@@ -11,7 +11,7 @@ class DeleteTeamRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return $this->user()->hasRole(['hackathon_admin', 'system_admin']);
     }
 
     /**
@@ -22,7 +22,8 @@ class DeleteTeamRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'reason' => 'required|string|max:500',
+            'notify_members' => 'boolean',
         ];
     }
 }

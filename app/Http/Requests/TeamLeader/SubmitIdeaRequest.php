@@ -11,7 +11,8 @@ class SubmitIdeaRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return $this->user()->hasRole('team_leader') && 
+               $this->user()->teams()->exists();
     }
 
     /**
@@ -22,7 +23,11 @@ class SubmitIdeaRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'final_pitch_deck' => 'required|file|mimes:pdf,pptx|max:15360', // 15MB max
+            'demo_video' => 'nullable|file|mimes:mp4,avi,mov|max:102400', // 100MB max
+            'source_code' => 'nullable|file|mimes:zip,tar,gz|max:51200', // 50MB max
+            'submission_notes' => 'nullable|string|max:1000',
+            'agree_to_terms' => 'required|accepted',
         ];
     }
 }

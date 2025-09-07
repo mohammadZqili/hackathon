@@ -11,7 +11,7 @@ class ExportTrackDataRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return $this->user()->hasRole(['supervisor', 'hackathon_admin', 'system_admin']);
     }
 
     /**
@@ -22,7 +22,15 @@ class ExportTrackDataRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'track_id' => 'required|exists:tracks,id',
+            'format' => 'required|in:csv,xlsx,pdf',
+            'include_teams' => 'boolean',
+            'include_ideas' => 'boolean',
+            'include_scores' => 'boolean',
+            'include_feedback' => 'boolean',
+            'date_range' => 'nullable|array',
+            'date_range.from' => 'nullable|date',
+            'date_range.to' => 'nullable|date|after_or_equal:date_range.from',
         ];
     }
 }

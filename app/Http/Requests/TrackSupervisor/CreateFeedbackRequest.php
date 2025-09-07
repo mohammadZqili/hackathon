@@ -11,7 +11,7 @@ class CreateFeedbackRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return $this->user()->hasRole(['supervisor', 'hackathon_admin', 'system_admin']);
     }
 
     /**
@@ -22,7 +22,16 @@ class CreateFeedbackRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'idea_id' => 'required|exists:ideas,id',
+            'feedback_text' => 'required|string|max:2000',
+            'score' => 'required|integer|min:0|max:100',
+            'criteria_scores' => 'required|array',
+            'criteria_scores.innovation' => 'required|integer|min:0|max:25',
+            'criteria_scores.technical' => 'required|integer|min:0|max:25',
+            'criteria_scores.feasibility' => 'required|integer|min:0|max:25',
+            'criteria_scores.presentation' => 'required|integer|min:0|max:25',
+            'recommendations' => 'nullable|string|max:1000',
+            'is_final' => 'boolean',
         ];
     }
 }

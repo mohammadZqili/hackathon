@@ -11,7 +11,7 @@ class UpdateBrandingSettingsRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return $this->user()->hasRole('system_admin');
     }
 
     /**
@@ -22,7 +22,17 @@ class UpdateBrandingSettingsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'logo' => 'nullable|image|max:2048',
+            'favicon' => 'nullable|image|max:512',
+            'primary_color' => 'nullable|string|regex:/^#[0-9A-Fa-f]{6}$/',
+            'secondary_color' => 'nullable|string|regex:/^#[0-9A-Fa-f]{6}$/',
+            'accent_color' => 'nullable|string|regex:/^#[0-9A-Fa-f]{6}$/',
+            'font_family' => 'nullable|string|max:100',
+            'footer_text' => 'nullable|string|max:500',
+            'social_facebook' => 'nullable|url|max:255',
+            'social_twitter' => 'nullable|url|max:255',
+            'social_linkedin' => 'nullable|url|max:255',
+            'social_instagram' => 'nullable|url|max:255',
         ];
     }
 }

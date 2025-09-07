@@ -11,7 +11,8 @@ class InviteMemberRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return $this->user()->hasRole('team_leader') && 
+               $this->user()->teams()->exists();
     }
 
     /**
@@ -22,7 +23,9 @@ class InviteMemberRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'email' => 'required|email|exists:users,email',
+            'message' => 'nullable|string|max:500',
+            'role' => 'in:team_member',
         ];
     }
 }

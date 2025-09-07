@@ -11,7 +11,7 @@ class RegisterWorkshopRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return $this->user()->hasRole(['team_leader', 'team_member']);
     }
 
     /**
@@ -22,7 +22,10 @@ class RegisterWorkshopRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'workshop_id' => 'required|exists:workshops,id',
+            'team_members' => 'required|array|min:1',
+            'team_members.*' => 'exists:users,id',
+            'notes' => 'nullable|string|max:500',
         ];
     }
 }

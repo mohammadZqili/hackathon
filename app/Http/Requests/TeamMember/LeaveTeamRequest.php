@@ -11,7 +11,8 @@ class LeaveTeamRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return $this->user()->hasRole('team_member') && 
+               $this->user()->teams()->exists();
     }
 
     /**
@@ -22,7 +23,8 @@ class LeaveTeamRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'reason' => 'nullable|string|max:500',
+            'notify_leader' => 'boolean',
         ];
     }
 }

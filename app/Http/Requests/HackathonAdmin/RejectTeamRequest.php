@@ -4,7 +4,7 @@ namespace App\Http\Requests\HackathonAdmin;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class DeleteWorkshopRequest extends FormRequest
+class RejectTeamRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,8 +22,21 @@ class DeleteWorkshopRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'reason' => 'required|string|max:500',
-            'notify_participants' => 'boolean',
+            'reason' => 'required|string|min:10|max:500',
+            'notify_leader' => 'boolean',
+        ];
+    }
+
+    /**
+     * Get custom messages for validator errors.
+     *
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'reason.required' => 'A reason for rejection is required.',
+            'reason.min' => 'The rejection reason must be at least 10 characters.',
         ];
     }
 }

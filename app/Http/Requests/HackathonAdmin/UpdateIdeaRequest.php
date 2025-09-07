@@ -11,7 +11,7 @@ class UpdateIdeaRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return $this->user()->hasRole(['hackathon_admin', 'system_admin']);
     }
 
     /**
@@ -22,7 +22,18 @@ class UpdateIdeaRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'title' => 'sometimes|required|string|max:255',
+            'description' => 'sometimes|required|string|min:100|max:5000',
+            'track_id' => 'sometimes|required|exists:tracks,id',
+            'problem_statement' => 'sometimes|required|string|max:2000',
+            'proposed_solution' => 'sometimes|required|string|max:3000',
+            'target_audience' => 'sometimes|required|string|max:1000',
+            'technologies' => 'sometimes|required|array|min:1',
+            'technologies.*' => 'string|max:50',
+            'pitch_deck' => 'nullable|file|mimes:pdf,pptx|max:10240',
+            'demo_url' => 'nullable|url|max:255',
+            'repository_url' => 'nullable|url|max:255',
+            'status' => 'sometimes|in:draft,submitted,under_review,approved,rejected',
         ];
     }
 }

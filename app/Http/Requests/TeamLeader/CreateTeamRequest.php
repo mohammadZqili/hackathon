@@ -11,7 +11,8 @@ class CreateTeamRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return $this->user()->hasRole(['team_leader', 'team_member']) && 
+               !$this->user()->teams()->exists();
     }
 
     /**
@@ -22,7 +23,10 @@ class CreateTeamRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'name' => 'required|string|max:255|unique:teams,name',
+            'track_id' => 'required|exists:tracks,id',
+            'hackathon_edition_id' => 'required|exists:hackathon_editions,id',
+            'description' => 'nullable|string|max:1000',
         ];
     }
 }

@@ -11,7 +11,8 @@ class RemoveMemberRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return $this->user()->hasRole('team_leader') && 
+               $this->user()->teams()->exists();
     }
 
     /**
@@ -22,7 +23,8 @@ class RemoveMemberRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'reason' => 'nullable|string|max:500',
+            'notify_member' => 'boolean',
         ];
     }
 }

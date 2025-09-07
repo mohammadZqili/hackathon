@@ -4,7 +4,7 @@ namespace App\Http\Requests\HackathonAdmin;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class CreateNewsRequest extends FormRequest
+class UpdateNewsRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -29,7 +29,7 @@ class CreateNewsRequest extends FormRequest
             'featured_image' => 'nullable|image|max:5120', // 5MB max
             'is_featured' => 'boolean',
             'status' => 'in:draft,published,scheduled',
-            'publish_at' => 'nullable|date|after:now',
+            'publish_at' => 'nullable|date',
             'meta_title' => 'nullable|string|max:60',
             'meta_description' => 'nullable|string|max:160',
         ];
@@ -47,7 +47,6 @@ class CreateNewsRequest extends FormRequest
             'content.required' => 'News content is required.',
             'category.required' => 'Please select a news category.',
             'featured_image.max' => 'Featured image must not exceed 5MB.',
-            'publish_at.after' => 'Publish date must be in the future.',
         ];
     }
 }

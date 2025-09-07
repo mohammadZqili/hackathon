@@ -11,7 +11,8 @@ class CreateIdeaRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return $this->user()->hasRole('team_leader') && 
+               $this->user()->teams()->exists();
     }
 
     /**
@@ -22,7 +23,16 @@ class CreateIdeaRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'title' => 'required|string|max:255',
+            'description' => 'required|string|min:100|max:5000',
+            'problem_statement' => 'required|string|max:2000',
+            'proposed_solution' => 'required|string|max:3000',
+            'target_audience' => 'required|string|max:1000',
+            'technologies' => 'required|array|min:1',
+            'technologies.*' => 'string|max:50',
+            'pitch_deck' => 'nullable|file|mimes:pdf,pptx|max:10240',
+            'demo_url' => 'nullable|url|max:255',
+            'repository_url' => 'nullable|url|max:255',
         ];
     }
 }

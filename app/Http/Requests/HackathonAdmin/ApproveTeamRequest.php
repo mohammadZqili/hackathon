@@ -11,7 +11,7 @@ class ApproveTeamRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return $this->user()->hasRole(['hackathon_admin', 'system_admin']);
     }
 
     /**
@@ -22,7 +22,8 @@ class ApproveTeamRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'message' => 'nullable|string|max:500',
+            'notify_leader' => 'boolean',
         ];
     }
 }

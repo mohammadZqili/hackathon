@@ -11,7 +11,8 @@ class UpdateTeamRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return $this->user()->hasRole('team_leader') && 
+               $this->user()->teams()->exists();
     }
 
     /**
@@ -22,7 +23,8 @@ class UpdateTeamRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'name' => 'sometimes|required|string|max:255|unique:teams,name,' . $this->route('team'),
+            'description' => 'nullable|string|max:1000',
         ];
     }
 }

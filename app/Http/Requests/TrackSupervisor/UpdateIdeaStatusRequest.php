@@ -11,7 +11,7 @@ class UpdateIdeaStatusRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return $this->user()->hasRole(['supervisor', 'hackathon_admin', 'system_admin']);
     }
 
     /**
@@ -22,7 +22,10 @@ class UpdateIdeaStatusRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'status' => 'required|in:draft,submitted,under_review,approved,rejected,winner,finalist',
+            'status_reason' => 'nullable|string|max:500',
+            'notify_team' => 'boolean',
+            'internal_notes' => 'nullable|string|max:1000',
         ];
     }
 }

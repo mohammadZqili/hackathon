@@ -11,7 +11,7 @@ class UpdateTwitterSettingsRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return $this->user()->hasRole('system_admin');
     }
 
     /**
@@ -22,7 +22,13 @@ class UpdateTwitterSettingsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'twitter_api_key' => 'nullable|string|max:255',
+            'twitter_api_secret' => 'nullable|string|max:255',
+            'twitter_access_token' => 'nullable|string|max:255',
+            'twitter_access_token_secret' => 'nullable|string|max:255',
+            'auto_tweet_news' => 'boolean',
+            'auto_tweet_winners' => 'boolean',
+            'hashtags' => 'nullable|string|max:500',
         ];
     }
 }
