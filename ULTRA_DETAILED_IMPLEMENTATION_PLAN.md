@@ -2160,6 +2160,524 @@ public function store(Request $request)
 
 ---
 
+## 🔍 **CRITICAL MISSING COMPONENTS ANALYSIS**
+
+### **🗃️ MISSING DATABASE MIGRATIONS**
+Based on Vue components and Figma analysis, these migrations are MISSING:
+
+```php
+// Missing: idea_reviews table
+Schema::create('idea_reviews', function (Blueprint $table) {
+    $table->id();
+    $table->char('idea_id', 26);
+    $table->char('reviewer_id', 26);
+    $table->enum('status', ['pending', 'approved', 'rejected', 'needs_revision']);
+    $table->integer('score')->nullable();
+    $table->text('feedback')->nullable();
+    $table->text('revision_notes')->nullable();
+    $table->timestamp('reviewed_at')->nullable();
+    $table->timestamps();
+    
+    $table->foreign('idea_id')->references('id')->on('ideas')->onDelete('cascade');
+    $table->foreign('reviewer_id')->references('id')->on('users')->onDelete('cascade');
+});
+
+// Missing: workshop_attendances table  
+Schema::create('workshop_attendances', function (Blueprint $table) {
+    $table->id();
+    $table->char('workshop_registration_id', 26);
+    $table->enum('status', ['present', 'absent', 'late']);
+    $table->timestamp('checked_in_at')->nullable();
+    $table->char('checked_in_by', 26)->nullable();
+    $table->text('notes')->nullable();
+    $table->timestamps();
+    
+    $table->foreign('workshop_registration_id')->references('id')->on('workshop_registrations')->onDelete('cascade');
+    $table->foreign('checked_in_by')->references('id')->on('users')->onDelete('set null');
+});
+
+// Missing: settings additions (for tabs)
+Schema::table('settings', function (Blueprint $table) {
+    $table->json('smtp_settings')->nullable();
+    $table->json('sms_api_settings')->nullable();
+    $table->json('branding_settings')->nullable();
+    $table->json('notification_settings')->nullable();
+});
+
+// Missing: news_media table
+Schema::create('news_media', function (Blueprint $table) {
+    $table->id();
+    $table->char('news_id', 26);
+    $table->string('file_name');
+    $table->string('file_path');
+    $table->string('file_type');
+    $table->integer('file_size');
+    $table->string('mime_type');
+    $table->timestamps();
+    
+    $table->foreign('news_id')->references('id')->on('news')->onDelete('cascade');
+});
+```
+
+### **📋 COMPLETE TAB-BASED PAGES FROM VUE ANALYSIS**
+
+#### **1. SETTINGS PAGE - 4 TABS**
+**Route:** `GET /system-admin/settings`  
+**Tabs Identified:**
+- **SMTP Tab:** Email configuration settings
+- **SMS API Tab:** SMS service configuration  
+- **Branding Tab:** App name, colors, logo upload
+- **Notifications Tab:** Notification preferences
+
+#### **2. WORKSHOPS PAGE - 3 TABS**
+**Route:** `GET /system-admin/workshops`
+**Tabs Identified:**
+- **Workshops Tab:** Main workshops list (Default)
+- **Speakers Tab:** Speaker management 
+- **Organizations Tab:** Organization management
+
+#### **3. IDEAS PAGE - 2 TABS** 
+**Route:** `GET /system-admin/ideas`
+**Tabs Identified:**
+- **Overview Tab:** Idea details and information
+- **Submitted Ideas Tab:** List of all submitted ideas
+
+#### **4. NEWS PAGE - 2 TABS**
+**Route:** `GET /system-admin/news`
+**Tabs Identified:**
+- **All News Tab:** Published news articles list
+- **Media Center Tab:** Media files management
+
+#### **5. REPORTS PAGE - 2 TABS**
+**Route:** `GET /system-admin/reports`
+**Tabs Identified:**
+- **All Reports Tab:** Overall statistics
+- **Edition Report Tab:** Edition-specific reporting
+
+#### **6. TEAM IDEAS PAGE (User) - 3 TABS**
+**Route:** `GET /team-leader/ideas` & `GET /team-member/ideas`
+**Tabs Identified:**
+- **Overview Tab:** Idea details view
+- **Submit Idea Tab:** Idea submission form
+- **Comments Tab:** Feedback and discussions
+- **Instructions Tab:** Submission guidelines
+
+### **🎯 COMPLETE REQUEST VALIDATION CLASSES**
+
+#### **Authentication Requests**
+```php
+// app/Http/Requests/Auth/LoginRequest.php
+class LoginRequest extends FormRequest
+{
+    public function rules(): array
+    {
+        return [
+            'email' => 'required|email|exists:users,email',
+            'password' => 'required|string|min:8',
+            'remember' => 'nullable|boolean',
+        ];
+    }
+}
+
+// app/Http/Requests/Auth/RegisterRequest.php  
+class RegisterRequest extends FormRequest
+{
+    public function rules(): array
+    {
+        return [
+            'name' => 'required|string|min:2|max:255',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|string|min:8|confirmed',
+            'phone' => 'nullable|string|max:20',
+            'user_type' => 'required|in:team_leader,team_member',
+            'hackathon_id' => 'required|exists:hackathons,id',
+        ];
+    }
+}
+```
+
+#### **Team Management Requests**
+```php
+// app/Http/Requests/Team/CreateTeamRequest.php
+class CreateTeamRequest extends FormRequest
+{
+    public function rules(): array
+    {
+        return [
+            'name' => 'required|string|min:3|max:50|unique:teams,name',
+            'hackathon_id' => 'required|exists:hackathons,id',
+            'track_id' => 'nullable|exists:tracks,id',
+            'member_emails' => 'nullable|array|max:4',
+            'member_emails.*' => 'email|distinct|exists:users,email',
+            'max_members' => 'nullable|integer|min:2|max:10',
+        ];
+    }
+}
+
+// app/Http/Requests/Team/UpdateTeamRequest.php
+class UpdateTeamRequest extends FormRequest
+{
+    public function rules(): array
+    {
+        return [
+            'name' => 'required|string|min:3|max:50|unique:teams,name,' . $this->route('team'),
+            'track_id' => 'nullable|exists:tracks,id',
+            'max_members' => 'nullable|integer|min:2|max:10',
+            'status' => 'nullable|in:pending,approved,rejected',
+        ];
+    }
+}
+
+// app/Http/Requests/Team/AddMemberRequest.php
+class AddMemberRequest extends FormRequest
+{
+    public function rules(): array
+    {
+        return [
+            'user_id' => 'required_without:email|exists:users,id',
+            'email' => 'required_without:user_id|email|exists:users,email',
+            'role' => 'nullable|in:member,leader',
+        ];
+    }
+}
+```
+
+#### **Idea Management Requests**
+```php
+// app/Http/Requests/Idea/SubmitIdeaRequest.php
+class SubmitIdeaRequest extends FormRequest
+{
+    public function rules(): array
+    {
+        return [
+            'title' => 'required|string|min:5|max:255',
+            'description' => 'required|string|min:50|max:5000',
+            'problem_statement' => 'required|string|min:50|max:2000',
+            'solution_approach' => 'required|string|min:50|max:2000',
+            'target_audience' => 'nullable|string|max:1000',
+            'technologies' => 'nullable|array',
+            'technologies.*' => 'string|max:50',
+            'files.*' => 'file|mimes:pdf,doc,docx,ppt,pptx|max:10240', // 10MB max
+            'track_id' => 'required|exists:tracks,id',
+        ];
+    }
+}
+
+// app/Http/Requests/Idea/ReviewIdeaRequest.php
+class ReviewIdeaRequest extends FormRequest
+{
+    public function rules(): array
+    {
+        return [
+            'status' => 'required|in:approved,rejected,needs_revision',
+            'score' => 'nullable|integer|min:0|max:100',
+            'feedback' => 'required|string|min:10|max:2000',
+            'revision_notes' => 'nullable|string|max:1000',
+        ];
+    }
+}
+```
+
+#### **Workshop Management Requests**
+```php
+// app/Http/Requests/Workshop/CreateWorkshopRequest.php
+class CreateWorkshopRequest extends FormRequest
+{
+    public function rules(): array
+    {
+        return [
+            'title' => 'required|string|min:5|max:255',
+            'description' => 'required|string|min:20|max:2000',
+            'hackathon_id' => 'required|exists:hackathons,id',
+            'start_datetime' => 'required|date|after:now',
+            'end_datetime' => 'required|date|after:start_datetime',
+            'location' => 'required|string|max:500',
+            'location_type' => 'required|in:in_person,remote,hybrid',
+            'remote_link' => 'nullable|required_if:location_type,remote,hybrid|url',
+            'max_attendees' => 'required|integer|min:1|max:1000',
+            'speaker_ids' => 'required|array|min:1',
+            'speaker_ids.*' => 'exists:speakers,id',
+            'organization_ids' => 'required|array|min:1',
+            'organization_ids.*' => 'exists:organizations,id',
+            'prerequisites' => 'nullable|string|max:1000',
+            'materials_url' => 'nullable|url',
+        ];
+    }
+}
+
+// app/Http/Requests/Workshop/RegisterWorkshopRequest.php
+class RegisterWorkshopRequest extends FormRequest
+{
+    public function rules(): array
+    {
+        return [
+            'workshop_id' => 'required|exists:workshops,id',
+            'special_requirements' => 'nullable|string|max:500',
+        ];
+    }
+}
+```
+
+#### **Settings Management Requests**
+```php
+// app/Http/Requests/Settings/UpdateSmtpRequest.php
+class UpdateSmtpRequest extends FormRequest
+{
+    public function rules(): array
+    {
+        return [
+            'smtp_host' => 'required|string|max:255',
+            'smtp_port' => 'required|integer|min:1|max:65535',
+            'smtp_username' => 'required|string|max:255',
+            'smtp_password' => 'required|string|max:255',
+            'smtp_encryption' => 'required|in:tls,ssl,none',
+            'from_email' => 'required|email',
+            'from_name' => 'required|string|max:255',
+        ];
+    }
+}
+
+// app/Http/Requests/Settings/UpdateBrandingRequest.php
+class UpdateBrandingRequest extends FormRequest
+{
+    public function rules(): array
+    {
+        return [
+            'app_name' => 'required|string|min:2|max:100',
+            'primary_color' => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
+            'secondary_color' => 'nullable|string|regex:/^#[0-9A-Fa-f]{6}$/',
+            'accent_color' => 'nullable|string|regex:/^#[0-9A-Fa-f]{6}$/',
+            'logo' => 'nullable|image|mimes:png,jpg,jpeg,svg|max:2048',
+        ];
+    }
+}
+
+// app/Http/Requests/Settings/UpdateSmsApiRequest.php
+class UpdateSmsApiRequest extends FormRequest
+{
+    public function rules(): array
+    {
+        return [
+            'provider' => 'required|in:twilio,nexmo,aws_sns',
+            'api_key' => 'required|string|max:255',
+            'api_secret' => 'required|string|max:255',
+            'from_number' => 'required|string|max:20',
+            'is_enabled' => 'required|boolean',
+        ];
+    }
+}
+```
+
+#### **News Management Requests**
+```php
+// app/Http/Requests/News/CreateNewsRequest.php
+class CreateNewsRequest extends FormRequest
+{
+    public function rules(): array
+    {
+        return [
+            'title' => 'required|string|min:5|max:255',
+            'content' => 'required|string|min:50|max:10000',
+            'excerpt' => 'nullable|string|max:500',
+            'hackathon_id' => 'required|exists:hackathons,id',
+            'featured_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120', // 5MB
+            'status' => 'required|in:draft,published,archived',
+            'publish_at' => 'nullable|date|after:now',
+            'auto_tweet' => 'nullable|boolean',
+            'tweet_content' => 'nullable|string|max:280',
+            'media_files.*' => 'file|mimes:jpg,jpeg,png,pdf,mp4|max:20480', // 20MB
+        ];
+    }
+}
+```
+
+### **⚡ 2-HOUR IMPLEMENTATION CHECKLIST**
+
+#### **PHASE 1: Database Setup (15 minutes)**
+```bash
+# Create missing migrations
+php artisan make:migration create_idea_reviews_table
+php artisan make:migration create_workshop_attendances_table  
+php artisan make:migration create_news_media_table
+php artisan make:migration add_settings_columns_to_settings_table
+
+# Run migrations
+php artisan migrate
+```
+
+#### **PHASE 2: Request Classes (20 minutes)**
+```bash
+# Create all validation request classes
+php artisan make:request Auth/LoginRequest
+php artisan make:request Auth/RegisterRequest
+php artisan make:request Team/CreateTeamRequest
+php artisan make:request Team/UpdateTeamRequest
+php artisan make:request Team/AddMemberRequest
+php artisan make:request Idea/SubmitIdeaRequest
+php artisan make:request Idea/ReviewIdeaRequest
+php artisan make:request Workshop/CreateWorkshopRequest
+php artisan make:request Settings/UpdateSmtpRequest
+php artisan make:request Settings/UpdateBrandingRequest
+php artisan make:request Settings/UpdateSmsApiRequest
+php artisan make:request News/CreateNewsRequest
+```
+
+#### **PHASE 3: Controllers & Services (45 minutes)**
+```bash
+# System Admin Controllers
+php artisan make:controller SystemAdmin/DashboardController
+php artisan make:controller SystemAdmin/TeamController --resource
+php artisan make:controller SystemAdmin/IdeaController --resource
+php artisan make:controller SystemAdmin/WorkshopController --resource
+php artisan make:controller SystemAdmin/SpeakerController --resource
+php artisan make:controller SystemAdmin/OrganizationController --resource
+php artisan make:controller SystemAdmin/SettingsController
+php artisan make:controller SystemAdmin/NewsController --resource
+php artisan make:controller SystemAdmin/ReportController
+
+# Hackathon Admin Controllers
+php artisan make:controller HackathonAdmin/DashboardController
+php artisan make:controller HackathonAdmin/TeamController --resource
+php artisan make:controller HackathonAdmin/IdeaController --resource
+php artisan make:controller HackathonAdmin/WorkshopController --resource
+
+# Team Leader Controllers
+php artisan make:controller TeamLeader/DashboardController
+php artisan make:controller TeamLeader/TeamController --resource
+php artisan make:controller TeamLeader/IdeaController --resource
+
+# Services
+php artisan make:service TeamService
+php artisan make:service IdeaService
+php artisan make:service WorkshopService
+php artisan make:service UserService
+php artisan make:service HackathonService
+php artisan make:service ReportService
+php artisan make:service SettingsService
+```
+
+#### **PHASE 4: Frontend Components (30 minutes)**
+- Update NavSidebarDesktop.vue with role-based menus
+- Create tab-based components for Settings, Workshops, Ideas, News
+- Implement all form components using existing Datatable.vue
+
+#### **PHASE 5: API Routes & Testing (10 minutes)**
+```bash
+# Add all routes to api.php and web.php
+# Test key endpoints
+php artisan serve
+```
+
+### **🎯 EXACT FILE STRUCTURE TO CREATE**
+
+#### **Controllers (23 files)**
+```
+app/Http/Controllers/
+├── SystemAdmin/
+│   ├── DashboardController.php
+│   ├── TeamController.php
+│   ├── IdeaController.php
+│   ├── WorkshopController.php
+│   ├── SpeakerController.php
+│   ├── OrganizationController.php
+│   ├── SettingsController.php
+│   ├── NewsController.php
+│   └── ReportController.php
+├── HackathonAdmin/
+│   ├── DashboardController.php
+│   ├── TeamController.php
+│   ├── IdeaController.php
+│   └── WorkshopController.php
+├── TrackSupervisor/
+│   ├── DashboardController.php
+│   ├── IdeaController.php
+│   └── TeamController.php
+├── TeamLeader/
+│   ├── DashboardController.php
+│   ├── TeamController.php
+│   └── IdeaController.php
+└── TeamMember/
+    ├── DashboardController.php
+    └── TeamController.php
+```
+
+#### **Request Classes (15 files)**
+```
+app/Http/Requests/
+├── Auth/
+│   ├── LoginRequest.php
+│   └── RegisterRequest.php
+├── Team/
+│   ├── CreateTeamRequest.php
+│   ├── UpdateTeamRequest.php
+│   └── AddMemberRequest.php
+├── Idea/
+│   ├── SubmitIdeaRequest.php
+│   └── ReviewIdeaRequest.php
+├── Workshop/
+│   ├── CreateWorkshopRequest.php
+│   └── RegisterWorkshopRequest.php
+├── Settings/
+│   ├── UpdateSmtpRequest.php
+│   ├── UpdateBrandingRequest.php
+│   └── UpdateSmsApiRequest.php
+└── News/
+    └── CreateNewsRequest.php
+```
+
+#### **Services (8 files)**
+```
+app/Services/
+├── TeamService.php
+├── IdeaService.php
+├── WorkshopService.php
+├── UserService.php
+├── HackathonService.php
+├── ReportService.php
+├── SettingsService.php
+└── SpeakerService.php
+```
+
+#### **Vue Components (Modifications)**
+```
+resources/js/Components/
+└── NavSidebarDesktop.vue (MODIFY - add role-based menus)
+
+resources/js/Pages/
+├── SystemAdmin/
+│   ├── Dashboard.vue
+│   ├── Teams/
+│   │   ├── Index.vue (with Datatable)
+│   │   ├── Edit.vue
+│   │   └── Create.vue
+│   ├── Ideas/
+│   │   ├── Index.vue (2 tabs: Overview + Submitted Ideas)
+│   │   └── Show.vue
+│   ├── Workshops/
+│   │   ├── Index.vue (3 tabs: Workshops + Speakers + Organizations)
+│   │   └── Create.vue
+│   ├── Settings/
+│   │   └── Index.vue (4 tabs: SMTP + SMS API + Branding + Notifications)
+│   ├── News/
+│   │   ├── Index.vue (2 tabs: All News + Media Center)
+│   │   └── Create.vue
+│   └── Reports/
+│       └── Index.vue (2 tabs: All Reports + Edition Report)
+├── TeamLeader/
+│   ├── Dashboard.vue
+│   ├── Teams/
+│   │   ├── Create.vue
+│   │   └── Show.vue
+│   └── Ideas/
+│       └── Index.vue (4 tabs: Overview + Submit + Comments + Instructions)
+└── TeamMember/
+    ├── Dashboard.vue
+    └── Ideas/
+        └── Index.vue (3 tabs: Overview + Comments + Instructions)
+```
+
+---
+
 ## 🔄 **HACKATHON ADMIN DATA FLOWS**
 
 ### **1. HACKATHON ADMIN DASHBOARD**
