@@ -25,6 +25,12 @@ use App\Http\Controllers\AdminPermissionRoleController;
 use App\Http\Controllers\ForcePasswordChangeController;
 use App\Http\Controllers\AdminPersonalisationController;
 
+// Hackathon Controllers
+use App\Http\Controllers\SystemAdmin\DashboardController as SystemAdminDashboardController;
+use App\Http\Controllers\SystemAdmin\EditionController as SystemAdminEditionController;
+use App\Http\Controllers\HackathonAdmin\TeamController as HackathonAdminTeamController;
+use App\Http\Controllers\HackathonAdmin\IdeaController as HackathonAdminIdeaController;
+
 Route::get('/terms', [PageController::class, 'terms'])->name('terms');
 Route::get('/', [PageController::class, 'home'])->name('home');
 
@@ -195,4 +201,29 @@ Route::middleware(['guest', 'web'])->group(function () {
             Route::get('/{token}', 'authenticate')->name('login.authenticate');
         });
     });
+});
+
+// Hackathon Routes - System Admin
+Route::middleware(['auth', 'system_admin'])->prefix('system-admin')->name('system-admin.')->group(function () {
+    Route::get('/dashboard', [SystemAdminDashboardController::class, 'index'])->name('dashboard');
+    
+    // Edition Management
+    Route::resource('editions', SystemAdminEditionController::class);
+    Route::post('editions/{edition}/set-current', [SystemAdminEditionController::class, 'setCurrent'])->name('editions.set-current');
+    Route::post('editions/{edition}/archive', [SystemAdminEditionController::class, 'archive'])->name('editions.archive');
+});
+
+// Hackathon Routes - Hackathon Admin
+Route::middleware(['auth', 'hackathon_admin'])->prefix('hackathon-admin')->name('hackathon-admin.')->group(function () {
+    Route::get('/dashboard', [HackathonAdminDashboardController::class, 'index'])->name('dashboard');
+    
+    // Team Management
+    Route::resource('teams', HackathonAdminTeamController::class);
+    Route::post('teams/{team}/approve', [HackathonAdminTeamController::class, 'approve'])->name('teams.approve');
+    Route::post('teams/{team}/reject', [HackathonAdminTeamController::class, 'reject'])->name('teams.reject');
+    
+    // Idea Management
+    Route::resource('ideas', HackathonAdminIdeaController::class);
+    Route::post('ideas/{idea}/approve', [HackathonAdminIdeaController::class, 'approve'])->name('ideas.approve');
+    Route::post('ideas/{idea}/reject', [HackathonAdminIdeaController::class, 'reject'])->name('ideas.reject');
 });

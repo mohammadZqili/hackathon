@@ -1,26 +1,29 @@
-# 🚀 **ULTRA-DETAILED IMPLEMENTATION PLAN**
-**Complete Hackathon Management System - 100% SRS Coverage**
+# 🚀 **ULTRA-DETAILED IMPLEMENTATION PLAN - COMPREHENSIVE MERGED VERSION**
+**Complete Hackathon Management System with Enhanced Role-Based Frontend Behavior**
 
-## 🚨 **VERIFIED SYSTEM ANALYSIS & CRITICAL GAPS**
+## 🚨 **CRITICAL ENHANCEMENTS APPLIED**
 
-After comprehensive analysis of HackathonSRS.txt, all Figma images, existing codebase, and frontend structure:
-- **Current Plan Coverage:** 50% of SRS requirements
-- **Missing Critical Features:** Public pages, QR system, Twitter integration, Arabic support
-- **Directory Structure:** ✅ VERIFIED - All paths below are confirmed to exist
+✅ **Complete Request Classes**: All controllers use specific validation classes  
+✅ **Enhanced Frontend Behavior**: Ultra-detailed role-based UI specifications  
+✅ **Seeder Coverage**: Complete seeder documentation with sample data  
+✅ **Role-Based Flows**: Exact navigation, permissions, and component behavior per role  
+✅ **Implementation Ready**: One-shot implementation with precise technical specifications  
+
+---
 
 ## 📁 **VERIFIED DIRECTORY STRUCTURE**
+
 ```
 ✅ EXISTING (VERIFIED):
 /home/geek/projects/hakathons/projects/guacpanel-tailwind-1.14/
 ├── app/Http/Controllers/ ✅
 ├── app/Models/ ✅
-├── database/migrations/ ✅
+├── database/migrations/ ✅ (35 migrations exist)
+├── database/seeders/ ✅ (20 seeders exist)
 ├── resources/js/Components/ ✅
 ├── resources/js/Layouts/ ✅
+│   └── Default.vue ✅ (Main layout with NavSidebarDesktop)
 ├── resources/js/Pages/ ✅
-│   ├── Admin/ ✅
-│   ├── Auth/ ✅
-│   └── UserAccount/ ✅
 └── routes/ ✅
 
 ❌ TO CREATE:
@@ -30,2333 +33,1263 @@ After comprehensive analysis of HackathonSRS.txt, all Figma images, existing cod
 ├── app/Http/Controllers/TeamLeader/ ❌
 ├── app/Http/Controllers/TeamMember/ ❌
 ├── app/Http/Controllers/Public/ ❌
-├── app/Http/Requests/ ❌
+├── app/Http/Requests/ ❌ (CRITICAL - All validation classes)
 ├── app/Services/ ❌
 ├── resources/js/Pages/SystemAdmin/ ❌
 ├── resources/js/Pages/HackathonAdmin/ ❌
-├── resources/js/Pages/TeamLeader/ ❌
-├── resources/js/Pages/TeamMember/ ❌
 └── resources/js/Components/Public/ ❌
 ```
 
-## 🚨 **CRITICAL MISSING FEATURES (FROM SRS ANALYSIS)**
+## 🏗️ **SYSTEM ARCHITECTURE**
 
-### **❌ COMPLETELY MISSING (0% implemented):**
-1. **Public Landing Pages** (SRS F1-F5) - WordPress + Elementor integration
-2. **Visitor Workshop Registration** (SRS F21-F28) - Public registration without accounts  
-3. **QR/Barcode System** (SRS F24, F26-F28) - Attendance tracking
-4. **Twitter/X Integration** (SRS F31) - Auto-posting news
-5. **Arabic RTL Support** (SRS requirement) - Bilingual interface
-6. **Multi-year Edition Management** (SRS F32-F34) - Historical data management
-
-### **⚠️ PARTIALLY MISSING (30-70% implemented):**
-1. **Workshop Management** - Missing public display and attendance features
-2. **News System** - Missing public display and Twitter integration
-3. **User Registration** - Missing visitor role and public registration
-4. **Reporting System** - Missing comprehensive analytics from SRS
-
-## 🏗️ **REVISED SYSTEM ARCHITECTURE**
-
+### **🎯 ROLE-BASED ACCESS SYSTEM (5 ROLES)**
 ```
-🌐 DUAL ARCHITECTURE SYSTEM (SRS COMPLIANT):
-
-┌─────────────────────────────────────────────────────────────┐
-│                    FRONTEND ARCHITECTURE                     │
-├─────────────────────────────────────────────────────────────┤
-│ 1. PUBLIC SITE (ruman.sa) - WordPress + Elementor          │
-│    ├── Landing page with hackathon info (SRS F1)           │
-│    ├── About hackathon & organizing bodies (SRS F2)        │
-│    ├── Prizes & tracks showcase (SRS F3)                   │
-│    ├── Workshops public schedule (SRS F4)                  │
-│    ├── News display (SRS F5)                               │
-│    └── Public workshop registration (SRS F21-F28)          │
-│                                                             │
-│ 2. ADMIN PANEL (app.ruman.sa) - Laravel + Vue + Inertia    │
-│    ├── System Admin Dashboard (Complete control)           │
-│    ├── Hackathon Admin Dashboard (Edition management)      │
-│    ├── Track Supervisor Dashboard (Idea review)            │
-│    ├── Team Leader Dashboard (Team & idea management)      │
-│    └── Team Member Dashboard (Basic participation)         │
-└─────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────┐
-│                     BACKEND SERVICES                        │
-├─────────────────────────────────────────────────────────────┤
-│ • Laravel API (app.ruman.sa/api)                           │
-│ • Public APIs for WordPress integration                     │
-│ • QR Code Generation & Scanning (Browser-based)            │
-│ • Twitter API Integration (Auto-posting)                   │
-│ • Email Services (SMTP) - Registration confirmations       │
-│ • SMS Services (Optional) - 2FA and notifications          │
-│ • File Storage & Management (Ideas: 8 files, 15MB each)    │
-│ • Multi-language Support (Arabic RTL + English LTR)        │
-└─────────────────────────────────────────────────────────────┘
+1. system_admin        - Full system control, edition management
+2. hackathon_admin     - Current edition management, track oversight  
+3. track_supervisor    - Track-specific team/idea oversight
+4. team_leader         - Team & idea management
+5. team_member         - Basic participation, view-only
 ```
 
-## 📋 **EXISTING COMPONENT ANALYSIS & REUSE STRATEGY**
+### **📱 FRONTEND STRUCTURE**
+```
+🌐 DUAL ARCHITECTURE:
+├── PUBLIC SITE (ruman.sa) - WordPress + Elementor
+│   ├── Landing pages (SRS F1-F5)
+│   └── Public workshop registration (SRS F21-F28)
+└── ADMIN PANEL (app.ruman.sa) - Laravel + Vue + Inertia
+    ├── 5 Role-based dashboards
+    ├── QR code scanning system
+    └── Twitter integration
+```
 
-### **✅ Layout Components (REUSE 100%)**
+---
 
-#### **1. Default.vue Layout (MAIN LAYOUT - REUSE AS-IS)**
-**Location:** `resources/js/Layouts/Default.vue`  
-**Usage:** All authenticated pages across all roles
-**Components Used:** ✅ Already has all we need
-- `NavSidebarDesktop.vue` ✅
-- `NavProfile.vue` ✅ 
-- `Notification.vue` ✅
-- `FlashMessage.vue` ✅
-- `Footer.vue` ✅
-- `ColorThemeSwitcher.vue` ✅
-- `Logo.vue` ✅
-- `Search.vue` ✅
-- `SystemNotice.vue` ✅
+## 🔐 **ENHANCED ROLE-BASED FRONTEND BEHAVIOR**
 
-**MODIFICATION NEEDED:** Update `NavSidebarDesktop.vue` to show role-based menus
+### **🔴 SYSTEM ADMIN ROLE (system_admin)**
+**Access Level:** Full system control + multi-edition management
 
-#### **2. NavSidebarDesktop.vue (MODIFY FOR ROLES)**
-**Current:** Hardcoded admin menu  
-**Needed:** Dynamic menu based on user role
+#### **Login Flow & Initial Landing:**
+```
+1. POST /login → validates credentials
+2. Middleware: auth, role:system_admin 
+3. HandleInertiaRequests shares: user.roles = ['system_admin']
+4. REDIRECT: /system-admin/dashboard
+5. NavSidebarDesktop renders: Full system admin menu
+```
 
-**EXACT MODIFICATION:**
+#### **Sidebar Navigation (NavSidebarDesktop.vue modifications):**
 ```javascript
-// Current hardcoded navigationSections (lines 47-111)
-const navigationSections = reactive([
-  // Current admin menu...
-])
-
-// NEW: Replace with role-based menu
-const user = computed(() => page.props.auth?.user)
-const userRole = computed(() => user.value?.user_type || 'guest')
-
-const navigationSections = computed(() => {
-  const roleMenus = {
-    'system_admin': [
-      {
-        items: [
-          { name: 'Dashboard', route: 'admin.dashboard', icon: dashboardIcon },
-          { type: 'divider' }
-        ]
-      },
-      {
-        items: [
-          { name: 'Ideas', route: 'admin.ideas.index', icon: ideasIcon },
-          { name: 'Teams', route: 'admin.teams.index', icon: teamsIcon },
-          { name: 'Tracks', route: 'admin.tracks.index', icon: tracksIcon },
-          { name: 'Workshops', route: 'admin.workshops.index', icon: workshopsIcon },
-          { name: 'Check-Ins', route: 'admin.checkins.index', icon: checkinsIcon },
-          { name: 'News', route: 'admin.news.index', icon: newsIcon },
-          { name: 'Editions', route: 'admin.editions.index', icon: editionsIcon },
-          { name: 'Reports', route: 'admin.reports.index', icon: reportsIcon },
-          { name: 'Settings', route: 'admin.settings.index', icon: settingsIcon },
-          { type: 'divider' }
-        ]
-      }
-    ],
-    'hackathon_admin': [
-      {
-        items: [
-          { name: 'Dashboard', route: 'hackathon-admin.dashboard', icon: dashboardIcon },
-          { type: 'divider' }
-        ]
-      },
-      {
-        items: [
-          { name: 'Ideas', route: 'hackathon-admin.ideas.index', icon: ideasIcon },
-          { name: 'Teams', route: 'hackathon-admin.teams.index', icon: teamsIcon },
-          { name: 'Tracks', route: 'hackathon-admin.tracks.index', icon: tracksIcon },
-          { name: 'Workshops', route: 'hackathon-admin.workshops.index', icon: workshopsIcon },
-          { name: 'Check-Ins', route: 'hackathon-admin.checkins.index', icon: checkinsIcon },
-          { name: 'News', route: 'hackathon-admin.news.index', icon: newsIcon },
-          { name: 'Reports', route: 'hackathon-admin.reports.index', icon: reportsIcon },
-          { type: 'divider' }
-        ]
-      }
-    ],
-    'track_supervisor': [
-      {
-        items: [
-          { name: 'Dashboard', route: 'supervisor.dashboard', icon: dashboardIcon },
-          { type: 'divider' }
-        ]
-      },
-      {
-        items: [
-          { name: 'Ideas', route: 'supervisor.ideas.index', icon: ideasIcon },
-          { name: 'Tracks', route: 'supervisor.tracks.index', icon: tracksIcon },
-          { name: 'Workshops', route: 'supervisor.workshops.index', icon: workshopsIcon },
-          { type: 'divider' }
-        ]
-      }
-    ],
-    'team_leader': [
-      {
-        items: [
-          { name: 'Dashboard', route: 'team-lead.dashboard', icon: dashboardIcon },
-          { type: 'divider' }
-        ]
-      },
-      {
-        items: [
-          { name: 'Our Idea', route: 'team-lead.ideas.index', icon: ideasIcon },
-          { name: 'My Team', route: 'team-lead.team.index', icon: teamsIcon },
-          { name: 'Tracks', route: 'team-lead.tracks.index', icon: tracksIcon },
-          { name: 'Workshops', route: 'team-lead.workshops.index', icon: workshopsIcon },
-          { type: 'divider' }
-        ]
-      }
-    ],
-    'team_member': [
-      {
-        items: [
-          { name: 'Dashboard', route: 'team-member.dashboard', icon: dashboardIcon },
-          { type: 'divider' }
-        ]
-      },
-      {
-        items: [
-          { name: 'Our Idea', route: 'team-member.ideas.index', icon: ideasIcon },
-          { name: 'My Team', route: 'team-member.team.index', icon: teamsIcon },
-          { name: 'Tracks', route: 'team-member.tracks.index', icon: tracksIcon },
-          { name: 'Workshops', route: 'team-member.workshops.index', icon: workshopsIcon },
-          { name: 'News', route: 'team-member.news.index', icon: newsIcon },
-          { type: 'divider' }
+// When user.roles includes 'system_admin':
+const systemAdminMenu = [
+  {
+    items: [
+      { name: 'Dashboard', route: 'system-admin.dashboard', icon: dashboardIcon },
+      { type: 'divider' }
+    ]
+  },
+  {
+    items: [
+      { name: 'Hackathon Editions', route: 'system-admin.editions.index', icon: editionsIcon },
+      { name: 'Users Management', route: 'system-admin.users.index', icon: usersIcon },
+      { name: 'All Teams', route: 'system-admin.teams.index', icon: teamsIcon },
+      { name: 'All Ideas', route: 'system-admin.ideas.index', icon: ideasIcon },
+      { name: 'All Workshops', route: 'system-admin.workshops.index', icon: workshopsIcon },
+      { name: 'News Management', route: 'system-admin.news.index', icon: newsIcon },
+      { name: 'Reports & Analytics', route: 'system-admin.reports.index', icon: reportsIcon },
+      { type: 'divider' }
+    ]
+  },
+  {
+    items: [
+      { 
+        name: 'System Settings', 
+        icon: settingsIcon,
+        children: [
+          { name: 'SMTP Configuration', route: 'system-admin.settings.smtp' },
+          { name: 'Twitter Integration', route: 'system-admin.settings.twitter' },
+          { name: 'Branding Settings', route: 'system-admin.settings.branding' },
+          { name: 'System Health', route: 'system-admin.health.index' }
         ]
       }
     ]
   }
-  
-  return roleMenus[userRole.value] || roleMenus['team_member']
-})
+]
 ```
 
-#### **3. NavProfile.vue (UPDATE ROLE DISPLAY)**
-**Current:** Shows generic role from `user.roles[0]`  
-**Needed:** Show Arabic role names with proper role badges
-
-**EXACT MODIFICATION:**
-```javascript
-// Line 10: Update role computation
-const primaryRole = computed(() => {
-  const roleMap = {
-    'system_admin': 'مدير النظام',
-    'hackathon_admin': 'مدير الهاكاثون', 
-    'track_supervisor': 'مشرف المسار',
-    'team_leader': 'قائد الفريق',
-    'team_member': 'عضو الفريق',
-  }
-  return roleMap[user.value?.user_type] || user.value?.user_type || ''
-})
-```
-
-### **✅ Reusable Data Components (REUSE 100%)**
-
-#### **1. Datatable.vue (PERFECT FOR ALL LIST PAGES)**
-**Location:** `resources/js/Components/Datatable.vue`
-**Usage:** All index pages (teams, ideas, workshops, news, etc.)
-**Features Already Built:**
-- ✅ Search functionality
-- ✅ Column sorting
-- ✅ Pagination (server-side & client-side)
-- ✅ Bulk selection & actions
-- ✅ Export to CSV
-- ✅ Mobile responsive cards
-- ✅ Loading states
-- ✅ Empty states
-
-**USAGE PATTERN FOR ALL LIST PAGES:**
+#### **Dashboard Component Behavior:**
 ```vue
-<Datatable 
-  :data="items.data"
-  :columns="tableColumns" 
-  :pagination="items"
-  :loading="loading"
-  :enable-search="true"
-  :enable-export="true"
-  :search-fields="['name', 'email']"
-  title="Page Title"
-  @update:pagination="updatePagination"
-/>
-```
-
-#### **2. Modal.vue (REUSE FOR FORMS)**
-**Location:** `resources/js/Components/Modal.vue`
-**Usage:** All create/edit forms, confirmations
-
-#### **3. Form Components (REUSE 100%)**
-- `FormInput.vue` ✅
-- `FormSelect.vue` ✅ 
-- `FormTextarea.vue` ✅
-- `FormCheckbox.vue` ✅
-- `FormRadioGroup.vue` ✅
-- `FilePondUploader.vue` ✅
-
-#### **4. Widget Components (REUSE FOR DASHBOARDS)**
-- `MetricWidget.vue` ✅
-- `StatWidget.vue` ✅
-- `AchievementWidget.vue` ✅
-- `StockWidget.vue` ✅
-
-#### **5. Chart Components (REUSE FOR REPORTS)**
-- `ApexAreaChart.vue` ✅
-- `ApexBarChart.vue` ✅
-- `ApexDonutChart.vue` ✅
-- `ApexLineChart.vue` ✅
-
----
-
-## 🗃️ **DETAILED SYSTEM ADMIN FLOWS WITH EXACT DATA SOURCES**
-
-### **1. SYSTEM ADMIN DASHBOARD**
-
-#### **Page:** `Admin/Dashboard.vue`
-**Route:** `GET /admin/dashboard`  
-**Controller:** `Admin\DashboardController@index`
-
-**DATA SOURCES & APIs:**
-```php
-public function index(Request $request)
-{
-    $user = $request->user();
-    
-    // Statistics from services
-    $stats = [
-        'hackathons' => [
-            'total' => $this->hackathonService->getTotalCount(),           // DB: SELECT COUNT(*) FROM hackathons
-            'active' => $this->hackathonService->getActiveCount(),        // DB: SELECT COUNT(*) FROM hackathons WHERE is_active = 1
-            'archived' => $this->hackathonService->getArchivedCount(),    // DB: SELECT COUNT(*) FROM hackathons WHERE is_archived = 1
-        ],
-        'teams' => [
-            'total' => $this->teamService->getTotalCount(),               // DB: SELECT COUNT(*) FROM teams
-            'pending' => $this->teamService->getPendingCount(),          // DB: SELECT COUNT(*) FROM teams WHERE status = 'pending'
-            'approved' => $this->teamService->getApprovedCount(),        // DB: SELECT COUNT(*) FROM teams WHERE status = 'approved'
-        ],
-        'ideas' => [
-            'total' => $this->ideaService->getTotalCount(),               // DB: SELECT COUNT(*) FROM ideas
-            'pending' => $this->ideaService->getPendingReviewCount(),    // DB: SELECT COUNT(*) FROM ideas WHERE status = 'pending_review'
-            'approved' => $this->ideaService->getApprovedCount(),        // DB: SELECT COUNT(*) FROM ideas WHERE status = 'approved'
-            'rejected' => $this->ideaService->getRejectedCount(),        // DB: SELECT COUNT(*) FROM ideas WHERE status = 'rejected'
-        ],
-        'workshops' => [
-            'total' => $this->workshopService->getTotalCount(),          // DB: SELECT COUNT(*) FROM workshops
-            'upcoming' => $this->workshopService->getUpcomingCount(),    // DB: SELECT COUNT(*) FROM workshops WHERE start_date > NOW()
-            'completed' => $this->workshopService->getCompletedCount(),  // DB: SELECT COUNT(*) FROM workshops WHERE end_date < NOW()
-        ],
-        'users' => [
-            'total' => $this->userService->getTotalCount(),              // DB: SELECT COUNT(*) FROM users
-            'active' => $this->userService->getActiveCount(),           // DB: SELECT COUNT(*) FROM users WHERE is_active = 1
-        ]
-    ];
-    
-    // Recent activities - from audit logs or activity tracking
-    $recentActivities = [
-        // DB: SELECT * FROM audit_logs ORDER BY created_at DESC LIMIT 10
-        // or DB: SELECT * FROM activity_logs ORDER BY created_at DESC LIMIT 10
-    ];
-    
-    return Inertia::render('Admin/Dashboard', [
-        'stats' => $stats,
-        'recentActivities' => $recentActivities,
-        'user' => $user,
-    ]);
-}
-```
-
-**FRONTEND COMPONENT USAGE:**
-```vue
+<!-- SystemAdmin/Dashboard/Index.vue -->
 <template>
   <Default>
-    <!-- Page uses existing PageHeader component -->
-    <PageHeader title="Dashboard" />
+    <!-- System-wide statistics visible -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <MetricWidget title="Total Editions" :value="stats.editions.total" color="blue" />
+      <MetricWidget title="Active Editions" :value="stats.editions.active" color="green" />
+      <MetricWidget title="Total Users" :value="stats.users.total" color="purple" />
+      <MetricWidget title="System Health" :value="stats.health.score + '%'" color="cyan" />
+    </div>
     
-    <!-- Stats Grid using existing MetricWidget -->
+    <!-- Edition Switcher (UNIQUE TO SYSTEM ADMIN) -->
+    <div class="bg-white rounded-lg shadow p-6">
+      <h3 class="text-lg font-medium mb-4">Edition Management</h3>
+      <FormSelect
+        v-model="selectedEdition" 
+        :options="editionOptions"
+        label="Switch Active Edition"
+        @change="switchEdition"
+      />
+      <div class="mt-4 flex space-x-3">
+        <Link :href="route('system-admin.editions.create')" class="btn-primary">
+          Create New Edition
+        </Link>
+        <Link :href="route('system-admin.editions.index')" class="btn-secondary">
+          Manage All Editions
+        </Link>
+      </div>
+    </div>
+    
+    <!-- Global Activity Feed -->
+    <Datatable 
+      title="System-wide Activity"
+      :data="activities"
+      :columns="activityColumns"
+      :enable-export="true"
+    />
+  </Default>
+</template>
+```
+
+#### **Page Access Control:**
+```php
+// Route middleware for system admin pages
+Route::middleware(['auth', 'role:system_admin'])->group(function () {
+    Route::get('/system-admin/dashboard', [SystemAdmin\DashboardController::class, 'index'])
+        ->name('system-admin.dashboard');
+    Route::resource('/system-admin/editions', SystemAdmin\HackathonEditionController::class)
+        ->names('system-admin.editions');
+    Route::resource('/system-admin/users', SystemAdmin\UserController::class)
+        ->names('system-admin.users');
+});
+```
+
+### **🟡 HACKATHON ADMIN ROLE (hackathon_admin)**
+**Access Level:** Current edition management + track oversight
+
+#### **Login Flow & Initial Landing:**
+```
+1. POST /login → validates credentials
+2. Middleware: auth, role:hackathon_admin
+3. HandleInertiaRequests shares: user.roles = ['hackathon_admin'], current_edition
+4. REDIRECT: /hackathon-admin/dashboard
+5. NavSidebarDesktop renders: Current edition focused menu
+```
+
+#### **Sidebar Navigation:**
+```javascript
+// When user.roles includes 'hackathon_admin':
+const hackathonAdminMenu = [
+  {
+    items: [
+      { name: 'Dashboard', route: 'hackathon-admin.dashboard', icon: dashboardIcon },
+      { name: 'Current Edition Overview', route: 'hackathon-admin.edition.show', icon: editionIcon },
+      { type: 'divider' }
+    ]
+  },
+  {
+    items: [
+      { name: 'Teams Management', route: 'hackathon-admin.teams.index', icon: teamsIcon },
+      { name: 'Ideas Review', route: 'hackathon-admin.ideas.index', icon: ideasIcon },
+      { name: 'Track Supervision', route: 'hackathon-admin.tracks.index', icon: tracksIcon },
+      { name: 'Workshops', route: 'hackathon-admin.workshops.index', icon: workshopsIcon },
+      { name: 'News & Updates', route: 'hackathon-admin.news.index', icon: newsIcon },
+      { type: 'divider' }
+    ]
+  },
+  {
+    items: [
+      { name: 'Reports', route: 'hackathon-admin.reports.index', icon: reportsIcon },
+      { name: 'Export Data', route: 'hackathon-admin.export.index', icon: exportIcon }
+    ]
+  }
+]
+```
+
+#### **Dashboard Component Behavior:**
+```vue
+<!-- HackathonAdmin/Dashboard/Index.vue -->
+<template>
+  <Default>
+    <!-- Current Edition Header (UNIQUE TO HACKATHON ADMIN) -->
+    <div class="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg shadow p-6 text-white mb-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-bold">{{ currentEdition.name }}</h1>
+          <p class="text-blue-100">{{ currentEdition.year }} • {{ currentEdition.theme }}</p>
+        </div>
+        <div class="text-right">
+          <div class="text-sm text-blue-100">Days Remaining</div>
+          <div class="text-3xl font-bold">{{ daysUntilDeadline }}</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Current Edition Statistics -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       <MetricWidget 
-        v-for="stat in statsArray" 
-        :key="stat.key"
-        :title="stat.title"
-        :value="stat.value"
-        :change="stat.change"
-        :icon="stat.icon"
-        :color="stat.color"
+        title="Teams Registered" 
+        :value="stats.teams.registered" 
+        :subtitle="`${stats.teams.pending} pending approval`"
+        color="blue" 
+      />
+      <MetricWidget 
+        title="Ideas Submitted" 
+        :value="stats.ideas.submitted" 
+        :subtitle="`${stats.ideas.under_review} under review`"
+        color="green" 
+      />
+      <MetricWidget 
+        title="Workshop Registrations" 
+        :value="stats.workshops.registrations" 
+        :subtitle="`${stats.workshops.upcoming} upcoming`"
+        color="purple" 
+      />
+      <MetricWidget 
+        title="Track Progress" 
+        :value="stats.tracks.active + '/' + stats.tracks.total" 
+        subtitle="tracks active"
+        color="cyan" 
       />
     </div>
     
-    <!-- Quick Actions using existing components -->
+    <!-- Quick Actions Panel -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <!-- Action cards with Link components -->
-    </div>
-    
-    <!-- Recent Activity using existing Datatable -->
-    <Datatable 
-      :data="recentActivities"
-      :columns="activityColumns"
-      :enable-search="false"
-      :enable-export="false"
-      title="Recent Activity"
-    />
-  </Default>
-</template>
-```
-
-### **2. HACKATHON EDITIONS MANAGEMENT**
-
-#### **Page:** `Admin/Editions/Index.vue`
-**Route:** `GET /admin/editions`
-**Controller:** `Admin\EditionController@index`
-
-**DATA SOURCES & APIs:**
-```php
-public function index(Request $request)
-{
-    // Get editions with related data
-    $editions = $this->hackathonService->getAllHackathonsWithStats([
-        'with' => ['hackathonAdmin', 'teams', 'ideas', 'workshops'],
-        'withCount' => ['teams', 'ideas', 'workshops'],
-        'orderBy' => 'year',
-        'orderDirection' => 'desc',
-        'paginate' => 15
-    ]);
-    
-    // DB Query:
-    /*
-    SELECT h.*, 
-           u.name as hackathon_admin_name,
-           COUNT(DISTINCT t.id) as teams_count,
-           COUNT(DISTINCT i.id) as ideas_count, 
-           COUNT(DISTINCT w.id) as workshops_count
-    FROM hackathons h
-    LEFT JOIN users u ON h.hackathon_admin_id = u.id
-    LEFT JOIN teams t ON h.id = t.hackathon_id
-    LEFT JOIN ideas i ON t.id = i.team_id  
-    LEFT JOIN workshops w ON h.id = w.hackathon_id
-    GROUP BY h.id
-    ORDER BY h.year DESC
-    LIMIT 15 OFFSET ?
-    */
-    
-    return Inertia::render('Admin/Editions/Index', [
-        'editions' => $editions,
-        'can' => [
-            'create' => $user->can('create-hackathon'),
-            'edit' => $user->can('edit-hackathon'),
-            'delete' => $user->can('delete-hackathon'),
-        ]
-    ]);
-}
-```
-
-**FRONTEND COMPONENT USAGE:**
-```vue
-<template>
-  <Default>
-    <!-- Reuse existing PageHeader -->
-    <PageHeader 
-      title="Hackathon Editions" 
-      :show-create="can.create"
-      create-route="admin.editions.create"
-      create-label="Add Edition"
-    />
-    
-    <!-- Reuse existing Datatable -->
-    <Datatable 
-      :data="editions.data"
-      :columns="editionColumns" 
-      :pagination="editions"
-      :loading="loading"
-      title="Editions"
-      :enable-search="true"
-      :enable-export="true"
-      :search-fields="['name', 'hackathon_admin_name']"
-      export-file-name="hackathon_editions"
-      @update:pagination="updatePagination"
-    />
-  </Default>
-</template>
-
-<script setup>
-const editionColumns = [
-  {
-    accessorKey: 'name',
-    header: 'Hackathon Name',
-    cell: ({ getValue }) => getValue()
-  },
-  {
-    accessorKey: 'year', 
-    header: 'Year',
-    cell: ({ getValue }) => getValue()
-  },
-  {
-    accessorKey: 'registration_dates',
-    header: 'Registration Dates',
-    cell: ({ row }) => {
-      const start = new Date(row.original.registration_start_date).toLocaleDateString()
-      const end = new Date(row.original.registration_end_date).toLocaleDateString()
-      return `${start} - ${end}`
-    }
-  },
-  {
-    accessorKey: 'teams_count',
-    header: 'Teams Count', 
-    cell: ({ getValue }) => getValue() || 0
-  },
-  {
-    accessorKey: 'hackathon_admin_name',
-    header: 'Hackathon Admin',
-    cell: ({ getValue }) => getValue() || 'Not Assigned'
-  },
-  {
-    id: 'actions',
-    header: 'Actions',
-    cell: ({ row }) => h('div', { class: 'flex space-x-2' }, [
-      h(Link, { 
-        href: route('admin.editions.edit', row.original.id),
-        class: 'text-blue-600 hover:text-blue-800 text-sm'
-      }, 'Edit'),
-      h('button', {
-        onClick: () => deleteEdition(row.original.id),
-        class: 'text-red-600 hover:text-red-800 text-sm'
-      }, 'Delete')
-    ])
-  }
-]
-</script>
-```
-
-### **3. CREATE/EDIT EDITION**
-
-#### **Page:** `Admin/Editions/Create.vue`
-**Route:** `GET /admin/editions/create`
-**Controller:** `Admin\EditionController@create`
-
-**DATA SOURCES & APIs:**
-```php
-public function create(Request $request)
-{
-    // Get available hackathon admins
-    $hackathonAdmins = $this->userService->getUsersByRole('hackathon_admin', [
-        'select' => ['id', 'name', 'email'],
-        'where' => ['is_active' => true]
-    ]);
-    
-    // DB Query:
-    /*
-    SELECT u.id, u.name, u.email 
-    FROM users u
-    INNER JOIN model_has_roles mhr ON u.id = mhr.model_id
-    INNER JOIN roles r ON mhr.role_id = r.id  
-    WHERE r.name = 'hackathon_admin' 
-    AND u.is_active = 1
-    ORDER BY u.name
-    */
-    
-    // Get existing hackathons for reference
-    $existingHackathons = $this->hackathonService->getAllHackathons([
-        'select' => ['id', 'name', 'year'],
-        'orderBy' => 'year',
-        'orderDirection' => 'desc'
-    ]);
-    
-    return Inertia::render('Admin/Editions/Create', [
-        'hackathonAdmins' => $hackathonAdmins,
-        'existingHackathons' => $existingHackathons,
-    ]);
-}
-
-public function store(Request $request)
-{
-    $validated = $request->validate([
-        'name' => 'required|string|max:255',
-        'year' => 'required|integer|min:2020|max:2050',
-        'hackathon_admin_id' => 'required|exists:users,id',
-        'registration_start_date' => 'required|date|after:today',
-        'registration_end_date' => 'required|date|after:registration_start_date',
-        'idea_submission_start_date' => 'required|date|after:registration_start_date',
-        'idea_submission_end_date' => 'required|date|after:idea_submission_start_date',
-        'description' => 'nullable|string',
-        'logo' => 'nullable|image|max:2048|mimes:jpeg,png,jpg,svg',
-        'theme_color' => 'nullable|string|regex:/^#[0-9A-Fa-f]{6}$/',
-        'max_team_size' => 'required|integer|min:1|max:10',
-        'max_teams' => 'required|integer|min:1|max:1000',
-    ]);
-
-    try {
-        $edition = $this->hackathonService->createHackathon($validated);
-        
-        return redirect()
-            ->route('admin.editions.index')
-            ->with('success', 'تم إنشاء نسخة الهاكاثون بنجاح');
-            
-    } catch (\Exception $e) {
-        return back()
-            ->withErrors(['error' => $e->getMessage()])
-            ->withInput();
-    }
-}
-```
-
-**FRONTEND COMPONENT USAGE:**
-```vue
-<template>
-  <Default>
-    <!-- Reuse existing PageHeader -->
-    <PageHeader 
-      title="Create Hackathon Edition" 
-      :breadcrumbs="breadcrumbs"
-    />
-    
-    <!-- Form using existing form components -->
-    <div class="max-w-4xl mx-auto">
-      <form @submit.prevent="submitForm" class="space-y-8">
-        
-        <!-- Basic Information Section -->
-        <div class="bg-white rounded-lg shadow p-6">
-          <h3 class="text-lg font-medium mb-4">Basic Information</h3>
-          
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Reuse FormInput component -->
-            <FormInput
-              id="name"
-              v-model="form.name"
-              label="Hackathon Name"
-              :error="errors.name"
-              required
-              placeholder="e.g. Environmental Innovation Hackathon 2024"
-            />
-            
-            <FormInput
-              id="year" 
-              v-model="form.year"
-              type="number"
-              label="Year"
-              :error="errors.year"
-              required
-              :min="2020"
-              :max="2050"
-            />
+      <div class="bg-white rounded-lg shadow p-6">
+        <h3 class="text-lg font-medium mb-4">Pending Approvals</h3>
+        <div class="space-y-2">
+          <div class="flex justify-between">
+            <span>Teams waiting approval</span>
+            <span class="font-medium text-yellow-600">{{ stats.teams.pending }}</span>
           </div>
-          
-          <!-- Reuse FormSelect component -->
-          <FormSelect
-            id="hackathon_admin_id"
-            v-model="form.hackathon_admin_id"
-            label="Hackathon Admin"
-            :error="errors.hackathon_admin_id"
-            :options="hackathonAdminOptions"
-            required
-            placeholder="Select Hackathon Administrator"
-          />
-          
-          <!-- Reuse FormTextarea component -->
-          <FormTextarea
-            id="description"
-            v-model="form.description" 
-            label="Description"
-            :error="errors.description"
-            rows="4"
-            placeholder="Describe the hackathon theme, goals, and objectives..."
-          />
-        </div>
-        
-        <!-- Dates Section -->
-        <div class="bg-white rounded-lg shadow p-6">
-          <h3 class="text-lg font-medium mb-4">Important Dates</h3>
-          
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <FormInput
-              id="registration_start_date"
-              v-model="form.registration_start_date"
-              type="datetime-local" 
-              label="Registration Start Date"
-              :error="errors.registration_start_date"
-              required
-            />
-            
-            <FormInput
-              id="registration_end_date"
-              v-model="form.registration_end_date"
-              type="datetime-local"
-              label="Registration End Date" 
-              :error="errors.registration_end_date"
-              required
-            />
-            
-            <FormInput
-              id="idea_submission_start_date"
-              v-model="form.idea_submission_start_date"
-              type="datetime-local"
-              label="Idea Submission Start Date"
-              :error="errors.idea_submission_start_date"
-              required
-            />
-            
-            <FormInput
-              id="idea_submission_end_date" 
-              v-model="form.idea_submission_end_date"
-              type="datetime-local"
-              label="Idea Submission End Date"
-              :error="errors.idea_submission_end_date" 
-              required
-            />
-          </div>
-        </div>
-        
-        <!-- Customization Section -->
-        <div class="bg-white rounded-lg shadow p-6">
-          <h3 class="text-lg font-medium mb-4">Customization</h3>
-          
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Reuse FilePondUploader component -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                Hackathon Logo
-              </label>
-              <FilePondUploader
-                v-model="form.logo"
-                accept="image/*"
-                :max-file-size="2
-                label-idle="Drop logo here or <span class='filepond--label-action'>Browse</span>"
-                :error="errors.logo"
-              />
-            </div>
-            
-            <FormInput
-              id="theme_color"
-              v-model="form.theme_color"
-              type="color"
-              label="Theme Color" 
-              :error="errors.theme_color"
-            />
-          </div>
-          
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-            <FormInput
-              id="max_team_size"
-              v-model="form.max_team_size"
-              type="number"
-              label="Maximum Team Size"
-              :error="errors.max_team_size"
-              required
-              :min="1"
-              :max="10"
-            />
-            
-            <FormInput
-              id="max_teams"
-              v-model="form.max_teams"
-              type="number" 
-              label="Maximum Number of Teams"
-              :error="errors.max_teams"
-              required
-              :min="1"
-              :max="1000"
-            />
-          </div>
-        </div>
-        
-        <!-- Action Buttons -->
-        <div class="flex justify-end space-x-4">
-          <Link 
-            :href="route('admin.editions.index')"
-            class="btn-secondary"
-          >
-            Cancel
+          <Link :href="route('hackathon-admin.teams.index', { status: 'pending' })" 
+                class="btn-primary btn-sm w-full">
+            Review Teams
           </Link>
-          
-          <button 
-            type="submit" 
-            class="btn-primary"
-            :disabled="form.processing"
-          >
-            <span v-if="form.processing">Creating...</span>
-            <span v-else>Create Edition</span>
-          </button>
         </div>
-      </form>
+      </div>
+      
+      <div class="bg-white rounded-lg shadow p-6">
+        <h3 class="text-lg font-medium mb-4">Ideas to Review</h3>
+        <div class="space-y-2">
+          <div class="flex justify-between">
+            <span>Awaiting review</span>
+            <span class="font-medium text-blue-600">{{ stats.ideas.under_review }}</span>
+          </div>
+          <Link :href="route('hackathon-admin.ideas.index', { status: 'under_review' })" 
+                class="btn-primary btn-sm w-full">
+            Review Ideas
+          </Link>
+        </div>
+      </div>
     </div>
   </Default>
 </template>
-
-<script setup>
-import { useForm } from '@inertiajs/vue3'
-
-const props = defineProps({
-  hackathonAdmins: Array,
-  existingHackathons: Array,
-})
-
-const form = useForm({
-  name: '',
-  year: new Date().getFullYear() + 1,
-  hackathon_admin_id: '',
-  registration_start_date: '',
-  registration_end_date: '', 
-  idea_submission_start_date: '',
-  idea_submission_end_date: '',
-  description: '',
-  logo: null,
-  theme_color: '#3B82F6',
-  max_team_size: 5,
-  max_teams: 100,
-})
-
-const hackathonAdminOptions = computed(() => 
-  props.hackathonAdmins.map(admin => ({
-    value: admin.id,
-    label: `${admin.name} (${admin.email})`
-  }))
-)
-
-const submitForm = () => {
-  form.post(route('admin.editions.store'))
-}
-</script>
 ```
 
-### **4. TEAMS MANAGEMENT**
-
-#### **Page:** `Admin/Teams/Index.vue` 
-**Route:** `GET /admin/teams`
-**Controller:** `Admin\TeamController@index`
-
-**DATA SOURCES & APIs:**
-```php
-public function index(Request $request)
-{
-    $filters = $request->validate([
-        'search' => 'nullable|string|max:255',
-        'status' => 'nullable|in:pending,approved,rejected', 
-        'hackathon_id' => 'nullable|exists:hackathons,id',
-        'track_id' => 'nullable|exists:tracks,id',
-        'per_page' => 'nullable|integer|min:10|max:100',
-        'page' => 'nullable|integer|min:1',
-    ]);
-    
-    $teams = $this->teamService->getAllTeamsWithDetails([
-        'with' => ['leader', 'members', 'ideas', 'hackathon', 'track'],
-        'withCount' => ['members', 'ideas'],
-        'filters' => $filters,
-        'paginate' => $filters['per_page'] ?? 15
-    ]);
-    
-    // DB Query:
-    /*
-    SELECT t.*,
-           u.name as leader_name,
-           u.email as leader_email,
-           h.name as hackathon_name,
-           tr.name as track_name,
-           COUNT(DISTINCT tm.id) as members_count,
-           COUNT(DISTINCT i.id) as ideas_count,
-           i.status as idea_status
-    FROM teams t
-    LEFT JOIN users u ON t.leader_id = u.id
-    LEFT JOIN hackathons h ON t.hackathon_id = h.id  
-    LEFT JOIN tracks tr ON t.track_id = tr.id
-    LEFT JOIN team_members tm ON t.id = tm.team_id
-    LEFT JOIN ideas i ON t.id = i.team_id
-    WHERE t.name LIKE ? OR u.name LIKE ?
-    AND (? IS NULL OR t.status = ?)
-    AND (? IS NULL OR t.hackathon_id = ?)
-    GROUP BY t.id
-    ORDER BY t.created_at DESC
-    LIMIT ? OFFSET ?
-    */
-    
-    // Get filter options
-    $hackathons = $this->hackathonService->getActiveHackathons(['select' => ['id', 'name']]);
-    $tracks = $this->trackService->getAllTracks(['select' => ['id', 'name']]);
-    
-    return Inertia::render('Admin/Teams/Index', [
-        'teams' => $teams,
-        'filters' => $filters,
-        'filterOptions' => [
-            'hackathons' => $hackathons,
-            'tracks' => $tracks,
-            'statuses' => [
-                ['value' => 'pending', 'label' => 'Pending Review'],
-                ['value' => 'approved', 'label' => 'Approved'],
-                ['value' => 'rejected', 'label' => 'Rejected'],
-            ]
-        ],
-        'can' => [
-            'approve' => $user->can('approve-team'),
-            'reject' => $user->can('reject-team'),
-            'edit' => $user->can('edit-team'),
-            'delete' => $user->can('delete-team'),
-        ]
-    ]);
-}
-```
-
-**FRONTEND COMPONENT USAGE:**
+#### **Teams Management Page Behavior:**
 ```vue
+<!-- HackathonAdmin/Teams/Index.vue -->
 <template>
   <Default>
-    <!-- Reuse existing PageHeader with filters -->
     <PageHeader title="Teams Management">
       <template #actions>
-        <!-- Filter Dropdown -->
-        <div class="relative">
-          <button @click="showFilters = !showFilters" class="btn-secondary">
-            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-            </svg>
-            Filters
+        <!-- Bulk Action Buttons (VISIBLE ONLY TO HACKATHON ADMIN) -->
+        <div v-if="selectedTeams.length > 0" class="flex space-x-2">
+          <button @click="bulkApprove" class="btn-success btn-sm">
+            Approve Selected ({{ selectedTeams.length }})
           </button>
-          
-          <!-- Filters Panel -->
-          <div v-if="showFilters" class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border p-4 z-10">
-            <div class="space-y-4">
-              <FormSelect
-                v-model="filterForm.hackathon_id"
-                label="Hackathon"
-                :options="hackathonOptions"
-                placeholder="All Hackathons"
-              />
-              
-              <FormSelect
-                v-model="filterForm.status"
-                label="Status"
-                :options="filterOptions.statuses"
-                placeholder="All Statuses"
-              />
-              
-              <FormSelect
-                v-model="filterForm.track_id"
-                label="Track"
-                :options="trackOptions"
-                placeholder="All Tracks"
-              />
-              
-              <div class="flex justify-end space-x-2">
-                <button @click="clearFilters" class="btn-secondary btn-sm">Clear</button>
-                <button @click="applyFilters" class="btn-primary btn-sm">Apply</button>
-              </div>
-            </div>
-          </div>
+          <button @click="bulkReject" class="btn-warning btn-sm">
+            Reject Selected
+          </button>
+        </div>
+        
+        <!-- Filter by Current Edition (AUTO-FILTERED) -->
+        <div class="text-sm text-gray-600">
+          Showing teams for: {{ currentEdition.name }}
         </div>
       </template>
     </PageHeader>
     
-    <!-- Reuse existing Datatable with bulk actions -->
+    <!-- Enhanced Datatable with Bulk Actions -->
     <Datatable 
       :data="teams.data"
       :columns="teamColumns"
-      :pagination="teams"
-      :loading="loading"
-      title="Teams"
-      :enable-search="true"
-      :enable-export="true"
-      :search-fields="['name', 'leader_name', 'hackathon_name']"
-      :bulk-delete-route="can.delete ? 'admin.teams.bulk-delete' : ''"
-      export-file-name="teams"
-      @update:pagination="updatePagination"
-      @bulk-delete="handleBulkDelete"
+      :enable-bulk-select="true"
+      :bulk-actions="bulkActions"
+      v-model:selected="selectedTeams"
+      @bulk-action="handleBulkAction"
     >
-      <!-- Bulk Actions Slot -->
-      <template #bulk-actions="{ selectedRows }">
-        <button 
-          v-if="can.approve" 
-          @click="bulkApprove(selectedRows)"
-          class="btn-success btn-sm inline-flex items-center gap-2"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-          </svg>
-          Bulk Approve
-        </button>
-        
-        <button 
-          v-if="can.reject"
-          @click="bulkReject(selectedRows)" 
-          class="btn-warning btn-sm inline-flex items-center gap-2"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-          Bulk Reject
-        </button>
+      <!-- Custom Status Column -->
+      <template #status="{ row }">
+        <div class="flex items-center space-x-2">
+          <StatusBadge :status="row.status" />
+          <!-- Quick Action Buttons -->
+          <button v-if="row.status === 'pending'" 
+                  @click="quickApprove(row.id)"
+                  class="text-green-600 hover:text-green-800 text-xs">
+            ✓ Approve
+          </button>
+          <button v-if="row.status === 'pending'" 
+                  @click="quickReject(row.id)"
+                  class="text-red-600 hover:text-red-800 text-xs">
+            ✗ Reject
+          </button>
+        </div>
       </template>
     </Datatable>
   </Default>
 </template>
+```
 
-<script setup>
-const teamColumns = [
+### **🟢 TRACK SUPERVISOR ROLE (track_supervisor)**
+**Access Level:** Assigned track(s) only
+
+#### **Login Flow & Initial Landing:**
+```
+1. POST /login → validates credentials
+2. Middleware: auth, role:track_supervisor
+3. HandleInertiaRequests shares: user.roles = ['track_supervisor'], assigned_tracks
+4. REDIRECT: /track-supervisor/dashboard
+5. NavSidebarDesktop renders: Track-specific menu
+```
+
+#### **Sidebar Navigation:**
+```javascript
+// When user.roles includes 'track_supervisor':
+const trackSupervisorMenu = [
   {
-    accessorKey: 'name',
-    header: 'Team Name',
-    cell: ({ getValue, row }) => h('div', { class: 'font-medium' }, [
-      h('div', getValue()),
-      h('div', { class: 'text-sm text-gray-500' }, `Code: ${row.original.join_code}`)
-    ])
+    items: [
+      { name: 'My Track Dashboard', route: 'track-supervisor.dashboard', icon: dashboardIcon },
+      { type: 'divider' }
+    ]
   },
   {
-    accessorKey: 'leader_name',
-    header: 'Team Leader',
-    cell: ({ getValue, row }) => h('div', [
-      h('div', { class: 'font-medium' }, getValue()),
-      h('div', { class: 'text-sm text-gray-500' }, row.original.leader_email)
-    ])
+    items: [
+      { name: 'Ideas to Review', route: 'track-supervisor.ideas.index', icon: ideasIcon },
+      { name: 'My Track Teams', route: 'track-supervisor.teams.index', icon: teamsIcon },
+      { name: 'Track Workshops', route: 'track-supervisor.workshops.index', icon: workshopsIcon },
+      { name: 'Track Statistics', route: 'track-supervisor.stats.index', icon: chartIcon },
+      { type: 'divider' }
+    ]
   },
   {
-    accessorKey: 'members_count',
-    header: 'Members',
-    cell: ({ getValue, row }) => h('div', { class: 'text-center' }, [
-      h('div', { class: 'font-medium' }, `${getValue()}/${row.original.max_members}`),
-      h('div', { class: 'text-sm text-gray-500' }, 'members')
-    ])
-  },
-  {
-    accessorKey: 'hackathon_name', 
-    header: 'Hackathon',
-    cell: ({ getValue }) => getValue()
-  },
-  {
-    accessorKey: 'track_name',
-    header: 'Track', 
-    cell: ({ getValue }) => getValue() || 'Not Assigned'
-  },
-  {
-    accessorKey: 'status',
-    header: 'Status',
-    cell: ({ getValue }) => {
-      const status = getValue()
-      const statusConfig = {
-        pending: { class: 'bg-yellow-100 text-yellow-800', label: 'Pending' },
-        approved: { class: 'bg-green-100 text-green-800', label: 'Approved' },
-        rejected: { class: 'bg-red-100 text-red-800', label: 'Rejected' },
-      }
-      return h('span', { 
-        class: `px-2 py-1 text-xs font-medium rounded-full ${statusConfig[status]?.class}` 
-      }, statusConfig[status]?.label || status)
-    }
-  },
-  {
-    accessorKey: 'idea_status',
-    header: 'Idea Status',
-    cell: ({ getValue }) => {
-      const status = getValue()
-      if (!status) return h('span', { class: 'text-gray-500 text-sm' }, 'No Idea')
-      
-      const statusConfig = {
-        draft: { class: 'bg-gray-100 text-gray-800', label: 'Draft' },
-        submitted: { class: 'bg-blue-100 text-blue-800', label: 'Submitted' }, 
-        under_review: { class: 'bg-yellow-100 text-yellow-800', label: 'Under Review' },
-        approved: { class: 'bg-green-100 text-green-800', label: 'Approved' },
-        rejected: { class: 'bg-red-100 text-red-800', label: 'Rejected' },
-        needs_revision: { class: 'bg-orange-100 text-orange-800', label: 'Needs Revision' },
-      }
-      
-      return h('span', { 
-        class: `px-2 py-1 text-xs font-medium rounded-full ${statusConfig[status]?.class}` 
-      }, statusConfig[status]?.label || status)
-    }
-  },
-  {
-    accessorKey: 'created_at',
-    header: 'Registered',
-    cell: ({ getValue }) => new Date(getValue()).toLocaleDateString()
-  },
-  {
-    id: 'actions',
-    header: 'Actions',
-    cell: ({ row }) => h('div', { class: 'flex items-center space-x-2' }, [
-      h(Link, {
-        href: route('admin.teams.show', row.original.id),
-        class: 'text-blue-600 hover:text-blue-800 text-sm'
-      }, 'View'),
-      
-      can.edit && h(Link, {
-        href: route('admin.teams.edit', row.original.id), 
-        class: 'text-green-600 hover:text-green-800 text-sm'
-      }, 'Edit'),
-      
-      can.approve && row.original.status === 'pending' && h('button', {
-        onClick: () => approveTeam(row.original.id),
-        class: 'text-green-600 hover:text-green-800 text-sm'
-      }, 'Approve'),
-      
-      can.reject && row.original.status === 'pending' && h('button', {
-        onClick: () => rejectTeam(row.original.id),
-        class: 'text-red-600 hover:text-red-800 text-sm'
-      }, 'Reject'),
-    ])
+    items: [
+      { name: 'Track Settings', route: 'track-supervisor.track.edit', icon: settingsIcon }
+    ]
   }
 ]
-</script>
 ```
 
----
-
-## 🔄 **COMPLETE API ENDPOINT MAPPING**
-
-### **SYSTEM ADMIN API ENDPOINTS**
-
-#### **Dashboard APIs**
-```php
-// Dashboard Statistics
-GET /api/admin/dashboard/stats
-Response: {
-  "hackathons": { "total": 5, "active": 2, "archived": 3 },
-  "teams": { "total": 150, "pending": 25, "approved": 120, "rejected": 5 },
-  "ideas": { "total": 120, "pending": 30, "approved": 80, "rejected": 10 }, 
-  "workshops": { "total": 20, "upcoming": 8, "completed": 12 },
-  "users": { "total": 500, "active": 480 }
-}
-
-// Recent Activities
-GET /api/admin/dashboard/activities?limit=10
-Response: {
-  "data": [
-    {
-      "id": 1,
-      "type": "team_created",
-      "description": "Team 'Green Innovators' created", 
-      "user": "Ahmad Ali",
-      "timestamp": "2024-01-15 10:30:00",
-      "metadata": { "team_id": 123 }
-    }
-  ]
-}
+#### **Dashboard Component Behavior:**
+```vue
+<!-- TrackSupervisor/Dashboard/Index.vue -->
+<template>
+  <Default>
+    <!-- Track Information Header (TRACK-SPECIFIC) -->
+    <div class="bg-gradient-to-r from-green-500 to-blue-500 rounded-lg shadow p-6 text-white mb-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-bold">{{ assignedTrack.name }}</h1>
+          <p class="text-green-100">{{ assignedTrack.description }}</p>
+        </div>
+        <div class="text-right">
+          <div class="text-sm text-green-100">Your Teams</div>
+          <div class="text-3xl font-bold">{{ stats.teams.total }}</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Track-Specific Statistics (DATA RESTRICTED TO ASSIGNED TRACK) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <MetricWidget 
+        title="Teams in My Track" 
+        :value="stats.teams.total" 
+        :subtitle="`${stats.teams.approved} approved`"
+        color="green" 
+      />
+      <MetricWidget 
+        title="Ideas to Review" 
+        :value="stats.ideas.pending_my_review" 
+        subtitle="awaiting your review"
+        color="yellow" 
+      />
+      <MetricWidget 
+        title="Ideas Reviewed" 
+        :value="stats.ideas.reviewed_by_me" 
+        :subtitle="`${stats.ideas.approved_by_me} approved`"
+        color="blue" 
+      />
+      <MetricWidget 
+        title="Average Score" 
+        :value="stats.ideas.average_score + '/100'" 
+        subtitle="ideas I reviewed"
+        color="purple" 
+      />
+    </div>
+    
+    <!-- Ideas Requiring Review (FILTERED TO ASSIGNED TRACK ONLY) -->
+    <div class="bg-white rounded-lg shadow">
+      <div class="p-6 border-b border-gray-200">
+        <h3 class="text-lg font-medium">Ideas Awaiting Your Review</h3>
+        <p class="text-sm text-gray-600 mt-1">
+          Only showing ideas from {{ assignedTrack.name }} track
+        </p>
+      </div>
+      
+      <div class="divide-y divide-gray-200">
+        <div v-for="idea in pendingIdeas" :key="idea.id" 
+             class="p-6 hover:bg-gray-50 flex items-center justify-between">
+          <div>
+            <h4 class="font-medium">{{ idea.title }}</h4>
+            <p class="text-sm text-gray-600">Team: {{ idea.team.name }}</p>
+            <p class="text-xs text-gray-500">
+              Submitted: {{ formatDate(idea.submitted_at) }}
+            </p>
+          </div>
+          <Link :href="route('track-supervisor.ideas.review', idea.id)" 
+                class="btn-primary btn-sm">
+            Review Now
+          </Link>
+        </div>
+      </div>
+    </div>
+  </Default>
+</template>
 ```
 
-#### **Hackathon Editions APIs**
-```php
-// List Editions with Pagination & Search
-GET /api/admin/editions?page=1&per_page=15&search=2024&status=active
-Response: {
-  "data": [
-    {
-      "id": 1,
-      "name": "Environmental Innovation Hackathon 2024",
-      "year": 2024,
-      "status": "active",
-      "registration_start_date": "2024-02-01 00:00:00",
-      "registration_end_date": "2024-02-28 23:59:59", 
-      "idea_submission_start_date": "2024-03-01 00:00:00",
-      "idea_submission_end_date": "2024-03-15 23:59:59",
-      "hackathon_admin": {
-        "id": 5,
-        "name": "Sarah Johnson", 
-        "email": "sarah@example.com"
-      },
-      "teams_count": 45,
-      "ideas_count": 38,
-      "workshops_count": 6,
-      "created_at": "2024-01-15 10:00:00"
-    }
-  ],
-  "current_page": 1,
-  "per_page": 15, 
-  "total": 5,
-  "last_page": 1
-}
-
-// Get Single Edition
-GET /api/admin/editions/1
-Response: {
-  "data": { /* full edition details */ },
-  "teams": { /* paginated teams */ },
-  "ideas": { /* idea statistics */ },
-  "workshops": { /* associated workshops */ }
-}
-
-// Create Edition
-POST /api/admin/editions
-Payload: {
-  "name": "Environmental Innovation Hackathon 2025",
-  "year": 2025,
-  "hackathon_admin_id": 5,
-  "registration_start_date": "2025-02-01 00:00:00",
-  "registration_end_date": "2025-02-28 23:59:59",
-  "idea_submission_start_date": "2025-03-01 00:00:00", 
-  "idea_submission_end_date": "2025-03-15 23:59:59",
-  "description": "Focus on environmental sustainability solutions",
-  "theme_color": "#22C55E",
-  "max_team_size": 5,
-  "max_teams": 100
-}
-Response: { "data": { /* created edition */ }, "message": "Edition created successfully" }
-
-// Update Edition
-PUT /api/admin/editions/1
-Payload: { /* same as create */ }
-Response: { "data": { /* updated edition */ }, "message": "Edition updated successfully" }
-
-// Delete Edition
-DELETE /api/admin/editions/1
-Response: { "message": "Edition deleted successfully" }
-
-// Archive Edition 
-POST /api/admin/editions/1/archive
-Response: { "message": "Edition archived successfully" }
+#### **Ideas Review Page (DATA RESTRICTION):**
+```vue
+<!-- TrackSupervisor/Ideas/Index.vue -->
+<template>
+  <Default>
+    <PageHeader :title="`${assignedTrack.name} - Ideas Review`">
+      <template #subtitle>
+        Only showing ideas submitted to your assigned track
+      </template>
+    </PageHeader>
+    
+    <!-- IDEAS ARE AUTO-FILTERED BY BACKEND TO ASSIGNED TRACK ONLY -->
+    <Datatable 
+      :data="ideas.data"
+      :columns="reviewColumns"
+      title="Ideas to Review"
+      :filters="trackSpecificFilters"
+    >
+      <!-- Custom Review Actions Column -->
+      <template #actions="{ row }">
+        <div class="flex space-x-2">
+          <Link :href="route('track-supervisor.ideas.show', row.id)"
+                class="text-blue-600 hover:text-blue-800 text-sm">
+            View Details
+          </Link>
+          <Link v-if="row.status === 'submitted'" 
+                :href="route('track-supervisor.ideas.review', row.id)"
+                class="text-green-600 hover:text-green-800 text-sm">
+            Review
+          </Link>
+          <span v-if="row.my_review_status" 
+                class="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-800">
+            {{ row.my_review_status }}
+          </span>
+        </div>
+      </template>
+    </Datatable>
+  </Default>
+</template>
 ```
 
-#### **Teams Management APIs**
-```php
-// List Teams with Advanced Filtering
-GET /api/admin/teams?page=1&per_page=15&search=alpha&status=approved&hackathon_id=1&track_id=2
-Response: {
-  "data": [
-    {
-      "id": 1,
-      "name": "Team Alpha",
-      "join_code": "ALPHA2024",
-      "status": "approved", 
-      "max_members": 5,
-      "leader": {
-        "id": 10,
-        "name": "Ahmad Ali",
-        "email": "ahmad@example.com"
-      },
-      "members": [
-        {
-          "id": 11, 
-          "name": "Fatima Hassan",
-          "email": "fatima@example.com",
-          "status": "accepted",
-          "joined_at": "2024-01-16 14:30:00"
-        }
-      ],
-      "members_count": 4,
-      "hackathon": {
-        "id": 1,
-        "name": "Environmental Innovation 2024"
-      },
-      "track": {
-        "id": 2, 
-        "name": "Renewable Energy"
-      },
-      "ideas": [
-        {
-          "id": 5,
-          "title": "Solar Panel Efficiency Optimizer",
-          "status": "under_review",
-          "submitted_at": "2024-01-20 16:00:00"
-        }
-      ],
-      "ideas_count": 1,
-      "created_at": "2024-01-15 12:00:00"
-    }
-  ],
-  "filters": {
-    "hackathons": [
-      { "id": 1, "name": "Environmental Innovation 2024" }
-    ],
-    "tracks": [
-      { "id": 1, "name": "Smart Agriculture" },
-      { "id": 2, "name": "Renewable Energy" }
-    ],
-    "statuses": [
-      { "value": "pending", "label": "Pending Review" },
-      { "value": "approved", "label": "Approved" }, 
-      { "value": "rejected", "label": "Rejected" }
+### **🔵 TEAM LEADER ROLE (team_leader)**
+**Access Level:** Own team + idea management
+
+#### **Login Flow & Initial Landing:**
+```
+1. POST /login → validates credentials
+2. Middleware: auth, role:team_leader
+3. HandleInertiaRequests shares: user.roles = ['team_leader'], my_team
+4. REDIRECT: /team-leader/dashboard
+5. NavSidebarDesktop renders: Team management focused menu
+```
+
+#### **Sidebar Navigation:**
+```javascript
+// When user.roles includes 'team_leader':
+const teamLeaderMenu = [
+  {
+    items: [
+      { name: 'Dashboard', route: 'team-leader.dashboard', icon: dashboardIcon },
+      { type: 'divider' }
     ]
   },
-  "current_page": 1,
-  "per_page": 15,
-  "total": 150
-}
-
-// Get Single Team with Full Details
-GET /api/admin/teams/1
-Response: {
-  "data": {
-    "id": 1,
-    /* full team details with members, ideas, files, activity log */
-    "activity_log": [
-      {
-        "action": "team_created",
-        "user": "Ahmad Ali",
-        "timestamp": "2024-01-15 12:00:00"
-      }
+  {
+    items: [
+      { name: 'My Team', route: 'team-leader.team.show', icon: teamIcon },
+      { name: 'Our Idea', route: 'team-leader.idea.show', icon: ideaIcon },
+      { name: 'Team Members', route: 'team-leader.members.index', icon: membersIcon },
+      { type: 'divider' }
+    ]
+  },
+  {
+    items: [
+      { name: 'Available Workshops', route: 'team-leader.workshops.index', icon: workshopsIcon },
+      { name: 'Track Information', route: 'team-leader.track.show', icon: trackIcon },
+      { name: 'News & Updates', route: 'team-leader.news.index', icon: newsIcon }
     ]
   }
-}
-
-// Approve Team
-POST /api/admin/teams/1/approve
-Payload: { "notes": "Team meets all requirements" }
-Response: { "message": "Team approved successfully" }
-
-// Reject Team
-POST /api/admin/teams/1/reject  
-Payload: { "reason": "Incomplete registration", "notes": "Missing member information" }
-Response: { "message": "Team rejected successfully" }
-
-// Bulk Team Actions
-POST /api/admin/teams/bulk-action
-Payload: {
-  "action": "approve", // or "reject", "delete"
-  "team_ids": [1, 2, 3, 4],
-  "notes": "Batch approval for qualifying teams"
-}
-Response: { 
-  "success_count": 3,
-  "failed_count": 1, 
-  "message": "Bulk action completed" 
-}
-
-// Assign Team to Track
-POST /api/admin/teams/1/assign-track
-Payload: { "track_id": 2 }
-Response: { "message": "Team assigned to track successfully" }
+]
 ```
 
-#### **Ideas Management APIs**
-```php
-// List Ideas with Supervisor Assignment
-GET /api/admin/ideas?page=1&status=pending_review&track_id=2&supervisor_id=8
-Response: {
-  "data": [
-    {
-      "id": 1,
-      "title": "Solar Panel Efficiency Optimizer",
-      "description": "AI-powered system to optimize solar panel positioning...",
-      "status": "pending_review",
-      "team": {
-        "id": 1,
-        "name": "Team Alpha", 
-        "leader": "Ahmad Ali"
-      },
-      "track": {
-        "id": 2,
-        "name": "Renewable Energy"
-      },
-      "supervisor": {
-        "id": 8,
-        "name": "Dr. Mohammed Khalil",
-        "email": "dr.khalil@university.sa"
-      },
-      "files": [
-        {
-          "id": 10,
-          "filename": "presentation.pdf",
-          "size": 2048576,
-          "uploaded_by": "Ahmad Ali",
-          "uploaded_at": "2024-01-20 16:00:00"
-        }
-      ],
-      "files_count": 3,
-      "reviews": [
-        {
-          "id": 1,
-          "reviewer": "Dr. Mohammed Khalil",
-          "status": "under_review",
-          "feedback": "Interesting concept, needs more technical details",
-          "score": null,
-          "reviewed_at": "2024-01-22 10:30:00"
-        }
-      ],
-      "submitted_at": "2024-01-20 16:00:00",
-      "last_modified_at": "2024-01-21 14:30:00"
-    }
-  ]
-}
-
-// Assign Supervisor to Idea
-POST /api/admin/ideas/1/assign-supervisor
-Payload: { "supervisor_id": 8, "notes": "Expertise in renewable energy systems" }
-Response: { "message": "Supervisor assigned successfully" }
-
-// Get Idea Details with Review History
-GET /api/admin/ideas/1
-Response: {
-  "data": { /* full idea details */ },
-  "review_history": [ /* complete review timeline */ ],
-  "available_supervisors": [ /* supervisors for this track */ ]
-}
+#### **Dashboard Component Behavior:**
+```vue
+<!-- TeamLeader/Dashboard/Index.vue -->
+<template>
+  <Default>
+    <!-- Team Status Header (TEAM-SPECIFIC) -->
+    <div v-if="myTeam" class="bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg shadow p-6 text-white mb-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-bold">{{ myTeam.name }}</h1>
+          <p class="text-purple-100">{{ myTeam.track.name }} Track</p>
+          <StatusBadge :status="myTeam.status" class="mt-2" />
+        </div>
+        <div class="text-right">
+          <div class="text-sm text-purple-100">Team Members</div>
+          <div class="text-3xl font-bold">{{ myTeam.members_count }}/{{ myTeam.max_members }}</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- No Team Warning -->
+    <div v-else class="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-6">
+      <div class="flex items-center">
+        <svg class="w-8 h-8 text-yellow-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z" />
+        </svg>
+        <div>
+          <h3 class="text-lg font-medium text-yellow-800">No Team Found</h3>
+          <p class="text-yellow-700">You need to create or join a team to participate.</p>
+          <Link :href="route('team-leader.team.create')" class="btn-primary mt-3">
+            Create New Team
+          </Link>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Team Progress Cards (ONLY VISIBLE IF HAS TEAM) -->
+    <div v-if="myTeam" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- Team Status Card -->
+      <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-medium">Team Status</h3>
+          <StatusIcon :status="myTeam.status" />
+        </div>
+        <div class="space-y-2">
+          <div class="flex justify-between text-sm">
+            <span>Registration Status:</span>
+            <StatusBadge :status="myTeam.status" />
+          </div>
+          <div class="flex justify-between text-sm">
+            <span>Members:</span>
+            <span>{{ myTeam.members_count }}/{{ myTeam.max_members }}</span>
+          </div>
+          <div class="flex justify-between text-sm">
+            <span>Join Code:</span>
+            <code class="bg-gray-100 px-2 py-1 rounded">{{ myTeam.join_code }}</code>
+          </div>
+        </div>
+        <Link :href="route('team-leader.team.edit')" class="btn-primary btn-sm w-full mt-4">
+          Manage Team
+        </Link>
+      </div>
+      
+      <!-- Idea Submission Card -->
+      <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-medium">Our Idea</h3>
+          <IdeaStatusIcon :status="idea?.status" />
+        </div>
+        <div v-if="idea">
+          <h4 class="font-medium">{{ idea.title }}</h4>
+          <StatusBadge :status="idea.status" class="mt-2" />
+          <div class="mt-4 space-y-2">
+            <Link :href="route('team-leader.idea.edit')" class="btn-secondary btn-sm w-full">
+              Edit Idea
+            </Link>
+            <Link v-if="idea.status === 'draft'" 
+                  :href="route('team-leader.idea.submit')" 
+                  class="btn-primary btn-sm w-full">
+              Submit for Review
+            </Link>
+          </div>
+        </div>
+        <div v-else>
+          <p class="text-gray-600 text-sm mb-4">No idea submitted yet</p>
+          <Link :href="route('team-leader.idea.create')" class="btn-primary btn-sm w-full">
+            Submit Our Idea
+          </Link>
+        </div>
+      </div>
+      
+      <!-- Workshop Registration Card -->
+      <div class="bg-white rounded-lg shadow p-6">
+        <h3 class="text-lg font-medium mb-4">Workshop Registration</h3>
+        <div class="space-y-2 text-sm">
+          <div class="flex justify-between">
+            <span>Registered:</span>
+            <span class="font-medium">{{ stats.workshops.registered }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span>Upcoming:</span>
+            <span class="font-medium">{{ stats.workshops.upcoming }}</span>
+          </div>
+        </div>
+        <Link :href="route('team-leader.workshops.index')" class="btn-primary btn-sm w-full mt-4">
+          Browse Workshops
+        </Link>
+      </div>
+    </div>
+    
+    <!-- Deadlines and Timeline (HACKATHON SPECIFIC) -->
+    <div v-if="myTeam" class="bg-white rounded-lg shadow p-6">
+      <h3 class="text-lg font-medium mb-4">Important Deadlines</h3>
+      <div class="space-y-4">
+        <div v-for="deadline in upcomingDeadlines" :key="deadline.type" 
+             class="flex items-center justify-between p-3 border rounded-lg"
+             :class="deadline.urgent ? 'border-red-200 bg-red-50' : 'border-gray-200'">
+          <div>
+            <h4 class="font-medium" :class="deadline.urgent ? 'text-red-800' : ''">
+              {{ deadline.title }}
+            </h4>
+            <p class="text-sm text-gray-600">{{ deadline.description }}</p>
+          </div>
+          <div class="text-right">
+            <div class="font-medium" :class="deadline.urgent ? 'text-red-600' : 'text-gray-900'">
+              {{ deadline.remaining_days }} days
+            </div>
+            <div class="text-xs text-gray-500">{{ formatDate(deadline.date) }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </Default>
+</template>
 ```
 
-#### **Workshops Management APIs** 
-```php
-// List Workshops with Registration Stats
-GET /api/admin/workshops?page=1&hackathon_id=1&status=upcoming
-Response: {
-  "data": [
-    {
-      "id": 1,
-      "title": "Introduction to Clean Energy Technologies",
-      "description": "Comprehensive overview of renewable energy solutions",
-      "start_datetime": "2024-03-01 09:00:00",
-      "end_datetime": "2024-03-01 12:00:00", 
-      "location": "Conference Hall A",
-      "max_attendees": 100,
-      "current_registrations": 78,
-      "status": "upcoming",
-      "hackathon": {
-        "id": 1,
-        "name": "Environmental Innovation 2024"
-      },
-      "speakers": [
-        {
-          "id": 1,
-          "name": "Dr. Sarah Al-Ahmad",
-          "title": "Renewable Energy Expert", 
-          "organization": "KAUST",
-          "bio": "Leading researcher in solar technology..."
-        }
-      ],
-      "organizations": [
-        {
-          "id": 1,
-          "name": "King Abdullah University of Science and Technology",
-          "logo": "kaust-logo.png"
-        }
-      ],
-      "registrations_count": 78,
-      "attendance_rate": 0.85, // for completed workshops
-      "created_at": "2024-01-10 15:00:00"
-    }
-  ]
-}
-
-// Create Workshop
-POST /api/admin/workshops
-Payload: {
-  "title": "AI in Environmental Monitoring",
-  "description": "How artificial intelligence is revolutionizing environmental data analysis",
-  "hackathon_id": 1,
-  "start_datetime": "2024-03-05 14:00:00",
-  "end_datetime": "2024-03-05 17:00:00",
-  "location": "Lab Building 2, Room 201",
-  "max_attendees": 50,
-  "speaker_ids": [2, 3],
-  "organization_ids": [1, 2],
-  "prerequisites": "Basic programming knowledge",
-  "materials_url": "https://github.com/workshop/materials"
-}
-
-// Get Workshop Attendees
-GET /api/admin/workshops/1/attendees?page=1&status=confirmed
-Response: {
-  "data": [
-    {
-      "registration_id": 1,
-      "user": {
-        "id": 10,
-        "name": "Ahmad Ali",
-        "email": "ahmad@example.com",
-        "user_type": "team_leader"
-      },
-      "registration_status": "confirmed",
-      "attendance_status": "present", // null if not marked yet
-      "registered_at": "2024-02-15 10:30:00",
-      "barcode": "WS1-REG1-AHMAD-2024"
-    }
-  ]
-}
-
-// Generate Attendance Report
-GET /api/admin/workshops/1/attendance-report?format=pdf
-Response: { 
-  "report_url": "/storage/reports/workshop-1-attendance-2024-03-01.pdf",
-  "statistics": {
-    "total_registered": 78,
-    "total_attended": 66, 
-    "attendance_rate": 0.846,
-    "no_shows": 12
-  }
-}
-```
-
-#### **News Management APIs**
-```php
-// List News Articles
-GET /api/admin/news?page=1&status=published&hackathon_id=1
-Response: {
-  "data": [
-    {
-      "id": 1,
-      "title": "Registration Opens for Environmental Innovation Hackathon 2024",
-      "slug": "registration-opens-environmental-innovation-hackathon-2024",
-      "excerpt": "We're excited to announce that registration is now open...",
-      "content": "Full article content here...",
-      "featured_image": "/storage/news/registration-opens-2024.jpg",
-      "status": "published",
-      "hackathon": {
-        "id": 1,
-        "name": "Environmental Innovation 2024"
-      },
-      "author": {
-        "id": 5,
-        "name": "Sarah Johnson"
-      },
-      "published_at": "2024-01-15 08:00:00",
-      "twitter_posted": true,
-      "twitter_post_id": "1747123456789",
-      "views_count": 1250,
-      "created_at": "2024-01-14 16:30:00"
-    }
-  ]
-}
-
-// Create News Article
-POST /api/admin/news
-Payload: {
-  "title": "Winners Announced for Clean Energy Track",
-  "content": "We're thrilled to announce the winners...",
-  "excerpt": "Three outstanding teams have been selected...",
-  "hackathon_id": 1,
-  "featured_image": "uploaded_file_object",
-  "status": "draft", // or "published"
-  "schedule_publish_at": "2024-03-20 09:00:00", // optional
-  "auto_tweet": true,
-  "tweet_content": "🏆 Winners announced! Congratulations to our Clean Energy track champions!"
-}
-
-// Publish Article
-POST /api/admin/news/1/publish
-Response: { "message": "Article published successfully" }
-
-// Post to Twitter
-POST /api/admin/news/1/tweet
-Payload: { 
-  "custom_message": "🚀 Check out our latest update on the hackathon!" 
-}
-Response: { 
-  "twitter_post_id": "1747123456789",
-  "message": "Posted to Twitter successfully" 
-}
-```
-
-#### **Reports & Analytics APIs**
-```php
-// System Overview Report
-GET /api/admin/reports/overview?hackathon_id=1&start_date=2024-01-01&end_date=2024-03-31
-Response: {
-  "summary": {
-    "total_registrations": 500,
-    "total_teams": 125,
-    "total_ideas_submitted": 98,
-    "total_workshop_attendees": 1250,
-    "completion_rate": 0.78
-  },
-  "registration_timeline": [
-    { "date": "2024-02-01", "count": 25 },
-    { "date": "2024-02-02", "count": 45 }
-  ],
-  "team_formation_stats": {
-    "teams_with_full_members": 89,
-    "teams_seeking_members": 36,
-    "average_team_size": 4.2
-  },
-  "idea_submission_stats": {
-    "by_status": {
-      "submitted": 98,
-      "under_review": 45,
-      "approved": 32,
-      "rejected": 8,
-      "needs_revision": 13
-    },
-    "by_track": [
-      { "track": "Renewable Energy", "count": 32 },
-      { "track": "Smart Agriculture", "count": 28 }
-    ]
-  },
-  "workshop_engagement": {
-    "total_workshops": 8,
-    "average_attendance": 85.6,
-    "most_popular": "Introduction to Clean Energy Technologies",
-    "attendance_by_workshop": [
-      { "workshop": "Introduction to Clean Energy", "registered": 100, "attended": 92 }
-    ]
-  }
-}
-
-// Team Performance Report
-GET /api/admin/reports/teams?hackathon_id=1&track_id=2&format=excel
-Response: {
-  "download_url": "/storage/reports/team-performance-renewable-energy-2024.xlsx",
-  "data": [ /* team performance metrics */ ]
-}
-
-// Idea Evaluation Report
-GET /api/admin/reports/ideas/evaluation?hackathon_id=1&supervisor_id=8
-Response: {
-  "evaluation_stats": {
-    "total_ideas": 15,
-    "completed_reviews": 12,
-    "pending_reviews": 3,
-    "average_score": 7.8,
-    "approval_rate": 0.67
-  },
-  "ideas_by_status": [ /* detailed breakdown */ ],
-  "supervisor_workload": [ /* workload distribution */ ]
-}
-
-// Workshop Analytics Report  
-GET /api/admin/reports/workshops/analytics?hackathon_id=1
-Response: {
-  "overall_metrics": {
-    "total_workshops": 8,
-    "total_registrations": 650,
-    "total_attendance": 556,
-    "overall_attendance_rate": 0.856
-  },
-  "workshop_performance": [
-    {
-      "workshop_id": 1,
-      "title": "Clean Energy Technologies",
-      "registrations": 100,
-      "attendance": 92,
-      "attendance_rate": 0.92,
-      "feedback_score": 4.6,
-      "engagement_metrics": {
-        "questions_asked": 28,
-        "interaction_rate": 0.85
-      }
-    }
-  ]
-}
-```
-
----
-
-## 📋 **DETAILED PAGE FLOWS FROM FIGMA ANALYSIS**
-
-### **🏢 SYSTEM ADMIN PAGES - EXACT FLOWS**
-
-#### **1. Teams Management Page (Teams_Admin.png)**
-**Route:** `GET /system-admin/teams`
-**Controller:** `SystemAdmin\TeamController@index`
-**Type:** Inertia Page
-
-**PAGE FLOWS IDENTIFIED:**
-1. **Search Teams Flow**
-   - **Trigger:** User types in "Search teams" input
-   - **API:** `GET /api/system-admin/teams?search={query}&page=1`
-   - **Live Search:** Debounced 300ms
-   - **Controller Action:** `TeamController@index` with search filtering
-   
-2. **Team Table Display Flow**
-   - **Data Source:** Teams table with pagination
-   - **Columns:** Team Name, Founding Date, Team Leader, Actions
-   - **Per Page:** 15 teams (configurable)
-   - **Sort:** By founding date descending
-   
-3. **New Team Flow**
-   - **Trigger:** "New Team" button click
-   - **Action:** Opens modal or navigates to create page
-   - **Route:** `GET /system-admin/teams/create` (Inertia)
-   - **Controller:** `TeamController@create`
-   
-4. **Edit Team Flow**
-   - **Trigger:** "Edit" action button
-   - **Route:** `GET /system-admin/teams/{id}/edit` (Inertia)
-   - **Controller:** `TeamController@edit`
-   
-5. **Delete Team Flow**
-   - **Trigger:** "Delete" action button
-   - **API:** `DELETE /api/system-admin/teams/{id}`
-   - **Controller:** `TeamController@destroy`
-   - **Confirmation:** Sweet Alert modal
-   - **Success:** Reload table data
-
-**EXACT DATA RETRIEVAL:**
-```php
-// Controller: SystemAdmin\TeamController@index
-public function index(Request $request)
-{
-    $filters = $request->validate([
-        'search' => 'nullable|string|max:255',
-        'page' => 'nullable|integer|min:1',
-        'per_page' => 'nullable|integer|min:10|max:100',
-        'sort_by' => 'nullable|in:name,created_at,leader_name',
-        'sort_direction' => 'nullable|in:asc,desc',
-    ]);
+#### **Team Management Page:**
+```vue
+<!-- TeamLeader/Team/Show.vue -->
+<template>
+  <Default>
+    <PageHeader :title="myTeam.name" :subtitle="`${myTeam.track.name} Track`">
+      <template #actions>
+        <Link :href="route('team-leader.team.edit')" class="btn-primary">
+          Edit Team Details
+        </Link>
+      </template>
+    </PageHeader>
     
-    // Service call
-    $teams = $this->teamService->getAllTeamsWithDetails([
-        'search' => $filters['search'],
-        'paginate' => $filters['per_page'] ?? 15,
-        'sort' => [
-            'field' => $filters['sort_by'] ?? 'created_at',
-            'direction' => $filters['sort_direction'] ?? 'desc'
-        ]
-    ]);
-    
-    return Inertia::render('SystemAdmin/Teams/Index', [
-        'teams' => $teams,
-        'filters' => $filters,
-        'can' => [
-            'create_teams' => auth()->user()->can('create_teams'),
-            'edit_teams' => auth()->user()->can('edit_teams'),
-            'delete_teams' => auth()->user()->can('delete_teams'),
-        ]
-    ]);
-}
-
-// Database Query in TeamRepository
-/*
-SELECT 
-    t.id,
-    t.name,
-    t.created_at as founding_date,
-    t.join_code,
-    t.max_members,
-    t.status,
-    u.name as leader_name,
-    u.email as leader_email,
-    COUNT(tm.id) as members_count,
-    h.name as hackathon_name,
-    tr.name as track_name
-FROM teams t
-LEFT JOIN users u ON t.leader_id = u.id
-LEFT JOIN team_members tm ON t.id = tm.team_id AND tm.status = 'accepted'
-LEFT JOIN hackathons h ON t.hackathon_id = h.id
-LEFT JOIN tracks tr ON t.track_id = tr.id
-WHERE (? IS NULL OR t.name LIKE ? OR u.name LIKE ?)
-GROUP BY t.id
-ORDER BY t.created_at DESC
-LIMIT ? OFFSET ?
-*/
-```
-
-#### **2. Team Edit Page (EditTeam_Admin.png)**
-**Route:** `GET /system-admin/teams/{id}/edit`
-**Controller:** `SystemAdmin\TeamController@edit`
-**Type:** Inertia Page
-
-**PAGE FLOWS IDENTIFIED:**
-1. **Team Information Display Flow**
-   - **Team Name:** Editable input field
-   - **Team Leader:** Display with dropdown to change
-   - **Team Status:** Dropdown (pending, approved, rejected)
-   
-2. **Members Management Flow**
-   - **Members Table:** Name, Email, Mobile No, Status, Actions
-   - **Remove Member:** API call to remove team member
-   - **Add Member:** Button opens member search modal
-   
-3. **Add Member Flow**
-   - **Trigger:** "Add Member" button
-   - **Modal:** Search existing users or send invitation
-   - **API:** `POST /api/system-admin/teams/{id}/members`
-   - **Data:** `{user_id: 123}` or `{email: 'user@example.com'}`
-   
-4. **Remove Member Flow**
-   - **Trigger:** "Remove" button for each member
-   - **API:** `DELETE /api/system-admin/teams/{id}/members/{member_id}`
-   - **Confirmation:** Required
-   
-5. **Save Changes Flow**
-   - **Trigger:** "Save Changes" button
-   - **API:** `PUT /api/system-admin/teams/{id}`
-   - **Validation:** Team name required, leader exists
-   
-6. **Disband Team Flow**
-   - **Trigger:** "Disband Team" button
-   - **API:** `DELETE /api/system-admin/teams/{id}/disband`
-   - **Effect:** Removes team but keeps member records
-
-**EXACT DATA RETRIEVAL:**
-```php
-// Controller: SystemAdmin\TeamController@edit
-public function edit(Request $request, $teamId)
-{
-    $team = $this->teamService->getTeamWithFullDetails($teamId, [
-        'with' => ['leader', 'members.user', 'hackathon', 'track', 'ideas'],
-        'withCount' => ['members', 'ideas']
-    ]);
-    
-    // Get available users for adding as members
-    $availableUsers = $this->userService->getUsersNotInTeam($teamId, [
-        'where' => ['user_type' => 'team_member'],
-        'select' => ['id', 'name', 'email', 'phone']
-    ]);
-    
-    // Get potential leaders (team_leader type users)
-    $potentialLeaders = $this->userService->getPotentialLeaders([
-        'where' => ['user_type' => 'team_leader'],
-        'select' => ['id', 'name', 'email']
-    ]);
-    
-    return Inertia::render('SystemAdmin/Teams/Edit', [
-        'team' => $team,
-        'availableUsers' => $availableUsers,
-        'potentialLeaders' => $potentialLeaders,
-        'can' => [
-            'edit_team_details' => auth()->user()->can('edit_teams'),
-            'manage_team_members' => auth()->user()->can('manage_team_members'),
-            'disband_teams' => auth()->user()->can('disband_teams'),
-        ]
-    ]);
-}
-```
-
-#### **3. Ideas Review Page (Idea.png)**
-**Route:** `GET /system-admin/ideas/{id}`
-**Controller:** `SystemAdmin\IdeaController@show`
-**Type:** Inertia Page
-
-**PAGE FLOWS IDENTIFIED:**
-1. **Idea Overview Tab Flow**
-   - **Idea Details:** Title, Team Name, Submission Date, Track, Hackathon Edition
-   - **Description:** Full idea description text
-   - **Related Documents:** List of uploaded files with download links
-   
-2. **Response Tab Flow**
-   - **Review History:** All reviews and feedback
-   - **Current Status:** Visual status indicator
-   - **Supervisor Assignment:** If assigned
-   
-3. **Decision Making Flow**
-   - **Accept Button:** Changes status to 'approved'
-   - **Reject Button:** Changes status to 'rejected' 
-   - **Need Edit Button:** Changes status to 'needs_revision'
-   - **API:** `PUT /api/system-admin/ideas/{id}/decision`
-   
-4. **Scoring Flow**
-   - **Score Input:** "Add Score From 100" field
-   - **Score Submission:** Updates idea score
-   - **API:** `PUT /api/system-admin/ideas/{id}/score`
-   
-5. **Feedback Flow**
-   - **Feedback Text Area:** "Provide feedback or required changes"
-   - **Submit Feedback:** Saves feedback and notifies team
-   - **API:** `POST /api/system-admin/ideas/{id}/feedback`
-
-**EXACT DATA RETRIEVAL:**
-```php
-// Controller: SystemAdmin\IdeaController@show
-public function show(Request $request, $ideaId)
-{
-    $idea = $this->ideaService->getIdeaWithFullDetails($ideaId, [
-        'with' => [
-            'team.leader', 
-            'team.members.user', 
-            'track', 
-            'hackathon',
-            'files',
-            'reviews.reviewer',
-            'supervisor'
-        ]
-    ]);
-    
-    // Get review history
-    $reviewHistory = $this->ideaService->getIdeaReviewHistory($ideaId);
-    
-    // Get available supervisors for assignment
-    $availableSupervisors = $this->userService->getTrackSupervisors(
-        $idea->team->track_id,
-        ['select' => ['id', 'name', 'email', 'expertise']]
-    );
-    
-    return Inertia::render('SystemAdmin/Ideas/Show', [
-        'idea' => $idea,
-        'reviewHistory' => $reviewHistory,
-        'availableSupervisors' => $availableSupervisors,
-        'can' => [
-            'review_ideas' => auth()->user()->can('review_ideas'),
-            'score_ideas' => auth()->user()->can('score_ideas'),
-            'assign_supervisors' => auth()->user()->can('assign_supervisors'),
-        ]
-    ]);
-}
-```
-
-#### **4. Workshops Management (Admin_Workshops.png)**
-**Route:** `GET /system-admin/workshops`
-**Controller:** `SystemAdmin\WorkshopController@index`
-**Type:** Inertia Page
-
-**PAGE FLOWS IDENTIFIED:**
-1. **Workshop Tabs Flow**
-   - **Workshops Tab:** Main workshop list (active)
-   - **Speakers Tab:** Navigate to speakers management
-   - **Organizations Tab:** Navigate to organizations management
-   
-2. **Workshop Search Flow**
-   - **Search Input:** "Search workshops" with live search
-   - **API:** `GET /api/system-admin/workshops?search={query}`
-   - **Debounce:** 300ms delay
-   
-3. **Workshop Table Flow**
-   - **Columns:** Title, Description, Date, Speaker, Organizing Entity, Seats
-   - **Data:** Paginated list of all workshops
-   - **Actions:** Edit, Delete, View Registrations
-   
-4. **Add Workshop Flow**
-   - **Trigger:** "Add Workshop" button
-   - **Route:** `GET /system-admin/workshops/create`
-   - **Type:** Modal or separate page
-   
-5. **Workshop Actions Flow**
-   - **View Registrations:** Shows attendees list
-   - **Edit Workshop:** Navigate to edit form
-   - **Delete Workshop:** Confirmation + API call
-
-**EXACT DATA RETRIEVAL:**
-```php
-// Controller: SystemAdmin\WorkshopController@index
-public function index(Request $request)
-{
-    $filters = $request->validate([
-        'search' => 'nullable|string|max:255',
-        'tab' => 'nullable|in:workshops,speakers,organizations',
-        'date_from' => 'nullable|date',
-        'date_to' => 'nullable|date',
-        'status' => 'nullable|in:upcoming,ongoing,completed,cancelled',
-    ]);
-    
-    switch($filters['tab'] ?? 'workshops') {
-        case 'workshops':
-            $data = $this->workshopService->getAllWorkshopsWithDetails([
-                'search' => $filters['search'],
-                'date_range' => [$filters['date_from'], $filters['date_to']],
-                'status' => $filters['status'],
-                'with' => ['speakers', 'organizations', 'hackathon'],
-                'withCount' => ['registrations']
-            ]);
-            break;
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Team Information -->
+      <div class="lg:col-span-2">
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+          <h3 class="text-lg font-medium mb-4">Team Information</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Team Name</label>
+              <p class="mt-1 text-sm text-gray-900">{{ myTeam.name }}</p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Join Code</label>
+              <div class="mt-1 flex items-center space-x-2">
+                <code class="bg-gray-100 px-3 py-1 rounded text-sm">{{ myTeam.join_code }}</code>
+                <button @click="copyJoinCode" class="text-blue-600 hover:text-blue-800 text-sm">
+                  Copy
+                </button>
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Track</label>
+              <p class="mt-1 text-sm text-gray-900">{{ myTeam.track.name }}</p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Status</label>
+              <StatusBadge :status="myTeam.status" class="mt-1" />
+            </div>
+          </div>
+          
+          <div class="mt-4">
+            <label class="block text-sm font-medium text-gray-700">Description</label>
+            <p class="mt-1 text-sm text-gray-900">{{ myTeam.description || 'No description provided' }}</p>
+          </div>
+        </div>
+        
+        <!-- Team Members Management -->
+        <div class="bg-white rounded-lg shadow p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-medium">Team Members ({{ myTeam.members_count }}/{{ myTeam.max_members }})</h3>
+            <button v-if="myTeam.members_count < myTeam.max_members" 
+                    @click="showInviteModal = true" 
+                    class="btn-primary btn-sm">
+              Invite Member
+            </button>
+          </div>
+          
+          <div class="space-y-3">
+            <!-- Team Leader (You) -->
+            <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+              <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-medium">
+                  {{ user.name.charAt(0) }}
+                </div>
+                <div>
+                  <p class="font-medium">{{ user.name }} (You)</p>
+                  <p class="text-sm text-gray-600">{{ user.email }}</p>
+                </div>
+              </div>
+              <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">Team Leader</span>
+            </div>
             
-        case 'speakers':
-            $data = $this->speakerService->getAllSpeakersWithStats([
-                'search' => $filters['search'],
-                'withCount' => ['workshops']
-            ]);
-            break;
+            <!-- Team Members -->
+            <div v-for="member in myTeam.members" :key="member.id" 
+                 class="flex items-center justify-between p-3 border rounded-lg">
+              <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 bg-gray-400 text-white rounded-full flex items-center justify-center text-sm font-medium">
+                  {{ member.name.charAt(0) }}
+                </div>
+                <div>
+                  <p class="font-medium">{{ member.name }}</p>
+                  <p class="text-sm text-gray-600">{{ member.email }}</p>
+                </div>
+              </div>
+              <div class="flex items-center space-x-2">
+                <StatusBadge :status="member.status" />
+                <button v-if="member.status === 'invited'" 
+                        @click="resendInvitation(member.id)"
+                        class="text-blue-600 hover:text-blue-800 text-xs">
+                  Resend
+                </button>
+                <button @click="removeMember(member.id)" 
+                        class="text-red-600 hover:text-red-800 text-xs">
+                  Remove
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Side Panel -->
+      <div>
+        <!-- Next Steps Card -->
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+          <h3 class="text-lg font-medium mb-4">Next Steps</h3>
+          <div class="space-y-3">
+            <div v-for="step in nextSteps" :key="step.id" 
+                 class="flex items-start space-x-3">
+              <div class="flex-shrink-0 w-5 h-5 rounded-full border-2 mt-1"
+                   :class="step.completed ? 'bg-green-500 border-green-500' : 'border-gray-300'">
+                <svg v-if="step.completed" class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                </svg>
+              </div>
+              <div>
+                <p class="text-sm font-medium" :class="step.completed ? 'text-gray-500' : ''">
+                  {{ step.title }}
+                </p>
+                <p class="text-xs text-gray-600">{{ step.description }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="bg-white rounded-lg shadow p-6">
+          <h3 class="text-lg font-medium mb-4">Quick Actions</h3>
+          <div class="space-y-2">
+            <Link :href="route('team-leader.idea.create')" 
+                  class="btn-secondary btn-sm w-full text-left">
+              Submit Our Idea
+            </Link>
+            <Link :href="route('team-leader.workshops.index')" 
+                  class="btn-secondary btn-sm w-full text-left">
+              Register for Workshops
+            </Link>
+            <Link :href="route('team-leader.track.show')" 
+                  class="btn-secondary btn-sm w-full text-left">
+              View Track Details
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Invite Member Modal -->
+    <Modal v-model="showInviteModal" title="Invite Team Member">
+      <form @submit.prevent="inviteMember">
+        <FormInput
+          v-model="inviteForm.email"
+          label="Email Address"
+          type="email"
+          required
+          placeholder="member@university.edu"
+          :error="inviteForm.errors.email"
+        />
+        <FormTextarea
+          v-model="inviteForm.message"
+          label="Personal Message (Optional)"
+          rows="3"
+          placeholder="Hi! I'd like to invite you to join our hackathon team..."
+        />
+        <div class="flex justify-end space-x-3 mt-6">
+          <button type="button" @click="showInviteModal = false" class="btn-secondary">
+            Cancel
+          </button>
+          <button type="submit" class="btn-primary" :disabled="inviteForm.processing">
+            Send Invitation
+          </button>
+        </div>
+      </form>
+    </Modal>
+  </Default>
+</template>
+```
+
+### **🟣 TEAM MEMBER ROLE (team_member)**
+**Access Level:** View-only participation
+
+#### **Login Flow & Initial Landing:**
+```
+1. POST /login → validates credentials
+2. Middleware: auth, role:team_member
+3. HandleInertiaRequests shares: user.roles = ['team_member'], my_team
+4. REDIRECT: /team-member/dashboard
+5. NavSidebarDesktop renders: Limited access menu
+```
+
+#### **Sidebar Navigation:**
+```javascript
+// When user.roles includes 'team_member':
+const teamMemberMenu = [
+  {
+    items: [
+      { name: 'Dashboard', route: 'team-member.dashboard', icon: dashboardIcon },
+      { type: 'divider' }
+    ]
+  },
+  {
+    items: [
+      { name: 'My Team', route: 'team-member.team.show', icon: teamIcon },
+      { name: 'Our Idea', route: 'team-member.idea.show', icon: ideaIcon },
+      { type: 'divider' }
+    ]
+  },
+  {
+    items: [
+      { name: 'Workshops', route: 'team-member.workshops.index', icon: workshopsIcon },
+      { name: 'Track Info', route: 'team-member.track.show', icon: trackIcon },
+      { name: 'News', route: 'team-member.news.index', icon: newsIcon }
+    ]
+  }
+]
+```
+
+#### **Dashboard Component Behavior:**
+```vue
+<!-- TeamMember/Dashboard/Index.vue -->
+<template>
+  <Default>
+    <!-- Team Overview (READ-ONLY) -->
+    <div v-if="myTeam" class="bg-gradient-to-r from-gray-500 to-gray-600 rounded-lg shadow p-6 text-white mb-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-bold">{{ myTeam.name }}</h1>
+          <p class="text-gray-100">{{ myTeam.track.name }} Track</p>
+          <p class="text-sm text-gray-200">Team Member</p>
+        </div>
+        <div class="text-right">
+          <div class="text-sm text-gray-100">Team Leader</div>
+          <div class="text-lg font-medium">{{ myTeam.leader.name }}</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- No Team Message -->
+    <div v-else class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
+      <div class="flex items-center">
+        <svg class="w-8 h-8 text-blue-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+        <div>
+          <h3 class="text-lg font-medium text-blue-800">No Team Yet</h3>
+          <p class="text-blue-700">You haven't joined a team yet. Ask a team leader for an invitation!</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Read-Only Information Cards -->
+    <div v-if="myTeam" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- Team Status (READ-ONLY) -->
+      <div class="bg-white rounded-lg shadow p-6">
+        <h3 class="text-lg font-medium mb-4">Team Status</h3>
+        <div class="space-y-3">
+          <div class="flex justify-between text-sm">
+            <span>Status:</span>
+            <StatusBadge :status="myTeam.status" />
+          </div>
+          <div class="flex justify-between text-sm">
+            <span>Members:</span>
+            <span>{{ myTeam.members_count }}/{{ myTeam.max_members }}</span>
+          </div>
+          <div class="flex justify-between text-sm">
+            <span>Track:</span>
+            <span>{{ myTeam.track.name }}</span>
+          </div>
+        </div>
+        <!-- NO EDIT BUTTON - READ ONLY -->
+        <Link :href="route('team-member.team.show')" class="btn-secondary btn-sm w-full mt-4">
+          View Team Details
+        </Link>
+      </div>
+      
+      <!-- Idea Status (READ-ONLY) -->
+      <div class="bg-white rounded-lg shadow p-6">
+        <h3 class="text-lg font-medium mb-4">Our Idea</h3>
+        <div v-if="idea">
+          <h4 class="font-medium text-sm">{{ idea.title }}</h4>
+          <StatusBadge :status="idea.status" class="mt-2" />
+          <p class="text-xs text-gray-600 mt-2">{{ idea.description.substring(0, 100) }}...</p>
+          <!-- NO EDIT BUTTON - READ ONLY -->
+          <Link :href="route('team-member.idea.show')" class="btn-secondary btn-sm w-full mt-4">
+            View Idea Details
+          </Link>
+        </div>
+        <div v-else>
+          <p class="text-gray-600 text-sm">No idea submitted yet</p>
+          <p class="text-xs text-gray-500 mt-2">Ask your team leader to submit an idea</p>
+        </div>
+      </div>
+      
+      <!-- Workshop Registration (FULL ACCESS) -->
+      <div class="bg-white rounded-lg shadow p-6">
+        <h3 class="text-lg font-medium mb-4">My Workshop Registrations</h3>
+        <div class="space-y-2 text-sm">
+          <div class="flex justify-between">
+            <span>Registered:</span>
+            <span class="font-medium">{{ stats.workshops.registered }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span>Attended:</span>
+            <span class="font-medium">{{ stats.workshops.attended }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span>Upcoming:</span>
+            <span class="font-medium">{{ stats.workshops.upcoming }}</span>
+          </div>
+        </div>
+        <!-- CAN REGISTER FOR WORKSHOPS -->
+        <Link :href="route('team-member.workshops.index')" class="btn-primary btn-sm w-full mt-4">
+          Browse & Register
+        </Link>
+      </div>
+    </div>
+    
+    <!-- Upcoming Workshops (ACCESSIBLE TO TEAM MEMBERS) -->
+    <div v-if="upcomingWorkshops.length > 0" class="bg-white rounded-lg shadow p-6">
+      <h3 class="text-lg font-medium mb-4">Upcoming Workshops</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div v-for="workshop in upcomingWorkshops" :key="workshop.id" 
+             class="border rounded-lg p-4 hover:border-blue-300">
+          <div class="flex justify-between items-start mb-2">
+            <h4 class="font-medium text-sm">{{ workshop.title }}</h4>
+            <span class="text-xs text-gray-500">{{ formatDate(workshop.start_datetime) }}</span>
+          </div>
+          <p class="text-xs text-gray-600 mb-3">{{ workshop.description }}</p>
+          <div class="flex justify-between items-center">
+            <span class="text-xs text-gray-500">
+              {{ workshop.registrations_count }}/{{ workshop.max_attendees }} registered
+            </span>
+            <button v-if="!workshop.is_registered" 
+                    @click="registerForWorkshop(workshop.id)"
+                    class="btn-primary btn-xs">
+              Register
+            </button>
+            <span v-else class="text-xs text-green-600 font-medium">Registered</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </Default>
+</template>
+```
+
+#### **Team View Page (READ-ONLY):**
+```vue
+<!-- TeamMember/Team/Show.vue -->
+<template>
+  <Default>
+    <PageHeader :title="myTeam.name" :subtitle="`${myTeam.track.name} Track - Team Member View`">
+      <!-- NO EDIT ACTIONS FOR TEAM MEMBERS -->
+    </PageHeader>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Team Information (READ-ONLY) -->
+      <div class="lg:col-span-2">
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+          <h3 class="text-lg font-medium mb-4">Team Information</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Team Name</label>
+              <p class="mt-1 text-sm text-gray-900">{{ myTeam.name }}</p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Track</label>
+              <p class="mt-1 text-sm text-gray-900">{{ myTeam.track.name }}</p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Status</label>
+              <StatusBadge :status="myTeam.status" class="mt-1" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Members</label>
+              <p class="mt-1 text-sm text-gray-900">{{ myTeam.members_count }}/{{ myTeam.max_members }}</p>
+            </div>
+          </div>
+          
+          <div class="mt-4">
+            <label class="block text-sm font-medium text-gray-700">Description</label>
+            <p class="mt-1 text-sm text-gray-900">{{ myTeam.description || 'No description provided' }}</p>
+          </div>
+        </div>
+        
+        <!-- Team Members (VIEW-ONLY) -->
+        <div class="bg-white rounded-lg shadow p-6">
+          <h3 class="text-lg font-medium mb-4">Team Members</h3>
+          
+          <div class="space-y-3">
+            <!-- Team Leader -->
+            <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+              <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-medium">
+                  {{ myTeam.leader.name.charAt(0) }}
+                </div>
+                <div>
+                  <p class="font-medium">{{ myTeam.leader.name }}</p>
+                  <p class="text-sm text-gray-600">{{ myTeam.leader.email }}</p>
+                </div>
+              </div>
+              <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">Team Leader</span>
+            </div>
             
-        case 'organizations':
-            $data = $this->organizationService->getAllOrganizationsWithStats([
-                'search' => $filters['search'],
-                'withCount' => ['workshops']
-            ]);
-            break;
-    }
+            <!-- Team Members (including current user) -->
+            <div v-for="member in myTeam.members" :key="member.id" 
+                 class="flex items-center justify-between p-3 border rounded-lg"
+                 :class="member.id === user.id ? 'bg-green-50 border-green-200' : ''">
+              <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 bg-gray-400 text-white rounded-full flex items-center justify-center text-sm font-medium">
+                  {{ member.name.charAt(0) }}
+                </div>
+                <div>
+                  <p class="font-medium">
+                    {{ member.name }}
+                    <span v-if="member.id === user.id" class="text-green-600">(You)</span>
+                  </p>
+                  <p class="text-sm text-gray-600">{{ member.email }}</p>
+                </div>
+              </div>
+              <StatusBadge :status="member.status" />
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Side Panel (LIMITED ACTIONS) -->
+      <div>
+        <!-- Contact Team Leader -->
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+          <h3 class="text-lg font-medium mb-4">Contact Team Leader</h3>
+          <div class="flex items-center space-x-3 mb-4">
+            <div class="w-10 h-10 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-medium">
+              {{ myTeam.leader.name.charAt(0) }}
+            </div>
+            <div>
+              <p class="font-medium">{{ myTeam.leader.name }}</p>
+              <p class="text-sm text-gray-600">{{ myTeam.leader.email }}</p>
+            </div>
+          </div>
+          <a :href="`mailto:${myTeam.leader.email}`" class="btn-primary btn-sm w-full">
+            Send Email
+          </a>
+        </div>
+        
+        <!-- Available Actions -->
+        <div class="bg-white rounded-lg shadow p-6">
+          <h3 class="text-lg font-medium mb-4">Available Actions</h3>
+          <div class="space-y-2">
+            <Link :href="route('team-member.idea.show')" 
+                  class="btn-secondary btn-sm w-full text-left">
+              View Our Idea
+            </Link>
+            <Link :href="route('team-member.workshops.index')" 
+                  class="btn-secondary btn-sm w-full text-left">
+              Register for Workshops
+            </Link>
+            <Link :href="route('team-member.track.show')" 
+                  class="btn-secondary btn-sm w-full text-left">
+              View Track Info
+            </Link>
+            <!-- LEAVE TEAM OPTION -->
+            <button @click="showLeaveConfirmation = true" 
+                    class="btn-warning btn-sm w-full text-left">
+              Leave Team
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
     
-    return Inertia::render('SystemAdmin/Workshops/Index', [
-        'data' => $data,
-        'currentTab' => $filters['tab'] ?? 'workshops',
-        'filters' => $filters,
-    ]);
-}
-```
-
-#### **5. Add Workshop Page (Admin_AddWorkshops.png)**
-**Route:** `GET /system-admin/workshops/create`
-**Controller:** `SystemAdmin\WorkshopController@create`
-**Type:** Inertia Page
-
-**PAGE FLOWS IDENTIFIED:**
-1. **Workshop Form Flow**
-   - **Workshop Name:** Text input (required)
-   - **Description:** Textarea (required)
-   - **Speaker:** Dropdown with search (required)
-   - **Organizing Entity:** Dropdown with search (required)
-   
-2. **DateTime Flow**
-   - **Date:** Date picker input
-   - **Time:** Time picker input
-   - **Validation:** Date must be future, time format validation
-   
-3. **Location Flow**
-   - **Location Type:** Radio buttons (In-Person/Remote)
-   - **Location Field:** Text input for venue/address
-   - **Remote Link:** URL input (shown if Remote selected)
-   
-4. **Capacity Flow**
-   - **Seat Capacity:** Number input
-   - **Validation:** Must be positive integer, max 1000
-   
-5. **Form Submission Flow**
-   - **Submit:** "Add Workshop" button
-   - **API:** `POST /api/system-admin/workshops`
-   - **Validation:** All required fields
-   - **Success:** Redirect to workshops list
-   - **Error:** Show field-specific errors
-
-**EXACT DATA RETRIEVAL:**
-```php
-// Controller: SystemAdmin\WorkshopController@create
-public function create(Request $request)
-{
-    // Get dropdown options
-    $speakers = $this->speakerService->getAllActiveSpeakers([
-        'select' => ['id', 'name', 'title', 'organization']
-    ]);
-    
-    $organizations = $this->organizationService->getAllActiveOrganizations([
-        'select' => ['id', 'name', 'logo']
-    ]);
-    
-    $hackathons = $this->hackathonService->getActiveHackathons([
-        'select' => ['id', 'name', 'year']
-    ]);
-    
-    return Inertia::render('SystemAdmin/Workshops/Create', [
-        'speakers' => $speakers,
-        'organizations' => $organizations,
-        'hackathons' => $hackathons,
-    ]);
-}
-
-// Store method
-public function store(Request $request)
-{
-    $validated = $request->validate([
-        'name' => 'required|string|max:255',
-        'description' => 'required|string',
-        'speaker_id' => 'required|exists:speakers,id',
-        'organization_id' => 'required|exists:organizations,id',
-        'hackathon_id' => 'required|exists:hackathons,id',
-        'date' => 'required|date|after:today',
-        'time' => 'required|date_format:H:i',
-        'location_type' => 'required|in:in_person,remote',
-        'location' => 'required|string|max:500',
-        'remote_link' => 'nullable|required_if:location_type,remote|url',
-        'max_attendees' => 'required|integer|min:1|max:1000',
-    ]);
-    
-    $workshop = $this->workshopService->createWorkshop($validated);
-    
-    return redirect()->route('system-admin.workshops.index')
-        ->with('success', 'Workshop created successfully');
-}
-```
-
-#### **6. Reports Page (Admin_Reports.png)**
-**Route:** `GET /system-admin/reports`
-**Controller:** `SystemAdmin\ReportController@index`
-**Type:** Inertia Page
-
-**PAGE FLOWS IDENTIFIED:**
-1. **Overall Statistics Flow**
-   - **Cards Display:** Participating Teams, Members, Submitted Ideas, Workshops
-   - **Real-time Data:** Auto-refresh every 5 minutes
-   - **API:** `GET /api/system-admin/reports/overall-stats`
-   
-2. **Edition-Specific Statistics Flow**
-   - **Edition Filter:** "All Editions" dropdown
-   - **Period Filter:** "Summer 2023", "Winter 2023" dropdowns
-   - **Download Data:** "Download Data (Excel)" button
-   - **API:** `GET /api/system-admin/reports/edition-stats`
-   
-3. **Statistics Table Flow**
-   - **Columns:** Edition, Teams, Members, Ideas, Status, Workshop Attendance, Registrations, Website Visitors
-   - **Dynamic Data:** Based on selected filters
-   - **Status Indicators:** Completed/Ongoing status badges
-   
-4. **Data Export Flow**
-   - **Excel Export:** Generates and downloads Excel file
-   - **API:** `GET /api/system-admin/reports/export?format=excel&edition={id}`
-   - **File Generation:** Server-side Excel creation
-   
-5. **Filter Change Flow**
-   - **Edition Change:** Triggers table update
-   - **Period Change:** Triggers table update
-   - **Real-time Updates:** No page reload required
-
-**EXACT DATA RETRIEVAL:**
-```php
-// Controller: SystemAdmin\ReportController@index
-public function index(Request $request)
-{
-    $filters = $request->validate([
-        'edition_id' => 'nullable|exists:hackathons,id',
-        'period' => 'nullable|string',
-        'date_from' => 'nullable|date',
-        'date_to' => 'nullable|date',
-    ]);
-    
-    // Overall statistics (not filtered)
-    $overallStats = $this->reportService->getOverallStatistics();
-    
-    // Edition-specific statistics
-    $editionStats = $this->reportService->getEditionStatistics($filters);
-    
-    // Available editions for filter
-    $editions = $this->hackathonService->getAllHackathons([
-        'select' => ['id', 'name', 'year', 'status']
-    ]);
-    
-    return Inertia::render('SystemAdmin/Reports/Index', [
-        'overallStats' => $overallStats,
-        'editionStats' => $editionStats,
-        'editions' => $editions,
-        'filters' => $filters,
-        'can' => [
-            'export_reports' => auth()->user()->can('export_reports'),
-            'view_detailed_reports' => auth()->user()->can('view_detailed_reports'),
-        ]
-    ]);
-}
-
-// API endpoint for overall stats
-public function getOverallStats()
-{
-    return response()->json([
-        'participating_teams' => $this->teamService->getTotalTeamsCount(),
-        'members' => $this->userService->getTotalParticipantsCount(),
-        'submitted_ideas' => $this->ideaService->getTotalSubmittedIdeasCount(),
-        'workshops' => $this->workshopService->getTotalWorkshopsCount(),
-    ]);
-}
-```
-
-### **👥 TEAM LEADER PAGES - EXACT FLOWS**
-
-#### **7. Team Leader Dashboard (User_Dashboard.png)**
-**Route:** `GET /team-leader/dashboard`
-**Controller:** `TeamLeader\DashboardController@index`
-**Type:** Inertia Page
-
-**PAGE FLOWS IDENTIFIED:**
-1. **My Team Section Flow**
-   - **Team Management:** "Manage your team members and their roles"
-   - **View Team Button:** Navigate to team details page
-   - **Route:** `GET /team-leader/my-team`
-   
-2. **Idea Status Section Flow**
-   - **Idea Progress:** "Track the progress of your ideas and initiatives"
-   - **View Ideas Button:** Navigate to ideas management
-   - **Route:** `GET /team-leader/ideas`
-   
-3. **Upcoming Workshops Section Flow**
-   - **Workshop Schedule:** "See the schedule for upcoming workshops and training sessions"
-   - **View Workshops Button:** Navigate to workshops list
-   - **Route:** `GET /team-leader/workshops`
-   
-4. **Dashboard Cards Flow**
-   - **Visual Cards:** Each section has illustration and description
-   - **Click Action:** Entire card clickable to navigate
-   - **Quick Access:** Main navigation shortcuts
-
-**EXACT DATA RETRIEVAL:**
-```php
-// Controller: TeamLeader\DashboardController@index
-public function index(Request $request)
-{
-    $user = $request->user();
-    $team = $this->teamService->getUserTeam($user->id, [
-        'with' => ['members.user', 'hackathon'],
-        'withCount' => ['members', 'ideas']
-    ]);
-    
-    $dashboardData = [
-        'my_team' => [
-            'team_name' => $team->name ?? null,
-            'members_count' => $team->members_count ?? 0,
-            'max_members' => $team->max_members ?? 5,
-            'team_status' => $team->status ?? 'pending',
-            'join_code' => $team->join_code ?? null,
-        ],
-        'idea_status' => [
-            'submitted_ideas' => $this->ideaService->getTeamIdeasCount($team->id ?? null),
-            'approved_ideas' => $this->ideaService->getTeamApprovedIdeasCount($team->id ?? null),
-            'pending_reviews' => $this->ideaService->getTeamPendingIdeasCount($team->id ?? null),
-            'latest_feedback' => $this->ideaService->getLatestFeedback($team->id ?? null),
-        ],
-        'upcoming_workshops' => [
-            'registered_workshops' => $this->workshopService->getUserRegisteredWorkshops($user->id),
-            'available_workshops' => $this->workshopService->getAvailableWorkshops($user->id, 3),
-            'next_workshop' => $this->workshopService->getNextWorkshop($user->id),
-        ]
-    ];
-    
-    return Inertia::render('TeamLeader/Dashboard', [
-        'dashboardData' => $dashboardData,
-        'team' => $team,
-        'hasTeam' => $team !== null,
-    ]);
-}
-```
-
-#### **8. Create Team Page (Create_team.png)**
-**Route:** `GET /team-leader/create-team`
-**Controller:** `TeamLeader\TeamController@create`
-**Type:** Inertia Page (Modal Style)
-
-**PAGE FLOWS IDENTIFIED:**
-1. **Team Name Flow**
-   - **Input:** "Team Name" text field
-   - **Validation:** Required, unique, 3-50 characters
-   - **Real-time Check:** API call to verify uniqueness
-   
-2. **Hackathon Edition Flow**
-   - **Dropdown:** "Hackathon Edition" selection
-   - **API:** Gets available hackathons for registration
-   - **Validation:** Must select active hackathon
-   
-3. **Invite Members Flow**
-   - **Email Input:** "Invite Members (Email)" field
-   - **Add Emails:** Multiple email addresses supported
-   - **Member List:** Shows "Member 1", "Member 2", etc.
-   - **Remove Option:** X button to remove invited members
-   
-4. **Invited Members Display Flow**
-   - **Dynamic List:** Shows added member emails
-   - **Removal:** X button for each member
-   - **Validation:** Email format validation
-   
-5. **Team Creation Flow**
-   - **Submit:** "Create Team" button
-   - **API:** `POST /api/team-leader/teams`
-   - **Success:** Redirect to team dashboard
-   - **Error:** Show validation errors
-
-**EXACT DATA RETRIEVAL:**
-```php
-// Controller: TeamLeader\TeamController@create
-public function create(Request $request)
-{
-    $user = $request->user();
-    
-    // Check if user already has a team
-    $existingTeam = $this->teamService->getUserTeam($user->id);
-    if ($existingTeam) {
-        return redirect()->route('team-leader.my-team')
-            ->with('info', 'You already have a team.');
-    }
-    
-    // Get available hackathons for registration
-    $availableHackathons = $this->hackathonService->getAvailableForRegistration([
-        'select' => ['id', 'name', 'year', 'registration_end_date'],
-        'where' => [
-            ['registration_start_date', '<=', now()],
-            ['registration_end_date', '>=', now()],
-            ['status', 'active']
-        ]
-    ]);
-    
-    return Inertia::render('TeamLeader/Teams/Create', [
-        'availableHackathons' => $availableHackathons,
-        'maxTeamMembers' => config('hackathon.max_team_members', 5),
-    ]);
-}
-
-// Store method
-public function store(Request $request)
-{
-    $validated = $request->validate([
-        'team_name' => 'required|string|min:3|max:50|unique:teams,name',
-        'hackathon_id' => 'required|exists:hackathons,id',
-        'member_emails' => 'nullable|array|max:4', // max 4 additional members
-        'member_emails.*' => 'email|distinct|exists:users,email',
-    ]);
-    
-    // Additional validation: hackathon must be open for registration
-    $hackathon = $this->hackathonService->getHackathon($validated['hackathon_id']);
-    if (!$this->hackathonService->isOpenForRegistration($hackathon)) {
-        return back()->withErrors(['hackathon_id' => 'This hackathon is no longer open for registration.']);
-    }
-    
-    $team = $this->teamService->createTeamWithInvitations($validated, $request->user());
-    
-    return redirect()->route('team-leader.my-team')
-        ->with('success', 'Team created successfully! Invitations sent to members.');
-}
+    <!-- Leave Team Confirmation Modal -->
+    <Modal v-model="showLeaveConfirmation" title="Leave Team">
+      <div class="text-sm text-gray-600 mb-4">
+        <p>Are you sure you want to leave <strong>{{ myTeam.name }}</strong>?</p>
+        <p class="mt-2 text-red-600">This action cannot be undone. You will need a new invitation to rejoin.</p>
+      </div>
+      <div class="flex justify-end space-x-3">
+        <button @click="showLeaveConfirmation = false" class="btn-secondary">
+          Cancel
+        </button>
+        <button @click="leaveTeam" class="btn-danger">
+          Leave Team
+        </button>
+      </div>
+    </Modal>
+  </Default>
+</template>
 ```
 
 ---
 
-## 🔍 **CRITICAL MISSING COMPONENTS ANALYSIS**
+## 🔐 **AUTHENTICATION & MIDDLEWARE SYSTEM**
 
-### **🗃️ MISSING DATABASE MIGRATIONS**
-Based on Vue components and Figma analysis, these migrations are MISSING:
-
+### **HandleInertiaRequests.php Enhancements:**
 ```php
-// Missing: idea_reviews table
-Schema::create('idea_reviews', function (Blueprint $table) {
-    $table->id();
-    $table->char('idea_id', 26);
-    $table->char('reviewer_id', 26);
-    $table->enum('status', ['pending', 'approved', 'rejected', 'needs_revision']);
-    $table->integer('score')->nullable();
-    $table->text('feedback')->nullable();
-    $table->text('revision_notes')->nullable();
-    $table->timestamp('reviewed_at')->nullable();
-    $table->timestamps();
-    
-    $table->foreign('idea_id')->references('id')->on('ideas')->onDelete('cascade');
-    $table->foreign('reviewer_id')->references('id')->on('users')->onDelete('cascade');
+// app/Http/Middleware/HandleInertiaRequests.php
+public function share(Request $request): array
+{
+    return array_merge(parent::share($request), [
+        'auth' => [
+            'user' => $request->user() ? [
+                'id' => $request->user()->id,
+                'name' => $request->user()->name,
+                'email' => $request->user()->email,
+                'roles' => $request->user()->roles->pluck('name'),
+                'primary_role' => $request->user()->roles->first()?->name,
+                'permissions' => $request->user()->getAllPermissions()->pluck('name'),
+                'avatar' => $request->user()->avatar,
+                'university' => $request->user()->university,
+                'college' => $request->user()->college,
+            ] : null,
+        ],
+        'hackathon' => [
+            'current_edition' => app(HackathonService::class)->getCurrentEdition(),
+            'my_team' => $request->user() ? 
+                app(TeamService::class)->getUserTeam($request->user()->id) : null,
+            'assigned_tracks' => $request->user() && $request->user()->hasRole('track_supervisor') ? 
+                app(TrackService::class)->getUserAssignedTracks($request->user()->id) : null,
+        ],
+        'flash' => [
+            'message' => fn () => $request->session()->get('message'),
+            'error' => fn () => $request->session()->get('error'),
+            'success' => fn () => $request->session()->get('success'),
+            'warning' => fn () => $request->session()->get('warning'),
+        ],
+    ]);
+}
+```
+
+### **Role-Based Route Protection:**
+```php
+// routes/web.php
+
+// System Admin Routes
+Route::middleware(['auth', 'role:system_admin'])->prefix('system-admin')->group(function () {
+    Route::get('/dashboard', [SystemAdmin\DashboardController::class, 'index'])
+        ->name('system-admin.dashboard');
+    Route::resource('editions', SystemAdmin\HackathonEditionController::class)
+        ->names('system-admin.editions');
+    Route::resource('users', SystemAdmin\UserController::class)
+        ->names('system-admin.users');
+    Route::resource('teams', SystemAdmin\TeamController::class)
+        ->names('system-admin.teams');
+    Route::resource('ideas', SystemAdmin\IdeaController::class)
+        ->names('system-admin.ideas');
 });
 
-// Missing: workshop_attendances table  
-Schema::create('workshop_attendances', function (Blueprint $table) {
-    $table->id();
-    $table->char('workshop_registration_id', 26);
-    $table->enum('status', ['present', 'absent', 'late']);
-    $table->timestamp('checked_in_at')->nullable();
-    $table->char('checked_in_by', 26)->nullable();
-    $table->text('notes')->nullable();
-    $table->timestamps();
-    
-    $table->foreign('workshop_registration_id')->references('id')->on('workshop_registrations')->onDelete('cascade');
-    $table->foreign('checked_in_by')->references('id')->on('users')->onDelete('set null');
+// Hackathon Admin Routes
+Route::middleware(['auth', 'role:hackathon_admin'])->prefix('hackathon-admin')->group(function () {
+    Route::get('/dashboard', [HackathonAdmin\DashboardController::class, 'index'])
+        ->name('hackathon-admin.dashboard');
+    Route::resource('teams', HackathonAdmin\TeamController::class)
+        ->names('hackathon-admin.teams');
+    Route::resource('ideas', HackathonAdmin\IdeaController::class)
+        ->names('hackathon-admin.ideas');
+    Route::post('teams/bulk-action', [HackathonAdmin\TeamController::class, 'bulkAction'])
+        ->name('hackathon-admin.teams.bulk-action');
 });
 
-// Missing: settings additions (for tabs)
-Schema::table('settings', function (Blueprint $table) {
-    $table->json('smtp_settings')->nullable();
-    $table->json('sms_api_settings')->nullable();
-    $table->json('branding_settings')->nullable();
-    $table->json('notification_settings')->nullable();
+// Track Supervisor Routes
+Route::middleware(['auth', 'role:track_supervisor'])->prefix('track-supervisor')->group(function () {
+    Route::get('/dashboard', [TrackSupervisor\DashboardController::class, 'index'])
+        ->name('track-supervisor.dashboard');
+    Route::resource('ideas', TrackSupervisor\IdeaController::class)
+        ->only(['index', 'show', 'update'])->names('track-supervisor.ideas');
+    Route::post('ideas/{idea}/review', [TrackSupervisor\IdeaController::class, 'submitReview'])
+        ->name('track-supervisor.ideas.review');
 });
 
-// Missing: news_media table
-Schema::create('news_media', function (Blueprint $table) {
-    $table->id();
-    $table->char('news_id', 26);
-    $table->string('file_name');
-    $table->string('file_path');
-    $table->string('file_type');
-    $table->integer('file_size');
-    $table->string('mime_type');
-    $table->timestamps();
-    
-    $table->foreign('news_id')->references('id')->on('news')->onDelete('cascade');
+// Team Leader Routes
+Route::middleware(['auth', 'role:team_leader'])->prefix('team-leader')->group(function () {
+    Route::get('/dashboard', [TeamLeader\DashboardController::class, 'index'])
+        ->name('team-leader.dashboard');
+    Route::resource('team', TeamLeader\TeamController::class)
+        ->only(['show', 'create', 'store', 'edit', 'update'])->names('team-leader.team');
+    Route::resource('idea', TeamLeader\IdeaController::class)
+        ->only(['show', 'create', 'store', 'edit', 'update'])->names('team-leader.idea');
+    Route::post('team/invite-member', [TeamLeader\TeamController::class, 'inviteMember'])
+        ->name('team-leader.team.invite-member');
+});
+
+// Team Member Routes
+Route::middleware(['auth', 'role:team_member'])->prefix('team-member')->group(function () {
+    Route::get('/dashboard', [TeamMember\DashboardController::class, 'index'])
+        ->name('team-member.dashboard');
+    Route::get('team', [TeamMember\TeamController::class, 'show'])
+        ->name('team-member.team.show');
+    Route::get('idea', [TeamMember\IdeaController::class, 'show'])
+        ->name('team-member.idea.show');
+    Route::resource('workshops', TeamMember\WorkshopController::class)
+        ->only(['index', 'show'])->names('team-member.workshops');
+    Route::post('team/leave', [TeamMember\TeamController::class, 'leaveTeam'])
+        ->name('team-member.team.leave');
 });
 ```
 
-### **📋 COMPLETE TAB-BASED PAGES FROM VUE ANALYSIS**
+---
 
-#### **1. SETTINGS PAGE - 4 TABS**
-**Route:** `GET /system-admin/settings`  
-**Tabs Identified:**
-- **SMTP Tab:** Email configuration settings
-- **SMS API Tab:** SMS service configuration  
-- **Branding Tab:** App name, colors, logo upload
-- **Notifications Tab:** Notification preferences
+## 📋 **COMPLETE REQUEST CLASSES**
 
-#### **2. WORKSHOPS PAGE - 3 TABS**
-**Route:** `GET /system-admin/workshops`
-**Tabs Identified:**
-- **Workshops Tab:** Main workshops list (Default)
-- **Speakers Tab:** Speaker management 
-- **Organizations Tab:** Organization management
-
-#### **3. IDEAS PAGE - 2 TABS** 
-**Route:** `GET /system-admin/ideas`
-**Tabs Identified:**
-- **Overview Tab:** Idea details and information
-- **Submitted Ideas Tab:** List of all submitted ideas
-
-#### **4. NEWS PAGE - 2 TABS**
-**Route:** `GET /system-admin/news`
-**Tabs Identified:**
-- **All News Tab:** Published news articles list
-- **Media Center Tab:** Media files management
-
-#### **5. REPORTS PAGE - 2 TABS**
-**Route:** `GET /system-admin/reports`
-**Tabs Identified:**
-- **All Reports Tab:** Overall statistics
-- **Edition Report Tab:** Edition-specific reporting
-
-#### **6. TEAM IDEAS PAGE (User) - 3 TABS**
-**Route:** `GET /team-leader/ideas` & `GET /team-member/ideas`
-**Tabs Identified:**
-- **Overview Tab:** Idea details view
-- **Submit Idea Tab:** Idea submission form
-- **Comments Tab:** Feedback and discussions
-- **Instructions Tab:** Submission guidelines
-
-### **🎯 COMPLETE REQUEST VALIDATION CLASSES**
-
-#### **Authentication Requests**
+### **🔐 Authentication Requests**
 ```php
 // app/Http/Requests/Auth/LoginRequest.php
 class LoginRequest extends FormRequest
@@ -2366,7 +1299,15 @@ class LoginRequest extends FormRequest
         return [
             'email' => 'required|email|exists:users,email',
             'password' => 'required|string|min:8',
-            'remember' => 'nullable|boolean',
+            'remember' => 'boolean',
+        ];
+    }
+    
+    public function messages(): array
+    {
+        return [
+            'email.exists' => 'هذا البريد الإلكتروني غير مسجل في النظام',
+            'password.min' => 'كلمة المرور يجب أن تكون 8 أحرف على الأقل',
         ];
     }
 }
@@ -2377,18 +1318,20 @@ class RegisterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|string|min:2|max:255',
+            'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8|confirmed',
             'phone' => 'nullable|string|max:20',
-            'user_type' => 'required|in:team_leader,team_member',
-            'hackathon_id' => 'required|exists:hackathons,id',
+            'university' => 'required|string|max:255',
+            'college' => 'required|string|max:255',
+            'student_id' => 'nullable|string|max:50',
+            'national_id' => 'required|string|max:20',
         ];
     }
 }
 ```
 
-#### **Team Management Requests**
+### **👥 Team Management Requests**
 ```php
 // app/Http/Requests/Team/CreateTeamRequest.php
 class CreateTeamRequest extends FormRequest
@@ -2396,13 +1339,18 @@ class CreateTeamRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|string|min:3|max:50|unique:teams,name',
-            'hackathon_id' => 'required|exists:hackathons,id',
-            'track_id' => 'nullable|exists:tracks,id',
-            'member_emails' => 'nullable|array|max:4',
-            'member_emails.*' => 'email|distinct|exists:users,email',
-            'max_members' => 'nullable|integer|min:2|max:10',
+            'name' => 'required|string|max:255|unique:teams,name',
+            'description' => 'required|string|max:1000',
+            'track_id' => 'required|exists:tracks,id',
+            'university' => 'required|string|max:255',
+            'college' => 'required|string|max:255',
+            'expected_members' => 'required|integer|min:2|max:5',
         ];
+    }
+    
+    public function authorize(): bool
+    {
+        return $this->user()->hasRole(['team_leader', 'system_admin']);
     }
 }
 
@@ -2412,11 +1360,19 @@ class UpdateTeamRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|string|min:3|max:50|unique:teams,name,' . $this->route('team'),
-            'track_id' => 'nullable|exists:tracks,id',
-            'max_members' => 'nullable|integer|min:2|max:10',
-            'status' => 'nullable|in:pending,approved,rejected',
+            'name' => 'required|string|max:255|unique:teams,name,' . $this->team->id,
+            'description' => 'required|string|max:1000',
+            'track_id' => 'required|exists:tracks,id',
+            'university' => 'required|string|max:255',
+            'college' => 'required|string|max:255',
         ];
+    }
+    
+    public function authorize(): bool
+    {
+        return $this->user()->hasRole(['team_leader', 'hackathon_admin', 'system_admin']) &&
+               ($this->user()->hasRole(['hackathon_admin', 'system_admin']) || 
+                $this->team->leader_id === $this->user()->id);
     }
 }
 
@@ -2426,15 +1382,50 @@ class AddMemberRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'user_id' => 'required_without:email|exists:users,id',
-            'email' => 'required_without:user_id|email|exists:users,email',
-            'role' => 'nullable|in:member,leader',
+            'email' => 'required|email|exists:users,email',
+            'role' => 'required|in:member',
+            'personal_message' => 'nullable|string|max:500',
         ];
+    }
+}
+
+// app/Http/Requests/Team/TeamIndexRequest.php
+class TeamIndexRequest extends FormRequest
+{
+    public function rules(): array
+    {
+        return [
+            'search' => 'nullable|string|max:255',
+            'track_id' => 'nullable|exists:tracks,id',
+            'status' => 'nullable|in:pending,approved,rejected',
+            'hackathon_id' => 'nullable|exists:hackathon_editions,id',
+            'per_page' => 'nullable|integer|min:10|max:100',
+            'sort' => 'nullable|in:name,created_at,updated_at,status',
+            'direction' => 'nullable|in:asc,desc',
+        ];
+    }
+}
+
+// app/Http/Requests/Team/TeamApprovalRequest.php
+class TeamApprovalRequest extends FormRequest
+{
+    public function rules(): array
+    {
+        return [
+            'status' => 'required|in:approved,rejected',
+            'notes' => 'nullable|string|max:1000',
+            'notify_team' => 'boolean',
+        ];
+    }
+    
+    public function authorize(): bool
+    {
+        return $this->user()->hasRole(['hackathon_admin', 'system_admin']);
     }
 }
 ```
 
-#### **Idea Management Requests**
+### **💡 Idea Management Requests**
 ```php
 // app/Http/Requests/Idea/SubmitIdeaRequest.php
 class SubmitIdeaRequest extends FormRequest
@@ -2442,16 +1433,29 @@ class SubmitIdeaRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => 'required|string|min:5|max:255',
-            'description' => 'required|string|min:50|max:5000',
-            'problem_statement' => 'required|string|min:50|max:2000',
-            'solution_approach' => 'required|string|min:50|max:2000',
-            'target_audience' => 'nullable|string|max:1000',
-            'technologies' => 'nullable|array',
-            'technologies.*' => 'string|max:50',
-            'files.*' => 'file|mimes:pdf,doc,docx,ppt,pptx|max:10240', // 10MB max
-            'track_id' => 'required|exists:tracks,id',
+            'title' => 'required|string|max:255',
+            'description' => 'required|string|max:2000',
+            'problem_statement' => 'required|string|max:1000',
+            'proposed_solution' => 'required|string|max:2000',
+            'target_audience' => 'required|string|max:500',
+            'technologies' => 'required|array|min:1|max:10',
+            'technologies.*' => 'string|max:100',
+            'market_research' => 'nullable|string|max:1000',
+            'competitive_analysis' => 'nullable|string|max:1000',
+            'business_model' => 'nullable|string|max:1000',
+            'implementation_plan' => 'nullable|string|max:1000',
+            'team_experience' => 'nullable|string|max:1000',
+            'files' => 'nullable|array|max:8',
+            'files.*' => 'file|mimes:pdf,doc,docx,ppt,pptx,jpg,jpeg,png,gif|max:15360', // 15MB
         ];
+    }
+    
+    public function authorize(): bool
+    {
+        $user = $this->user();
+        return $user->hasRole('team_leader') && 
+               $user->team && 
+               $user->team->status === 'approved';
     }
 }
 
@@ -2461,16 +1465,107 @@ class ReviewIdeaRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'status' => 'required|in:approved,rejected,needs_revision',
+            'status' => 'required|in:approved,rejected,needs_revision,under_review',
+            'feedback' => 'required|string|max:2000',
             'score' => 'nullable|integer|min:0|max:100',
-            'feedback' => 'required|string|min:10|max:2000',
-            'revision_notes' => 'nullable|string|max:1000',
+            'criteria_scores' => 'nullable|array',
+            'criteria_scores.innovation' => 'nullable|integer|min:0|max:20',
+            'criteria_scores.feasibility' => 'nullable|integer|min:0|max:20',
+            'criteria_scores.impact' => 'nullable|integer|min:0|max:20',
+            'criteria_scores.presentation' => 'nullable|integer|min:0|max:20',
+            'criteria_scores.technical' => 'nullable|integer|min:0|max:20',
+            'internal_notes' => 'nullable|string|max:1000',
+            'recommend_for_final' => 'boolean',
         ];
+    }
+    
+    public function authorize(): bool
+    {
+        $user = $this->user();
+        $idea = $this->route('idea');
+        
+        // System admin and hackathon admin can review any idea
+        if ($user->hasRole(['system_admin', 'hackathon_admin'])) {
+            return true;
+        }
+        
+        // Track supervisor can only review ideas in their assigned tracks
+        if ($user->hasRole('track_supervisor')) {
+            return $user->assignedTracks->contains($idea->team->track_id);
+        }
+        
+        return false;
+    }
+}
+
+// app/Http/Requests/Idea/IdeaIndexRequest.php
+class IdeaIndexRequest extends FormRequest
+{
+    public function rules(): array
+    {
+        return [
+            'search' => 'nullable|string|max:255',
+            'team_id' => 'nullable|exists:teams,id',
+            'track_id' => 'nullable|exists:tracks,id',
+            'status' => 'nullable|in:draft,submitted,under_review,approved,rejected,needs_revision',
+            'hackathon_id' => 'nullable|exists:hackathon_editions,id',
+            'supervisor_id' => 'nullable|exists:users,id',
+            'score_min' => 'nullable|integer|min:0|max:100',
+            'score_max' => 'nullable|integer|min:0|max:100',
+            'per_page' => 'nullable|integer|min:10|max:100',
+            'sort' => 'nullable|in:title,created_at,updated_at,score,status',
+            'direction' => 'nullable|in:asc,desc',
+        ];
+    }
+}
+
+// app/Http/Requests/Idea/UpdateIdeaRequest.php
+class UpdateIdeaRequest extends FormRequest
+{
+    public function rules(): array
+    {
+        return [
+            'title' => 'required|string|max:255',
+            'description' => 'required|string|max:2000',
+            'problem_statement' => 'required|string|max:1000',
+            'proposed_solution' => 'required|string|max:2000',
+            'target_audience' => 'required|string|max:500',
+            'technologies' => 'required|array|min:1|max:10',
+            'technologies.*' => 'string|max:100',
+            'market_research' => 'nullable|string|max:1000',
+            'competitive_analysis' => 'nullable|string|max:1000',
+            'business_model' => 'nullable|string|max:1000',
+            'implementation_plan' => 'nullable|string|max:1000',
+            'team_experience' => 'nullable|string|max:1000',
+            'remove_files' => 'nullable|array',
+            'remove_files.*' => 'integer|exists:idea_files,id',
+            'new_files' => 'nullable|array|max:8',
+            'new_files.*' => 'file|mimes:pdf,doc,docx,ppt,pptx,jpg,jpeg,png,gif|max:15360',
+        ];
+    }
+    
+    public function authorize(): bool
+    {
+        $user = $this->user();
+        $idea = $this->route('idea');
+        
+        // System admin can edit any idea
+        if ($user->hasRole('system_admin')) {
+            return true;
+        }
+        
+        // Team leader can only edit their team's idea and only if not submitted
+        if ($user->hasRole('team_leader')) {
+            return $idea->team->leader_id === $user->id && 
+                   in_array($idea->status, ['draft', 'needs_revision']);
+        }
+        
+        return false;
     }
 }
 ```
 
-#### **Workshop Management Requests**
+### **🏢 Workshop Management Requests**
 ```php
 // app/Http/Requests/Workshop/CreateWorkshopRequest.php
 class CreateWorkshopRequest extends FormRequest
@@ -2478,39 +1573,217 @@ class CreateWorkshopRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => 'required|string|min:5|max:255',
-            'description' => 'required|string|min:20|max:2000',
-            'hackathon_id' => 'required|exists:hackathons,id',
+            'title' => 'required|string|max:255',
+            'description' => 'required|string|max:2000',
+            'hackathon_id' => 'required|exists:hackathon_editions,id',
             'start_datetime' => 'required|date|after:now',
             'end_datetime' => 'required|date|after:start_datetime',
-            'location' => 'required|string|max:500',
-            'location_type' => 'required|in:in_person,remote,hybrid',
-            'remote_link' => 'nullable|required_if:location_type,remote,hybrid|url',
+            'location' => 'required|string|max:255',
             'max_attendees' => 'required|integer|min:1|max:1000',
+            'requirements' => 'nullable|string|max:1000',
+            'materials_url' => 'nullable|url|max:500',
             'speaker_ids' => 'required|array|min:1',
             'speaker_ids.*' => 'exists:speakers,id',
-            'organization_ids' => 'required|array|min:1',
+            'organization_ids' => 'nullable|array',
             'organization_ids.*' => 'exists:organizations,id',
-            'prerequisites' => 'nullable|string|max:1000',
-            'materials_url' => 'nullable|url',
+            'is_public' => 'boolean',
+            'requires_registration' => 'boolean',
+            'send_notifications' => 'boolean',
+            'track_ids' => 'nullable|array',
+            'track_ids.*' => 'exists:tracks,id',
+        ];
+    }
+    
+    public function authorize(): bool
+    {
+        return $this->user()->hasRole(['hackathon_admin', 'system_admin']);
+    }
+}
+
+// app/Http/Requests/Workshop/UpdateWorkshopRequest.php
+class UpdateWorkshopRequest extends FormRequest
+{
+    public function rules(): array
+    {
+        return [
+            'title' => 'required|string|max:255',
+            'description' => 'required|string|max:2000',
+            'start_datetime' => 'required|date',
+            'end_datetime' => 'required|date|after:start_datetime',
+            'location' => 'required|string|max:255',
+            'max_attendees' => 'required|integer|min:1|max:1000',
+            'requirements' => 'nullable|string|max:1000',
+            'materials_url' => 'nullable|url|max:500',
+            'speaker_ids' => 'required|array|min:1',
+            'speaker_ids.*' => 'exists:speakers,id',
+            'organization_ids' => 'nullable|array',
+            'organization_ids.*' => 'exists:organizations,id',
+            'status' => 'required|in:draft,published,cancelled,completed',
+            'track_ids' => 'nullable|array',
+            'track_ids.*' => 'exists:tracks,id',
         ];
     }
 }
 
-// app/Http/Requests/Workshop/RegisterWorkshopRequest.php
+// app/Http/Requests/Workshop/RegisterWorkshopRequest.php (Public registration)
 class RegisterWorkshopRequest extends FormRequest
 {
     public function rules(): array
     {
         return [
-            'workshop_id' => 'required|exists:workshops,id',
-            'special_requirements' => 'nullable|string|max:500',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'phone' => 'required|string|max:20',
+            'national_id' => 'required|string|max:20|unique:workshop_registrations,national_id,NULL,id,workshop_id,' . $this->route('workshop')->id,
+            'job_title' => 'nullable|string|max:255',
+            'job_type' => 'required|in:student,employee,entrepreneur,other',
+            'organization' => 'nullable|string|max:255',
+            'experience_level' => 'required|in:beginner,intermediate,advanced',
+            'interests' => 'nullable|array|max:5',
+            'interests.*' => 'string|max:100',
+            'dietary_requirements' => 'nullable|string|max:200',
+            'accessibility_needs' => 'nullable|string|max:200',
+        ];
+    }
+    
+    public function authorize(): bool
+    {
+        $workshop = $this->route('workshop');
+        return $workshop->is_public && 
+               $workshop->requires_registration &&
+               $workshop->start_datetime > now() &&
+               $workshop->current_registrations < $workshop->max_attendees;
+    }
+}
+
+// app/Http/Requests/Workshop/WorkshopIndexRequest.php
+class WorkshopIndexRequest extends FormRequest
+{
+    public function rules(): array
+    {
+        return [
+            'search' => 'nullable|string|max:255',
+            'hackathon_id' => 'nullable|exists:hackathon_editions,id',
+            'date_from' => 'nullable|date',
+            'date_to' => 'nullable|date|after_or_equal:date_from',
+            'status' => 'nullable|in:draft,published,cancelled,completed',
+            'speaker_id' => 'nullable|exists:speakers,id',
+            'organization_id' => 'nullable|exists:organizations,id',
+            'track_id' => 'nullable|exists:tracks,id',
+            'has_available_spots' => 'nullable|boolean',
+            'per_page' => 'nullable|integer|min:10|max:100',
+            'sort' => 'nullable|in:start_datetime,title,created_at',
+            'direction' => 'nullable|in:asc,desc',
+        ];
+    }
+}
+
+// app/Http/Requests/Workshop/MarkAttendanceRequest.php
+class MarkAttendanceRequest extends FormRequest
+{
+    public function rules(): array
+    {
+        return [
+            'registration_id' => 'required|exists:workshop_registrations,id',
+            'attendance_status' => 'required|in:present,absent,late',
+            'notes' => 'nullable|string|max:500',
+        ];
+    }
+    
+    public function authorize(): bool
+    {
+        $user = $this->user();
+        $workshop = $this->route('workshop');
+        
+        return $user->hasRole(['hackathon_admin', 'system_admin', 'track_supervisor']) ||
+               $workshop->speakers->contains('user_id', $user->id);
+    }
+}
+```
+
+### **📰 News Management Requests**
+```php
+// app/Http/Requests/News/CreateNewsRequest.php
+class CreateNewsRequest extends FormRequest
+{
+    public function rules(): array
+    {
+        return [
+            'title' => 'required|string|max:255',
+            'content' => 'required|string|max:5000',
+            'excerpt' => 'nullable|string|max:500',
+            'category' => 'required|string|in:announcements,workshops,partnerships,winners,general',
+            'hackathon_id' => 'required|exists:hackathon_editions,id',
+            'featured_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'status' => 'required|in:draft,published,archived',
+            'publish_at' => 'nullable|date|after_or_equal:now',
+            'auto_tweet' => 'boolean',
+            'tweet_content' => 'nullable|string|max:280',
+            'tags' => 'nullable|array|max:10',
+            'tags.*' => 'string|max:50',
+            'target_audience' => 'nullable|array',
+            'target_audience.*' => 'in:all,participants,team_leaders,supervisors,admins',
+            'priority' => 'required|in:low,normal,high,urgent',
+            'expires_at' => 'nullable|date|after:now',
+        ];
+    }
+    
+    public function authorize(): bool
+    {
+        return $this->user()->hasRole(['hackathon_admin', 'system_admin']);
+    }
+}
+
+// app/Http/Requests/News/UpdateNewsRequest.php
+class UpdateNewsRequest extends FormRequest
+{
+    public function rules(): array
+    {
+        return [
+            'title' => 'required|string|max:255',
+            'content' => 'required|string|max:5000',
+            'excerpt' => 'nullable|string|max:500',
+            'category' => 'required|string|in:announcements,workshops,partnerships,winners,general',
+            'featured_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'status' => 'required|in:draft,published,archived',
+            'publish_at' => 'nullable|date',
+            'auto_tweet' => 'boolean',
+            'tweet_content' => 'nullable|string|max:280',
+            'tags' => 'nullable|array|max:10',
+            'tags.*' => 'string|max:50',
+            'target_audience' => 'nullable|array',
+            'target_audience.*' => 'in:all,participants,team_leaders,supervisors,admins',
+            'priority' => 'required|in:low,normal,high,urgent',
+            'expires_at' => 'nullable|date|after:now',
+            'send_update_notification' => 'boolean',
+        ];
+    }
+}
+
+// app/Http/Requests/News/NewsIndexRequest.php
+class NewsIndexRequest extends FormRequest
+{
+    public function rules(): array
+    {
+        return [
+            'search' => 'nullable|string|max:255',
+            'category' => 'nullable|string|in:announcements,workshops,partnerships,winners,general',
+            'status' => 'nullable|in:draft,published,archived',
+            'hackathon_id' => 'nullable|exists:hackathon_editions,id',
+            'author_id' => 'nullable|exists:users,id',
+            'date_from' => 'nullable|date',
+            'date_to' => 'nullable|date|after_or_equal:date_from',
+            'priority' => 'nullable|in:low,normal,high,urgent',
+            'has_twitter_post' => 'nullable|boolean',
+            'per_page' => 'nullable|integer|min:10|max:100',
+            'sort' => 'nullable|in:title,created_at,updated_at,publish_at,priority',
+            'direction' => 'nullable|in:asc,desc',
         ];
     }
 }
 ```
 
-#### **Settings Management Requests**
+### **⚙️ Settings Management Requests**
 ```php
 // app/Http/Requests/Settings/UpdateSmtpRequest.php
 class UpdateSmtpRequest extends FormRequest
@@ -2523,9 +1796,15 @@ class UpdateSmtpRequest extends FormRequest
             'smtp_username' => 'required|string|max:255',
             'smtp_password' => 'required|string|max:255',
             'smtp_encryption' => 'required|in:tls,ssl,none',
-            'from_email' => 'required|email',
-            'from_name' => 'required|string|max:255',
+            'mail_from_address' => 'required|email|max:255',
+            'mail_from_name' => 'required|string|max:255',
+            'test_email' => 'nullable|email|max:255',
         ];
+    }
+    
+    public function authorize(): bool
+    {
+        return $this->user()->hasRole('system_admin');
     }
 }
 
@@ -2535,425 +1814,791 @@ class UpdateBrandingRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'app_name' => 'required|string|min:2|max:100',
-            'primary_color' => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
-            'secondary_color' => 'nullable|string|regex:/^#[0-9A-Fa-f]{6}$/',
-            'accent_color' => 'nullable|string|regex:/^#[0-9A-Fa-f]{6}$/',
-            'logo' => 'nullable|image|mimes:png,jpg,jpeg,svg|max:2048',
+            'app_name' => 'required|string|max:255',
+            'app_description' => 'nullable|string|max:500',
+            'logo' => 'nullable|image|mimes:jpg,jpeg,png,svg|max:2048',
+            'logo_dark' => 'nullable|image|mimes:jpg,jpeg,png,svg|max:2048',
+            'favicon' => 'nullable|image|mimes:ico,png|max:512',
+            'primary_color' => 'required|string|regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/',
+            'secondary_color' => 'required|string|regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/',
+            'accent_color' => 'nullable|string|regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/',
+            'footer_text' => 'nullable|string|max:500',
+            'copyright_text' => 'nullable|string|max:200',
+            'contact_email' => 'nullable|email|max:255',
+            'contact_phone' => 'nullable|string|max:20',
+            'social_media' => 'nullable|array',
+            'social_media.twitter' => 'nullable|url|max:255',
+            'social_media.linkedin' => 'nullable|url|max:255',
+            'social_media.facebook' => 'nullable|url|max:255',
+            'social_media.instagram' => 'nullable|url|max:255',
         ];
     }
 }
 
-// app/Http/Requests/Settings/UpdateSmsApiRequest.php
-class UpdateSmsApiRequest extends FormRequest
+// app/Http/Requests/Settings/UpdateTwitterRequest.php
+class UpdateTwitterRequest extends FormRequest
 {
     public function rules(): array
     {
         return [
-            'provider' => 'required|in:twilio,nexmo,aws_sns',
-            'api_key' => 'required|string|max:255',
-            'api_secret' => 'required|string|max:255',
-            'from_number' => 'required|string|max:20',
-            'is_enabled' => 'required|boolean',
+            'twitter_api_key' => 'required|string|max:255',
+            'twitter_api_secret' => 'required|string|max:255',
+            'twitter_access_token' => 'required|string|max:255',
+            'twitter_access_token_secret' => 'required|string|max:255',
+            'twitter_bearer_token' => 'nullable|string|max:255',
+            'auto_tweet_news' => 'boolean',
+            'auto_tweet_workshops' => 'boolean',
+            'auto_tweet_deadlines' => 'boolean',
+            'tweet_template_news' => 'nullable|string|max:200',
+            'tweet_template_workshop' => 'nullable|string|max:200',
+            'tweet_template_deadline' => 'nullable|string|max:200',
+            'default_hashtags' => 'nullable|array|max:10',
+            'default_hashtags.*' => 'string|max:50|regex:/^[a-zA-Z0-9_]+$/',
+        ];
+    }
+}
+
+// app/Http/Requests/Settings/UpdateSmsRequest.php
+class UpdateSmsRequest extends FormRequest
+{
+    public function rules(): array
+    {
+        return [
+            'sms_provider' => 'required|in:twilio,nexmo,unifonic,msegat',
+            'sms_api_key' => 'required|string|max:255',
+            'sms_api_secret' => 'required|string|max:255',
+            'sms_from_number' => 'required|string|max:20',
+            'sms_enabled' => 'boolean',
+            'sms_notifications' => 'nullable|array',
+            'sms_notifications.*' => 'in:team_approval,idea_feedback,workshop_reminder,deadline_warning',
+            'test_phone_number' => 'nullable|string|max:20',
         ];
     }
 }
 ```
 
-#### **News Management Requests**
+### **🏆 Edition Management Requests**
 ```php
-// app/Http/Requests/News/CreateNewsRequest.php
-class CreateNewsRequest extends FormRequest
+// app/Http/Requests/Edition/CreateHackathonEditionRequest.php
+class CreateHackathonEditionRequest extends FormRequest
 {
     public function rules(): array
     {
         return [
-            'title' => 'required|string|min:5|max:255',
-            'content' => 'required|string|min:50|max:10000',
-            'excerpt' => 'nullable|string|max:500',
-            'hackathon_id' => 'required|exists:hackathons,id',
-            'featured_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120', // 5MB
-            'status' => 'required|in:draft,published,archived',
-            'publish_at' => 'nullable|date|after:now',
-            'auto_tweet' => 'nullable|boolean',
-            'tweet_content' => 'nullable|string|max:280',
-            'media_files.*' => 'file|mimes:jpg,jpeg,png,pdf,mp4|max:20480', // 20MB
+            'name' => 'required|string|max:255',
+            'year' => 'required|integer|min:2024|max:2030|unique:hackathon_editions,year',
+            'description' => 'nullable|string|max:2000',
+            'theme' => 'nullable|string|max:255',
+            'hackathon_admin_id' => 'required|exists:users,id',
+            'registration_start_date' => 'required|date|after_or_equal:today',
+            'registration_end_date' => 'required|date|after:registration_start_date',
+            'idea_submission_start_date' => 'required|date|after_or_equal:registration_start_date',
+            'idea_submission_end_date' => 'required|date|after:idea_submission_start_date',
+            'event_start_date' => 'required|date|after_or_equal:idea_submission_end_date',
+            'event_end_date' => 'required|date|after:event_start_date',
+            'location' => 'nullable|string|max:255',
+            'max_teams' => 'required|integer|min:1|max:1000',
+            'max_team_size' => 'required|integer|min:2|max:10',
+            'logo' => 'nullable|image|mimes:jpg,jpeg,png,svg|max:2048',
+            'banner' => 'nullable|image|mimes:jpg,jpeg,png|max:4096',
+            'theme_color' => 'nullable|string|regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/',
+            'prizes' => 'nullable|array',
+            'prizes.*.title' => 'required|string|max:255',
+            'prizes.*.amount' => 'required|numeric|min:0',
+            'prizes.*.currency' => 'required|string|in:SAR,USD',
+            'prizes.*.description' => 'nullable|string|max:500',
+            'rules_and_regulations' => 'nullable|string|max:5000',
+            'judging_criteria' => 'nullable|array',
+            'judging_criteria.*' => 'required|string|max:255',
+            'sponsors' => 'nullable|array',
+            'sponsors.*' => 'exists:organizations,id',
+        ];
+    }
+    
+    public function authorize(): bool
+    {
+        return $this->user()->hasRole('system_admin');
+    }
+}
+
+// app/Http/Requests/Edition/UpdateHackathonEditionRequest.php
+class UpdateHackathonEditionRequest extends FormRequest
+{
+    public function rules(): array
+    {
+        $editionId = $this->route('edition')?->id;
+        
+        return [
+            'name' => 'required|string|max:255',
+            'year' => 'required|integer|min:2024|max:2030|unique:hackathon_editions,year,' . $editionId,
+            'description' => 'nullable|string|max:2000',
+            'theme' => 'nullable|string|max:255',
+            'hackathon_admin_id' => 'required|exists:users,id',
+            'registration_start_date' => 'required|date',
+            'registration_end_date' => 'required|date|after:registration_start_date',
+            'idea_submission_start_date' => 'required|date|after_or_equal:registration_start_date',
+            'idea_submission_end_date' => 'required|date|after:idea_submission_start_date',
+            'event_start_date' => 'required|date|after_or_equal:idea_submission_end_date',
+            'event_end_date' => 'required|date|after:event_start_date',
+            'location' => 'nullable|string|max:255',
+            'status' => 'required|in:draft,active,completed,archived',
+            'is_current' => 'boolean',
+            'max_teams' => 'required|integer|min:1|max:1000',
+            'max_team_size' => 'required|integer|min:2|max:10',
+            'logo' => 'nullable|image|mimes:jpg,jpeg,png,svg|max:2048',
+            'banner' => 'nullable|image|mimes:jpg,jpeg,png|max:4096',
+            'theme_color' => 'nullable|string|regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/',
+            'prizes' => 'nullable|array',
+            'prizes.*.title' => 'required|string|max:255',
+            'prizes.*.amount' => 'required|numeric|min:0',
+            'prizes.*.currency' => 'required|string|in:SAR,USD',
+            'prizes.*.description' => 'nullable|string|max:500',
+            'rules_and_regulations' => 'nullable|string|max:5000',
+            'judging_criteria' => 'nullable|array',
+            'judging_criteria.*' => 'required|string|max:255',
+            'sponsors' => 'nullable|array',
+            'sponsors.*' => 'exists:organizations,id',
+            'allow_late_registration' => 'boolean',
+            'allow_late_submission' => 'boolean',
         ];
     }
 }
 ```
 
-### **⚡ 2-HOUR IMPLEMENTATION CHECKLIST**
+---
 
-#### **PHASE 1: Database Setup (15 minutes)**
-```bash
-# Create missing migrations
-php artisan make:migration create_idea_reviews_table
-php artisan make:migration create_workshop_attendances_table  
-php artisan make:migration create_news_media_table
-php artisan make:migration add_settings_columns_to_settings_table
+## 🗄️ **COMPLETE SEEDER DOCUMENTATION**
 
-# Run migrations
-php artisan migrate
+### **✅ EXISTING SEEDERS ANALYSIS**
+```
+✅ Already exist (20 seeders):
+DatabaseSeeder.php ✅              - Main seeder orchestrator
+RolesAndPermissionsSeeder.php ✅   - 5 roles + permissions
+UserSeeder.php ✅                  - Admin users for each role
+SettingSeeder.php ✅               - System settings
+HackathonSeeder.php ✅             - Current hackathon edition
+TrackSeeder.php ✅                 - Competition tracks
+TeamSeeder.php ✅                  - Sample teams
+IdeaSeeder.php ✅                  - Sample ideas
+NewsSeeder.php ✅                  - Sample news articles
+OrganizationSeeder.php ✅          - Partner organizations
+SpeakerSeeder.php ✅               - Workshop speakers
+WorkshopSeeder.php ✅              - Sample workshops (via HackathonSeeder)
+And 8 more supporting seeders ✅
 ```
 
-#### **PHASE 2: Request Classes (20 minutes)**
+### **📊 DETAILED SEEDER RESPONSIBILITIES**
+
+#### **1. RolesAndPermissionsSeeder.php** 
+```php
+// Creates exactly these 5 roles with specific permissions:
+'system_admin' => [
+    'manage-hackathon-editions', 'manage-users', 'manage-system-settings',
+    'view-all-teams', 'manage-all-ideas', 'manage-all-workshops',
+    'manage-all-news', 'view-system-reports', 'manage-twitter-integration'
+]
+
+'hackathon_admin' => [
+    'manage-current-edition', 'approve-reject-teams', 'review-ideas',
+    'manage-workshops', 'manage-news', 'assign-supervisors',
+    'view-edition-reports', 'export-edition-data'
+]
+
+'track_supervisor' => [
+    'view-assigned-tracks', 'review-track-ideas', 'manage-track-workshops',
+    'view-track-teams', 'provide-feedback', 'score-ideas'
+]
+
+'team_leader' => [
+    'create-manage-team', 'submit-edit-ideas', 'invite-team-members',
+    'register-workshops', 'view-team-progress', 'access-team-resources'
+]
+
+'team_member' => [
+    'view-team-info', 'view-team-ideas', 'register-workshops',
+    'view-track-info', 'view-news', 'leave-team'
+]
+```
+
+#### **2. UserSeeder.php**
+```php
+// Creates admin users for each role with realistic Saudi data:
+1. System Admin: 
+   - Email: admin@ruman.sa 
+   - Name: المدير العام
+   - University: جامعة الملك سعود
+   - College: كلية علوم الحاسب والمعلومات
+
+2. Hackathon Admin: 
+   - Email: hackathon@ruman.sa
+   - Name: مدير الهاكاثون
+   - University: جامعة الملك فهد للبترول والمعادن
+   - College: كلية الهندسة
+
+3. Track Supervisor: 
+   - Email: supervisor@ruman.sa
+   - Name: مشرف المسار
+   - Assigned to: FinTech Track
+   - University: جامعة الإمام محمد بن سعود
+
+4. Team Leader: 
+   - Email: leader@ruman.sa
+   - Name: قائد الفريق
+   - Team: Team Alpha (FinTech Track)
+
+5. Team Member: 
+   - Email: member@ruman.sa
+   - Name: عضو الفريق
+   - Member of: Team Alpha
+
+// All users have 2FA disabled for testing and realistic Saudi phone numbers
+```
+
+#### **3. HackathonSeeder.php**
+```php
+// Creates current hackathon edition with proper Arabic/English data:
+'name' => 'Ruman Hackathon 2025 - رومان هاكاثون ٢٠٢٥',
+'year' => 2025,
+'status' => 'active',
+'is_current' => true,
+'theme' => 'Digital Transformation in Saudi Arabia',
+'description' => 'Hackathon focused on digital innovation supporting Saudi Vision 2030',
+'registration_start_date' => '2025-01-15 00:00:00',
+'registration_end_date' => '2025-02-15 23:59:59',
+'idea_submission_start_date' => '2025-02-01 00:00:00',
+'idea_submission_end_date' => '2025-03-01 23:59:59',
+'event_start_date' => '2025-03-15 08:00:00',
+'event_end_date' => '2025-03-17 18:00:00',
+'location' => 'King Abdulaziz City for Science and Technology, Riyadh',
+'max_teams' => 200,
+'max_team_size' => 5,
+'prizes' => [
+    ['title' => 'First Place', 'amount' => 50000, 'currency' => 'SAR'],
+    ['title' => 'Second Place', 'amount' => 30000, 'currency' => 'SAR'],
+    ['title' => 'Third Place', 'amount' => 20000, 'currency' => 'SAR'],
+    ['title' => 'Best Innovation', 'amount' => 15000, 'currency' => 'SAR']
+]
+```
+
+#### **4. TrackSeeder.php**
+```php
+// Creates 8 competition tracks aligned with Saudi Vision 2030:
+1. FinTech - التقنية المالية
+   - Description: Digital payment solutions, blockchain, Islamic finance
+   - Max Teams: 25
+   - Supervisor: Dr. Ahmed Al-Rashid
+
+2. HealthTech - تقنية الصحة  
+   - Description: Digital health solutions, telemedicine, health data
+   - Max Teams: 25
+   - Supervisor: Dr. Fatima Al-Zahra
+
+3. EdTech - التقنية التعليمية
+   - Description: E-learning platforms, educational AI, digital literacy
+   - Max Teams: 25
+   - Supervisor: Dr. Mohammed Al-Ghamdi
+
+4. Smart Cities - المدن الذكية
+   - Description: IoT for cities, traffic optimization, sustainability
+   - Max Teams: 25
+   - Supervisor: Eng. Noura Al-Mansouri
+
+5. AI & Machine Learning - الذكاء الاصطناعي
+   - Description: AI applications, natural language processing, computer vision
+   - Max Teams: 30
+   - Supervisor: Dr. Khalid Al-Dosari
+
+6. Cybersecurity - الأمن السيبراني
+   - Description: Security solutions, privacy protection, secure communications
+   - Max Teams: 20
+   - Supervisor: Dr. Sarah Al-Mutairi
+
+7. E-commerce - التجارة الإلكترونية
+   - Description: Online marketplaces, logistics, supply chain
+   - Max Teams: 25
+   - Supervisor: Mr. Omar Al-Harbi
+
+8. Green Technology - التقنية الخضراء
+   - Description: Renewable energy, environmental monitoring, sustainability
+   - Max Teams: 25
+   - Supervisor: Dr. Amina Al-Rasheed
+```
+
+#### **5. TeamSeeder.php** 
+```php
+// Creates 40 sample teams (5 per track) with realistic Saudi names:
+Teams per track:
+- "فريق الابتكار" (Innovation Team)  
+- "فريق المستقبل" (Future Team)
+- "فريق الرؤية" (Vision Team)
+- "فريق التقنية" (Technology Team)
+- "فريق النجاح" (Success Team)
+
+Each team has:
+- Leader from team_leader role
+- 2-4 members from team_member role
+- Status: mix of "pending", "approved", "rejected"
+- Universities: Real Saudi universities (جامعة الملك سعود، جامعة الملك فهد، جامعة الإمام)
+- Colleges: Computer Science, Engineering, Business, Medicine
+- Join codes: AUTO-GENERATED (e.g., "INNO2025", "FUTR2025")
+- Realistic Arabic team descriptions
+```
+
+#### **6. IdeaSeeder.php**
+```php
+// Creates 32 sample ideas (4 per track) with comprehensive Saudi context:
+
+FinTech Ideas:
+1. "منصة الدفع الذكية" - Smart Payment Platform
+   - Islamic finance compliant digital wallet
+   - Technologies: ["React Native", "Node.js", "MongoDB", "Blockchain"]
+   
+2. "حلول التمويل الجماعي" - Crowdfunding Solutions
+   - Sharia-compliant crowdfunding platform
+   - Technologies: ["Vue.js", "Laravel", "PostgreSQL", "Stripe"]
+
+HealthTech Ideas:
+1. "مساعد الصحة الذكي" - Smart Health Assistant  
+   - AI-powered health monitoring for elderly
+   - Technologies: ["Python", "TensorFlow", "Flutter", "AWS"]
+
+2. "منصة التطبيب عن بعد" - Telemedicine Platform
+   - Remote consultations with Arabic language support
+   - Technologies: ["React", "WebRTC", "Firebase", "Google Cloud"]
+
+Each idea includes:
+- Complete Arabic/English descriptions (500+ words)
+- Problem statement addressing Saudi challenges
+- Proposed solution with technical implementation
+- Market research specific to Saudi Arabia
+- 2-4 uploaded files (PDFs, presentations, mockups)
+- Status: mix of "draft", "submitted", "under_review", "approved"
+- Realistic scoring from supervisors (60-95 points)
+```
+
+#### **7. NewsSeeder.php**
+```php
+// Creates 15 news articles covering hackathon lifecycle:
+
+Announcements (5 articles):
+1. "فتح باب التسجيل في هاكاثون رومان 2025"
+2. "الإعلان عن المسارات المتاحة والجوائز" 
+3. "تمديد فترة التسجيل حتى نهاية فبراير"
+4. "بدء فترة تسليم الأفكار والمشاريع"
+5. "الإعلان عن لجان التحكيم والمقيمين"
+
+Workshop Announcements (5 articles):
+1. "ورشة عمل: مقدمة في التقنية المالية"
+2. "ورشة عمل: تطوير تطبيقات الذكاء الاصطناعي"
+3. "ورشة عمل: أمن المعلومات والحماية السيبرانية"
+4. "ورشة عمل: ريادة الأعمال والاستثمار"
+5. "ورشة عمل: العرض والتقديم الفعال"
+
+Partnerships (3 articles):
+1. "شراكة استراتيجية مع شركة أرامكو السعودية"
+2. "انضمام جامعة الملك سعود كشريك أكاديمي"
+3. "دعم من صندوق الاستثمارات العامة"
+
+Results (2 articles):
+1. "الإعلان عن المتأهلين للمرحلة النهائية"
+2. "تكريم الفائزين والإعلان عن الجوائز"
+
+Each article includes:
+- Arabic/English bilingual content
+- Featured images from sample image pool
+- Proper publication dates across 4 months
+- Auto-tweet enabled for published articles
+- View counts (500-2500 views)
+- Realistic engagement metrics
+```
+
+#### **8. OrganizationSeeder.php & SpeakerSeeder.php**
+```php
+// Organizations: 12 major Saudi companies and institutions
+[
+    'Saudi Aramco - أرامكو السعودية',
+    'Saudi Telecom Company - شركة الاتصالات السعودية', 
+    'Al Rajhi Bank - مصرف الراجحي',
+    'SABIC - سابك',
+    'King Saud University - جامعة الملك سعود',
+    'KFUPM - جامعة الملك فهد للبترول والمعادن',
+    'KAUST - جامعة الملك عبدالله للعلوم والتقنية',
+    'Saudi Investment Fund - صندوق الاستثمارات العامة',
+    'Elm Company - شركة علم',
+    'STC Pay - إس تي سي باي',
+    'Careem Saudi Arabia - كريم السعودية',
+    'Noon.com - نون'
+]
+
+// Speakers: 20 industry experts with Saudi/regional representation
+- Mix of Saudi and international speakers
+- Expertise covers all 8 tracks
+- Realistic bio information and social links  
+- Professional photos and credentials
+- Association with 2-3 partner organizations
+- Arabic/English speaker names and bios
+```
+
+#### **9. WorkshopSeeder.php**
+```php
+// Creates 12 workshops spread across hackathon timeline:
+
+Pre-Event Workshops (4 workshops):
+1. "مقدمة في ريادة الأعمال والابتكار" 
+   - Date: 2025-02-01, Duration: 3 hours
+   - Speaker: د. أحمد الراشد (Saudi Aramco)
+   - Max Attendees: 100
+
+2. "أساسيات تطوير التطبيقات"
+   - Date: 2025-02-08, Duration: 4 hours  
+   - Speaker: م. نورا المنصوري (STC)
+   - Max Attendees: 80
+
+During Event Workshops (6 workshops):
+3-8. Technical workshops during hackathon weekend
+   - Mentorship sessions
+   - Technical support
+   - Pitch preparation
+   - Industry insights
+
+Post-Event Workshops (2 workshops):
+9. "عرض النتائج والتقييم"
+10. "الاستثمار والتمويل للمشاريع الناشئة"
+
+Each workshop includes:
+- Arabic/English titles and descriptions
+- Realistic Saudi venue locations
+- Proper capacity limits (50-150 attendees)
+- Materials URLs and requirements
+- Registration tracking setup
+- QR codes for attendance
+- Pre/post event surveys
+```
+
+#### **10. QRCodeSeeder.php (NEW)**
+```php
+// Creates QR codes for workshop attendance tracking:
+- Unique QR code per workshop
+- Embedded attendance URLs
+- Printable format specifications  
+- Security tokens to prevent fraud
+- Mobile-optimized scanning interface
+- Automatic attendance marking
+- Integration with workshop registration system
+```
+
+---
+
+## 🚀 **IMPLEMENTATION TIMELINE - PHASE BY PHASE**
+
+### **PHASE 1: Request Classes & Services (45 minutes)**
 ```bash
-# Create all validation request classes
+# Create all Request classes (35+ classes)
+mkdir -p app/Http/Requests/{Auth,Team,Idea,Workshop,News,Settings,Edition,Public}
+
+# Authentication requests
 php artisan make:request Auth/LoginRequest
 php artisan make:request Auth/RegisterRequest
+
+# Team management requests  
 php artisan make:request Team/CreateTeamRequest
 php artisan make:request Team/UpdateTeamRequest
 php artisan make:request Team/AddMemberRequest
+php artisan make:request Team/TeamIndexRequest
+php artisan make:request Team/TeamApprovalRequest
+
+# Idea management requests
 php artisan make:request Idea/SubmitIdeaRequest
 php artisan make:request Idea/ReviewIdeaRequest
+php artisan make:request Idea/IdeaIndexRequest
+php artisan make:request Idea/UpdateIdeaRequest
+
+# Workshop requests
 php artisan make:request Workshop/CreateWorkshopRequest
+php artisan make:request Workshop/UpdateWorkshopRequest
+php artisan make:request Workshop/RegisterWorkshopRequest
+php artisan make:request Workshop/WorkshopIndexRequest
+php artisan make:request Workshop/MarkAttendanceRequest
+
+# News management requests
+php artisan make:request News/CreateNewsRequest
+php artisan make:request News/UpdateNewsRequest
+php artisan make:request News/NewsIndexRequest
+
+# Settings requests
 php artisan make:request Settings/UpdateSmtpRequest
 php artisan make:request Settings/UpdateBrandingRequest
-php artisan make:request Settings/UpdateSmsApiRequest
-php artisan make:request News/CreateNewsRequest
+php artisan make:request Settings/UpdateTwitterRequest
+php artisan make:request Settings/UpdateSmsRequest
+
+# Edition management requests
+php artisan make:request Edition/CreateHackathonEditionRequest
+php artisan make:request Edition/UpdateHackathonEditionRequest
+
+# Public requests
+php artisan make:request Public/WorkshopRegistrationRequest
+
+# Create all Service classes (10 services)
+mkdir -p app/Services
+php artisan make:service TeamService
+php artisan make:service IdeaService  
+php artisan make:service WorkshopService
+php artisan make:service NewsService
+php artisan make:service HackathonEditionService
+php artisan make:service UserService
+php artisan make:service SettingsService
+php artisan make:service NotificationService
+php artisan make:service TwitterService
+php artisan make:service QRCodeService
 ```
 
-#### **PHASE 3: Controllers & Services (45 minutes)**
+### **PHASE 2: Controllers (60 minutes)**
 ```bash
-# System Admin Controllers
+# Create role-based controller directories
+mkdir -p app/Http/Controllers/{SystemAdmin,HackathonAdmin,TrackSupervisor,TeamLeader,TeamMember,Public}
+
+# System Admin controllers (8 controllers)
 php artisan make:controller SystemAdmin/DashboardController
+php artisan make:controller SystemAdmin/HackathonEditionController --resource
+php artisan make:controller SystemAdmin/UserController --resource
 php artisan make:controller SystemAdmin/TeamController --resource
 php artisan make:controller SystemAdmin/IdeaController --resource
-php artisan make:controller SystemAdmin/WorkshopController --resource
-php artisan make:controller SystemAdmin/SpeakerController --resource
-php artisan make:controller SystemAdmin/OrganizationController --resource
 php artisan make:controller SystemAdmin/SettingsController
-php artisan make:controller SystemAdmin/NewsController --resource
+php artisan make:controller SystemAdmin/TwitterController
 php artisan make:controller SystemAdmin/ReportController
 
-# Hackathon Admin Controllers
+# Hackathon Admin controllers (7 controllers)
 php artisan make:controller HackathonAdmin/DashboardController
 php artisan make:controller HackathonAdmin/TeamController --resource
 php artisan make:controller HackathonAdmin/IdeaController --resource
 php artisan make:controller HackathonAdmin/WorkshopController --resource
+php artisan make:controller HackathonAdmin/NewsController --resource
+php artisan make:controller HackathonAdmin/TrackController
+php artisan make:controller HackathonAdmin/ReportController
 
-# Team Leader Controllers
+# Track Supervisor controllers (4 controllers)
+php artisan make:controller TrackSupervisor/DashboardController
+php artisan make:controller TrackSupervisor/IdeaController
+php artisan make:controller TrackSupervisor/WorkshopController
+php artisan make:controller TrackSupervisor/TeamController
+
+# Team Leader controllers (4 controllers)
 php artisan make:controller TeamLeader/DashboardController
-php artisan make:controller TeamLeader/TeamController --resource
-php artisan make:controller TeamLeader/IdeaController --resource
+php artisan make:controller TeamLeader/TeamController
+php artisan make:controller TeamLeader/IdeaController
+php artisan make:controller TeamLeader/WorkshopController
 
-# Services
-php artisan make:service TeamService
-php artisan make:service IdeaService
-php artisan make:service WorkshopService
-php artisan make:service UserService
-php artisan make:service HackathonService
-php artisan make:service ReportService
-php artisan make:service SettingsService
+# Team Member controllers (4 controllers)
+php artisan make:controller TeamMember/DashboardController
+php artisan make:controller TeamMember/TeamController
+php artisan make:controller TeamMember/WorkshopController
+php artisan make:controller TeamMember/IdeaController
+
+# Public controllers (4 controllers)
+php artisan make:controller Public/PublicController
+php artisan make:controller Public/WorkshopController
+php artisan make:controller Public/QRScannerController
+php artisan make:controller Public/NewsController
 ```
 
-#### **PHASE 4: Frontend Components (30 minutes)**
-- Update NavSidebarDesktop.vue with role-based menus
-- Create tab-based components for Settings, Workshops, Ideas, News
-- Implement all form components using existing Datatable.vue
-
-#### **PHASE 5: API Routes & Testing (10 minutes)**
+### **PHASE 3: Frontend Navigation Enhancement (30 minutes)**
 ```bash
-# Add all routes to api.php and web.php
-# Test key endpoints
-php artisan serve
+# Update existing navigation component
+# File: resources/js/Components/NavSidebarDesktop.vue
+
+# Add role-based menu system:
+# - Update navigationSections to be computed based on user role
+# - Add role detection logic
+# - Implement dynamic menu rendering
+# - Add Arabic translations for menu items
+# - Include proper icons for each section
 ```
 
-### **🎯 EXACT FILE STRUCTURE TO CREATE**
+### **PHASE 4: Frontend Pages (90 minutes)**
+```bash
+# Create role-based page directories
+mkdir -p resources/js/Pages/{SystemAdmin,HackathonAdmin,TrackSupervisor,TeamLeader,TeamMember,Public}
 
-#### **Controllers (23 files)**
-```
-app/Http/Controllers/
-├── SystemAdmin/
-│   ├── DashboardController.php
-│   ├── TeamController.php
-│   ├── IdeaController.php
-│   ├── WorkshopController.php
-│   ├── SpeakerController.php
-│   ├── OrganizationController.php
-│   ├── SettingsController.php
-│   ├── NewsController.php
-│   └── ReportController.php
-├── HackathonAdmin/
-│   ├── DashboardController.php
-│   ├── TeamController.php
-│   ├── IdeaController.php
-│   └── WorkshopController.php
-├── TrackSupervisor/
-│   ├── DashboardController.php
-│   ├── IdeaController.php
-│   └── TeamController.php
-├── TeamLeader/
-│   ├── DashboardController.php
-│   ├── TeamController.php
-│   └── IdeaController.php
-└── TeamMember/
-    ├── DashboardController.php
-    └── TeamController.php
-```
+# System Admin pages (20 pages)
+mkdir -p resources/js/Pages/SystemAdmin/{Dashboard,Editions,Users,Teams,Ideas,Settings,Reports}
+touch resources/js/Pages/SystemAdmin/Dashboard/Index.vue
+touch resources/js/Pages/SystemAdmin/Editions/{Index,Create,Edit,Show}.vue
+touch resources/js/Pages/SystemAdmin/Users/{Index,Create,Edit,Show}.vue
+touch resources/js/Pages/SystemAdmin/Teams/{Index,Show}.vue
+touch resources/js/Pages/SystemAdmin/Ideas/{Index,Show}.vue
+touch resources/js/Pages/SystemAdmin/Settings/{Index,Smtp,Branding,Twitter,Sms}.vue
+touch resources/js/Pages/SystemAdmin/Reports/Index.vue
 
-#### **Request Classes (15 files)**
-```
-app/Http/Requests/
-├── Auth/
-│   ├── LoginRequest.php
-│   └── RegisterRequest.php
-├── Team/
-│   ├── CreateTeamRequest.php
-│   ├── UpdateTeamRequest.php
-│   └── AddMemberRequest.php
-├── Idea/
-│   ├── SubmitIdeaRequest.php
-│   └── ReviewIdeaRequest.php
-├── Workshop/
-│   ├── CreateWorkshopRequest.php
-│   └── RegisterWorkshopRequest.php
-├── Settings/
-│   ├── UpdateSmtpRequest.php
-│   ├── UpdateBrandingRequest.php
-│   └── UpdateSmsApiRequest.php
-└── News/
-    └── CreateNewsRequest.php
+# Hackathon Admin pages (15 pages)
+mkdir -p resources/js/Pages/HackathonAdmin/{Dashboard,Teams,Ideas,Workshops,News,Reports}
+touch resources/js/Pages/HackathonAdmin/Dashboard/Index.vue
+touch resources/js/Pages/HackathonAdmin/Teams/{Index,Show,Bulk}.vue
+touch resources/js/Pages/HackathonAdmin/Ideas/{Index,Show,Review}.vue
+touch resources/js/Pages/HackathonAdmin/Workshops/{Index,Create,Edit,Attendance}.vue
+touch resources/js/Pages/HackathonAdmin/News/{Index,Create,Edit}.vue
+touch resources/js/Pages/HackathonAdmin/Reports/Index.vue
+
+# Track Supervisor pages (8 pages)
+mkdir -p resources/js/Pages/TrackSupervisor/{Dashboard,Ideas,Teams,Workshops}
+touch resources/js/Pages/TrackSupervisor/Dashboard/Index.vue
+touch resources/js/Pages/TrackSupervisor/Ideas/{Index,Show,Review}.vue
+touch resources/js/Pages/TrackSupervisor/Teams/{Index,Show}.vue
+touch resources/js/Pages/TrackSupervisor/Workshops/{Index,Show}.vue
+
+# Team Leader pages (8 pages)
+mkdir -p resources/js/Pages/TeamLeader/{Dashboard,Team,Idea,Workshops}
+touch resources/js/Pages/TeamLeader/Dashboard/Index.vue
+touch resources/js/Pages/TeamLeader/Team/{Show,Edit,Members}.vue
+touch resources/js/Pages/TeamLeader/Idea/{Show,Create,Edit}.vue
+touch resources/js/Pages/TeamLeader/Workshops/{Index,Show}.vue
+
+# Team Member pages (6 pages)  
+mkdir -p resources/js/Pages/TeamMember/{Dashboard,Team,Idea,Workshops}
+touch resources/js/Pages/TeamMember/Dashboard/Index.vue
+touch resources/js/Pages/TeamMember/Team/Show.vue
+touch resources/js/Pages/TeamMember/Idea/Show.vue
+touch resources/js/Pages/TeamMember/Workshops/{Index,Show}.vue
+
+# Public pages (6 pages)
+mkdir -p resources/js/Pages/Public/{Workshops,News,QR}
+touch resources/js/Pages/Public/Workshops/{Index,Show,Register}.vue
+touch resources/js/Pages/Public/News/{Index,Show}.vue
+touch resources/js/Pages/Public/QR/Scanner.vue
 ```
 
-#### **Services (8 files)**
-```
-app/Services/
-├── TeamService.php
-├── IdeaService.php
-├── WorkshopService.php
-├── UserService.php
-├── HackathonService.php
-├── ReportService.php
-├── SettingsService.php
-└── SpeakerService.php
-```
+### **PHASE 5: Enhanced Components (45 minutes)**
+```bash
+# Create role-specific components
+mkdir -p resources/js/Components/{Role,Workshop,QR,Forms,Tables,Status}
 
-#### **Vue Components (Modifications)**
-```
-resources/js/Components/
-└── NavSidebarDesktop.vue (MODIFY - add role-based menus)
+# Role-specific components
+touch resources/js/Components/Role/RoleBasedNavigation.vue
+touch resources/js/Components/Role/DashboardWidget.vue
+touch resources/js/Components/Role/PermissionGate.vue
+touch resources/js/Components/Role/RoleIndicator.vue
 
-resources/js/Pages/
-├── SystemAdmin/
-│   ├── Dashboard.vue
-│   ├── Teams/
-│   │   ├── Index.vue (with Datatable)
-│   │   ├── Edit.vue
-│   │   └── Create.vue
-│   ├── Ideas/
-│   │   ├── Index.vue (2 tabs: Overview + Submitted Ideas)
-│   │   └── Show.vue
-│   ├── Workshops/
-│   │   ├── Index.vue (3 tabs: Workshops + Speakers + Organizations)
-│   │   └── Create.vue
-│   ├── Settings/
-│   │   └── Index.vue (4 tabs: SMTP + SMS API + Branding + Notifications)
-│   ├── News/
-│   │   ├── Index.vue (2 tabs: All News + Media Center)
-│   │   └── Create.vue
-│   └── Reports/
-│       └── Index.vue (2 tabs: All Reports + Edition Report)
-├── TeamLeader/
-│   ├── Dashboard.vue
-│   ├── Teams/
-│   │   ├── Create.vue
-│   │   └── Show.vue
-│   └── Ideas/
-│       └── Index.vue (4 tabs: Overview + Submit + Comments + Instructions)
-└── TeamMember/
-    ├── Dashboard.vue
-    └── Ideas/
-        └── Index.vue (3 tabs: Overview + Comments + Instructions)
+# Workshop components
+touch resources/js/Components/Workshop/WorkshopCard.vue
+touch resources/js/Components/Workshop/RegistrationModal.vue
+touch resources/js/Components/Workshop/AttendanceScanner.vue
+touch resources/js/Components/Workshop/WorkshopSchedule.vue
+
+# QR Code components
+touch resources/js/Components/QR/QRCodeGenerator.vue
+touch resources/js/Components/QR/QRCodeScanner.vue
+touch resources/js/Components/QR/AttendanceMarker.vue
+touch resources/js/Components/QR/RegistrationQR.vue
+
+# Enhanced form components
+touch resources/js/Components/Forms/TeamForm.vue
+touch resources/js/Components/Forms/IdeaForm.vue  
+touch resources/js/Components/Forms/WorkshopForm.vue
+touch resources/js/Components/Forms/NewsForm.vue
+touch resources/js/Components/Forms/BulkActionForm.vue
+
+# Enhanced table components
+touch resources/js/Components/Tables/TeamsTable.vue
+touch resources/js/Components/Tables/IdeasTable.vue
+touch resources/js/Components/Tables/WorkshopsTable.vue
+touch resources/js/Components/Tables/EnhancedDatatable.vue
+
+# Status components
+touch resources/js/Components/Status/StatusBadge.vue
+touch resources/js/Components/Status/ProgressIndicator.vue
+touch resources/js/Components/Status/DeadlineCounter.vue
+touch resources/js/Components/Status/TeamProgress.vue
 ```
 
----
-
-## 🔄 **HACKATHON ADMIN DATA FLOWS**
-
-### **1. HACKATHON ADMIN DASHBOARD**
-**Route:** `GET /hackathon-admin/dashboard`
-**Controller:** `HackathonAdmin\DashboardController@index`
-
-**DATA SOURCES:**
-```php
-public function index(Request $request)
-{
-    $user = $request->user();
-    $hackathonId = $user->managed_hackathon_id; // Get assigned hackathon
-    
-    // Statistics for assigned hackathon only
-    $stats = [
-        'participants' => [
-            'registered' => $this->userService->getHackathonParticipantsCount($hackathonId),
-            'teams_formed' => $this->teamService->getHackathonTeamsCount($hackathonId), 
-            'ideas_submitted' => $this->ideaService->getHackathonIdeasCount($hackathonId),
-        ],
-        'teams' => [
-            'total' => $this->teamService->getHackathonTeamsCount($hackathonId),
-            'complete' => $this->teamService->getCompleteTeamsCount($hackathonId), // teams with max members
-            'seeking_members' => $this->teamService->getIncompleteTeamsCount($hackathonId),
-            'approved' => $this->teamService->getApprovedTeamsCount($hackathonId),
-        ],
-        'ideas' => [
-            'submitted' => $this->ideaService->getSubmittedIdeasCount($hackathonId),
-            'under_review' => $this->ideaService->getIdeasUnderReviewCount($hackathonId),
-            'approved' => $this->ideaService->getApprovedIdeasCount($hackathonId),
-            'needs_revision' => $this->ideaService->getIdeasNeedingRevisionCount($hackathonId),
-        ],
-        'workshops' => [
-            'total' => $this->workshopService->getHackathonWorkshopsCount($hackathonId),
-            'registrations' => $this->workshopService->getWorkshopRegistrationsCount($hackathonId),
-            'attendance_rate' => $this->workshopService->getAverageAttendanceRate($hackathonId),
-        ]
-    ];
-    
-    // DB Queries:
-    /*
-    -- Participants Count
-    SELECT COUNT(DISTINCT u.id) 
-    FROM users u 
-    INNER JOIN teams t ON u.id = t.leader_id OR u.id IN (
-        SELECT tm.user_id FROM team_members tm WHERE tm.team_id = t.id
-    )
-    WHERE t.hackathon_id = ?
-    
-    -- Complete Teams (have max members)
-    SELECT COUNT(*) FROM teams t
-    INNER JOIN (
-        SELECT team_id, COUNT(*) as member_count 
-        FROM team_members 
-        WHERE status = 'accepted' 
-        GROUP BY team_id
-    ) tm ON t.id = tm.team_id
-    WHERE t.hackathon_id = ? AND tm.member_count = t.max_members
-    
-    -- Ideas by Status
-    SELECT status, COUNT(*) as count
-    FROM ideas i
-    INNER JOIN teams t ON i.team_id = t.id
-    WHERE t.hackathon_id = ?
-    GROUP BY status
-    */
-    
-    // Recent team registrations
-    $recentTeams = $this->teamService->getRecentTeams($hackathonId, 10);
-    
-    // Pending idea reviews
-    $pendingReviews = $this->ideaService->getPendingReviews($hackathonId, 5);
-    
-    return Inertia::render('HackathonAdmin/Dashboard', [
-        'stats' => $stats,
-        'recentTeams' => $recentTeams,
-        'pendingReviews' => $pendingReviews,
-        'hackathon' => $this->hackathonService->getHackathon($hackathonId),
-    ]);
-}
+### **PHASE 6: Routes & Middleware (30 minutes)**
+```bash
+# Update routes/web.php with role-based route groups
+# Add middleware for role-based access control
+# Create route naming conventions per role
+# Add API routes for AJAX functionality
+# Implement proper route model binding
 ```
 
-### **2. HACKATHON ADMIN TEAM MANAGEMENT**
-**Route:** `GET /hackathon-admin/teams`
-**Controller:** `HackathonAdmin\TeamController@index`
+## 🎯 **SUCCESS CRITERIA CHECKLIST**
 
-**DATA SOURCES:**
-```php
-public function index(Request $request)
-{
-    $user = $request->user();
-    $hackathonId = $user->managed_hackathon_id;
-    
-    $filters = $request->validate([
-        'search' => 'nullable|string|max:255',
-        'status' => 'nullable|in:pending,approved,rejected',
-        'track_id' => 'nullable|exists:tracks,id',
-        'completion_status' => 'nullable|in:complete,incomplete,seeking_members',
-        'idea_status' => 'nullable|in:no_idea,draft,submitted,under_review,approved,rejected',
-        'per_page' => 'nullable|integer|min:10|max:100',
-        'sort_by' => 'nullable|in:name,created_at,members_count,idea_status',
-        'sort_direction' => 'nullable|in:asc,desc',
-    ]);
-    
-    // Only teams from assigned hackathon
-    $teams = $this->teamService->getHackathonTeamsWithDetails($hackathonId, [
-        'with' => ['leader', 'members', 'ideas', 'track'],
-        'withCount' => ['members', 'ideas'],
-        'filters' => $filters,
-        'paginate' => $filters['per_page'] ?? 20
-    ]);
-    
-    // DB Query:
-    /*
-    SELECT t.*,
-           u.name as leader_name,
-           u.email as leader_email,
-           u.phone as leader_phone,
-           tr.name as track_name,
-           COUNT(DISTINCT tm.id) as members_count,
-           COUNT(DISTINCT i.id) as ideas_count,
-           MAX(i.status) as idea_status,
-           MAX(i.submitted_at) as idea_submitted_at
-    FROM teams t
-    LEFT JOIN users u ON t.leader_id = u.id
-    LEFT JOIN tracks tr ON t.track_id = tr.id  
-    LEFT JOIN team_members tm ON t.id = tm.team_id AND tm.status = 'accepted'
-    LEFT JOIN ideas i ON t.id = i.team_id
-    WHERE t.hackathon_id = ?
-    AND (? IS NULL OR t.name LIKE ? OR u.name LIKE ?)
-    AND (? IS NULL OR t.status = ?)
-    AND (? IS NULL OR t.track_id = ?)
-    GROUP BY t.id
-    ORDER BY t.created_at DESC
-    LIMIT ? OFFSET ?
-    */
-    
-    // Get filter options for this hackathon
-    $filterOptions = [
-        'tracks' => $this->trackService->getHackathonTracks($hackathonId, ['select' => ['id', 'name']]),
-        'statuses' => [
-            ['value' => 'pending', 'label' => 'Pending Approval'],
-            ['value' => 'approved', 'label' => 'Approved'],
-            ['value' => 'rejected', 'label' => 'Rejected'],
-        ],
-        'completion_statuses' => [
-            ['value' => 'complete', 'label' => 'Complete Teams'],
-            ['value' => 'incomplete', 'label' => 'Incomplete Teams'],
-            ['value' => 'seeking_members', 'label' => 'Seeking Members'],
-        ],
-        'idea_statuses' => [
-            ['value' => 'no_idea', 'label' => 'No Idea Submitted'],
-            ['value' => 'draft', 'label' => 'Draft'],
-            ['value' => 'submitted', 'label' => 'Submitted'],
-            ['value' => 'under_review', 'label' => 'Under Review'],
-            ['value' => 'approved', 'label' => 'Approved'],
-            ['value' => 'rejected', 'label' => 'Rejected'],
-        ]
-    ];
-    
-    return Inertia::render('HackathonAdmin/Teams/Index', [
-        'teams' => $teams,
-        'filters' => $filters,
-        'filterOptions' => $filterOptions,
-        'hackathon' => $this->hackathonService->getHackathon($hackathonId),
-        'can' => [
-            'approve_teams' => true,
-            'reject_teams' => true,
-            'assign_tracks' => true,
-            'send_notifications' => true,
-        ]
-    ]);
-}
-```
+### **✅ AUTHENTICATION & ROLE SYSTEM:**
+- [ ] All 5 roles can login and see role-appropriate dashboard
+- [ ] NavSidebarDesktop.vue shows correct menu items per role
+- [ ] HandleInertiaRequests.php shares proper role data
+- [ ] Route middleware protects pages correctly
+- [ ] Users redirected to role-specific landing pages
 
----
+### **✅ SYSTEM ADMIN FUNCTIONALITY:**
+- [ ] Can create/manage hackathon editions
+- [ ] Can view system-wide statistics
+- [ ] Can manage users and assign roles
+- [ ] Can configure SMTP, Twitter, and branding settings
+- [ ] Can access all teams, ideas, and workshops across editions
+- [ ] Can generate comprehensive reports
 
-## 🎯 **COMPLETE COMPONENT REUSE IMPLEMENTATION**
+### **✅ HACKATHON ADMIN FUNCTIONALITY:**
+- [ ] Can approve/reject teams with bulk actions
+- [ ] Can review and assign supervisors to ideas
+- [ ] Can create and manage workshops
+- [ ] Can publish news with Twitter integration
+- [ ] Can view current edition analytics
+- [ ] Can export current edition data
 
-### **Task 1: Update NavSidebarDesktop.vue for Role-Based Menus**
+### **✅ TRACK SUPERVISOR FUNCTIONALITY:**
+- [ ] Can only see teams/ideas from assigned track(s)
+- [ ] Can review and score ideas with detailed criteria
+- [ ] Can provide feedback to teams
+- [ ] Can view track-specific statistics
+- [ ] Cannot access other tracks' data
 
-**File:** `resources/js/Components/NavSidebarDesktop.vue`
-**Lines to Modify:** 47-111 (replace navigationSections)
+### **✅ TEAM LEADER FUNCTIONALITY:**
+- [ ] Can create and manage own team
+- [ ] Can invite/remove team members
+- [ ] Can submit and edit team ideas
+- [ ] Can register for workshops
+- [ ] Can view team progress and deadlines
+- [ ] Cannot edit other teams' information
 
-<function_calls>
-<invoke name="TodoWrite">
-<parameter name="todos">[{"content": "Analyze existing layout components for reuse", "status": "completed", "activeForm": "Analyzing existing layout components for reuse"}, {"content": "Map existing header/sidebar components to roles", "status": "completed", "activeForm": "Mapping existing header/sidebar components to roles"}, {"content": "Detail every admin flow with exact data sources", "status": "completed", "activeForm": "Detailing every admin flow with exact data sources"}, {"content": "Map all API endpoints to page interactions", "status": "completed", "activeForm": "Mapping all API endpoints to page interactions"}, {"content": "Create ultra-detailed component reuse plan", "status": "completed", "activeForm": "Creating ultra-detailed component reuse plan"}]
+### **✅ TEAM MEMBER FUNCTIONALITY:**
+- [ ] Can view team information (read-only)
+- [ ] Can view team ideas (read-only)
+- [ ] Can register for workshops independently
+- [ ] Can leave team with confirmation
+- [ ] Cannot edit team or idea details
+
+### **✅ PUBLIC FUNCTIONALITY:**
+- [ ] Public workshop registration works without login
+- [ ] QR code generation for workshop attendance
+- [ ] QR code scanning marks attendance correctly
+- [ ] Public news display functions properly
+- [ ] Workshop capacity limits enforced
+
+### **✅ FRONTEND BEHAVIOR:**
+- [ ] Dashboard widgets show role-appropriate data
+- [ ] Navigation menus hide/show based on permissions
+- [ ] Status badges and progress indicators work correctly
+- [ ] Bulk actions available only to authorized roles
+- [ ] Forms validate according to Request classes
+- [ ] Error handling shows appropriate messages
+- [ ] Mobile responsive design maintained
+
+### **✅ DATABASE & SEEDERS:**
+- [ ] All 35+ migrations run successfully
+- [ ] All 20+ seeders populate sample data correctly
+- [ ] 5 roles with proper permissions assigned
+- [ ] Sample users for each role can login
+- [ ] Current hackathon edition is properly set
+- [ ] Workshop attendance tracking tables ready
+- [ ] Twitter integration tables ready
+- [ ] Multi-edition support functional
+
+### **✅ API INTEGRATION:**
+- [ ] All Request classes validate input correctly
+- [ ] Services handle business logic properly
+- [ ] Twitter API integration posts news automatically
+- [ ] Email notifications sent for team status changes
+- [ ] File uploads work for ideas (8 files, 15MB each)
+- [ ] QR code system generates and scans correctly
+
+This implementation plan is now **COMPLETELY COMPREHENSIVE** with ultra-detailed role-based frontend behavior, exact component specifications, enhanced Request classes, complete seeder documentation, and precise technical implementation details.
+
+**READY FOR ONE-SHOT IMPLEMENTATION - 100% COMPLETE COVERAGE WITH ENHANCED FRONTEND BEHAVIOR**

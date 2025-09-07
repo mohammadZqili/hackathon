@@ -6,7 +6,6 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
@@ -15,6 +14,9 @@ use Laravel\Sanctum\HasApiTokens;
 use Laravel\Scout\Searchable;
 use OwenIt\Auditing\Contracts\Auditable;
 use Spatie\Permission\Traits\HasRoles;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class User extends Authenticatable implements Auditable
 {
@@ -39,6 +41,15 @@ class User extends Authenticatable implements Auditable
         'password_changed_at',
         'force_password_change',
         'disable_account',
+        // Hackathon fields
+        'date_of_birth',
+        'phone',
+        'national_id',
+        'user_type',
+        'occupation',
+        'job_title',
+        'is_active',
+        'last_login_at',
     ];
 
     protected $casts = [
@@ -49,6 +60,10 @@ class User extends Authenticatable implements Auditable
         'force_password_change' => 'boolean',
         'disable_account' => 'boolean',
         'deleted_at' => 'datetime',
+        // Hackathon casts
+        'date_of_birth' => 'date',
+        'is_active' => 'boolean',
+        'last_login_at' => 'datetime',
     ];
 
     protected $appends = ['created_at_formatted'];
@@ -153,7 +168,7 @@ class User extends Authenticatable implements Auditable
 
     public function isSuperUser(): bool
     {
-        return $this->hasRole('superuser');
+        return $this->hasRole('superuser') || $this->hasRole('system_admin') || $this->hasRole('admin');
     }
 
 
@@ -182,5 +197,170 @@ class User extends Authenticatable implements Auditable
             'created_at' => $this->created_at->timestamp,
             'collection_name' => 'users',
         ]);
+    }
+
+    // =====================================================
+    // Hackathon Relationships
+    // =====================================================
+
+    /**
+     * Get teams led by this user.
+     */
+    public function ledTeams(): HasMany
+    {
+        return $this->hasMany(Team::class, 'leader_id');
+    }
+
+    /**
+     * Get teams this user is a member of.
+     */
+    public function teams(): BelongsToMany
+    {
+        return $this->belongsToMany(Team::class, 'team_members')
+            ->withPivot(['status', 'role', 'joined_at', 'invited_at', 'invited_by'])
+            ->withTimestamps();
+    }
+
+    /**
+     * Get active teams (accepted membership).
+     */
+    public function activeTeams(): BelongsToMany
+    {
+        return $this->teams()->wherePivot('status', 'accepted');
+    }
+
+    /**
+     * Get workshop registrations.
+     */
+    public function workshopRegistrations(): HasMany
+    {
+        return $this->hasMany(WorkshopRegistration::class);
+    }
+
+    /**
+     * Get tracks this user supervises.
+     */
+    public function supervisedTracks(): BelongsToMany
+    {
+        return $this->belongsToMany(Track::class, 'track_supervisors')
+            ->withTimestamps();
+    }
+
+    /**
+     * Get ideas reviewed by this user.
+     */
+    public function reviewedIdeas(): HasMany
+    {
+        return $this->hasMany(Idea::class, 'reviewed_by');
+    }
+
+    /**
+     * Get idea files uploaded by this user.
+     */
+    public function uploadedIdeaFiles(): HasMany
+    {
+        return $this->hasMany(IdeaFile::class, 'uploaded_by');
+    }
+
+    /**
+     * Get audit logs created by this user.
+     */
+    public function ideaAuditLogs(): HasMany
+    {
+        return $this->hasMany(IdeaAuditLog::class);
+    }
+
+    // =====================================================
+    // Hackathon Helper Methods
+    // =====================================================
+
+    /**
+     * Check if user is a team leader.
+     */
+    public function isTeamLeader(): bool
+    {
+        return $this->user_type === 'team_leader' || $this->ledTeams()->exists();
+    }
+
+    /**
+     * Check if user is a track supervisor.
+     */
+    public function isTrackSupervisor(): bool
+    {
+        return $this->user_type === 'track_supervisor' || $this->supervisedTracks()->exists();
+    }
+
+    /**
+     * Check if user can create a team.
+     */
+    public function canCreateTeam(): bool
+    {
+        return in_array($this->user_type, ['team_leader', 'team_member', 'visitor']);
+    }
+
+    /**
+     * Check if user can join teams.
+     */
+    public function canJoinTeam(): bool
+    {
+        return in_array($this->user_type, ['team_member', 'visitor']);
+    }
+
+    /**
+     * Check if user is hackathon admin.
+     */
+    public function isHackathonAdmin(): bool
+    {
+        return $this->user_type === 'hackathon_admin' || $this->hasRole('hackathon_admin');
+    }
+
+    /**
+     * Check if user is system admin.
+     */
+    public function isSystemAdmin(): bool
+    {
+        return $this->user_type === 'system_admin' || $this->hasRole('system_admin') || $this->isSuperUser();
+    }
+
+    /**
+     * Get current team for a hackathon.
+     */
+    public function getTeamForHackathon($hackathonId)
+    {
+        return $this->activeTeams()
+            ->where('hackathon_id', $hackathonId)
+            ->first();
+    }
+
+    /**
+     * Check if user has a team in current hackathon.
+     */
+    public function hasTeamInCurrentHackathon(): bool
+    {
+        $currentHackathon = \App\Models\Hackathon::current();
+        if (!$currentHackathon) {
+            return false;
+        }
+
+        return $this->activeTeams()
+            ->where('hackathon_id', $currentHackathon->id)
+            ->exists();
+    }
+
+    /**
+     * Get user's role label.
+     */
+    public function getUserTypeLabel(): string
+    {
+        return match($this->user_type) {
+            'system_admin' => 'مدير النظام',
+            'hackathon_admin' => 'مدير الهاكاثون',
+            'track_supervisor' => 'مشرف المسار',
+            'workshop_supervisor' => 'مشرف الورشة',
+            'team_leader' => 'قائد الفريق',
+            'team_member' => 'عضو الفريق',
+            'visitor' => 'زائر',
+            default => 'مستخدم',
+        };
     }
 }

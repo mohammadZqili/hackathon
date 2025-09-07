@@ -48,8 +48,14 @@ class HandleInertiaRequests extends Middleware
             [
                 'auth' => [
                     'user' => $request->user() ? [
+                        'id' => $request->user()->id,
                         'name' => $request->user()->name,
+                        'email' => $request->user()->email,
                         'roles' => $request->user()->roles->pluck('name'),
+                        'permissions' => $request->user()->getPermissionsViaRoles()->pluck('name'),
+                        'primary_role' => $request->user()->getRoleNames()->first(),
+                        'team_id' => $request->user()->team_id ?? null,
+                        'track_id' => $request->user()->track_id ?? null,
                         'avatar' => $avatar
                             ->create($request->user()->name)
                             ->setTheme('pastel')
