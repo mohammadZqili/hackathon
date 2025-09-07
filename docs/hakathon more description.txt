@@ -1,0 +1,394 @@
+﻿Hackathon Management System – Software Requirements Specification (SRS)
+Draft Idea
+The idea of the system is to manage an environment-focused hackathon held in Buraidah City under the supervision of the Saudi Ministry of Agriculture (Qassim Branch) and the Qassim Emirate.
+The Hackathon System is a web platform that includes:
+* A landing page.
+
+* A page describing the hackathon.
+
+* A page for prizes.
+
+* A page to showcase workshops, seminars, and lectures held during the hackathon.
+
+* A page that explains the hackathon tracks.
+
+The system allows users to register either as:
+   * Team Leader, or
+
+   * Team Member.
+
+After registration, the Team Leader submits the idea they want to participate with under one of the hackathon tracks.
+      * Registration and idea submission are time-limited. Once the deadline ends, registration and idea submissions close.
+
+      * The hackathon has a new edition every year, with different start and end dates for registration.
+
+      * After submission, the idea goes to the track supervisor, who evaluates, accepts, or rejects it.
+
+      * Once accepted or rejected, an email notification is sent to the Team Leader, and the result appears when logging in (for the Team Leader or any team member).
+
+      * Team Members can either join a team by invitation from the leader or by registering and requesting to join a team. The Team Leader then receives a notification to accept or reject the request.
+
+The track supervisor has the ability to:
+         * Accept, reject, or request modifications for an idea.
+
+         * Ask for additional files or details.
+
+         * Provide comments, which are visible to the whole team.
+
+When an idea is accepted, the supervisor can also send notifications to the team, such as:
+            * Scheduling an online or in-person meeting.
+
+            * Informing them of next steps and upcoming requirements.
+
+The platform also allows visitors (non-participants) to register for seminars or workshops held during the hackathon if they are interested.
+               * Registration for workshops requires: Name, Email, Phone Number, National ID/Residence Number.
+
+               * After registration, an email with a barcode is sent for attendance verification.
+
+               * Attendance is recorded by scanning the barcode using any mobile device authorized for attendance tracking.
+
+               * Attendance can be counted per session or in total across all events.
+
+Visitors, Team Leaders, and Team Members can all register for workshops.
+                  * Multiple workshops can be registered for.
+
+The platform includes a news section with:
+                     * Title, description, image, and publication date.
+
+                     * Each news item can be automatically posted to Twitter (X).
+
+The system is:
+                        * Responsive across all devices.
+
+                        * Supports Arabic and English.
+
+                        * Supports Dark Mode.
+
+________________
+
+
+1. Technical Requirements
+1.1 System Overview
+A web-based system for managing hackathons organized by a government entity.
+It is used to:
+                           * Register teams and ideas.
+
+                           * Manage filtering and evaluation.
+
+                           * Schedule workshops.
+
+                           * Communicate with participants.
+
+                           * Track attendance at side events.
+
+                           * Support multiple annual hackathon editions.
+
+1.2 Technology Stack
+Component
+	Technology
+	Reason for Selection
+	Back-End
+	Laravel 12 (PHP) / WordPress
+	Fast development, strong ecosystem, built-in security, scalability
+	Front-End
+	WordPress + Elementor (public site)
+Laravel + Vue 3 + Inertia.js + TailwindCSS (internal system app.ruman.sa)
+	Modern SPA experience, multilingual support, optional SSR
+	Database
+	MySQL 8
+	Stability, strong indexing, vertical & horizontal scalability
+	Cache/Sessions
+	Redis
+	Performance improvement, reduce DB load
+	Web Server
+	Nginx + PHP-FPM
+	High performance, reliable PHP execution
+	Authentication
+	JWT + Two-Factor (2FA)
+	Secure login/registration
+	Deployment
+	Docker Containers + CI/CD
+	Easy portability between environments
+	File Storage
+	Local
+	Support for required files (PDF, PPT, etc.)
+	Notifications
+	Email (SMTP) + Optional SMS
+	Notifications for idea acceptance/rejection, registration confirmations
+	Version Control
+	Git + GitHub Actions
+	Manage releases and automated updates
+	Languages
+	Arabic (RTL) & English (LTR)
+	Full bilingual interface
+	1.3 Security Requirements
+                              * Passwords encrypted with argon2id (supported in Laravel).
+
+                              * Protection against SQL Injection, XSS, CSRF (Laravel built-in).
+
+                              * Brute-force login protection: max 5 attempts per minute per IP.
+
+                              * Role-based access: Admin, Track Supervisor, Team Leader, Member, Visitor (via Laravel Spatie Permission).
+
+                              * Full Audit Trail of user actions.
+
+                              * HTTPS (SSL/TLS) enforced.
+
+                              * File upload restrictions: Max 15MB per file, 8 files per idea.
+
+                              * File validation + Antivirus scan (ClamAV integration).
+
+                              * Optional Two-Factor Authentication (via SMS/Email OTP or Google Authenticator with Laravel Fortify).
+
+1.4 Performance Requirements
+                                 * Supports up to 1500 concurrent users.
+
+                                 * Response time ≤ 2 seconds.
+
+                                 * Redis used for caching sessions and temporary queries.
+
+                                 * Optional CDN (e.g., Cloudflare) for static files.
+
+                                 * Browser caching headers enabled.
+
+1.5 Server Resources
+                                    * Production VPS Requirements:
+
+                                       * CPU: 4 vCPUs
+
+                                       * RAM: 8 GB
+
+                                       * Storage: 80–100 GB SSD
+
+                                       * OS: Ubuntu 22.04 LTS
+
+                                       * Network: 1 Gbps
+
+                                       * Containerization: Docker / Docker Compose
+
+Additional:
+                                          * Daily DB and file backups.
+
+                                          * Monitoring: Laravel Telescope / Sentry.
+
+                                          * Queue system for heavy tasks (emails, file uploads, PDF reports).
+
+                                          * Database indexing from the start.
+
+________________
+
+
+2. Functional Requirements
+2.1 Public Pages Management
+                                             * F1: Landing page introducing the hackathon (ruman.sa, app.ruman.sa).
+
+                                             * F2: Page describing hackathon goals and organizers.
+
+                                             * F3: Page listing prizes and tracks.
+
+                                             * F4: Page showing workshop/lecture/seminar schedules.
+
+                                             * F5: Hackathon news page with auto-post to Twitter.
+
+2.2 Authentication & User Management
+                                                * F6: Registration form: Name, Email (with confirmation), Date of Birth, Phone, National ID, Password, Occupation (student/employee), Job title (optional).
+
+                                                * F7: Registration options:
+
+                                                   * Team Leader
+
+                                                   * Team Member
+
+                                                   * Visitor (for workshops only)
+
+                                                      * F8: Login and password reset functionality.
+
+2.3 Teams & Ideas
+                                                         * F9: Team Leader can create a team.
+
+                                                         * F10: Team Leader can invite members via email or ID.
+
+                                                         * F11: Team Members can request to join → Leader accepts/rejects.
+
+                                                         * F12: Team Leader submits project idea under a track.
+
+                                                         * F13: Idea statuses: Pending Review, Accepted, Rejected, Needs Edit.
+
+                                                         * F14: Notifications (email + in-app) sent when status changes.
+
+                                                         * F15: Supervisors can request edits, additional files, or corrections.
+
+                                                         * F16: After acceptance, supervisors can send further notifications (meeting invites, next steps).
+
+2.4 Tracks & Supervisors
+                                                            * F17: Each track has one or more supervisors; global admin oversees all.
+
+                                                            * F18: Supervisor sees only ideas under their track.
+
+                                                            * F19: Supervisor evaluates, changes status, and adds comments.
+
+                                                            * F20: Supervisor can communicate with accepted teams.
+
+2.5 Workshops Registration
+                                                               * F21: Public list of workshops/seminars with details (title, description, date, speaker, organizer, seats).
+
+                                                               * F22: Registration open for all roles (Visitor, Leader, Member, Supervisor, Admin).
+
+                                                               * F23: Required registration data: Name, ID, Phone, Email.
+
+                                                               * F24: Email confirmation with unique barcode.
+
+                                                               * F25: Support multiple workshop registrations.
+
+2.6 Attendance Tracking
+                                                                  * F26: Workshop supervisors scan barcode using mobile/browser.
+
+                                                                  * F27: Attendance automatically updated in system.
+
+                                                                  * F28: Attendance reports generated per workshop, per user.
+
+2.7 News Module
+                                                                     * F29: Add/Edit/Delete news.
+
+                                                                     * F30: Each news includes title, text, image, and date.
+
+                                                                     * F31: Auto-post news to Twitter (X).
+
+2.8 Hackathon Editions
+                                                                        * F32: Create new hackathon edition each year.
+
+                                                                        * F33: Each edition has registration/idea submission dates, assigned supervisors, and teams.
+
+                                                                        * F34: Archive yearly editions with statistics.
+
+________________
+
+
+3. User Journeys
+3.1 Visitor Journey
+Visit site → Browse hackathon info & workshops → Open workshop page → View details (description, speaker, organizer) → Click “Register Now” → Enter data (name, email, phone, job title) → Receive barcode → Attend workshop → Barcode scanned → Attendance confirmed.
+3.2 Team Leader Journey
+Register → Select “Team Leader” → Create team with unique name → Invite members via email → Select hackathon edition → Create idea (description, files) → Select track → Submit for review → Receive notifications (Accepted/Rejected/Needs Edit) → Edit & resubmit if needed → On acceptance, click “Next Steps” → Receive supervisor notifications (meeting invites, requirements, updates) → Can also register for workshops.
+3.3 Team Member Journey
+Register/login → Select “Team Member” → Join team via invite or team code → See team name & idea → Can edit idea description or upload files (with permission) → Edits logged in audit trail → Resubmission possible → See live idea evaluation status → Can register for workshops.
+3.4 Track Supervisor Journey
+Login → Open “Ideas” dashboard → View incoming ideas list → Open idea → Review description/files → Add comments → Choose status (Accept/Reject/Needs Edit + score) → Send evaluation → Notifications sent to leader → On acceptance, can schedule meetings or request further requirements → Monitor progress of teams.
+3.5 Hackathon Admin Journey
+Login → Set registration/idea submission dates → Define tracks → Assign supervisors → Create workshops (title, description, date, seats, speakers, organizations) → Publish workshops → Monitor reports (teams, members, submitted ideas, idea statuses, workshops, attendance, registrations) → Reports available in charts/tables, exportable to Excel → Publish news + auto-post to Twitter.
+3.6 System Admin Journey
+Login to main dashboard → Create yearly hackathon editions → Assign Hackathon Admins → Configure SMTP, SMS, Twitter API → Manage user roles/permissions → Review audit logs → Manage branding (logo, colors) & technical integrations.
+________________
+
+
+4. Database Design (ERD)
+4.1 Proposed Tables
+                                                                           * Core: users, hackathons, tracks, teams, team_members, ideas, idea_files, idea_audit_logs, notifications, settings
+
+                                                                           * Workshops & Related: workshops, organizations, speakers, workshop_organizations (pivot), workshop_speakers (pivot), workshop_registrations
+
+                                                                           * News: news
+
+4.2 ERD
+(English ERD matches exactly the one provided in Arabic draft – users, hackathons, tracks, teams, team_members, ideas, idea_files, idea_audit_logs, notifications, settings, workshops, organizations, speakers, pivots, registrations, news with all relations).
+________________
+
+
+5. Workflows
+Workflow 1 – Team Registration & Idea Submission
+                                                                              1. Leader logs into site.
+
+                                                                              2. Registers new account.
+
+                                                                              3. Chooses user type = Team Leader.
+
+                                                                              4. Creates team → enters name.
+
+                                                                              5. Invites members via email/ID.
+
+                                                                              6. Selects hackathon edition.
+
+                                                                              7. Clicks “Create Idea”.
+
+                                                                              8. Enters idea details (title, description, track).
+
+                                                                              9. Uploads files (PDF, PPT, etc.).
+
+                                                                              10. Submits idea → Status = Pending.
+
+                                                                              11. Supervisor notified of new idea.
+
+                                                                              12. Supervisor reviews & selects:
+
+                                                                                 * Accept → Notification to leader.
+
+                                                                                 * Reject → Notification to team.
+
+                                                                                 * Needs Edit → Sends feedback.
+
+                                                                                    13. Team edits & resubmits → Status returns to Pending.
+
+                                                                                    14. On acceptance → Next stage unlocked (meetings, presentations).
+
+Workflow 2 – Team Member Joining
+                                                                                       1. Member registers account.
+
+                                                                                       2. Chooses user type = Team Member.
+
+                                                                                       3. Enters team code or accepts email invite.
+
+                                                                                       4. Status = Pending.
+
+                                                                                       5. Leader notified → Accept/Reject.
+
+                                                                                          * Accept → Member becomes active.
+
+                                                                                          * Reject → Member can choose another team.
+
+                                                                                             6. After acceptance → Member can edit idea or upload files.
+
+                                                                                             7. All edits logged in audit trail.
+
+Workflow 3 – Workshop Registration
+                                                                                                1. User (any type) browses workshops.
+
+                                                                                                2. Opens details page.
+
+                                                                                                3. Clicks “Register Now”.
+
+                                                                                                4. Enters info (Name, ID, Phone, Email).
+
+                                                                                                5. Registration created → Barcode emailed.
+
+                                                                                                6. During workshop → Supervisor scans barcode.
+
+                                                                                                7. Attendance marked = true.
+
+                                                                                                8. Attendance report available later.
+
+Workflow 4 – Hackathon Edition Management (Hackathon Admin)
+                                                                                                   1. Admin logs in.
+
+                                                                                                   2. Creates new edition.
+
+                                                                                                   3. Sets registration/idea submission dates.
+
+                                                                                                   4. Defines tracks & assigns supervisors.
+
+                                                                                                   5. Creates workshops & assigns speakers/organizations.
+
+                                                                                                   6. Tracks statistics (teams, members, ideas, statuses, workshops, attendance).
+
+                                                                                                   7. Publishes news.
+
+                                                                                                   8. At edition end → Archives all data.
+
+Workflow 5 – System Administration
+                                                                                                      1. Create accounts for Hackathon Admins.
+
+                                                                                                      2. Configure general settings (SMTP, SMS, Logo, Colors).
+
+                                                                                                      3. Enable/disable editions.
+
+                                                                                                      4. Review audit logs & notifications.
+
+                                                                                                      5. Manage user roles and permissions.
