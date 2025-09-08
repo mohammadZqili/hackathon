@@ -2,17 +2,25 @@
 import { Head } from '@inertiajs/vue3'
 import Default from '../../../Layouts/Default.vue'
 
-
-
 const props = defineProps({
-    stats: Object, recentActivity: Object, systemHealth: Object
+    statistics: Object
 })
 
+// Extract data from statistics object
+const stats = [
+    { label: 'Total Editions', value: props.statistics?.total_editions || 0 },
+    { label: 'Total Users', value: props.statistics?.total_users || 0 },
+    { label: 'Total Teams', value: props.statistics?.total_teams || 0 },
+    { label: 'Total Ideas', value: props.statistics?.total_ideas || 0 },
+    { label: 'Total Workshops', value: props.statistics?.total_workshops || 0 },
+]
 
+const recentActivity = props.statistics?.recent_activities || []
+const currentEdition = props.statistics?.current_edition
 </script>
 
 <template>
-    <Head title="System Dashboard" />
+    <Head title="System Admin Dashboard" />
     
     <Default>
         <div class="container mx-auto px-4 py-8">
@@ -29,15 +37,37 @@ const props = defineProps({
                 </div>
             </div>
 
+            <!-- Current Edition Info -->
+            <div v-if="currentEdition" class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-6 mb-8">
+                <h2 class="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-2">Current Edition</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <div class="text-sm text-blue-600 dark:text-blue-300">Name</div>
+                        <div class="font-medium text-blue-900 dark:text-blue-100">{{ currentEdition.name }}</div>
+                    </div>
+                    <div>
+                        <div class="text-sm text-blue-600 dark:text-blue-300">Year</div>
+                        <div class="font-medium text-blue-900 dark:text-blue-100">{{ currentEdition.year }}</div>
+                    </div>
+                    <div>
+                        <div class="text-sm text-blue-600 dark:text-blue-300">Teams</div>
+                        <div class="font-medium text-blue-900 dark:text-blue-100">{{ currentEdition.teams_count }}</div>
+                    </div>
+                </div>
+            </div>
+
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                     <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Recent Activity</h2>
                     <div class="space-y-3">
-                        <div v-for="activity in recentActivity" :key="activity.id"
+                        <div v-if="recentActivity.length === 0" class="text-sm text-gray-500 dark:text-gray-400">
+                            No recent activity
+                        </div>
+                        <div v-for="(activity, index) in recentActivity" :key="index"
                              class="flex items-start space-x-3">
                             <div class="flex-shrink-0 w-2 h-2 mt-2 rounded-full bg-blue-500"></div>
                             <div class="flex-1">
-                                <p class="text-sm text-gray-900 dark:text-white">{{ activity.description }}</p>
+                                <p class="text-sm text-gray-900 dark:text-white">{{ activity.message }}</p>
                                 <p class="text-xs text-gray-500 dark:text-gray-400">{{ activity.time }}</p>
                             </div>
                         </div>
@@ -45,19 +75,20 @@ const props = defineProps({
                 </div>
 
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">System Health</h2>
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Quick Actions</h2>
                     <div class="space-y-3">
-                        <div v-for="metric in systemHealth" :key="metric.name">
-                            <div class="flex justify-between mb-1">
-                                <span class="text-sm text-gray-600 dark:text-gray-400">{{ metric.name }}</span>
-                                <span class="text-sm font-medium">{{ metric.value }}%</span>
-                            </div>
-                            <div class="w-full bg-gray-200 rounded-full h-2">
-                                <div class="h-2 rounded-full"
-                                     :class="metric.value > 80 ? 'bg-green-500' : metric.value > 50 ? 'bg-yellow-500' : 'bg-red-500'"
-                                     :style="`width: ${metric.value}%`"></div>
-                            </div>
-                        </div>
+                        <a href="/system-admin/editions" class="block w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 rounded-lg transition-colors">
+                            Manage Hackathon Editions
+                        </a>
+                        <a href="/system-admin/users" class="block w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 rounded-lg transition-colors">
+                            Manage Users
+                        </a>
+                        <a href="/system-admin/settings" class="block w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 rounded-lg transition-colors">
+                            System Settings
+                        </a>
+                        <a href="/system-admin/reports" class="block w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 rounded-lg transition-colors">
+                            View Reports
+                        </a>
                     </div>
                 </div>
             </div>

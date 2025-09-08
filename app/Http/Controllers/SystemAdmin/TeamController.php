@@ -11,7 +11,8 @@ class TeamController extends Controller
 {
     public function index()
     {
-        $teams = Team::with(['hackathonEdition', 'leader', 'members', 'idea'])
+        $teams = Team::with(['hackathon', 'leader', 'members', 'idea'])
+            ->latest()
             ->paginate(15);
 
         return Inertia::render('SystemAdmin/Teams/Index', [
@@ -21,7 +22,7 @@ class TeamController extends Controller
 
     public function show(Team $team)
     {
-        $team->load(['hackathonEdition', 'leader', 'members', 'idea']);
+        $team->load(['hackathon', 'leader', 'members', 'idea']);
 
         return Inertia::render('SystemAdmin/Teams/Show', [
             'team' => $team

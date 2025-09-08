@@ -1,5 +1,6 @@
 <template>
-    <div>
+    <Head title="Speakers Management" />
+    <Default>
         <div class="flex items-center justify-between mb-6">
             <h1 class="text-2xl font-bold text-gray-900">Speakers Management</h1>
             <Link :href="route('system-admin.speakers.create')"
@@ -81,11 +82,12 @@
                 </div>
             </div>
         </div>
-    </div>
+    </Default>
 </template>
 
 <script setup>
-import { Link, useForm } from '@inertiajs/vue3'
+import { Head, Link, useForm } from '@inertiajs/vue3'
+import Default from '../../../Layouts/Default.vue'
 
 const props = defineProps({
     speakers: {

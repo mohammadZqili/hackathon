@@ -12,6 +12,30 @@ class DashboardController extends Controller
 {
     public function index()
     {
+        $user = auth()->user();
+        
+        // Redirect to role-specific dashboard
+        if ($user->hasRole('system_admin')) {
+            return redirect()->route('system-admin.dashboard');
+        }
+        
+        if ($user->hasRole('hackathon_admin')) {
+            return redirect()->route('hackathon-admin.dashboard');
+        }
+        
+        if ($user->hasRole('track_supervisor')) {
+            return redirect()->route('track-supervisor.dashboard');
+        }
+        
+        if ($user->hasRole('team_leader')) {
+            return redirect()->route('team-leader.dashboard');
+        }
+        
+        if ($user->hasRole('team_member')) {
+            return redirect()->route('team-member.dashboard');
+        }
+        
+        // Fallback to generic dashboard
         return Inertia::render('Dashboard', [
             'stats' => $this->getStats(),
         ]);

@@ -11,7 +11,8 @@ class WorkshopController extends Controller
 {
     public function index()
     {
-        $workshops = Workshop::with(['hackathonEdition', 'speakers', 'organizations', 'registrations'])
+        $workshops = Workshop::with(['hackathon', 'speakers', 'organizations', 'registrations'])
+            ->latest()
             ->paginate(15);
 
         return Inertia::render('SystemAdmin/Workshops/Index', [
@@ -33,7 +34,7 @@ class WorkshopController extends Controller
 
     public function show(Workshop $workshop)
     {
-        $workshop->load(['hackathonEdition', 'speakers', 'organizations', 'registrations']);
+        $workshop->load(['hackathon', 'speakers', 'organizations', 'registrations']);
 
         return Inertia::render('SystemAdmin/Workshops/Show', [
             'workshop' => $workshop

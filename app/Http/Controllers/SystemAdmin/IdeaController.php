@@ -11,7 +11,8 @@ class IdeaController extends Controller
 {
     public function index()
     {
-        $ideas = Idea::with(['team', 'track', 'hackathonEdition', 'files'])
+        $ideas = Idea::with(['team.hackathon', 'track', 'reviewer', 'files'])
+            ->latest()
             ->paginate(15);
 
         return Inertia::render('SystemAdmin/Ideas/Index', [
@@ -21,7 +22,7 @@ class IdeaController extends Controller
 
     public function show(Idea $idea)
     {
-        $idea->load(['team', 'track', 'hackathonEdition', 'files', 'auditLogs']);
+        $idea->load(['team.hackathon', 'track', 'reviewer', 'files', 'auditLogs']);
 
         return Inertia::render('SystemAdmin/Ideas/Show', [
             'idea' => $idea

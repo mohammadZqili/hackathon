@@ -301,7 +301,9 @@ const originalNavigationSections = [
 ]
 
 // Use dynamic navigation based on user role
-const navigationSections = reactive(buildNavigation())
+const navigationSections = computed(() => {
+    return buildNavigation()
+})
 </script>
 
 <template>
