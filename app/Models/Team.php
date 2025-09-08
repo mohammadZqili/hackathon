@@ -18,6 +18,8 @@ class Team extends Model
         'name',
         'slug',
         'description',
+        'user_id',  // For Jetstream compatibility
+        'personal_team',  // For Jetstream compatibility
         'hackathon_id',
         'leader_id',
         'track_id',

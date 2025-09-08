@@ -16,24 +16,25 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             SettingSeeder::class,
             PermissionRoleSeeder::class,
-            
+
             // Hackathon-specific role and permission seeder
             HackathonRoleSeeder::class,
-            
+
             // User seeder (creates users with roles)
             UserSeeder::class,
-            
+
             // Hackathon core data
             HackathonEditionSeeder::class,
+            HackathonSeeder::class,
             TrackSeeder::class,
             
             // Teams and related data
             TeamSeeder::class,
-            
+
             // Content seeders
             NewsSeeder::class,
             WorkshopSeeder::class,
-            
+
             // Optional: Sample data for dashboard
             FinancialMetricsSeeder::class,
         ]);

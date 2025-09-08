@@ -16,11 +16,10 @@ class TeamSeeder extends Seeder
     public function run(): void
     {
         // Get or create a current hackathon and tracks for testing
-        $hackathon = Hackathon::where('is_current', true)->first() 
-                    ?? Hackathon::factory()->create(['is_current' => true]);
+        $hackathon = Hackathon::where('is_current', true)->first() ;
 
-        $tracks = $hackathon->tracks()->count() > 0 
-                 ? $hackathon->tracks 
+        $tracks = $hackathon->tracks()->count() > 0
+                 ? $hackathon->tracks
                  : Track::factory()->count(3)->for($hackathon)->create();
 
         // Create team leaders
@@ -31,7 +30,7 @@ class TeamSeeder extends Seeder
         // Create teams in different statuses
         foreach ($leaders as $index => $leader) {
             $track = $tracks->random();
-            
+
             $team = Team::factory()
                 ->withLeader($leader)
                 ->create([
@@ -39,7 +38,7 @@ class TeamSeeder extends Seeder
                     'track_id' => $track->id,
                     'status' => match($index % 4) {
                         0 => 'draft',
-                        1 => 'active', 
+                        1 => 'active',
                         2 => 'submitted',
                         3 => 'accepted',
                     }
@@ -59,10 +58,6 @@ class TeamSeeder extends Seeder
             }
         }
 
-        // Create some personal teams for Jetstream compatibility (if needed)
-        User::factory()->count(3)->create()->each(function ($user) {
-            Team::factory()->personal()->withLeader($user)->create();
-        });
 
         $this->command->info('Created teams with different statuses for testing');
     }

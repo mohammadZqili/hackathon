@@ -58,7 +58,7 @@ class HackathonRoleSeeder extends Seeder
         ];
 
         foreach ($permissions as $permission) {
-            Permission::create(['name' => $permission]);
+            Permission::firstOrCreate(['name' => $permission]);
         }
 
         // Create roles and assign permissions
@@ -119,8 +119,8 @@ class HackathonRoleSeeder extends Seeder
         ];
 
         foreach ($roles as $roleName => $rolePermissions) {
-            $role = Role::create(['name' => $roleName]);
-            $role->givePermissionTo($rolePermissions);
+            $role = Role::firstOrCreate(['name' => $roleName]);
+            $role->syncPermissions($rolePermissions); // Use sync to avoid duplicates
         }
 
         $this->command->info('Hackathon roles and permissions created successfully.');

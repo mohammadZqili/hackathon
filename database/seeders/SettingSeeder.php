@@ -13,10 +13,13 @@ class SettingSeeder extends Seeder
      */
     public function run(): void
     {
-        Setting::create([
-            'passwordless_login' => false,
-            'password_expiry' => false,
-            'two_factor_authentication' => false,
-        ]);
+        Setting::firstOrCreate(
+            ['id' => 1], // Use ID as identifier
+            [
+                'passwordless_login' => false,
+                'password_expiry' => false,
+                'two_factor_authentication' => false,
+            ]
+        );
     }
 }
