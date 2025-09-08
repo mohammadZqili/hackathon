@@ -28,5 +28,6 @@ typesense-server-*.tar.gz.*
 typesense-server.md5.txt
 typesense/data/
 typesense/*
+typesense-data
 typesense-data/*
 data/
