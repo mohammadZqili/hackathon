@@ -37,7 +37,7 @@ class WorkshopController extends Controller
         }
 
         $query = Workshop::where('hackathon_id', $currentHackathon->id)
-            ->with(['speaker', 'registrations']);
+            ->with(['speakers', 'registrations']);
 
         // Apply filters
         if ($request->filled('search')) {
@@ -152,7 +152,7 @@ class WorkshopController extends Controller
      */
     public function show(Workshop $workshop): Response
     {
-        $workshop->load(['speaker', 'registrations.user', 'attendances.user']);
+        $workshop->load(['speakers', 'registrations.user', 'attendances.user']);
 
         // Get attendance statistics
         $attendanceStats = [

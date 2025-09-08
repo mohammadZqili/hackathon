@@ -180,7 +180,7 @@ const formatDate = (date) => {
                             <h3 class="text-lg font-medium text-gray-900 dark:text-white">Recent Teams</h3>
                             <a :href="route('hackathon-admin.teams.index')" 
                                class="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
-                                View all ’
+                                View all ï¿½
                             </a>
                         </div>
                     </div>
@@ -217,7 +217,7 @@ const formatDate = (date) => {
                             <h3 class="text-lg font-medium text-gray-900 dark:text-white">Recent Ideas</h3>
                             <a :href="route('hackathon-admin.ideas.index')" 
                                class="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
-                                View all ’
+                                View all ï¿½
                             </a>
                         </div>
                     </div>
@@ -257,7 +257,7 @@ const formatDate = (date) => {
                             <h3 class="text-lg font-medium text-gray-900 dark:text-white">Upcoming Workshops</h3>
                             <a :href="route('hackathon-admin.workshops.index')" 
                                class="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
-                                Manage ’
+                                Manage ï¿½
                             </a>
                         </div>
                     </div>
@@ -274,7 +274,7 @@ const formatDate = (date) => {
                                         {{ formatDate(workshop.start_time) }}
                                     </div>
                                     <div class="text-xs text-gray-500 dark:text-gray-400">
-                                        Speaker: {{ workshop.speaker?.name || 'TBD' }}
+                                        Speaker: {{ workshop.speakers?.[0]?.name || 'TBD' }}
                                     </div>
                                 </div>
                                 <span class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400 rounded-full">

@@ -62,7 +62,7 @@ const unregisterFromWorkshop = () => {
                         <AcademicCapIcon class="w-5 h-5 mr-2 text-gray-400" />
                         <div>
                             <div class="font-medium">Speaker</div>
-                            <div class="text-gray-600 dark:text-gray-400">{{ workshop?.speaker?.name || 'TBD' }}</div>
+                            <div class="text-gray-600 dark:text-gray-400">{{ workshop?.speakers?.[0]?.name || 'TBD' }}</div>
                         </div>
                     </div>
                 </div>
