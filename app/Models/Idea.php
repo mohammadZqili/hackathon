@@ -62,6 +62,14 @@ class Idea extends Model
     }
 
     /**
+     * Get the supervisor who reviewed this idea (alias for reviewer).
+     */
+    public function supervisor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'reviewed_by');
+    }
+
+    /**
      * Get the files associated with this idea.
      */
     public function files(): HasMany
@@ -164,7 +172,7 @@ class Idea extends Model
             'user_id' => $user?->id ?? auth()?->id(),
             'action' => $action,
             'field_name' => $fieldName,
-            'new_value' => $newValue,
+            'new_value' => is_array($newValue) ? json_encode($newValue) : $newValue,
             'notes' => $notes,
             'ip_address' => request()?->ip(),
             'user_agent' => request()?->userAgent(),

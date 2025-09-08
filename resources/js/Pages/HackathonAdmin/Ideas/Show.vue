@@ -21,9 +21,10 @@ const props = defineProps({
 })
 
 const statusColors = {
-    pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400',
-    under_review: 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400',
-    approved: 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400',
+    draft: 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400',
+    submitted: 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400',
+    under_review: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400',
+    accepted: 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400',
     rejected: 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400',
     needs_revision: 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400',
 }
@@ -149,7 +150,7 @@ const formatDate = (date) => {
                                 <div class="flex justify-between">
                                     <span class="text-lg font-semibold text-gray-900 dark:text-white">Total Score</span>
                                     <span class="text-lg font-bold text-blue-600 dark:text-blue-400">
-                                        {{ idea.total_score || 0 }} / 100
+                                        {{ idea.score || 0 }} / 100
                                     </span>
                                 </div>
                             </div>
@@ -167,22 +168,22 @@ const formatDate = (date) => {
                                  class="border-l-4 border-gray-200 dark:border-gray-700 pl-4">
                                 <div class="flex items-center justify-between mb-2">
                                     <div class="flex items-center space-x-2">
-                                        <span class="font-medium text-gray-900 dark:text-white">
-                                            {{ review.reviewer?.name }}
-                                        </span>
-                                        <span :class="[statusColors[review.status], 'px-2 py-0.5 text-xs font-medium rounded-full']">
-                                            {{ review.status }}
-                                        </span>
+                                    <span class="font-medium text-gray-900 dark:text-white">
+                                    {{ review.user?.name || 'System' }}
+                                    </span>
+                                    <span :class="[statusColors[review.new_value] || 'bg-gray-100 text-gray-800', 'px-2 py-0.5 text-xs font-medium rounded-full']">
+                                    {{ review.new_value || review.action }}
+                                    </span>
                                     </div>
                                     <span class="text-xs text-gray-500 dark:text-gray-400">
                                         {{ formatDate(review.created_at) }}
                                     </span>
                                 </div>
-                                <p v-if="review.feedback" class="text-sm text-gray-700 dark:text-gray-300">
-                                    {{ review.feedback }}
+                                <p v-if="review.notes" class="text-sm text-gray-700 dark:text-gray-300">
+                                    {{ review.notes }}
                                 </p>
-                                <div v-if="review.scores" class="mt-2 flex space-x-4 text-xs">
-                                    <span v-for="(score, key) in review.scores" :key="key" class="text-gray-500 dark:text-gray-400">
+                                <div v-if="review.metadata && review.metadata.scores" class="mt-2 flex space-x-4 text-xs">
+                                    <span v-for="(score, key) in review.metadata.scores" :key="key" class="text-gray-500 dark:text-gray-400">
                                         {{ key }}: {{ score }}
                                     </span>
                                 </div>

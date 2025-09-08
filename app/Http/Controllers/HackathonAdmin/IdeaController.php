@@ -50,9 +50,9 @@ class IdeaController extends Controller
 
         if ($request->filled('has_supervisor')) {
             if ($request->has_supervisor === 'yes') {
-                $query->whereNotNull('supervisor_id');
+                $query->whereNotNull('reviewed_by');
             } else {
-                $query->whereNull('supervisor_id');
+                $query->whereNull('reviewed_by');
             }
         }
 
@@ -63,15 +63,18 @@ class IdeaController extends Controller
             'total' => Idea::whereHas('team', function($q) use ($currentEdition) {
                 $q->where('hackathon_id', $currentEdition->id);
             })->count(),
-            'pending' => Idea::whereHas('team', function($q) use ($currentEdition) {
+            'draft' => Idea::whereHas('team', function($q) use ($currentEdition) {
                 $q->where('hackathon_id', $currentEdition->id);
-            })->where('status', 'pending')->count(),
+            })->where('status', 'draft')->count(),
+            'submitted' => Idea::whereHas('team', function($q) use ($currentEdition) {
+                $q->where('hackathon_id', $currentEdition->id);
+            })->where('status', 'submitted')->count(),
             'under_review' => Idea::whereHas('team', function($q) use ($currentEdition) {
                 $q->where('hackathon_id', $currentEdition->id);
             })->where('status', 'under_review')->count(),
-            'approved' => Idea::whereHas('team', function($q) use ($currentEdition) {
+            'accepted' => Idea::whereHas('team', function($q) use ($currentEdition) {
                 $q->where('hackathon_id', $currentEdition->id);
-            })->where('status', 'approved')->count(),
+            })->where('status', 'accepted')->count(),
             'rejected' => Idea::whereHas('team', function($q) use ($currentEdition) {
                 $q->where('hackathon_id', $currentEdition->id);
             })->where('status', 'rejected')->count(),
@@ -101,16 +104,17 @@ class IdeaController extends Controller
     {
         $idea->load(['team.members', 'track', 'supervisor', 'files']);
 
-        // Get review history
-        $reviewHistory = $idea->reviews()
-            ->with('reviewer')
+        // Get review history from audit logs
+        $reviewHistory = $idea->auditLogs()
+            ->where('action', 'status_changed')
+            ->with('user')
             ->latest()
             ->get();
 
         // Get scoring breakdown if available
         $scoring = null;
-        if ($idea->scoring_data) {
-            $scoring = json_decode($idea->scoring_data, true);
+        if ($idea->evaluation_scores) {
+            $scoring = $idea->evaluation_scores;
         }
 
         return Inertia::render('HackathonAdmin/Ideas/Show', [
@@ -150,22 +154,33 @@ class IdeaController extends Controller
     /**
      * Process idea review.
      */
-    public function processReview(ReviewIdeaRequest $request, Idea $idea)
+    public function processReview(Request $request, Idea $idea)
     {
-        $validated = $request->validated();
+        $validated = $request->validate([
+            'status' => 'required|in:draft,submitted,under_review,needs_revision,accepted,rejected',
+            'reviewed_by' => 'nullable|exists:users,id',
+            'feedback' => 'nullable|string',
+            'scores' => 'nullable|array',
+            'scores.innovation' => 'nullable|numeric|min:0|max:25',
+            'scores.feasibility' => 'nullable|numeric|min:0|max:25',
+            'scores.impact' => 'nullable|numeric|min:0|max:25', 
+            'scores.presentation' => 'nullable|numeric|min:0|max:25',
+            'notify_team' => 'boolean',
+        ]);
 
-        // Update idea status
+        // Update idea fields
         $idea->status = $validated['status'];
         
-        // Assign supervisor if provided
-        if (isset($validated['supervisor_id'])) {
-            $idea->supervisor_id = $validated['supervisor_id'];
+        // Assign reviewer if provided
+        if (isset($validated['reviewed_by']) && !empty($validated['reviewed_by'])) {
+            $idea->reviewed_by = $validated['reviewed_by'];
         }
 
-        // Store scoring data
+        // Store scoring data in evaluation_scores column
         if (isset($validated['scores'])) {
-            $idea->scoring_data = json_encode($validated['scores']);
-            $idea->total_score = array_sum($validated['scores']);
+            $idea->evaluation_scores = $validated['scores'];
+            // Calculate total score and store in score column
+            $idea->score = array_sum($validated['scores']);
         }
 
         // Add feedback
@@ -174,20 +189,20 @@ class IdeaController extends Controller
         }
 
         $idea->reviewed_at = now();
-        $idea->reviewed_by = auth()->id();
         $idea->save();
 
-        // Create review record
-        $idea->reviews()->create([
-            'reviewer_id' => auth()->id(),
-            'status' => $validated['status'],
-            'feedback' => $validated['feedback'] ?? null,
-            'scores' => $validated['scores'] ?? null,
-        ]);
+        // Log the review action
+        $idea->logAction(
+            'status_changed', 
+            'status', 
+            $validated['status'], 
+            $validated['feedback'] ?? 'Review processed', 
+            auth()->user()
+        );
 
         // Send notification to team if requested
         if ($request->boolean('notify_team')) {
-            // Trigger notification service here
+            // TODO: Trigger notification service here
         }
 
         return redirect()->route('hackathon-admin.ideas.index')

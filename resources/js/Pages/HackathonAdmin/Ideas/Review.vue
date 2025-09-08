@@ -19,14 +19,14 @@ const props = defineProps({
 })
 
 const form = useForm({
-    status: props.idea.status || 'pending',
-    supervisor_id: props.idea.supervisor_id || '',
+    status: props.idea.status || 'draft',
+    reviewed_by: props.idea.reviewed_by || '',
     feedback: props.idea.feedback || '',
     scores: {
-        innovation: props.idea.scoring_data?.innovation || 0,
-        feasibility: props.idea.scoring_data?.feasibility || 0,
-        impact: props.idea.scoring_data?.impact || 0,
-        presentation: props.idea.scoring_data?.presentation || 0,
+        innovation: props.idea.evaluation_scores?.innovation || 0,
+        feasibility: props.idea.evaluation_scores?.feasibility || 0,
+        impact: props.idea.evaluation_scores?.impact || 0,
+        presentation: props.idea.evaluation_scores?.presentation || 0,
     },
     notify_team: true,
 })
@@ -77,27 +77,35 @@ const criteriaDescriptions = {
                     <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Review Status</h2>
                     <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
                         <label class="relative">
-                            <input type="radio" v-model="form.status" value="pending" class="sr-only peer" />
+                            <input type="radio" v-model="form.status" value="draft" class="sr-only peer" />
                             <div class="px-4 py-2 border-2 rounded-lg cursor-pointer text-center transition-all
-                                        peer-checked:border-yellow-500 peer-checked:bg-yellow-50 dark:peer-checked:bg-yellow-900/20
+                                        peer-checked:border-gray-500 peer-checked:bg-gray-50 dark:peer-checked:bg-gray-900/20
                                         border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600">
-                                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Pending</span>
+                                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Draft</span>
+                            </div>
+                        </label>
+                        <label class="relative">
+                            <input type="radio" v-model="form.status" value="submitted" class="sr-only peer" />
+                            <div class="px-4 py-2 border-2 rounded-lg cursor-pointer text-center transition-all
+                                        peer-checked:border-blue-500 peer-checked:bg-blue-50 dark:peer-checked:bg-blue-900/20
+                                        border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600">
+                                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Submitted</span>
                             </div>
                         </label>
                         <label class="relative">
                             <input type="radio" v-model="form.status" value="under_review" class="sr-only peer" />
                             <div class="px-4 py-2 border-2 rounded-lg cursor-pointer text-center transition-all
-                                        peer-checked:border-blue-500 peer-checked:bg-blue-50 dark:peer-checked:bg-blue-900/20
+                                        peer-checked:border-yellow-500 peer-checked:bg-yellow-50 dark:peer-checked:bg-yellow-900/20
                                         border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600">
                                 <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Under Review</span>
                             </div>
                         </label>
                         <label class="relative">
-                            <input type="radio" v-model="form.status" value="approved" class="sr-only peer" />
+                            <input type="radio" v-model="form.status" value="accepted" class="sr-only peer" />
                             <div class="px-4 py-2 border-2 rounded-lg cursor-pointer text-center transition-all
                                         peer-checked:border-green-500 peer-checked:bg-green-50 dark:peer-checked:bg-green-900/20
                                         border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600">
-                                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Approved</span>
+                                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Accepted</span>
                             </div>
                         </label>
                         <label class="relative">
@@ -122,7 +130,7 @@ const criteriaDescriptions = {
                 <!-- Supervisor Assignment -->
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                     <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Assign Supervisor</h2>
-                    <select v-model="form.supervisor_id"
+                    <select v-model="form.reviewed_by"
                             class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500">
                         <option value="">No Supervisor Assigned</option>
                         <option v-for="supervisor in supervisors" :key="supervisor.id" :value="supervisor.id">

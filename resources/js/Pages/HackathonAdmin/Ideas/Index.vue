@@ -31,9 +31,10 @@ const searchForm = useForm({
 })
 
 const statusColors = {
-    pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400',
-    under_review: 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400',
-    approved: 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400',
+    draft: 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400',
+    submitted: 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400',
+    under_review: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400',
+    accepted: 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400',
     rejected: 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400',
     needs_revision: 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400',
 }
@@ -90,22 +91,26 @@ const getScoreColor = (score) => {
             </div>
 
             <!-- Statistics Cards -->
-            <div v-if="statistics" class="grid grid-cols-1 md:grid-cols-6 gap-4 mb-6">
+            <div v-if="statistics" class="grid grid-cols-1 md:grid-cols-7 gap-4 mb-6">
                 <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow">
                     <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Total</div>
                     <div class="mt-1 text-2xl font-semibold text-gray-900 dark:text-white">{{ statistics.total }}</div>
                 </div>
                 <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow">
-                    <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Pending</div>
-                    <div class="mt-1 text-2xl font-semibold text-yellow-600 dark:text-yellow-400">{{ statistics.pending }}</div>
+                    <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Draft</div>
+                    <div class="mt-1 text-2xl font-semibold text-gray-600 dark:text-gray-400">{{ statistics.draft }}</div>
+                </div>
+                <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow">
+                    <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Submitted</div>
+                    <div class="mt-1 text-2xl font-semibold text-blue-600 dark:text-blue-400">{{ statistics.submitted }}</div>
                 </div>
                 <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow">
                     <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Under Review</div>
-                    <div class="mt-1 text-2xl font-semibold text-blue-600 dark:text-blue-400">{{ statistics.under_review }}</div>
+                    <div class="mt-1 text-2xl font-semibold text-yellow-600 dark:text-yellow-400">{{ statistics.under_review }}</div>
                 </div>
                 <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow">
-                    <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Approved</div>
-                    <div class="mt-1 text-2xl font-semibold text-green-600 dark:text-green-400">{{ statistics.approved }}</div>
+                    <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Accepted</div>
+                    <div class="mt-1 text-2xl font-semibold text-green-600 dark:text-green-400">{{ statistics.accepted }}</div>
                 </div>
                 <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow">
                     <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Rejected</div>
@@ -139,9 +144,10 @@ const getScoreColor = (score) => {
                             class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                         >
                             <option value="">All Status</option>
-                            <option value="pending">Pending</option>
+                            <option value="draft">Draft</option>
+                            <option value="submitted">Submitted</option>
                             <option value="under_review">Under Review</option>
-                            <option value="approved">Approved</option>
+                            <option value="accepted">Accepted</option>
                             <option value="rejected">Rejected</option>
                             <option value="needs_revision">Needs Revision</option>
                         </select>
@@ -237,8 +243,8 @@ const getScoreColor = (score) => {
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <span v-if="idea.total_score" :class="getScoreColor(idea.total_score)" class="text-sm font-semibold">
-                                        {{ idea.total_score }}/100
+                                    <span v-if="idea.score" :class="getScoreColor(idea.score)" class="text-sm font-semibold">
+                                        {{ idea.score }}/100
                                     </span>
                                     <span v-else class="text-sm text-gray-400">
                                         Not Scored

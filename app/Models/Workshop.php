@@ -93,6 +93,14 @@ class Workshop extends Model
     }
 
     /**
+     * Get the attendance records for this workshop.
+     */
+    public function attendances(): HasMany
+    {
+        return $this->hasMany(WorkshopAttendance::class);
+    }
+
+    /**
      * Get the users registered for this workshop.
      */
     public function attendees(): BelongsToMany

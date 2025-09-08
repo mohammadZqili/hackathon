@@ -152,14 +152,14 @@ class WorkshopController extends Controller
      */
     public function show(Workshop $workshop): Response
     {
-        $workshop->load(['speakers', 'registrations.user', 'attendances.user']);
+        $workshop->load(['speakers', 'registrations.user', 'attendances']);
 
         // Get attendance statistics
         $attendanceStats = [
             'registered' => $workshop->registrations()->count(),
-            'attended' => $workshop->attendances()->count(),
+            'attended' => $workshop->attendances()->where('attended', true)->count(),
             'attendance_rate' => $workshop->registrations()->count() > 0 
-                ? round(($workshop->attendances()->count() / $workshop->registrations()->count()) * 100, 2)
+                ? round(($workshop->attendances()->where('attended', true)->count() / $workshop->registrations()->count()) * 100, 2)
                 : 0,
         ];
 

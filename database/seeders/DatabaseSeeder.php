@@ -30,6 +30,8 @@ class DatabaseSeeder extends Seeder
             
             // Teams and related data
             TeamSeeder::class,
+            IdeaSeeder::class,
+            IdeaAuditLogSeeder::class,
 
             // Content seeders
             NewsSeeder::class,
