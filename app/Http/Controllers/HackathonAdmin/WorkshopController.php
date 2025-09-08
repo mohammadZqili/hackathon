@@ -5,6 +5,7 @@ namespace App\Http\Controllers\HackathonAdmin;
 use App\Http\Controllers\Controller;
 use App\Models\Workshop;
 use App\Models\HackathonEdition;
+use App\Models\Hackathon;
 use App\Models\Speaker;
 use App\Models\WorkshopRegistration;
 use App\Http\Requests\HackathonAdmin\CreateWorkshopRequest;
@@ -28,7 +29,14 @@ class WorkshopController extends Controller
             return Inertia::render('HackathonAdmin/NoEdition');
         }
 
-        $query = Workshop::where('hackathon_edition_id', $currentEdition->id)
+        // Get current hackathon for workshop queries
+        $currentHackathon = Hackathon::where('is_current', true)->first();
+        
+        if (!$currentHackathon) {
+            return Inertia::render('HackathonAdmin/NoEdition');
+        }
+
+        $query = Workshop::where('hackathon_id', $currentHackathon->id)
             ->with(['speaker', 'registrations']);
 
         // Apply filters
@@ -65,19 +73,19 @@ class WorkshopController extends Controller
 
         // Get statistics
         $statistics = [
-            'total' => Workshop::where('hackathon_edition_id', $currentEdition->id)->count(),
-            'upcoming' => Workshop::where('hackathon_edition_id', $currentEdition->id)
+            'total' => Workshop::where('hackathon_id', $currentHackathon->id)->count(),
+            'upcoming' => Workshop::where('hackathon_id', $currentHackathon->id)
                 ->where('start_time', '>', Carbon::now())
                 ->count(),
-            'ongoing' => Workshop::where('hackathon_edition_id', $currentEdition->id)
+            'ongoing' => Workshop::where('hackathon_id', $currentHackathon->id)
                 ->where('start_time', '<=', Carbon::now())
                 ->where('end_time', '>=', Carbon::now())
                 ->count(),
-            'completed' => Workshop::where('hackathon_edition_id', $currentEdition->id)
+            'completed' => Workshop::where('hackathon_id', $currentHackathon->id)
                 ->where('end_time', '<', Carbon::now())
                 ->count(),
-            'total_registrations' => WorkshopRegistration::whereHas('workshop', function($q) use ($currentEdition) {
-                $q->where('hackathon_edition_id', $currentEdition->id);
+            'total_registrations' => WorkshopRegistration::whereHas('workshop', function($q) use ($currentHackathon) {
+                $q->where('hackathon_id', $currentHackathon->id);
             })->count(),
         ];
 
@@ -121,8 +129,14 @@ class WorkshopController extends Controller
             return back()->with('error', 'No current hackathon edition found.');
         }
 
+        $currentHackathon = Hackathon::where('is_current', true)->first();
+        
+        if (!$currentHackathon) {
+            return back()->with('error', 'No current hackathon found.');
+        }
+
         $validated = $request->validated();
-        $validated['hackathon_edition_id'] = $currentEdition->id;
+        $validated['hackathon_id'] = $currentHackathon->id;
         
         // Generate unique QR code identifier
         $validated['qr_code'] = 'WORKSHOP-' . strtoupper(uniqid());

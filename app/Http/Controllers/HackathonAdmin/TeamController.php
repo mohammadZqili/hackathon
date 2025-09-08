@@ -9,6 +9,7 @@ use App\Http\Requests\HackathonAdmin\ApproveTeamRequest;
 use App\Services\TeamService;
 use App\Models\Team;
 use App\Models\HackathonEdition;
+use App\Models\Hackathon;
 use App\Models\Track;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -46,7 +47,9 @@ class TeamController extends Controller
             ->latest()
             ->paginate(15);
 
-        $tracks = Track::where('hackathon_edition_id', $currentEdition->id)->get();
+        // Get the current hackathon to find tracks
+        $currentHackathon = Hackathon::where('is_current', true)->first();
+        $tracks = $currentHackathon ? Track::where('hackathon_id', $currentHackathon->id)->get() : collect();
 
         return Inertia::render('HackathonAdmin/Teams/Index', [
             'teams' => $teams,
@@ -64,9 +67,11 @@ class TeamController extends Controller
             return Inertia::render('HackathonAdmin/NoEdition');
         }
 
-        $tracks = Track::where('hackathon_edition_id', $currentEdition->id)
+        // Get the current hackathon to find tracks
+        $currentHackathon = Hackathon::where('is_current', true)->first();
+        $tracks = $currentHackathon ? Track::where('hackathon_id', $currentHackathon->id)
             ->where('is_active', true)
-            ->get();
+            ->get() : collect();
         
         $users = User::whereDoesntHave('teams', function ($query) use ($currentEdition) {
             $query->where('hackathon_id', $currentEdition->id);
@@ -105,9 +110,11 @@ class TeamController extends Controller
     {
         $currentEdition = HackathonEdition::where('is_current', true)->first();
         
-        $tracks = Track::where('hackathon_edition_id', $currentEdition->id)
+        // Get the current hackathon to find tracks
+        $currentHackathon = Hackathon::where('is_current', true)->first();
+        $tracks = $currentHackathon ? Track::where('hackathon_id', $currentHackathon->id)
             ->where('is_active', true)
-            ->get();
+            ->get() : collect();
 
         return Inertia::render('HackathonAdmin/Teams/Edit', [
             'team' => $team,

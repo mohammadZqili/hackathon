@@ -30,6 +30,9 @@ use App\Http\Controllers\SystemAdmin\DashboardController as SystemAdminDashboard
 use App\Http\Controllers\SystemAdmin\EditionController as SystemAdminEditionController;
 use App\Http\Controllers\HackathonAdmin\TeamController as HackathonAdminTeamController;
 use App\Http\Controllers\HackathonAdmin\IdeaController as HackathonAdminIdeaController;
+use App\Http\Controllers\HackathonAdmin\WorkshopController as HackathonAdminWorkshopController;
+use App\Http\Controllers\HackathonAdmin\NewsController as HackathonAdminNewsController;
+use App\Http\Controllers\HackathonAdmin\DashboardController as HackathonAdminDashboardController;
 
 Route::get('/terms', [PageController::class, 'terms'])->name('terms');
 Route::get('/', [PageController::class, 'home'])->name('home');
@@ -226,4 +229,42 @@ Route::middleware(['auth', 'hackathon_admin'])->prefix('hackathon-admin')->name(
     Route::resource('ideas', HackathonAdminIdeaController::class);
     Route::post('ideas/{idea}/approve', [HackathonAdminIdeaController::class, 'approve'])->name('ideas.approve');
     Route::post('ideas/{idea}/reject', [HackathonAdminIdeaController::class, 'reject'])->name('ideas.reject');
+    
+    // Workshop Management
+    Route::resource('workshops', HackathonAdminWorkshopController::class);
+    Route::get('workshops/{workshop}/attendance', [HackathonAdminWorkshopController::class, 'attendance'])->name('workshops.attendance');
+    Route::post('workshops/{workshop}/generate-qr', [HackathonAdminWorkshopController::class, 'generateQR'])->name('workshops.generate-qr');
+    
+    // News Management
+    Route::resource('news', HackathonAdminNewsController::class);
+    Route::post('news/{news}/publish', [HackathonAdminNewsController::class, 'publish'])->name('news.publish');
+    Route::post('news/{news}/unpublish', [HackathonAdminNewsController::class, 'unpublish'])->name('news.unpublish');
 });
+
+// Workshop Routes - General (for all participants)
+Route::middleware(['auth'])->group(function () {
+    Route::get('/workshops', [HackathonAdminWorkshopController::class, 'publicIndex'])->name('workshops.index');
+    Route::get('/workshops/{workshop}', [HackathonAdminWorkshopController::class, 'publicShow'])->name('workshops.show');
+    Route::post('/workshops/{workshop}/register', [HackathonAdminWorkshopController::class, 'register'])->name('workshops.register');
+});
+
+// TODO: Add these routes when controllers are created
+// Track Supervisor Routes
+// Route::middleware(['auth', 'track_supervisor'])->prefix('track-supervisor')->name('track-supervisor.')->group(function () {
+//     Route::get('/dashboard', [\App\Http\Controllers\TrackSupervisor\DashboardController::class, 'index'])->name('dashboard');
+//     Route::get('/teams', [\App\Http\Controllers\TrackSupervisor\TeamController::class, 'index'])->name('teams.index');
+//     Route::get('/ideas', [\App\Http\Controllers\TrackSupervisor\IdeaController::class, 'index'])->name('ideas.index');
+// });
+
+// Team Leader Routes
+// Route::middleware(['auth', 'team_leader'])->prefix('team-leader')->name('team-leader.')->group(function () {
+//     Route::get('/dashboard', [\App\Http\Controllers\TeamLeader\DashboardController::class, 'index'])->name('dashboard');
+//     Route::get('/team', [\App\Http\Controllers\TeamLeader\TeamController::class, 'show'])->name('team.show');
+//     Route::get('/idea/edit', [\App\Http\Controllers\TeamLeader\IdeaController::class, 'edit'])->name('idea.edit');
+// });
+
+// Team Member Routes
+// Route::middleware(['auth', 'team_member'])->prefix('team-member')->name('team-member.')->group(function () {
+//     Route::get('/dashboard', [\App\Http\Controllers\TeamMember\DashboardController::class, 'index'])->name('dashboard');
+//     Route::get('/team', [\App\Http\Controllers\TeamMember\TeamController::class, 'show'])->name('team.show');
+// });

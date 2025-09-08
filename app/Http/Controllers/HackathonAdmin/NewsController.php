@@ -27,8 +27,7 @@ class NewsController extends Controller
             return Inertia::render('HackathonAdmin/NoEdition');
         }
 
-        $query = News::where('hackathon_edition_id', $currentEdition->id)
-            ->with('author');
+        $query = News::with('author');
 
         // Apply filters
         if ($request->filled('search')) {
@@ -53,17 +52,13 @@ class NewsController extends Controller
 
         $news = $query->latest()->paginate(15)->withQueryString();
 
-        // Get statistics
+        // Get statistics (news is global, not edition-specific)
         $statistics = [
-            'total' => News::where('hackathon_edition_id', $currentEdition->id)->count(),
-            'draft' => News::where('hackathon_edition_id', $currentEdition->id)
-                ->where('status', 'draft')->count(),
-            'published' => News::where('hackathon_edition_id', $currentEdition->id)
-                ->where('status', 'published')->count(),
-            'scheduled' => News::where('hackathon_edition_id', $currentEdition->id)
-                ->where('status', 'scheduled')->count(),
-            'tweeted' => News::where('hackathon_edition_id', $currentEdition->id)
-                ->whereNotNull('tweeted_at')->count(),
+            'total' => News::count(),
+            'draft' => News::where('status', 'draft')->count(),
+            'published' => News::where('status', 'published')->count(),
+            'archived' => News::where('status', 'archived')->count(),
+            'featured' => News::where('is_featured', true)->count(),
         ];
 
         $categories = [
@@ -121,7 +116,6 @@ class NewsController extends Controller
         }
 
         $validated = $request->validated();
-        $validated['hackathon_edition_id'] = $currentEdition->id;
         $validated['author_id'] = auth()->id();
         $validated['slug'] = Str::slug($validated['title']);
         

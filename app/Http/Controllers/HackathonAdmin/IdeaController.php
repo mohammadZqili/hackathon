@@ -5,6 +5,7 @@ namespace App\Http\Controllers\HackathonAdmin;
 use App\Http\Controllers\Controller;
 use App\Models\Idea;
 use App\Models\HackathonEdition;
+use App\Models\Hackathon;
 use App\Models\User;
 use App\Models\Track;
 use App\Http\Requests\HackathonAdmin\ReviewIdeaRequest;
@@ -79,7 +80,9 @@ class IdeaController extends Controller
             })->where('status', 'needs_revision')->count(),
         ];
 
-        $tracks = Track::where('hackathon_edition_id', $currentEdition->id)->get();
+        // Get the current hackathon to find tracks
+        $currentHackathon = Hackathon::where('is_current', true)->first();
+        $tracks = $currentHackathon ? Track::where('hackathon_id', $currentHackathon->id)->get() : collect();
         $supervisors = User::role('track_supervisor')->get();
 
         return Inertia::render('HackathonAdmin/Ideas/Index', [

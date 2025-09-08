@@ -4,6 +4,7 @@ namespace App\Http\Controllers\HackathonAdmin;
 
 use App\Http\Controllers\Controller;
 use App\Models\HackathonEdition;
+use App\Models\Hackathon;
 use App\Models\Team;
 use App\Models\Idea;
 use App\Models\Workshop;
@@ -23,6 +24,9 @@ class DashboardController extends Controller
             return Inertia::render('HackathonAdmin/NoEdition');
         }
 
+        // Get the current hackathon for workshop and track queries
+        $currentHackathon = Hackathon::where('is_current', true)->first();
+        
         // Get statistics for current edition
         $statistics = [
             'teams' => [
@@ -43,15 +47,15 @@ class DashboardController extends Controller
                 })->where('status', 'approved')->count(),
             ],
             'workshops' => [
-                'total' => Workshop::where('hackathon_edition_id', $currentEdition->id)->count(),
-                'upcoming' => Workshop::where('hackathon_edition_id', $currentEdition->id)
+                'total' => $currentHackathon ? Workshop::where('hackathon_id', $currentHackathon->id)->count() : 0,
+                'upcoming' => $currentHackathon ? Workshop::where('hackathon_id', $currentHackathon->id)
                     ->where('start_time', '>', Carbon::now())
-                    ->count(),
-                'completed' => Workshop::where('hackathon_edition_id', $currentEdition->id)
+                    ->count() : 0,
+                'completed' => $currentHackathon ? Workshop::where('hackathon_id', $currentHackathon->id)
                     ->where('end_time', '<', Carbon::now())
-                    ->count(),
+                    ->count() : 0,
             ],
-            'tracks' => Track::where('hackathon_edition_id', $currentEdition->id)->count(),
+            'tracks' => $currentHackathon ? Track::where('hackathon_id', $currentHackathon->id)->count() : 0,
         ];
 
         // Get recent activities
@@ -70,18 +74,18 @@ class DashboardController extends Controller
             ->get();
 
         // Get upcoming workshops
-        $upcomingWorkshops = Workshop::where('hackathon_edition_id', $currentEdition->id)
+        $upcomingWorkshops = $currentHackathon ? Workshop::where('hackathon_id', $currentHackathon->id)
             ->where('start_time', '>', Carbon::now())
             ->orderBy('start_time')
             ->take(5)
-            ->get();
+            ->get() : collect();
 
         // Get teams by track
-        $teamsByTrack = Track::where('hackathon_edition_id', $currentEdition->id)
+        $teamsByTrack = $currentHackathon ? Track::where('hackathon_id', $currentHackathon->id)
             ->withCount(['teams' => function($q) use ($currentEdition) {
                 $q->where('hackathon_id', $currentEdition->id);
             }])
-            ->get();
+            ->get() : collect();
 
         return Inertia::render('HackathonAdmin/Dashboard/Index', [
             'currentEdition' => $currentEdition,

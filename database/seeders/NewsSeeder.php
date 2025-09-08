@@ -147,7 +147,10 @@ class NewsSeeder extends Seeder
         ];
 
         foreach ($newsItems as $news) {
-            News::create($news);
+            News::firstOrCreate(
+                ['slug' => $news['slug']],
+                $news
+            );
         }
     }
 }

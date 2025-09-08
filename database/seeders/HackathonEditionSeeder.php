@@ -29,7 +29,9 @@ class HackathonEditionSeeder extends Seeder
         }
 
         // Create past edition
-        HackathonEdition::create([
+        HackathonEdition::firstOrCreate(
+            ['slug' => 'hackathon-2023'],
+            [
             'name' => 'Hackathon 2023',
             'slug' => 'hackathon-2023',
             'year' => 2023,
@@ -66,10 +68,13 @@ class HackathonEditionSeeder extends Seeder
                 'projects_submitted' => 42
             ],
             'created_by' => $user->id,
-        ]);
+            ]
+        );
 
         // Create current edition
-        HackathonEdition::create([
+        HackathonEdition::firstOrCreate(
+            ['slug' => 'hackathon-2024'],
+            [
             'name' => 'Hackathon 2024',
             'slug' => 'hackathon-2024',
             'year' => 2024,
@@ -104,10 +109,13 @@ class HackathonEditionSeeder extends Seeder
             ],
             'statistics' => null,
             'created_by' => $user->id,
-        ]);
+            ]
+        );
 
         // Create upcoming edition
-        HackathonEdition::create([
+        HackathonEdition::firstOrCreate(
+            ['slug' => 'hackathon-2025'],
+            [
             'name' => 'Hackathon 2025',
             'slug' => 'hackathon-2025',
             'year' => 2025,
@@ -141,6 +149,7 @@ class HackathonEditionSeeder extends Seeder
             ],
             'statistics' => null,
             'created_by' => $user->id,
-        ]);
+            ]
+        );
     }
 }
