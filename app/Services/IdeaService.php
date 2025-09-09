@@ -5,21 +5,35 @@ namespace App\Services;
 use App\Models\Idea;
 use App\Models\Team;
 use App\Models\User;
+use App\Models\Track;
 use App\Models\IdeaFile;
 use App\Models\IdeaAuditLog;
 use App\Repositories\IdeaRepository;
+use App\Repositories\TrackRepository;
+use App\Repositories\HackathonRepository;
+use App\Repositories\UserRepository;
 use App\Services\Contracts\IdeaServiceInterface;
+use App\Enums\IdeaStatus;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class IdeaService implements IdeaServiceInterface
 {
     public function __construct(
-        private IdeaRepository $ideaRepo
+        private IdeaRepository $ideaRepo,
+        private TrackRepository $trackRepo,
+        private HackathonRepository $hackathonRepo,
+        private UserRepository $userRepo
     ) {}
+
+    // =====================================================
+    // Team/Member Operations (Existing Functionality)
+    // =====================================================
 
     /**
      * Create a new idea for a team.
@@ -321,6 +335,398 @@ class IdeaService implements IdeaServiceInterface
         ];
     }
 
+    // =====================================================
+    // SystemAdmin Operations (New Functionality)
+    // =====================================================
+
+    /**
+     * Get paginated ideas with filters for system admin.
+     */
+    public function getPaginatedIdeas(array $filters = [], int $perPage = 15): LengthAwarePaginator
+    {
+        $query = $this->ideaRepo->getModel()->with(['team.leader', 'team.hackathon', 'track', 'reviewer', 'files']);
+
+        // Apply search filter
+        if (!empty($filters['search'])) {
+            $search = $filters['search'];
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%")
+                  ->orWhereHas('team', function ($teamQuery) use ($search) {
+                      $teamQuery->where('name', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('team.leader', function ($leaderQuery) use ($search) {
+                      $leaderQuery->where('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        // Apply status filter
+        if (!empty($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        // Apply track filter
+        if (!empty($filters['track'])) {
+            $query->where('track_id', $filters['track']);
+        }
+
+        // Apply edition filter
+        if (!empty($filters['edition'])) {
+            $query->whereHas('team.hackathon', function ($q) use ($filters) {
+                $q->where('id', $filters['edition']);
+            });
+        }
+
+        return $query->latest()->paginate($perPage)->withQueryString();
+    }
+
+    /**
+     * Get filter options for ideas list.
+     */
+    public function getFilterOptions(): array
+    {
+        return [
+            'tracks' => $this->trackRepo->getModel()
+                ->select('id', 'name', 'hackathon_id')
+                ->with('hackathon:id,name')
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get(),
+            'editions' => $this->hackathonRepo->getModel()
+                ->select('id', 'name', 'year')
+                ->orderBy('year', 'desc')
+                ->get()
+        ];
+    }
+
+    /**
+     * Get general ideas statistics.
+     */
+    public function getGeneralIdeaStatistics(): array
+    {
+        return [
+            'total' => $this->ideaRepo->count(),
+            'pending' => $this->ideaRepo->getModel()->whereIn('status', ['submitted', 'under_review'])->count(),
+            'accepted' => $this->ideaRepo->getModel()->where('status', 'accepted')->count(),
+            'rejected' => $this->ideaRepo->getModel()->where('status', 'rejected')->count(),
+            'needs_revision' => $this->ideaRepo->getModel()->where('status', 'needs_revision')->count(),
+        ];
+    }
+
+    /**
+     * Get idea with all relations for admin view.
+     */
+    public function getIdeaWithRelations(int $ideaId): ?Idea
+    {
+        return $this->ideaRepo->getModel()
+            ->with([
+                'team.leader', 
+                'team.hackathon', 
+                'team.members',
+                'track', 
+                'reviewer', 
+                'files', 
+                'auditLogs.user'
+            ])
+            ->find($ideaId);
+    }
+
+    /**
+     * Get available supervisors for track.
+     */
+    public function getAvailableSupervisors(?int $trackId = null): Collection
+    {
+        if (!$trackId) {
+            return collect();
+        }
+
+        return $this->userRepo->getModel()
+            ->whereHas('roles', function ($query) {
+                $query->where('name', 'track_supervisor');
+            })
+            ->select('id', 'name', 'email')
+            ->orderBy('name')
+            ->get();
+    }
+
+    /**
+     * Get user permissions for idea management.
+     */
+    public function getUserPermissions(): array
+    {
+        $user = Auth::user();
+        
+        return [
+            'review_ideas' => $user->can('review_ideas') || $user->hasRole('system_admin'),
+            'score_ideas' => $user->can('score_ideas') || $user->hasRole('system_admin'),
+            'assign_supervisors' => $user->can('assign_supervisors') || $user->hasRole('system_admin'),
+        ];
+    }
+
+    /**
+     * Accept an idea (SystemAdmin).
+     */
+    public function acceptIdea(Idea $idea, array $data): bool
+    {
+        return DB::transaction(function () use ($idea, $data) {
+            $previousStatus = $idea->status;
+
+            $updated = $this->ideaRepo->update($idea->id, [
+                'status' => IdeaStatus::ACCEPTED->value,
+                'feedback' => $data['feedback'] ?? null,
+                'score' => $data['score'] ?? null,
+                'reviewed_by' => Auth::id(),
+                'reviewed_at' => now()
+            ]);
+
+            if ($updated) {
+                $this->createAuditLog($idea, 'accepted', $data['feedback'] ?: 'Idea accepted without feedback', Auth::user(), [
+                    'score' => $data['score'] ?? null,
+                    'previous_status' => $previousStatus,
+                    'reviewer_name' => Auth::user()->name
+                ]);
+            }
+
+            return $updated;
+        });
+    }
+
+    /**
+     * Reject an idea (SystemAdmin).
+     */
+    public function rejectIdea(Idea $idea, array $data): bool
+    {
+        return DB::transaction(function () use ($idea, $data) {
+            $previousStatus = $idea->status;
+
+            $updated = $this->ideaRepo->update($idea->id, [
+                'status' => IdeaStatus::REJECTED->value,
+                'feedback' => $data['feedback'],
+                'score' => $data['score'] ?? null,
+                'reviewed_by' => Auth::id(),
+                'reviewed_at' => now()
+            ]);
+
+            if ($updated) {
+                $this->createAuditLog($idea, 'rejected', $data['feedback'], Auth::user(), [
+                    'score' => $data['score'] ?? null,
+                    'previous_status' => $previousStatus,
+                    'reviewer_name' => Auth::user()->name
+                ]);
+            }
+
+            return $updated;
+        });
+    }
+
+    /**
+     * Mark idea as needing revision (SystemAdmin).
+     */
+    public function markForRevision(Idea $idea, array $data): bool
+    {
+        return DB::transaction(function () use ($idea, $data) {
+            $previousStatus = $idea->status;
+
+            $updated = $this->ideaRepo->update($idea->id, [
+                'status' => IdeaStatus::NEEDS_REVISION->value,
+                'feedback' => $data['feedback'],
+                'score' => $data['score'] ?? null,
+                'reviewed_by' => Auth::id(),
+                'reviewed_at' => now()
+            ]);
+
+            if ($updated) {
+                $this->createAuditLog($idea, 'needs_revision', $data['feedback'], Auth::user(), [
+                    'score' => $data['score'] ?? null,
+                    'previous_status' => $previousStatus,
+                    'reviewer_name' => Auth::user()->name
+                ]);
+            }
+
+            return $updated;
+        });
+    }
+
+    /**
+     * Assign supervisor to an idea (SystemAdmin).
+     */
+    public function assignSupervisor(Idea $idea, int $supervisorId): bool
+    {
+        $supervisor = $this->userRepo->find($supervisorId);
+        
+        if (!$supervisor || !$supervisor->hasRole('track_supervisor')) {
+            throw new \Exception('Selected user is not a track supervisor.');
+        }
+
+        return DB::transaction(function () use ($idea, $supervisor) {
+            $previousSupervisor = $idea->reviewer;
+
+            $updated = $this->ideaRepo->update($idea->id, [
+                'reviewed_by' => $supervisor->id,
+                'status' => $idea->status === 'submitted' ? 'under_review' : $idea->status
+            ]);
+
+            if ($updated) {
+                $this->createAuditLog($idea, 'supervisor_assigned', "Supervisor assigned: {$supervisor->name}", Auth::user(), [
+                    'new_supervisor_id' => $supervisor->id,
+                    'new_supervisor_name' => $supervisor->name,
+                    'previous_supervisor_id' => $previousSupervisor?->id,
+                    'previous_supervisor_name' => $previousSupervisor?->name,
+                    'assigned_by' => Auth::user()->name
+                ]);
+            }
+
+            return $updated;
+        });
+    }
+
+    /**
+     * Update score for an idea (SystemAdmin).
+     */
+    public function updateScore(Idea $idea, float $score): bool
+    {
+        return DB::transaction(function () use ($idea, $score) {
+            $previousScore = $idea->score;
+
+            $updated = $this->ideaRepo->update($idea->id, [
+                'score' => $score,
+                'reviewed_by' => $idea->reviewed_by ?: Auth::id(),
+                'reviewed_at' => $idea->reviewed_at ?: now()
+            ]);
+
+            if ($updated) {
+                $this->createAuditLog($idea, 'score_updated', "Score updated from {$previousScore} to {$score}", Auth::user(), [
+                    'new_score' => $score,
+                    'previous_score' => $previousScore,
+                    'updated_by' => Auth::user()->name
+                ]);
+            }
+
+            return $updated;
+        });
+    }
+
+    /**
+     * Delete an idea (SystemAdmin).
+     */
+    public function deleteIdea(Idea $idea): bool
+    {
+        return DB::transaction(function () use ($idea) {
+            // Create audit log before deletion
+            $this->createAuditLog($idea, 'deleted', 'Idea deleted by system administrator', Auth::user(), [
+                'idea_title' => $idea->title,
+                'team_name' => $idea->team->name ?? 'Unknown',
+                'deleted_at' => now()->toISOString()
+            ]);
+
+            return $this->ideaRepo->delete($idea->id);
+        });
+    }
+
+    /**
+     * Get export data for ideas.
+     */
+    public function getExportData(array $filters = []): Collection
+    {
+        $query = $this->ideaRepo->getModel()->with(['team.leader', 'team.hackathon', 'track', 'reviewer']);
+
+        // Apply same filters as index
+        if (!empty($filters['search'])) {
+            $search = $filters['search'];
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%")
+                  ->orWhereHas('team', function ($teamQuery) use ($search) {
+                      $teamQuery->where('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        if (!empty($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        if (!empty($filters['track'])) {
+            $query->where('track_id', $filters['track']);
+        }
+
+        if (!empty($filters['edition'])) {
+            $query->whereHas('team.hackathon', function ($q) use ($filters) {
+                $q->where('id', $filters['edition']);
+            });
+        }
+
+        return $query->get()->map(function ($idea) {
+            return [
+                'id' => $idea->id,
+                'title' => $idea->title,
+                'description' => $idea->description,
+                'team_name' => $idea->team->name ?? 'N/A',
+                'team_leader' => $idea->team->leader->name ?? 'N/A',
+                'track' => $idea->track->name ?? 'N/A',
+                'edition' => $idea->team->hackathon->name ?? 'N/A',
+                'status' => $idea->status,
+                'score' => $idea->score,
+                'reviewer' => $idea->reviewer->name ?? 'N/A',
+                'submitted_at' => $idea->submitted_at?->format('Y-m-d H:i:s'),
+                'reviewed_at' => $idea->reviewed_at?->format('Y-m-d H:i:s'),
+                'created_at' => $idea->created_at->format('Y-m-d H:i:s')
+            ];
+        });
+    }
+
+    /**
+     * Get detailed statistics for system admin.
+     */
+    public function getDetailedStatistics(): array
+    {
+        return [
+            'total' => $this->ideaRepo->count(),
+            'by_status' => $this->ideaRepo->getModel()
+                ->select('status', DB::raw('count(*) as count'))
+                ->groupBy('status')
+                ->pluck('count', 'status'),
+            'by_track' => $this->ideaRepo->getModel()
+                ->with('track:id,name')
+                ->select('track_id', DB::raw('count(*) as count'))
+                ->groupBy('track_id')
+                ->get()
+                ->map(function ($item) {
+                    return [
+                        'track' => $item->track->name ?? 'Unknown',
+                        'count' => $item->count
+                    ];
+                }),
+            'average_score' => $this->ideaRepo->getModel()->whereNotNull('score')->avg('score'),
+            'recent_submissions' => $this->ideaRepo->getModel()->where('created_at', '>=', now()->subDays(7))->count(),
+            'pending_review' => $this->ideaRepo->getModel()->whereIn('status', ['submitted', 'under_review'])->count()
+        ];
+    }
+
+    /**
+     * Get evaluation criteria for review page.
+     */
+    public function getEvaluationCriteria(?Track $track = null): array
+    {
+        $defaultCriteria = [
+            ['name' => 'Innovation', 'weight' => 25, 'description' => 'How innovative and creative is the solution?'],
+            ['name' => 'Technical Feasibility', 'weight' => 25, 'description' => 'Is the technical approach sound and achievable?'],
+            ['name' => 'Impact', 'weight' => 25, 'description' => 'What is the potential impact of this solution?'],
+            ['name' => 'Presentation', 'weight' => 25, 'description' => 'How well is the idea presented and documented?']
+        ];
+
+        if ($track && $track->evaluation_criteria) {
+            return $track->evaluation_criteria;
+        }
+
+        return $defaultCriteria;
+    }
+
+    // =====================================================
+    // Private Helper Methods
+    // =====================================================
+
     /**
      * Upload a single file for an idea.
      */
@@ -421,17 +827,17 @@ class IdeaService implements IdeaServiceInterface
     /**
      * Create audit log entry.
      */
-    private function createAuditLog(Idea $idea, string $action, string $description, User $user): void
+    private function createAuditLog(Idea $idea, string $action, string $description, User $user, array $metadata = []): void
     {
         IdeaAuditLog::create([
             'idea_id' => $idea->id,
             'user_id' => $user->id,
             'action' => $action,
             'description' => $description,
-            'metadata' => [
+            'metadata' => array_merge([
                 'user_name' => $user->name,
                 'user_role' => $user->user_type,
-            ],
+            ], $metadata),
         ]);
     }
 

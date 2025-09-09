@@ -14,9 +14,8 @@ return new class extends Migration
         Schema::table('news', function (Blueprint $table) {
             // Add hackathon_id column after author_id
             $table->after('author_id', function ($table) {
-                $table->char('hackathon_id', 26)->nullable();
-                $table->foreign('hackathon_id')->references('id')->on('hackathons')->onDelete('cascade');
-                $table->index('hackathon_id');
+                $table->foreignId('hackathon_id')->nullable()
+                    ->constrained('hackathons')->onDelete('cascade');
             });
         });
     }

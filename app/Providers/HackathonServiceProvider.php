@@ -6,6 +6,7 @@ use Illuminate\Support\ServiceProvider;
 
 // Service Interfaces
 use App\Services\Contracts\HackathonServiceInterface;
+use App\Services\Contracts\HackathonEditionServiceInterface;
 use App\Services\Contracts\TeamServiceInterface;
 use App\Services\Contracts\IdeaServiceInterface;
 use App\Services\Contracts\WorkshopServiceInterface;
@@ -14,6 +15,7 @@ use App\Services\Contracts\NewsServiceInterface;
 
 // Service Implementations
 use App\Services\HackathonService;
+use App\Services\HackathonEditionService;
 use App\Services\TeamService;
 use App\Services\IdeaService;
 use App\Services\WorkshopService;
@@ -22,6 +24,7 @@ use App\Services\NewsService;
 
 // Repository Interfaces
 use App\Repositories\Contracts\HackathonRepositoryInterface;
+use App\Repositories\Contracts\HackathonEditionRepositoryInterface;
 use App\Repositories\Contracts\TeamRepositoryInterface;
 use App\Repositories\Contracts\IdeaRepositoryInterface;
 use App\Repositories\Contracts\WorkshopRepositoryInterface;
@@ -31,6 +34,7 @@ use App\Repositories\Contracts\UserRepositoryInterface;
 
 // Repository Implementations
 use App\Repositories\HackathonRepository;
+use App\Repositories\HackathonEditionRepository;
 use App\Repositories\TeamRepository;
 use App\Repositories\IdeaRepository;
 use App\Repositories\WorkshopRepository;
@@ -40,6 +44,7 @@ use App\Repositories\UserRepository;
 
 // Models
 use App\Models\Hackathon;
+use App\Models\HackathonEdition;
 use App\Models\Team;
 use App\Models\Idea;
 use App\Models\Workshop;
@@ -61,6 +66,10 @@ class HackathonServiceProvider extends ServiceProvider
         // Bind repository interfaces to implementations
         $this->app->bind(HackathonRepositoryInterface::class, function ($app) {
             return new HackathonRepository(new Hackathon());
+        });
+
+        $this->app->bind(HackathonEditionRepositoryInterface::class, function ($app) {
+            return new HackathonEditionRepository(new HackathonEdition());
         });
 
         $this->app->bind(TeamRepositoryInterface::class, function ($app) {
@@ -93,6 +102,9 @@ class HackathonServiceProvider extends ServiceProvider
         
         // Bind HackathonService
         $this->app->bind(HackathonServiceInterface::class, HackathonService::class);
+
+        // Bind HackathonEditionService
+        $this->app->bind(HackathonEditionServiceInterface::class, HackathonEditionService::class);
 
         // Bind TeamService
         $this->app->bind(TeamServiceInterface::class, TeamService::class);

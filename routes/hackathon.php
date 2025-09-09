@@ -63,6 +63,14 @@ Route::middleware(['auth', 'role:system_admin|permission:manage-hackathon-editio
 
     // Global Idea Management
     Route::resource('ideas', SystemAdminIdeaController::class)->only(['index', 'show', 'destroy']);
+    Route::get('ideas/{idea}/review', [SystemAdminIdeaController::class, 'review'])->name('ideas.review');
+    Route::post('ideas/{idea}/review/accept', [SystemAdminIdeaController::class, 'accept'])->name('ideas.review.accept');
+    Route::post('ideas/{idea}/review/reject', [SystemAdminIdeaController::class, 'reject'])->name('ideas.review.reject');
+    Route::post('ideas/{idea}/review/need-edit', [SystemAdminIdeaController::class, 'needEdit'])->name('ideas.review.need-edit');
+    Route::post('ideas/{idea}/assign-supervisor', [SystemAdminIdeaController::class, 'assignSupervisor'])->name('ideas.assign-supervisor');
+    Route::post('ideas/{idea}/update-score', [SystemAdminIdeaController::class, 'updateScore'])->name('ideas.update-score');
+    Route::get('ideas/{idea}/files/{file}/download', [SystemAdminIdeaController::class, 'downloadFile'])->name('ideas.download-file');
+    Route::get('ideas/statistics', [SystemAdminIdeaController::class, 'statistics'])->name('ideas.statistics');
     Route::get('ideas/export', [SystemAdminIdeaController::class, 'export'])->name('ideas.export');
 
     // Workshop Management (All Editions)
