@@ -60,6 +60,8 @@ class User extends Authenticatable implements Auditable
         'force_password_change' => 'boolean',
         'disable_account' => 'boolean',
         'deleted_at' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
         // Hackathon casts
         'date_of_birth' => 'date',
         'is_active' => 'boolean',
@@ -92,6 +94,11 @@ class User extends Authenticatable implements Auditable
     {
         $date = $date ?? $this->created_at;
 
+        // Ensure we have a Carbon instance
+        if (is_string($date)) {
+            $date = Carbon::parse($date);
+        }
+
         if (!$date) {
             return '';
         }
@@ -123,7 +130,12 @@ class User extends Authenticatable implements Auditable
 
     public function getCreatedAtFormattedAttribute(): string
     {
-        return $this->formatDateStyle($this->created_at);
+        // Ensure created_at is a Carbon instance
+        $createdAt = $this->created_at instanceof Carbon 
+            ? $this->created_at 
+            : ($this->created_at ? Carbon::parse($this->created_at) : null);
+            
+        return $this->formatDateStyle($createdAt);
     }
 
 
