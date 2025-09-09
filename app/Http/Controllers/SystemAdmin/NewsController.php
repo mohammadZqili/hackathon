@@ -11,7 +11,7 @@ class NewsController extends Controller
 {
     public function index()
     {
-        $news = News::with(['hackathon'])
+        $news = News::with(['author'])
             ->orderBy('created_at', 'desc')
             ->paginate(15);
 
