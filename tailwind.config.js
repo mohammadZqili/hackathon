@@ -11,7 +11,16 @@ export default {
         "./components/**/*.{html,js}",
     ],
     theme: {
-        extend: {},
+        extend: {
+            colors: {
+                mintcream: {
+                    100: '#F5FFFA',
+                    200: '#E0F7F0',
+                    300: '#D0F0E5',
+                },
+                seagreen: '#2E8B57',
+            },
+        },
     },
     plugins: [forms],
 };

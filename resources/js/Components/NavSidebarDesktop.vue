@@ -1,6 +1,7 @@
 <script setup>
 import { Link, usePage } from '@inertiajs/vue3'
 import { reactive, computed, ref } from 'vue'
+import Logo from './Logo.vue'
 
 const page = usePage()
 const user = computed(() => page.props.auth?.user)
@@ -312,45 +313,50 @@ const navigationSections = computed(() => {
 </script>
 
 <template>
-    <aside data-sidebar-content class="nav-sidebar" @click.stop>
-        <nav class="flex-1 overflow-y-auto py-2 px-2" aria-labelledby="nav-heading">
-            <ul class="space-y-1">
+    <aside data-sidebar-content class="h-full flex flex-col p-4" @click.stop>
+        <!-- Logo Section -->
+        <div class="flex flex-col items-center justify-center p-4 mb-2">
+            <Link href="/" aria-label="Go to homepage">
+                <Logo size="10rem" />
+            </Link>
+        </div>
+        
+        <!-- Divider -->
+        <div class="border-gray-200 dark:border-gray-700 border-t mb-2"></div>
+        
+        <!-- Navigation -->
+        <nav class="flex-1 overflow-y-auto" aria-labelledby="nav-heading">
+            <ul class="space-y-2">
                 <template v-for="(section, sectionIndex) in navigationSections" :key="sectionIndex">
                     <template v-if="sectionHasVisibleItems(section)" v-for="(item, itemIndex) in section.items"
                         :key="itemIndex">
-                        <li v-if="item.type === 'divider'" class="my-1.5 px-2" role="separator">
-                            <div class="nav-divider"></div>
+                        <li v-if="item.type === 'divider'" class="my-2" role="separator">
+                            <div class="border-gray-200 dark:border-gray-700 border-t"></div>
                         </li>
 
                         <li v-else>
                             <!-- Regular navigation item -->
                             <Link v-if="!item.children && hasPermission(item.permission) && item.route"
-                                :href="route(item.route)" :class="[
-                                    'nav-item',
-                                    isCurrentRoute(item.route) ? 'nav-item-active' : 'nav-item-default'
-                                ]">
-                            <svg :class="[
-                                'nav-icon',
-                                isCurrentRoute(item.route) ? 'nav-icon-active' : 'nav-icon-default'
-                            ]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                :href="route(item.route)" 
+                                class="w-full rounded-xl flex items-center gap-3 py-2 px-3 text-sm transition-all duration-200"
+                                :class="isCurrentRoute(item.route) ? 'nav-item-active' : 'nav-item-default'">
+                            <svg class="w-6 h-6 flex-shrink-0"
+                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                                 stroke="currentColor" aria-hidden="true" v-html="item.icon">
                             </svg>
-                            <span class="text-sm font-medium">{{ item.name }}</span>
+                            <span>{{ item.name }}</span>
                             </Link>
 
                             <!-- Dropdown navigation item -->
                             <button v-else-if="item.children && hasVisibleChildren(item)"
-                                @click="toggleDropdown(sectionIndex)" :class="[
-                                    'nav-item w-full text-left cursor-pointer',
-                                    isDropdownOpen(sectionIndex) ? 'nav-item-active' : 'nav-item-default'
-                                ]">
-                                <svg :class="[
-                                    'nav-icon',
-                                    isDropdownOpen(sectionIndex) ? 'nav-icon-active' : 'nav-icon-default'
-                                ]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                @click="toggleDropdown(sectionIndex)" 
+                                class="w-full rounded-xl flex items-center gap-3 py-2 px-3 text-sm transition-all duration-200 text-left"
+                                :class="isDropdownOpen(sectionIndex) ? 'nav-item-active' : 'nav-item-default'">
+                                <svg class="w-6 h-6 flex-shrink-0"
+                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                     stroke-width="1.5" stroke="currentColor" aria-hidden="true" v-html="item.icon">
                                 </svg>
-                                <span class="text-sm font-medium flex-1">{{ item.name }}</span>
+                                <span class="flex-1">{{ item.name }}</span>
                                 <svg :class="[
                                     'w-4 h-4 transition-transform duration-200',
                                     isDropdownOpen(sectionIndex) ? 'rotate-180' : ''
@@ -364,13 +370,12 @@ const navigationSections = computed(() => {
 
                         <!-- Dropdown children -->
                         <li v-if="item.children && isDropdownOpen(sectionIndex) && hasVisibleChildren(item)">
-                            <ul class="ml-7 space-y-1">
+                            <ul class="ml-9 space-y-1 mt-1">
                                 <li v-for="child in item.children" :key="child.name">
-                                    <Link v-if="hasPermission(child.permission)" :href="route(child.route)" :class="[
-                                        'nav-item pl-4',
-                                        isCurrentRoute(child.route) ? 'nav-item-active' : 'nav-item-default'
-                                    ]">
-                                    <span class="text-sm font-medium">{{ child.name }}</span>
+                                    <Link v-if="hasPermission(child.permission)" :href="route(child.route)" 
+                                        class="block rounded-lg py-1.5 px-3 text-sm transition-all duration-200"
+                                        :class="isCurrentRoute(child.route) ? 'nav-child-active' : 'nav-child-default'">
+                                    <span>{{ child.name }}</span>
                                     </Link>
                                 </li>
                             </ul>

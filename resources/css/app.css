@@ -430,6 +430,27 @@ pre {
     }
 }
 
+/* Navigation Item Styles with Theme Support */
+.nav-item-default {
+    @apply bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300;
+}
+
+.nav-item-active {
+    background-color: rgba(var(--primary-color-rgb), 0.1);
+    color: var(--primary-color);
+    @apply font-semibold dark:bg-gray-700 dark:text-white;
+}
+
+.nav-child-default {
+    @apply hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400;
+}
+
+.nav-child-active {
+    background-color: rgba(var(--primary-color-rgb), 0.05);
+    color: var(--primary-color);
+    @apply font-medium dark:bg-gray-600 dark:text-white;
+}
+
 /* Navigation Styles */
 .nav-sidebar {
     height: 100%;
