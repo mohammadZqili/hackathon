@@ -28,7 +28,7 @@ class ReportController extends Controller
         $overallStats = $this->getOverallStatistics($selectedEditionId);
         
         // Get editions for filtering
-        $editions = HackathonEdition::orderBy('start_date', 'desc')->get();
+        $editions = HackathonEdition::orderBy('event_start_date', 'desc')->get();
         
         // Get edition-specific statistics
         $editionStats = $this->getEditionStatistics();
@@ -66,10 +66,10 @@ class ReportController extends Controller
             
             // Get submitted vs draft ideas
             $submittedIdeas = Idea::where('edition_id', $editionId)
-                ->where('is_submitted', true)
+                ->whereNotIn('status', ['draft'])
                 ->count();
             $draftIdeas = Idea::where('edition_id', $editionId)
-                ->where('is_submitted', false)
+                ->where('status', 'draft')
                 ->count();
         } else {
             $teamsCount = Team::count();
@@ -78,8 +78,8 @@ class ReportController extends Controller
             $workshopsCount = Workshop::count();
             
             // Get submitted vs draft ideas
-            $submittedIdeas = Idea::where('is_submitted', true)->count();
-            $draftIdeas = Idea::where('is_submitted', false)->count();
+            $submittedIdeas = Idea::whereNotIn('status', ['draft'])->count();
+            $draftIdeas = Idea::where('status', 'draft')->count();
         }
         
         // Calculate growth percentages (compared to last month)
@@ -137,7 +137,7 @@ class ReportController extends Controller
     private function getEditionStatistics()
     {
         $editions = HackathonEdition::with(['teams', 'ideas', 'workshops'])
-            ->orderBy('start_date', 'desc')
+            ->orderBy('event_start_date', 'desc')
             ->take(10)
             ->get();
         
@@ -162,8 +162,8 @@ class ReportController extends Controller
             
             // Determine status based on dates
             $now = Carbon::now();
-            $startDate = Carbon::parse($edition->start_date);
-            $endDate = Carbon::parse($edition->end_date);
+            $startDate = Carbon::parse($edition->event_start_date);
+            $endDate = Carbon::parse($edition->event_end_date);
             
             if ($now->lt($startDate)) {
                 $status = 'upcoming';

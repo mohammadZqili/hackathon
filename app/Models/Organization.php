@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 class Organization extends Model
@@ -43,6 +44,14 @@ class Organization extends Model
                 $organization->slug = Str::slug($organization->name);
             }
         });
+    }
+
+    /**
+     * Get the speakers that belong to this organization.
+     */
+    public function speakers(): HasMany
+    {
+        return $this->hasMany(Speaker::class);
     }
 
     /**

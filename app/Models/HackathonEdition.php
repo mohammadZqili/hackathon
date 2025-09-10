@@ -54,6 +54,11 @@ class HackathonEdition extends Model
         return $this->hasMany(Team::class, 'edition_id');
     }
 
+    public function ideas(): HasMany
+    {
+        return $this->hasMany(Idea::class, 'edition_id');
+    }
+
     public function workshops(): HasMany
     {
         return $this->hasMany(Workshop::class, 'hackathon_edition_id');

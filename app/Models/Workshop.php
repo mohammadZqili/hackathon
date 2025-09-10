@@ -68,7 +68,7 @@ class Workshop extends Model
      */
     public function edition(): BelongsTo
     {
-        return $this->belongsTo(Edition::class, 'hackathon_edition_id');
+        return $this->belongsTo(HackathonEdition::class, 'hackathon_edition_id');
     }
 
     /**

@@ -14,6 +14,7 @@ use App\Http\Controllers\SystemAdmin\OrganizationController as SystemAdminOrgani
 use App\Http\Controllers\SystemAdmin\NewsController as SystemAdminNewsController;
 use App\Http\Controllers\SystemAdmin\SettingsController as SystemAdminSettingsController;
 use App\Http\Controllers\SystemAdmin\ReportController as SystemAdminReportController;
+use App\Http\Controllers\SystemAdmin\CheckinController as SystemAdminCheckinController;
 
 use App\Http\Controllers\HackathonAdmin\DashboardController as HackathonAdminDashboardController;
 use App\Http\Controllers\HackathonAdmin\TeamController as HackathonAdminTeamController;
@@ -129,6 +130,17 @@ Route::middleware(['auth', 'role:system_admin|permission:manage-hackathon-editio
         Route::post('/generate', [SystemAdminReportController::class, 'generateReport'])->name('generate');
         Route::post('/export-pdf', [SystemAdminReportController::class, 'exportPdf'])->name('export-pdf');
         Route::post('/schedule', [SystemAdminReportController::class, 'scheduleReports'])->name('schedule');
+    });
+
+    // Check-ins Management
+    Route::prefix('checkins')->name('checkins.')->group(function () {
+        Route::get('/', [SystemAdminCheckinController::class, 'index'])->name('index');
+        Route::post('/process-qr', [SystemAdminCheckinController::class, 'processQR'])->name('process-qr');
+        Route::post('/mark-attendance', [SystemAdminCheckinController::class, 'markAttendance'])->name('mark-attendance');
+        Route::get('/search', [SystemAdminCheckinController::class, 'search'])->name('search');
+        Route::get('/export', [SystemAdminCheckinController::class, 'export'])->name('export');
+        Route::get('/workshop/{workshop}', [SystemAdminCheckinController::class, 'workshopAttendance'])->name('workshop-attendance');
+        Route::get('/generate-qr/{registration}', [SystemAdminCheckinController::class, 'generateQR'])->name('generate-qr');
     });
 });
 

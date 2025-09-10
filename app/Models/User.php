@@ -17,6 +17,7 @@ use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use App\Traits\HasSuperAdminPrivileges;
 
 class User extends Authenticatable implements Auditable
 {
@@ -26,8 +27,12 @@ class User extends Authenticatable implements Auditable
 
     use \OwenIt\Auditing\Auditable;
 
-    use HasRoles;
-
+    use HasRoles, HasSuperAdminPrivileges {
+        HasSuperAdminPrivileges::hasPermissionTo insteadof HasRoles;
+        HasSuperAdminPrivileges::hasRole insteadof HasRoles;
+        HasRoles::hasPermissionTo as hasBasePermissionTo;
+        HasRoles::hasRole as hasBaseRole;
+    }
     use Searchable;
 
     protected $guarded = ['id'];
@@ -180,7 +185,8 @@ class User extends Authenticatable implements Auditable
 
     public function isSuperUser(): bool
     {
-        return $this->hasRole('superuser') || $this->hasRole('system_admin') || $this->hasRole('admin');
+        // Now uses the trait method isSuperAdmin() internally
+        return $this->isSuperAdmin();
     }
 
 
@@ -331,7 +337,8 @@ class User extends Authenticatable implements Auditable
      */
     public function isSystemAdmin(): bool
     {
-        return $this->user_type === 'system_admin' || $this->hasRole('system_admin') || $this->isSuperUser();
+        // Check if user is system admin using the enhanced trait
+        return $this->user_type === 'admin' || $this->isSuperAdmin();
     }
 
     /**
