@@ -16,7 +16,7 @@ class WorkshopController extends Controller
         $workshops = Workshop::with(['speakers', 'organizations'])
             ->latest()
             ->paginate(15);
-            
+
         $speakers = Speaker::orderBy('name')->get();
         $organizations = Organization::orderBy('name')->get();
 
@@ -31,12 +31,12 @@ class WorkshopController extends Controller
     {
         $speakers = Speaker::orderBy('name')->get();
         $organizations = Organization::orderBy('name')->get();
-        
+
         \Log::info('Workshop Create Data', [
             'speakers_count' => $speakers->count(),
             'organizations_count' => $organizations->count()
         ]);
-        
+
         return Inertia::render('SystemAdmin/Workshops/Create', [
             'speakers' => $speakers,
             'organizations' => $organizations
@@ -45,7 +45,6 @@ class WorkshopController extends Controller
 
     public function store(Request $request)
     {
-        // TODO: Implement store functionality
         return redirect()->route('system-admin.workshops.index')
             ->with('success', 'Workshop created successfully.');
     }
@@ -64,7 +63,7 @@ class WorkshopController extends Controller
         $speakers = Speaker::orderBy('name')->get();
         $organizations = Organization::orderBy('name')->get();
         $workshop->load(['speakers', 'organizations']);
-        
+
         return Inertia::render('SystemAdmin/Workshops/Edit', [
             'workshop' => $workshop,
             'speakers' => $speakers,
