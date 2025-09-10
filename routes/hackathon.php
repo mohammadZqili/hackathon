@@ -90,6 +90,11 @@ Route::middleware(['auth', 'role:system_admin|permission:manage-hackathon-editio
     Route::post('organizations/{organization}/deactivate', [SystemAdminOrganizationController::class, 'deactivate'])->name('organizations.deactivate');
 
     // News Management (All Editions)
+    Route::get('news/media-center', [SystemAdminNewsController::class, 'mediaCenter'])->name('news.media-center');
+    Route::post('news/upload-temp', [SystemAdminNewsController::class, 'uploadTemp'])->name('news.upload-temp');
+    Route::delete('news/delete-temp', [SystemAdminNewsController::class, 'deleteTemp'])->name('news.delete-temp');
+    Route::get('news/media/{mediaId}', [SystemAdminNewsController::class, 'getMedia'])->name('news.get-media');
+    Route::delete('news/media/{mediaId}', [SystemAdminNewsController::class, 'deleteMedia'])->name('news.media.delete');
     Route::resource('news', SystemAdminNewsController::class);
     Route::post('news/{news}/publish', [SystemAdminNewsController::class, 'publish'])->name('news.publish');
     Route::post('news/{news}/unpublish', [SystemAdminNewsController::class, 'unpublish'])->name('news.unpublish');

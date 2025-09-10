@@ -1,17 +1,9 @@
 <script setup>
-import { Head, router } from '@inertiajs/vue3'
+import { Head, router, useForm } from '@inertiajs/vue3'
 import { ref } from 'vue'
 import Default from '../../../Layouts/Default.vue'
 import { 
-    ArrowLeftIcon,
-    DocumentTextIcon,
-    UserGroupIcon,
-    StarIcon,
-    ClockIcon,
-    PencilIcon,
-    UserPlusIcon,
-    PaperClipIcon,
-    ChatBubbleLeftRightIcon
+    DocumentIcon
 } from '@heroicons/vue/24/outline'
 
 const props = defineProps({
@@ -20,37 +12,41 @@ const props = defineProps({
     scoring: Object,
 })
 
-const statusColors = {
-    draft: 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400',
-    submitted: 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400',
-    under_review: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400',
-    accepted: 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400',
-    rejected: 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400',
-    needs_revision: 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400',
-}
+const activeTab = ref('overview')
 
-const scoringCriteria = [
-    { key: 'innovation', label: 'Innovation & Creativity', max: 25 },
-    { key: 'feasibility', label: 'Technical Feasibility', max: 25 },
-    { key: 'impact', label: 'Potential Impact', max: 25 },
-    { key: 'presentation', label: 'Presentation Quality', max: 25 },
-]
+// Form for decision making
+const decisionForm = useForm({
+    status: '',
+    feedback: '',
+    score: null,
+})
 
-const getScoreColor = (score, max) => {
-    const percentage = (score / max) * 100
-    if (percentage >= 80) return 'bg-green-500'
-    if (percentage >= 60) return 'bg-yellow-500'
-    return 'bg-red-500'
-}
-
-const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
+const submitDecision = (status) => {
+    decisionForm.status = status
+    decisionForm.post(route('hackathon-admin.ideas.review.submit', props.idea.id), {
+        onSuccess: () => {
+            // Handle success
+        },
     })
+}
+
+const updateScore = () => {
+    if (decisionForm.score && decisionForm.score >= 0 && decisionForm.score <= 100) {
+        decisionForm.post(route('hackathon-admin.ideas.score', props.idea.id), {
+            only: ['score'],
+            preserveScroll: true,
+        })
+    }
+}
+
+const formatDateTime = (date) => {
+    const d = new Date(date)
+    const year = d.getFullYear()
+    const month = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    const hours = String(d.getHours()).padStart(2, '0')
+    const minutes = String(d.getMinutes()).padStart(2, '0')
+    return `${year}-${month}-${day} ${hours}:${minutes}`
 }
 </script>
 
@@ -58,216 +54,281 @@ const formatDate = (date) => {
     <Head :title="`Idea: ${idea.title}`" />
 
     <Default>
-        <div class="max-w-7xl mx-auto">
-            <!-- Header -->
-            <div class="mb-8">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-4">
-                        <a :href="route('hackathon-admin.ideas.index')"
-                           class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
-                            <ArrowLeftIcon class="w-5 h-5" />
-                        </a>
-                        <div>
-                            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ idea.title }}</h1>
-                            <div class="mt-2 flex items-center space-x-4">
-                                <span :class="[statusColors[idea.status], 'px-3 py-1 text-sm font-medium rounded-full']">
-                                    {{ idea.status }}
-                                </span>
-                                <span class="text-sm text-gray-500 dark:text-gray-400">
-                                    Submitted {{ formatDate(idea.created_at) }}
-                                </span>
+        <div class="flex-1 flex flex-col items-start justify-start gap-4">
+            <!-- Main Content Area -->
+            <div class="self-stretch flex flex-col items-start justify-start gap-2.5 text-gray-100 font-space-grotesk">
+                <div class="w-full overflow-hidden flex flex-col items-start justify-start max-w-[960px]">
+                    <!-- Header -->
+                    <div class="self-stretch flex flex-row items-start justify-between flex-wrap content-start p-4 text-[32px]">
+                        <div class="flex flex-col items-start justify-start gap-3 min-w-[288px]">
+                            <div class="flex flex-col items-start justify-start">
+                                <b class="self-stretch relative leading-10">Idea: {{ idea.title }}</b>
+                            </div>
+                            <div class="w-[589px] flex flex-col items-start justify-start text-sm text-seagreen">
+                                <div class="self-stretch relative leading-[21px]">Submitted by {{ idea.team?.name || 'Unknown Team' }}</div>
                             </div>
                         </div>
                     </div>
-                    <div class="flex space-x-3">
-                        <a :href="route('hackathon-admin.ideas.review', idea.id)"
-                           class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors">
-                            <PencilIcon class="w-5 h-5 mr-2" />
-                            Review Idea
-                        </a>
-                    </div>
-                </div>
-            </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Main Content -->
-                <div class="lg:col-span-2 space-y-6">
-                    <!-- Description -->
-                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Description</h2>
-                        <div class="prose dark:prose-invert max-w-none">
-                            <p class="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{{ idea.description }}</p>
+                    <!-- Tabs -->
+                    <div class="self-stretch flex flex-col items-start justify-start pt-0 px-0 pb-3 text-sm">
+                        <div class="self-stretch border-honeydew border-solid border-b-[1px] flex flex-row items-start justify-start py-0 px-4 gap-8">
+                            <div @click="activeTab = 'overview'"
+                                 :class="activeTab === 'overview' ? 'border-gainsboro-100' : 'border-transparent'"
+                                 class="border-solid border-b-[3px] flex flex-col items-center justify-center pt-4 px-0 pb-[13px] cursor-pointer">
+                                <div class="flex flex-col items-start justify-start">
+                                    <b class="self-stretch relative leading-[21px]" 
+                                       :class="activeTab === 'overview' ? 'text-gray-100' : 'text-seagreen'">Overview</b>
+                                </div>
+                            </div>
+                            <div @click="activeTab = 'response'"
+                                 :class="activeTab === 'response' ? 'border-gainsboro-100' : 'border-transparent'"
+                                 class="border-solid border-b-[3px] flex flex-col items-center justify-center pt-4 px-0 pb-[13px] cursor-pointer">
+                                <div class="flex flex-col items-start justify-start">
+                                    <b class="self-stretch relative leading-[21px]"
+                                       :class="activeTab === 'response' ? 'text-gray-100' : 'text-seagreen'">Response</b>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Files -->
-                    <div v-if="idea.files && idea.files.length > 0" class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                            <PaperClipIcon class="w-5 h-5 mr-2" />
-                            Attached Files ({{ idea.files.length }})
-                        </h2>
-                        <div class="space-y-2">
-                            <div v-for="file in idea.files" :key="file.id" 
-                                 class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                                <div class="flex items-center">
-                                    <DocumentTextIcon class="w-5 h-5 text-gray-400 mr-3" />
-                                    <div>
-                                        <p class="text-sm font-medium text-gray-900 dark:text-white">{{ file.filename }}</p>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ file.size_formatted }}</p>
+                    <!-- Overview Tab Content -->
+                    <div v-show="activeTab === 'overview'">
+                        <!-- Idea Details Header -->
+                        <div class="self-stretch h-[60px] flex flex-col items-start justify-start pt-5 px-4 pb-3 box-border text-[22px]">
+                            <b class="self-stretch relative leading-7">Idea Details</b>
+                        </div>
+
+                        <!-- Idea Details Content -->
+                        <div class="self-stretch flex flex-col items-start justify-start p-4 gap-6 text-sm text-cadetblue">
+                            <!-- Row 1: Team Name & Submission Date/Time -->
+                            <div class="self-stretch flex-1 flex flex-row items-start justify-start gap-6">
+                                <div class="self-stretch w-[186px] border-gainsboro-100 border-solid border-t-[1px] box-border flex flex-col items-start justify-start py-5 px-0">
+                                    <div class="self-stretch flex-1 flex flex-row items-start justify-start">
+                                        <div class="self-stretch w-[186px] flex flex-col items-start justify-start">
+                                            <div class="self-stretch relative leading-[21px]">Team Name</div>
+                                        </div>
+                                    </div>
+                                    <div class="self-stretch flex-1 flex flex-row items-start justify-start text-gray-200">
+                                        <div class="self-stretch w-[186px] flex flex-col items-start justify-start">
+                                            <div class="self-stretch relative leading-[21px]">{{ idea.team?.name || 'N/A' }}</div>
+                                        </div>
                                     </div>
                                 </div>
-                                <a :href="file.download_url" 
-                                   class="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm">
-                                    Download
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Scoring -->
-                    <div v-if="scoring" class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                            <StarIcon class="w-5 h-5 mr-2" />
-                            Scoring Breakdown
-                        </h2>
-                        <div class="space-y-4">
-                            <div v-for="criterion in scoringCriteria" :key="criterion.key">
-                                <div class="flex justify-between mb-1">
-                                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                        {{ criterion.label }}
-                                    </span>
-                                    <span class="text-sm font-semibold text-gray-900 dark:text-white">
-                                        {{ scoring[criterion.key] || 0 }} / {{ criterion.max }}
-                                    </span>
-                                </div>
-                                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                                    <div :class="getScoreColor(scoring[criterion.key] || 0, criterion.max)"
-                                         :style="`width: ${((scoring[criterion.key] || 0) / criterion.max) * 100}%`"
-                                         class="h-2 rounded-full"></div>
-                                </div>
-                            </div>
-                            <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
-                                <div class="flex justify-between">
-                                    <span class="text-lg font-semibold text-gray-900 dark:text-white">Total Score</span>
-                                    <span class="text-lg font-bold text-blue-600 dark:text-blue-400">
-                                        {{ idea.score || 0 }} / 100
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Review History -->
-                    <div v-if="reviewHistory && reviewHistory.length > 0" class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                            <ChatBubbleLeftRightIcon class="w-5 h-5 mr-2" />
-                            Review History
-                        </h2>
-                        <div class="space-y-4">
-                            <div v-for="review in reviewHistory" :key="review.id" 
-                                 class="border-l-4 border-gray-200 dark:border-gray-700 pl-4">
-                                <div class="flex items-center justify-between mb-2">
-                                    <div class="flex items-center space-x-2">
-                                    <span class="font-medium text-gray-900 dark:text-white">
-                                    {{ review.user?.name || 'System' }}
-                                    </span>
-                                    <span :class="[statusColors[review.new_value] || 'bg-gray-100 text-gray-800', 'px-2 py-0.5 text-xs font-medium rounded-full']">
-                                    {{ review.new_value || review.action }}
-                                    </span>
+                                <div class="self-stretch w-[718px] border-gainsboro-100 border-solid border-t-[1px] box-border flex flex-col items-start justify-start py-5 px-0">
+                                    <div class="self-stretch flex-1 flex flex-row items-start justify-start">
+                                        <div class="self-stretch w-[718px] flex flex-col items-start justify-start">
+                                            <div class="self-stretch relative leading-[21px]">Submission Date/Time</div>
+                                        </div>
                                     </div>
-                                    <span class="text-xs text-gray-500 dark:text-gray-400">
-                                        {{ formatDate(review.created_at) }}
-                                    </span>
+                                    <div class="self-stretch flex-1 flex flex-row items-start justify-start text-gray-200">
+                                        <div class="self-stretch w-[718px] flex flex-col items-start justify-start">
+                                            <div class="self-stretch relative leading-[21px]">{{ formatDateTime(idea.created_at) }}</div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <p v-if="review.notes" class="text-sm text-gray-700 dark:text-gray-300">
-                                    {{ review.notes }}
-                                </p>
-                                <div v-if="review.metadata && review.metadata.scores" class="mt-2 flex space-x-4 text-xs">
-                                    <span v-for="(score, key) in review.metadata.scores" :key="key" class="text-gray-500 dark:text-gray-400">
-                                        {{ key }}: {{ score }}
-                                    </span>
+                            </div>
+
+                            <!-- Row 2: Idea Leader & Track -->
+                            <div class="self-stretch flex-1 flex flex-row items-start justify-start gap-6">
+                                <div class="self-stretch w-[186px] border-gainsboro-100 border-solid border-t-[1px] box-border flex flex-col items-start justify-start py-5 px-0">
+                                    <div class="self-stretch flex-1 flex flex-row items-start justify-start">
+                                        <div class="self-stretch w-[186px] flex flex-col items-start justify-start">
+                                            <div class="self-stretch relative leading-[21px]">Idea Leader</div>
+                                        </div>
+                                    </div>
+                                    <div class="self-stretch flex-1 flex flex-row items-start justify-start text-gray-200">
+                                        <div class="self-stretch w-[186px] flex flex-col items-start justify-start">
+                                            <div class="self-stretch relative leading-[21px]">{{ idea.leader_name || 'Sarah Chen' }}</div>
+                                        </div>
+                                    </div>
                                 </div>
+                                <div class="self-stretch w-[718px] border-gainsboro-100 border-solid border-t-[1px] box-border flex flex-col items-start justify-start py-5 px-0">
+                                    <div class="self-stretch flex-1 flex flex-row items-start justify-start">
+                                        <div class="self-stretch w-[718px] flex flex-col items-start justify-start">
+                                            <div class="self-stretch relative leading-[21px]">Track</div>
+                                        </div>
+                                    </div>
+                                    <div class="self-stretch flex-1 flex flex-row items-start justify-start text-gray-200">
+                                        <div class="self-stretch w-[718px] flex flex-col items-start justify-start">
+                                            <div class="self-stretch relative leading-[21px]">{{ idea.track?.name || 'Unassigned' }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Row 3: Hackathon Edition -->
+                            <div class="self-stretch flex-1 flex flex-row items-start justify-start">
+                                <div class="self-stretch w-[186px] border-gainsboro-100 border-solid border-t-[1px] box-border flex flex-col items-start justify-start py-5 px-0">
+                                    <div class="self-stretch flex-1 flex flex-row items-start justify-start">
+                                        <div class="self-stretch w-[186px] flex flex-col items-start justify-start">
+                                            <div class="self-stretch relative leading-[21px]">Hackathon Edition</div>
+                                        </div>
+                                    </div>
+                                    <div class="self-stretch flex-1 flex flex-row items-start justify-start text-gray-200">
+                                        <div class="self-stretch w-[186px] flex flex-col items-start justify-start">
+                                            <div class="self-stretch relative leading-[21px]">{{ idea.edition || 'Summer 2024' }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Description Section -->
+                        <div class="self-stretch flex flex-col items-start justify-start pt-5 px-4 pb-3 text-[22px] text-gray-200">
+                            <b class="self-stretch relative leading-7">Description</b>
+                        </div>
+                        <div class="self-stretch flex flex-col items-start justify-start pt-1 px-4 pb-3 text-gray-200">
+                            <div class="self-stretch relative leading-6">{{ idea.description }}</div>
+                        </div>
+
+                        <!-- Related Documents Section -->
+                        <div v-if="idea.files && idea.files.length > 0">
+                            <div class="self-stretch h-[60px] flex flex-col items-start justify-start pt-5 px-4 pb-3 box-border text-[22px]">
+                                <b class="self-stretch relative leading-7">Related Documents</b>
+                            </div>
+                            <div v-for="file in idea.files" :key="file.id">
+                                <div class="self-stretch bg-mintcream-100 h-14 flex flex-row items-center justify-start py-0 px-4 box-border gap-4 min-h-[56px]">
+                                    <div class="w-10 h-10 rounded-lg bg-white dark:bg-gray-700 flex items-center justify-center">
+                                        <DocumentIcon class="w-6 h-6 text-gray-500 dark:text-gray-400" />
+                                    </div>
+                                    <div class="flex-1 overflow-hidden flex flex-col items-start justify-start">
+                                        <div class="self-stretch relative leading-6 overflow-hidden text-ellipsis whitespace-nowrap">{{ file.filename }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Default Documents if no files -->
+                        <div v-else>
+                            <div class="self-stretch h-[60px] flex flex-col items-start justify-start pt-5 px-4 pb-3 box-border text-[22px]">
+                                <b class="self-stretch relative leading-7">Related Documents</b>
+                            </div>
+                            <div class="self-stretch bg-mintcream-100 h-14 flex flex-row items-center justify-start py-0 px-4 box-border gap-4 min-h-[56px]">
+                                <div class="w-10 h-10 rounded-lg bg-white dark:bg-gray-700 flex items-center justify-center">
+                                    <DocumentIcon class="w-6 h-6 text-gray-500 dark:text-gray-400" />
+                                </div>
+                                <div class="flex-1 overflow-hidden flex flex-col items-start justify-start">
+                                    <div class="self-stretch relative leading-6 overflow-hidden text-ellipsis whitespace-nowrap">Onboarding Checklist</div>
+                                </div>
+                            </div>
+                            <div class="self-stretch bg-mintcream-100 h-14 flex flex-row items-center justify-start py-0 px-4 box-border gap-4 min-h-[56px]">
+                                <div class="w-10 h-10 rounded-lg bg-white dark:bg-gray-700 flex items-center justify-center">
+                                    <DocumentIcon class="w-6 h-6 text-gray-500 dark:text-gray-400" />
+                                </div>
+                                <div class="flex-1 overflow-hidden flex flex-col items-start justify-start">
+                                    <div class="self-stretch relative leading-6 overflow-hidden text-ellipsis whitespace-nowrap">Training Module Outline</div>
+                                </div>
+                            </div>
+                            <div class="self-stretch bg-mintcream-100 h-14 flex flex-row items-center justify-start py-0 px-4 box-border gap-4 min-h-[56px]">
+                                <div class="w-10 h-10 rounded-lg bg-white dark:bg-gray-700 flex items-center justify-center">
+                                    <DocumentIcon class="w-6 h-6 text-gray-500 dark:text-gray-400" />
+                                </div>
+                                <div class="flex-1 overflow-hidden flex flex-col items-start justify-start">
+                                    <div class="self-stretch relative leading-6 overflow-hidden text-ellipsis whitespace-nowrap">Feedback Survey Template</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Response Tab Content -->
+                    <div v-show="activeTab === 'response'" class="self-stretch p-4">
+                        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+                            <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+                                Review History
+                            </h2>
+                            <div v-if="reviewHistory && reviewHistory.length > 0" class="space-y-4">
+                                <div v-for="review in reviewHistory" :key="review.id" 
+                                     class="border-l-4 border-emerald-500 pl-4 py-2">
+                                    <div class="flex justify-between items-start mb-2">
+                                        <div>
+                                            <span class="font-medium text-gray-900 dark:text-gray-100">
+                                                {{ review.reviewer_name }}
+                                            </span>
+                                            <span class="ml-2 text-sm text-gray-500 dark:text-gray-400">
+                                                {{ formatDateTime(review.created_at) }}
+                                            </span>
+                                        </div>
+                                        <span :class="[
+                                            'px-2 py-1 text-xs font-medium rounded-full',
+                                            review.status === 'accepted' ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' :
+                                            review.status === 'rejected' ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400' :
+                                            'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
+                                        ]">
+                                            {{ review.status }}
+                                        </span>
+                                    </div>
+                                    <p class="text-gray-700 dark:text-gray-300">{{ review.feedback }}</p>
+                                    <p v-if="review.score !== null" class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                                        Score: {{ review.score }}/100
+                                    </p>
+                                </div>
+                            </div>
+                            <div v-else class="text-center py-8 text-gray-500 dark:text-gray-400">
+                                No review history available
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Sidebar -->
-                <div class="space-y-6">
-                    <!-- Team Information -->
-                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                            <UserGroupIcon class="w-5 h-5 mr-2" />
-                            Team Information
-                        </h2>
-                        <dl class="space-y-3">
-                            <div>
-                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Team Name</dt>
-                                <dd class="mt-1 text-sm text-gray-900 dark:text-white">{{ idea.team?.name || 'N/A' }}</dd>
+                <!-- Decision and Score Section -->
+                <div class="self-stretch flex flex-row items-start justify-start text-[22px] text-gray-200">
+                    <!-- Make Decision Section -->
+                    <div class="flex-1 flex flex-col items-start justify-start">
+                        <div class="self-stretch flex flex-col items-start justify-start pt-5 px-4 pb-3">
+                            <b class="self-stretch relative leading-7">Make Decision ... </b>
+                        </div>
+                        <div class="self-stretch flex flex-row items-start justify-center text-center text-sm">
+                            <div class="flex-1 flex flex-row items-start justify-start flex-wrap content-start py-3 px-4 gap-3">
+                                <div @click="submitDecision('accepted')"
+                                     class="w-[84px] rounded-xl bg-mediumseagreen h-10 overflow-hidden shrink-0 flex flex-row items-center justify-center py-0 px-4 box-border min-w-[84px] max-w-[480px] cursor-pointer hover:opacity-90 transition-opacity">
+                                    <div class="overflow-hidden flex flex-col items-center justify-start">
+                                        <b class="self-stretch relative leading-[21px] overflow-hidden text-ellipsis whitespace-nowrap text-white">Accept</b>
+                                    </div>
+                                </div>
+                                <div @click="submitDecision('rejected')"
+                                     class="w-[84px] rounded-xl bg-whitesmoke h-10 overflow-hidden shrink-0 flex flex-row items-center justify-center py-0 px-4 box-border min-w-[84px] max-w-[480px] cursor-pointer hover:bg-gray-300 transition-colors">
+                                    <div class="overflow-hidden flex flex-col items-center justify-start">
+                                        <b class="self-stretch relative leading-[21px] overflow-hidden text-ellipsis whitespace-nowrap">Reject</b>
+                                    </div>
+                                </div>
+                                <div @click="submitDecision('needs_revision')"
+                                     class="rounded-xl bg-whitesmoke h-10 overflow-hidden flex flex-row items-center justify-center py-0 px-4 box-border min-w-[84px] max-w-[480px] cursor-pointer hover:bg-gray-300 transition-colors">
+                                    <div class="overflow-hidden flex flex-col items-center justify-start">
+                                        <b class="self-stretch relative leading-[21px] overflow-hidden text-ellipsis whitespace-nowrap">Need Edit</b>
+                                    </div>
+                                </div>
                             </div>
-                            <div>
-                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Track</dt>
-                                <dd class="mt-1 text-sm text-gray-900 dark:text-white">{{ idea.track?.name || 'Not Assigned' }}</dd>
+                        </div>
+                        <div class="flex flex-row items-end justify-start flex-wrap content-end py-3 px-4 box-border max-w-[480px] text-base">
+                            <div class="flex-1 flex flex-col items-start justify-start min-w-[160px]">
+                                <div class="self-stretch flex-1 rounded-xl bg-white border-gainsboro-200 border-solid border-[1px] box-border overflow-hidden flex flex-row items-start justify-start p-[15px] min-h-[144px]">
+                                    <textarea
+                                        v-model="decisionForm.feedback"
+                                        placeholder="Provide feedback or required changes for the idea's acceptance"
+                                        class="flex-1 relative leading-6 bg-transparent border-none outline-none resize-none text-gray-600 dark:text-gray-400 placeholder:text-gray-500/75"
+                                        rows="5"
+                                    ></textarea>
+                                </div>
                             </div>
-                            <div>
-                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Team Leader</dt>
-                                <dd class="mt-1 text-sm text-gray-900 dark:text-white">
-                                    {{ idea.team?.leader?.name || 'N/A' }}
-                                </dd>
-                            </div>
-                            <div>
-                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Members</dt>
-                                <dd class="mt-1">
-                                    <ul class="text-sm text-gray-900 dark:text-white space-y-1">
-                                        <li v-for="member in idea.team?.members" :key="member.id">
-                                            {{ member.name }}
-                                        </li>
-                                    </ul>
-                                </dd>
-                            </div>
-                        </dl>
+                        </div>
                     </div>
 
-                    <!-- Review Details -->
-                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Review Details</h2>
-                        <dl class="space-y-3">
-                            <div>
-                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Supervisor</dt>
-                                <dd class="mt-1 text-sm text-gray-900 dark:text-white">
-                                    {{ idea.supervisor?.name || 'Not Assigned' }}
-                                </dd>
-                            </div>
-                            <div v-if="idea.reviewed_at">
-                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Last Reviewed</dt>
-                                <dd class="mt-1 text-sm text-gray-900 dark:text-white">
-                                    {{ formatDate(idea.reviewed_at) }}
-                                </dd>
-                            </div>
-                            <div v-if="idea.reviewed_by">
-                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Reviewed By</dt>
-                                <dd class="mt-1 text-sm text-gray-900 dark:text-white">
-                                    {{ idea.reviewer?.name }}
-                                </dd>
-                            </div>
-                        </dl>
-                    </div>
-
-                    <!-- Actions -->
-                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Quick Actions</h2>
-                        <div class="space-y-2">
-                            <a :href="route('hackathon-admin.ideas.review', idea.id)"
-                               class="w-full inline-flex items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors">
-                                <PencilIcon class="w-5 h-5 mr-2" />
-                                Review This Idea
-                            </a>
-                            <button v-if="!idea.supervisor"
-                                    @click="router.visit(route('hackathon-admin.ideas.review', idea.id))"
-                                    class="w-full inline-flex items-center justify-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors">
-                                <UserPlusIcon class="w-5 h-5 mr-2" />
-                                Assign Supervisor
-                            </button>
+                    <!-- Score Section -->
+                    <div class="flex-1 flex flex-col items-start justify-start">
+                        <div class="self-stretch flex flex-col items-start justify-start pt-5 px-4 pb-3">
+                            <b class="self-stretch relative leading-7">Score</b>
+                        </div>
+                        <div class="mx-4">
+                            <input
+                                v-model.number="decisionForm.score"
+                                @blur="updateScore"
+                                type="number"
+                                min="0"
+                                max="100"
+                                placeholder="Add Score From 100"
+                                class="rounded-xl bg-mintcream-100 border-honeydew border-solid border-[1px] h-14 w-full px-[15px] text-base text-seagreen placeholder:text-seagreen outline-none focus:border-seagreen"
+                            />
                         </div>
                     </div>
                 </div>
@@ -275,3 +336,60 @@ const formatDate = (date) => {
         </div>
     </Default>
 </template>
+
+<style scoped>
+/* Custom styles for exact matching */
+.bg-mediumseagreen {
+    background-color: #3cb371;
+}
+
+.bg-whitesmoke {
+    background-color: #f5f5f5;
+}
+
+.bg-mintcream-100 {
+    background-color: #f0fff4;
+}
+
+.bg-mintcream-200 {
+    background-color: #e6f7ed;
+}
+
+.bg-mintcream-300 {
+    background-color: #dcf4e6;
+}
+
+.border-honeydew {
+    border-color: #f0fff0;
+}
+
+.border-gainsboro-100 {
+    border-color: #dcdcdc;
+}
+
+.border-gainsboro-200 {
+    border-color: #d3d3d3;
+}
+
+.text-seagreen {
+    color: #2e8b57;
+}
+
+.text-cadetblue {
+    color: #5f9ea0;
+}
+
+.text-gray-200 {
+    color: #374151;
+}
+
+/* Remove spinner from number input */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+</style>

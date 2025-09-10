@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./mint-theme.css";
 @source "../views";
 
 /* Theme Configuration */

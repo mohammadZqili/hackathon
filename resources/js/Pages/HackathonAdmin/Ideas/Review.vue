@@ -5,10 +5,6 @@ import Default from '../../../Layouts/Default.vue'
 import { 
     ArrowLeftIcon,
     StarIcon,
-    DocumentTextIcon,
-    CheckCircleIcon,
-    XCircleIcon,
-    ExclamationTriangleIcon,
     ArrowPathIcon
 } from '@heroicons/vue/24/outline'
 
@@ -19,7 +15,7 @@ const props = defineProps({
 })
 
 const form = useForm({
-    status: props.idea.status || 'draft',
+    status: props.idea.status || 'pending_review',
     reviewed_by: props.idea.reviewed_by || '',
     feedback: props.idea.feedback || '',
     scores: {
@@ -39,9 +35,14 @@ const submitReview = () => {
     form.post(route('hackathon-admin.ideas.process-review', props.idea.id), {
         preserveScroll: true,
         onSuccess: () => {
-            // Handle success
+            router.visit(route('hackathon-admin.ideas.show', props.idea.id))
         },
     })
+}
+
+const quickDecision = (status) => {
+    form.status = status
+    submitReview()
 }
 
 const criteriaDescriptions = {
@@ -56,102 +57,107 @@ const criteriaDescriptions = {
     <Head :title="`Review: ${idea.title}`" />
 
     <Default>
-        <div class="max-w-5xl mx-auto">
+        <div class="max-w-[1200px] mx-auto px-4">
             <!-- Header -->
-            <div class="mb-8">
-                <div class="flex items-center space-x-4">
+            <div class="mb-6">
+                <div class="flex items-center mb-3">
                     <a :href="route('hackathon-admin.ideas.show', idea.id)"
-                       class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
+                       class="mr-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
                         <ArrowLeftIcon class="w-5 h-5" />
                     </a>
                     <div>
-                        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Review Idea</h1>
-                        <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">{{ idea.title }}</p>
+                        <h1 class="text-[32px] font-bold text-gray-900 dark:text-gray-100">
+                            Review: {{ idea.title }}
+                        </h1>
+                        <p class="text-sm text-emerald-600 dark:text-emerald-400 mt-1">
+                            Submitted by {{ idea.team?.name || 'Unknown Team' }}
+                        </p>
                     </div>
                 </div>
             </div>
 
             <form @submit.prevent="submitReview" class="space-y-6">
-                <!-- Status Selection -->
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Review Status</h2>
-                    <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
-                        <label class="relative">
-                            <input type="radio" v-model="form.status" value="draft" class="sr-only peer" />
-                            <div class="px-4 py-2 border-2 rounded-lg cursor-pointer text-center transition-all
-                                        peer-checked:border-gray-500 peer-checked:bg-gray-50 dark:peer-checked:bg-gray-900/20
-                                        border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600">
-                                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Draft</span>
-                            </div>
+                <!-- Main Review Section -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+                    <h2 class="text-[22px] font-bold text-gray-900 dark:text-gray-100 mb-6">
+                        Review Details
+                    </h2>
+
+                    <!-- Quick Decision Buttons -->
+                    <div class="mb-6">
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">Quick Decision</p>
+                        <div class="flex flex-wrap gap-3">
+                            <button type="button"
+                                    @click="quickDecision('accepted')"
+                                    :disabled="form.processing"
+                                    class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition-colors disabled:opacity-50">
+                                Accept
+                            </button>
+                            <button type="button"
+                                    @click="quickDecision('rejected')"
+                                    :disabled="form.processing"
+                                    class="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 font-bold rounded-xl transition-colors disabled:opacity-50">
+                                Reject
+                            </button>
+                            <button type="button"
+                                    @click="quickDecision('needs_revision')"
+                                    :disabled="form.processing"
+                                    class="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 font-bold rounded-xl transition-colors disabled:opacity-50">
+                                Need Edit
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Detailed Status Selection -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Review Status
                         </label>
-                        <label class="relative">
-                            <input type="radio" v-model="form.status" value="submitted" class="sr-only peer" />
-                            <div class="px-4 py-2 border-2 rounded-lg cursor-pointer text-center transition-all
-                                        peer-checked:border-blue-500 peer-checked:bg-blue-50 dark:peer-checked:bg-blue-900/20
-                                        border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600">
-                                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Submitted</span>
-                            </div>
+                        <select v-model="form.status"
+                                class="w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                            <option value="pending_review">Pending Review</option>
+                            <option value="under_review">Under Review</option>
+                            <option value="accepted">Accepted</option>
+                            <option value="rejected">Rejected</option>
+                            <option value="needs_revision">Needs Revision</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                    </div>
+
+                    <!-- Supervisor Assignment -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Assign Supervisor
                         </label>
-                        <label class="relative">
-                            <input type="radio" v-model="form.status" value="under_review" class="sr-only peer" />
-                            <div class="px-4 py-2 border-2 rounded-lg cursor-pointer text-center transition-all
-                                        peer-checked:border-yellow-500 peer-checked:bg-yellow-50 dark:peer-checked:bg-yellow-900/20
-                                        border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600">
-                                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Under Review</span>
-                            </div>
-                        </label>
-                        <label class="relative">
-                            <input type="radio" v-model="form.status" value="accepted" class="sr-only peer" />
-                            <div class="px-4 py-2 border-2 rounded-lg cursor-pointer text-center transition-all
-                                        peer-checked:border-green-500 peer-checked:bg-green-50 dark:peer-checked:bg-green-900/20
-                                        border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600">
-                                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Accepted</span>
-                            </div>
-                        </label>
-                        <label class="relative">
-                            <input type="radio" v-model="form.status" value="rejected" class="sr-only peer" />
-                            <div class="px-4 py-2 border-2 rounded-lg cursor-pointer text-center transition-all
-                                        peer-checked:border-red-500 peer-checked:bg-red-50 dark:peer-checked:bg-red-900/20
-                                        border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600">
-                                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Rejected</span>
-                            </div>
-                        </label>
-                        <label class="relative">
-                            <input type="radio" v-model="form.status" value="needs_revision" class="sr-only peer" />
-                            <div class="px-4 py-2 border-2 rounded-lg cursor-pointer text-center transition-all
-                                        peer-checked:border-orange-500 peer-checked:bg-orange-50 dark:peer-checked:bg-orange-900/20
-                                        border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600">
-                                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Needs Revision</span>
-                            </div>
-                        </label>
+                        <select v-model="form.reviewed_by"
+                                class="w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                            <option value="">No Supervisor Assigned</option>
+                            <option v-for="supervisor in supervisors" :key="supervisor.id" :value="supervisor.id">
+                                {{ supervisor.name }}
+                            </option>
+                        </select>
                     </div>
                 </div>
 
-                <!-- Supervisor Assignment -->
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Assign Supervisor</h2>
-                    <select v-model="form.reviewed_by"
-                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500">
-                        <option value="">No Supervisor Assigned</option>
-                        <option v-for="supervisor in supervisors" :key="supervisor.id" :value="supervisor.id">
-                            {{ supervisor.name }}
-                        </option>
-                    </select>
-                </div>
-
-                <!-- Scoring -->
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                        <StarIcon class="w-5 h-5 mr-2" />
+                <!-- Scoring Section -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+                    <h2 class="text-[22px] font-bold text-gray-900 dark:text-gray-100 mb-6 flex items-center">
+                        <StarIcon class="w-6 h-6 mr-2 text-emerald-600 dark:text-emerald-400" />
                         Scoring Criteria
                     </h2>
                     <div class="space-y-6">
                         <div v-for="(label, key) in scoringCriteria" :key="key">
-                            <div class="mb-2">
-                                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                    {{ label }}
-                                </label>
-                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            <div class="mb-3">
+                                <div class="flex justify-between items-center mb-1">
+                                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        {{ label }}
+                                    </label>
+                                    <span class="text-sm font-bold text-gray-900 dark:text-gray-100">
+                                        {{ form.scores[key] }} / 25
+                                    </span>
+                                </div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">
                                     {{ criteriaDescriptions[key] }}
                                 </p>
                             </div>
@@ -160,20 +166,19 @@ const criteriaDescriptions = {
                                        v-model="form.scores[key]"
                                        min="0"
                                        max="25"
-                                       class="flex-1"
-                                       :style="`background: linear-gradient(to right, #3B82F6 0%, #3B82F6 ${(form.scores[key] / 25) * 100}%, #E5E7EB ${(form.scores[key] / 25) * 100}%, #E5E7EB 100%)`" />
+                                       class="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                                       :style="`background: linear-gradient(to right, #10b981 0%, #10b981 ${(form.scores[key] / 25) * 100}%, #e5e7eb ${(form.scores[key] / 25) * 100}%, #e5e7eb 100%)`" />
                                 <input type="number"
                                        v-model="form.scores[key]"
                                        min="0"
                                        max="25"
-                                       class="w-16 px-2 py-1 text-center border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
-                                <span class="text-sm text-gray-500 dark:text-gray-400">/ 25</span>
+                                       class="w-16 px-2 py-1 text-center border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
                             </div>
                         </div>
-                        <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <div class="pt-6 border-t border-gray-200 dark:border-gray-700">
                             <div class="flex justify-between items-center">
-                                <span class="text-lg font-semibold text-gray-900 dark:text-white">Total Score</span>
-                                <span class="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                                <span class="text-lg font-semibold text-gray-900 dark:text-gray-100">Total Score</span>
+                                <span class="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
                                     {{ totalScore }} / 100
                                 </span>
                             </div>
@@ -181,39 +186,36 @@ const criteriaDescriptions = {
                     </div>
                 </div>
 
-                <!-- Feedback -->
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Feedback</h2>
+                <!-- Feedback Section -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+                    <h2 class="text-[22px] font-bold text-gray-900 dark:text-gray-100 mb-4">
+                        Feedback
+                    </h2>
                     <textarea v-model="form.feedback"
                               rows="6"
-                              placeholder="Provide detailed feedback for the team..."
-                              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
-                    <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                        This feedback will be shared with the team if notification is enabled.
-                    </p>
-                </div>
-
-                <!-- Notification -->
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                    <label class="flex items-center">
-                        <input type="checkbox"
-                               v-model="form.notify_team"
-                               class="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500" />
-                        <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">
-                            Notify team about this review
-                        </span>
-                    </label>
+                              placeholder="Provide feedback or required changes for the idea's acceptance..."
+                              class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none"></textarea>
+                    <div class="mt-3">
+                        <label class="flex items-center">
+                            <input type="checkbox"
+                                   v-model="form.notify_team"
+                                   class="rounded border-gray-300 dark:border-gray-600 text-emerald-600 focus:ring-emerald-500" />
+                            <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                                Notify team about this review
+                            </span>
+                        </label>
+                    </div>
                 </div>
 
                 <!-- Actions -->
                 <div class="flex justify-end space-x-3">
                     <a :href="route('hackathon-admin.ideas.show', idea.id)"
-                       class="px-6 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors">
+                       class="px-6 py-2.5 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl font-medium transition-colors">
                         Cancel
                     </a>
                     <button type="submit"
                             :disabled="form.processing"
-                            class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                            class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center">
                         <span v-if="!form.processing">Submit Review</span>
                         <span v-else class="flex items-center">
                             <ArrowPathIcon class="w-4 h-4 mr-2 animate-spin" />
@@ -225,3 +227,56 @@ const criteriaDescriptions = {
         </div>
     </Default>
 </template>
+
+<style scoped>
+/* Custom range slider styling */
+input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-track {
+    background: inherit;
+    height: 8px;
+    border-radius: 4px;
+}
+
+input[type="range"]::-moz-range-track {
+    background: inherit;
+    height: 8px;
+    border-radius: 4px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    background: #10b981;
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+input[type="range"]::-moz-range-thumb {
+    background: #10b981;
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+}
+
+/* Remove spinner from number input */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+</style>

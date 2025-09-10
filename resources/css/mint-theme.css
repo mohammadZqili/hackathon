@@ -1,0 +1,40 @@
+/* Mint-green theme colors to match Figma design */
+:root {
+  /* Mint cream color palette */
+  --mintcream-100: #f9fffe;
+  --mintcream-200: #f0fdf9;
+  --mintcream-300: #e6fffa;
+  
+  /* Accent colors */
+  --seagreen: #4f9673;
+  --seagreen-dark: #3d7559;
+  --cadetblue: #79a3b1;
+  --mediumseagreen: #60b285;
+  
+  /* Gray colors */
+  --gray-100: #f7fafc;
+  --gray-200: #718096;
+  --gainsboro-100: #e2e8f0;
+  --gainsboro-200: #cbd5e0;
+  --honeydew: #f0fff4;
+  --whitesmoke: #f5f5f5;
+}
+
+/* Mint theme utility classes */
+.bg-mintcream-100 { background-color: var(--mintcream-100); }
+.bg-mintcream-200 { background-color: var(--mintcream-200); }
+.bg-mintcream-300 { background-color: var(--mintcream-300); }
+
+.text-seagreen { color: var(--seagreen); }
+.text-cadetblue { color: var(--cadetblue); }
+
+.border-honeydew { border-color: var(--honeydew); }
+.border-gainsboro-100 { border-color: var(--gainsboro-100); }
+.border-gainsboro-200 { border-color: var(--gainsboro-200); }
+
+.bg-mediumseagreen { background-color: var(--mediumseagreen); }
+.bg-whitesmoke { background-color: var(--whitesmoke); }
+
+/* Font families from Figma */
+.font-ruman-one { font-family: 'Ruman One', sans-serif; }
+.font-space-grotesk { font-family: 'Space Grotesk', sans-serif; }

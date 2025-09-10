@@ -14,6 +14,49 @@ This refactoring successfully implements the Service-Repository pattern for the 
 **Files Modified**:
 - `app/Http/Controllers/SystemAdmin/IdeaController.php` (lines 91 and 131)
 
+### 1.1. Type Conversion Issue Resolution ✅
+**Problem**: `Argument #2 ($supervisorId) must be of type int, string given` when assigning supervisors
+**Root Cause**: HTTP request data always comes as strings, but service methods expected int/float types.
+**Solution**: Added explicit type casting in controller and service methods.
+
+**Files Modified**:
+- `app/Http/Controllers/SystemAdmin/IdeaController.php` (assignSupervisor, updateScore methods)
+- `app/Services/IdeaService.php` (acceptIdea, rejectIdea, markForRevision, reviewIdea methods)
+- Fixed incorrect field names in reviewIdea method (`review_feedback` → `feedback`, `review_score` → `score`)
+
+### 1.2. Track Supervisor Logic Consistency Issue Resolution ✅
+**Problem**: "Selected user is not a track supervisor" error when assigning supervisors, even though non-supervisors appeared in dropdown
+**Root Cause**: Inconsistent logic between filtering available supervisors and validating assignments. The system uses multiple ways to determine track supervisors: `user_type` field, `supervisedTracks` relationship, and Spatie roles.
+**Solution**: Made both filtering and validation use the same logic as `User::isTrackSupervisor()` method.
+
+**Files Modified**:
+- `app/Services/IdeaService.php` (getAvailableSupervisors, assignSupervisor methods)
+- Now consistently checks: `user_type === 'track_supervisor'` OR `supervisedTracks()->exists()`
+
+### 1.3. Review Page JavaScript Error Resolution ✅
+**Problem**: `ReferenceError: evaluationCriteria is not defined` when accessing review page
+**Root Cause**: Code was accessing `evaluationCriteria` directly instead of `props.evaluationCriteria` in Vue component
+**Solution**: Fixed all references to use proper props access
+
+**Files Modified**:
+- `resources/js/Pages/SystemAdmin/Ideas/Review.vue` (lines 58, 400, 534)
+
+### 1.4. Missing Supervisor Assignment Dropdown Resolution ✅
+**Problem**: Supervisor assignment dropdown disappeared from Show and Review pages
+**Root Cause**: `getAvailableSupervisors` method returned empty collection due to restrictive track filtering
+**Solution**: Removed track ID restriction to show all available track supervisors
+
+**Files Modified**:
+- `app/Services/IdeaService.php` (getAvailableSupervisors method)
+
+### 1.5. Design Theme Addition ✅
+**Problem**: Current design doesn't match Figma mint-green theme
+**Solution**: Added mint-green CSS variables and utility classes for future design updates
+
+**Files Created**:
+- `resources/css/mint-theme.css` (mint color palette and utilities)
+- `resources/css/app.css` (updated to include mint theme)
+
 ### 2. Centralized Service-Repository Pattern Implementation ✅
 **Problem**: IdeaController was accessing models directly instead of using service layer.
 **Solution**: Enhanced the existing `IdeaService` with SystemAdmin functionality instead of creating a separate service, maintaining centralization.
@@ -160,6 +203,30 @@ Visit: `http://localhost:8000/system-admin/ideas`
 - Test supervisor review functions
 - Ensure system admin operations work
 - Check that audit logs are consistent across all contexts
+
+### 6. Test Type Conversion Fixes ✅
+- Test supervisor assignment (should not throw type errors)
+- Test score updates with decimal values
+- Test idea acceptance/rejection with scores
+- Verify all numeric inputs are properly converted
+
+### 7. Test Track Supervisor Logic Consistency ✅
+- Test supervisor assignment dropdown (should only show actual supervisors)
+- Test supervisor assignment (should not throw "not a track supervisor" errors)
+- Verify users with `user_type = 'track_supervisor'` appear in dropdown
+- Verify users with assigned tracks appear in dropdown
+- Confirm consistent logic between filtering and validation
+
+### 8. Test JavaScript Error Fix ✅
+- Visit review page (should no longer have JavaScript errors)
+- Verify evaluation criteria form works correctly
+- Test step navigation in review process
+
+### 9. Test Supervisor Assignment Functionality ✅
+- Visit idea details page (supervisor dropdown should appear)
+- Test supervisor assignment from Show page
+- Test supervisor assignment from Review page step 3
+- Verify only actual track supervisors appear in dropdown
 
 ## Future Enhancements
 

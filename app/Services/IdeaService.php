@@ -258,8 +258,8 @@ class IdeaService implements IdeaServiceInterface
                 'status' => $status,
                 'reviewed_by' => $reviewer->id,
                 'reviewed_at' => now(),
-                'review_feedback' => $reviewData['feedback'] ?? null,
-                'review_score' => $reviewData['score'] ?? null,
+                'feedback' => $reviewData['feedback'] ?? null,
+                'score' => isset($reviewData['score']) ? (float) $reviewData['score'] : null,
             ];
 
             $result = $this->ideaRepo->update($idea->id, $updateData);
@@ -437,13 +437,13 @@ class IdeaService implements IdeaServiceInterface
      */
     public function getAvailableSupervisors(?int $trackId = null): Collection
     {
-        if (!$trackId) {
-            return collect();
-        }
-
+        // Get users who are track supervisors (consistent with User::isTrackSupervisor logic)
+        // Note: We return all track supervisors, not just those for a specific track,
+        // since system admin should be able to assign any supervisor to any idea
         return $this->userRepo->getModel()
-            ->whereHas('roles', function ($query) {
-                $query->where('name', 'track_supervisor');
+            ->where(function ($query) {
+                $query->where('user_type', 'track_supervisor')
+                      ->orWhereHas('supervisedTracks');
             })
             ->select('id', 'name', 'email')
             ->orderBy('name')
@@ -475,7 +475,7 @@ class IdeaService implements IdeaServiceInterface
             $updated = $this->ideaRepo->update($idea->id, [
                 'status' => IdeaStatus::ACCEPTED->value,
                 'feedback' => $data['feedback'] ?? null,
-                'score' => $data['score'] ?? null,
+                'score' => isset($data['score']) ? (float) $data['score'] : null,
                 'reviewed_by' => Auth::id(),
                 'reviewed_at' => now()
             ]);
@@ -503,7 +503,7 @@ class IdeaService implements IdeaServiceInterface
             $updated = $this->ideaRepo->update($idea->id, [
                 'status' => IdeaStatus::REJECTED->value,
                 'feedback' => $data['feedback'],
-                'score' => $data['score'] ?? null,
+                'score' => isset($data['score']) ? (float) $data['score'] : null,
                 'reviewed_by' => Auth::id(),
                 'reviewed_at' => now()
             ]);
@@ -531,7 +531,7 @@ class IdeaService implements IdeaServiceInterface
             $updated = $this->ideaRepo->update($idea->id, [
                 'status' => IdeaStatus::NEEDS_REVISION->value,
                 'feedback' => $data['feedback'],
-                'score' => $data['score'] ?? null,
+                'score' => isset($data['score']) ? (float) $data['score'] : null,
                 'reviewed_by' => Auth::id(),
                 'reviewed_at' => now()
             ]);
@@ -555,7 +555,8 @@ class IdeaService implements IdeaServiceInterface
     {
         $supervisor = $this->userRepo->find($supervisorId);
         
-        if (!$supervisor || !$supervisor->hasRole('track_supervisor')) {
+        // Use the same logic as User::isTrackSupervisor() method
+        if (!$supervisor || !$supervisor->isTrackSupervisor()) {
             throw new \Exception('Selected user is not a track supervisor.');
         }
 

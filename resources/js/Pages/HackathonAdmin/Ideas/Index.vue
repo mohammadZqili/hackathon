@@ -3,16 +3,7 @@ import { Head, useForm, router } from '@inertiajs/vue3'
 import { ref, computed, watch } from 'vue'
 import Default from '../../../Layouts/Default.vue'
 import { 
-    LightBulbIcon, 
-    MagnifyingGlassIcon, 
-    FunnelIcon,
-    EyeIcon, 
-    PencilIcon, 
-    UserPlusIcon,
-    ArrowDownTrayIcon,
-    CheckCircleIcon,
-    XCircleIcon,
-    ClockIcon 
+    MagnifyingGlassIcon
 } from '@heroicons/vue/24/outline'
 
 const props = defineProps({
@@ -30,13 +21,34 @@ const searchForm = useForm({
     has_supervisor: props.filters?.has_supervisor || '',
 })
 
+// Status badge colors matching Figma design
 const statusColors = {
-    draft: 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400',
-    submitted: 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400',
-    under_review: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400',
-    accepted: 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400',
-    rejected: 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400',
-    needs_revision: 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400',
+    pending_review: 'bg-amber-50 text-amber-700 border-amber-200',
+    approved: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    rejected: 'bg-red-50 text-red-700 border-red-200',
+    in_progress: 'bg-blue-50 text-blue-700 border-blue-200',
+    completed: 'bg-gray-50 text-gray-700 border-gray-200',
+    // Legacy statuses mapping
+    draft: 'bg-gray-50 text-gray-700 border-gray-200',
+    submitted: 'bg-amber-50 text-amber-700 border-amber-200',
+    under_review: 'bg-amber-50 text-amber-700 border-amber-200',
+    accepted: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    needs_revision: 'bg-orange-50 text-orange-700 border-orange-200',
+}
+
+// Display names for statuses
+const statusDisplayNames = {
+    pending_review: 'Pending Review',
+    approved: 'Approved',
+    rejected: 'Rejected',
+    in_progress: 'In Progress',
+    completed: 'Completed',
+    // Legacy statuses
+    draft: 'Draft',
+    submitted: 'Pending Review',
+    under_review: 'Pending Review',
+    accepted: 'Approved',
+    needs_revision: 'Needs Edit',
 }
 
 const filterIdeas = () => {
@@ -51,263 +63,166 @@ const filterIdeas = () => {
     })
 }
 
-const exportIdeas = () => {
-    window.location.href = route('hackathon-admin.ideas.export')
-}
-
 watch(() => searchForm.search, () => {
     clearTimeout(window.searchTimeout)
     window.searchTimeout = setTimeout(filterIdeas, 300)
 })
 
-const getScoreColor = (score) => {
-    if (!score) return 'text-gray-500'
-    if (score >= 80) return 'text-green-600 dark:text-green-400'
-    if (score >= 60) return 'text-yellow-600 dark:text-yellow-400'
-    return 'text-red-600 dark:text-red-400'
+const formatDate = (date) => {
+    return new Date(date).toISOString().split('T')[0] // Returns YYYY-MM-DD format
+}
+
+const viewDetails = (idea) => {
+    router.get(route('hackathon-admin.ideas.show', idea.id))
+}
+
+const editIdea = (idea) => {
+    router.get(route('hackathon-admin.ideas.review', idea.id))
 }
 </script>
 
 <template>
-    <Head title="Ideas Management" />
+    <Head title="Submitted Ideas" />
 
     <Default>
-        <div class="max-w-7xl mx-auto">
+        <div class="max-w-[1200px] mx-auto px-4">
             <!-- Header -->
-            <div class="mb-8">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Ideas Management</h1>
-                        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                            Review and manage hackathon ideas
-                        </p>
-                    </div>
-                    <button @click="exportIdeas"
-                            class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors">
-                        <ArrowDownTrayIcon class="w-5 h-5 mr-2" />
-                        Export Ideas
-                    </button>
-                </div>
+            <div class="mb-6">
+                <h1 class="text-[32px] font-bold text-gray-900 dark:text-gray-100 mb-2">
+                    Submitted Ideas
+                </h1>
+                <p class="text-sm text-gray-600 dark:text-gray-400">
+                    Browse and manage all submitted ideas from various teams.
+                </p>
             </div>
 
-            <!-- Statistics Cards -->
-            <div v-if="statistics" class="grid grid-cols-1 md:grid-cols-7 gap-4 mb-6">
-                <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow">
-                    <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Total</div>
-                    <div class="mt-1 text-2xl font-semibold text-gray-900 dark:text-white">{{ statistics.total }}</div>
-                </div>
-                <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow">
-                    <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Draft</div>
-                    <div class="mt-1 text-2xl font-semibold text-gray-600 dark:text-gray-400">{{ statistics.draft }}</div>
-                </div>
-                <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow">
-                    <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Submitted</div>
-                    <div class="mt-1 text-2xl font-semibold text-blue-600 dark:text-blue-400">{{ statistics.submitted }}</div>
-                </div>
-                <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow">
-                    <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Under Review</div>
-                    <div class="mt-1 text-2xl font-semibold text-yellow-600 dark:text-yellow-400">{{ statistics.under_review }}</div>
-                </div>
-                <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow">
-                    <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Accepted</div>
-                    <div class="mt-1 text-2xl font-semibold text-green-600 dark:text-green-400">{{ statistics.accepted }}</div>
-                </div>
-                <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow">
-                    <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Rejected</div>
-                    <div class="mt-1 text-2xl font-semibold text-red-600 dark:text-red-400">{{ statistics.rejected }}</div>
-                </div>
-                <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow">
-                    <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Needs Revision</div>
-                    <div class="mt-1 text-2xl font-semibold text-orange-600 dark:text-orange-400">{{ statistics.needs_revision }}</div>
-                </div>
-            </div>
-
-            <!-- Filters -->
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow mb-6">
-                <div class="p-4 border-b border-gray-200 dark:border-gray-700">
-                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-                        <!-- Search -->
-                        <div class="relative">
-                            <MagnifyingGlassIcon class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                            <input
-                                v-model="searchForm.search"
-                                type="text"
-                                placeholder="Search ideas..."
-                                class="pl-10 pr-3 py-2 w-full border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                            />
-                        </div>
-
-                        <!-- Status Filter -->
-                        <select
-                            v-model="searchForm.status"
-                            @change="filterIdeas"
-                            class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                        >
-                            <option value="">All Status</option>
-                            <option value="draft">Draft</option>
-                            <option value="submitted">Submitted</option>
-                            <option value="under_review">Under Review</option>
-                            <option value="accepted">Accepted</option>
-                            <option value="rejected">Rejected</option>
-                            <option value="needs_revision">Needs Revision</option>
-                        </select>
-
-                        <!-- Track Filter -->
-                        <select
-                            v-model="searchForm.track_id"
-                            @change="filterIdeas"
-                            class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                        >
-                            <option value="">All Tracks</option>
-                            <option v-for="track in tracks" :key="track.id" :value="track.id">
-                                {{ track.name }}
-                            </option>
-                        </select>
-
-                        <!-- Supervisor Filter -->
-                        <select
-                            v-model="searchForm.has_supervisor"
-                            @change="filterIdeas"
-                            class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                        >
-                            <option value="">All Ideas</option>
-                            <option value="yes">Has Supervisor</option>
-                            <option value="no">No Supervisor</option>
-                        </select>
-
-                        <!-- Clear Filters -->
-                        <button
-                            @click="searchForm.reset(); filterIdeas()"
-                            class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
-                        >
-                            Clear Filters
-                        </button>
+            <!-- Search Bar -->
+            <div class="mb-6">
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" />
                     </div>
+                    <input
+                        v-model="searchForm.search"
+                        type="text"
+                        placeholder="Search ideas by title, team, or track"
+                        class="block w-full pl-10 pr-3 py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent sm:text-base"
+                    />
                 </div>
             </div>
 
             <!-- Ideas Table -->
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+            <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                        <thead class="bg-gray-50 dark:bg-gray-900">
+                        <thead class="bg-white dark:bg-gray-800">
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    Idea
+                                <th scope="col" class="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    Title
                                 </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                <th scope="col" class="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">
                                     Team
                                 </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                <th scope="col" class="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    Submission Date
+                                </th>
+                                <th scope="col" class="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">
                                     Track
                                 </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                <th scope="col" class="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">
                                     Status
                                 </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    Score
-                                </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    Supervisor
-                                </th>
-                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                <th scope="col" class="px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400">
                                     Actions
                                 </th>
                             </tr>
                         </thead>
                         <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                            <tr v-for="idea in ideas.data" :key="idea.id">
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div>
-                                        <div class="text-sm font-medium text-gray-900 dark:text-white">
-                                            {{ idea.title }}
-                                        </div>
-                                        <div class="text-xs text-gray-500 dark:text-gray-400">
-                                            Submitted: {{ new Date(idea.created_at).toLocaleDateString() }}
-                                        </div>
+                            <tr v-for="idea in ideas.data" :key="idea.id" class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                <td class="px-4 py-5 text-sm text-gray-900 dark:text-gray-100">
+                                    <div class="max-w-[200px]">
+                                        <p class="font-medium line-clamp-2">{{ idea.title }}</p>
                                     </div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-gray-900 dark:text-white">
-                                        {{ idea.team?.name || 'N/A' }}
+                                <td class="px-4 py-5 text-sm text-gray-600 dark:text-gray-400">
+                                    <div class="max-w-[150px]">
+                                        <p class="line-clamp-2">{{ idea.team?.name || 'N/A' }}</p>
                                     </div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-gray-900 dark:text-white">
-                                        {{ idea.track?.name || 'Not Assigned' }}
+                                <td class="px-4 py-5 text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                                    {{ formatDate(idea.created_at) }}
+                                </td>
+                                <td class="px-4 py-5 text-sm">
+                                    <div class="inline-flex items-center justify-center px-3 py-1.5 rounded-xl bg-gray-100 dark:bg-gray-700">
+                                        <span class="text-gray-700 dark:text-gray-300 font-medium">
+                                            {{ idea.track?.name || 'Unassigned' }}
+                                        </span>
                                     </div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span :class="[statusColors[idea.status], 'px-2 py-1 text-xs font-medium rounded-full']">
-                                        {{ idea.status }}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span v-if="idea.score" :class="getScoreColor(idea.score)" class="text-sm font-semibold">
-                                        {{ idea.score }}/100
-                                    </span>
-                                    <span v-else class="text-sm text-gray-400">
-                                        Not Scored
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div v-if="idea.supervisor" class="text-sm text-gray-900 dark:text-white">
-                                        {{ idea.supervisor.name }}
+                                <td class="px-4 py-5 text-sm">
+                                    <div class="inline-flex items-center justify-center px-3 py-1.5 rounded-xl border"
+                                         :class="statusColors[idea.status] || statusColors.pending_review">
+                                        <span class="font-medium">
+                                            {{ statusDisplayNames[idea.status] || idea.status }}
+                                        </span>
                                     </div>
-                                    <span v-else class="text-sm text-gray-400">
-                                        Not Assigned
-                                    </span>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <div class="flex items-center justify-end space-x-2">
-                                        <a :href="route('hackathon-admin.ideas.show', idea.id)"
-                                           class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">
-                                            <EyeIcon class="w-5 h-5" />
-                                        </a>
-                                        <a :href="route('hackathon-admin.ideas.review', idea.id)"
-                                           class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300">
-                                            <PencilIcon class="w-5 h-5" />
-                                        </a>
-                                        <button v-if="!idea.supervisor"
-                                                @click="$inertia.visit(route('hackathon-admin.ideas.review', idea.id))"
-                                                class="text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300"
-                                                title="Assign Supervisor">
-                                            <UserPlusIcon class="w-5 h-5" />
-                                        </button>
-                                    </div>
+                                <td class="px-4 py-5 text-sm">
+                                    <button @click="viewDetails(idea)" 
+                                            class="text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 font-bold transition-colors">
+                                        View Details
+                                    </button>
+                                    <span class="mx-1 text-gray-400">/</span>
+                                    <button @click="editIdea(idea)"
+                                            class="text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 font-bold transition-colors">
+                                        Edit
+                                    </button>
+                                </td>
+                            </tr>
+                            
+                            <!-- Empty State -->
+                            <tr v-if="!ideas.data || ideas.data.length === 0">
+                                <td colspan="6" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                                    No ideas found
                                 </td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
+            </div>
 
-                <!-- Pagination -->
-                <div v-if="ideas.links && ideas.links.length > 3" class="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
-                    <div class="flex items-center justify-between">
-                        <div class="text-sm text-gray-700 dark:text-gray-300">
-                            Showing {{ ideas.from }} to {{ ideas.to }} of {{ ideas.total }} results
-                        </div>
-                        <div class="flex space-x-2">
-                            <template v-for="link in ideas.links" :key="link.label">
-                                <a v-if="link.url"
-                                   :href="link.url"
-                                   :class="[
-                                       'px-3 py-1 text-sm rounded',
-                                       link.active
-                                           ? 'bg-blue-600 text-white'
-                                           : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-                                   ]"
-                                   v-html="link.label">
-                                </a>
-                                <span v-else
-                                      class="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-800 text-gray-400 rounded cursor-not-allowed"
-                                      v-html="link.label">
-                                </span>
-                            </template>
-                        </div>
-                    </div>
+            <!-- Pagination -->
+            <div v-if="ideas.links && ideas.links.length > 3" class="mt-6 flex items-center justify-between">
+                <div class="text-sm text-gray-600 dark:text-gray-400">
+                    Showing {{ ideas.from }} to {{ ideas.to }} of {{ ideas.total }} results
+                </div>
+                <div class="flex space-x-2">
+                    <template v-for="link in ideas.links" :key="link.label">
+                        <button
+                            v-if="link.url"
+                            @click="router.get(link.url)"
+                            :disabled="!link.url"
+                            v-html="link.label"
+                            :class="[
+                                'px-3 py-1 text-sm rounded-lg transition-colors',
+                                link.active 
+                                    ? 'bg-emerald-600 text-white' 
+                                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600'
+                            ]"
+                        />
+                    </template>
                 </div>
             </div>
         </div>
     </Default>
 </template>
+
+<style scoped>
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+</style>

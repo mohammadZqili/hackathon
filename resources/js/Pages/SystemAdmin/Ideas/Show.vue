@@ -1,618 +1,336 @@
 <script setup>
-import { Head, Link, useForm } from '@inertiajs/vue3'
-import { ref, computed, onMounted } from 'vue'
-import Default from '../../../Layouts/Default.vue'
-import FormInput from '../../../Components/FormInput.vue'
-import FormTextarea from '../../../Components/FormTextarea.vue'
+import { Head, router, useForm } from '@inertiajs/vue3'
+import { ref } from 'vue'
+import Default from '@/Layouts/Default.vue'
+import { 
+    DocumentIcon
+} from '@heroicons/vue/24/outline'
 
 const props = defineProps({
-    idea: {
-        type: Object,
-        required: true
-    },
-    availableSupervisors: {
-        type: Array,
-        default: () => []
-    },
-    can: {
-        type: Object,
-        default: () => ({})
-    }
+    idea: Object,
+    reviewHistory: Array,
+    scoring: Object,
 })
 
-// Get theme color from localStorage or default
-const themeColor = ref({
-    primary: '#0d9488',
-    hover: '#0f766e',
-    rgb: '13, 148, 136',
-    gradientFrom: '#0d9488',
-    gradientTo: '#14b8a6'
-})
-
-onMounted(() => {
-    // Get the current theme color from CSS variables
-    const root = document.documentElement
-    const primary = getComputedStyle(root).getPropertyValue('--primary-color').trim() || '#0d9488'
-    const hover = getComputedStyle(root).getPropertyValue('--primary-hover').trim() || '#0f766e'
-    const rgb = getComputedStyle(root).getPropertyValue('--primary-color-rgb').trim() || '13, 148, 136'
-    const gradientFrom = getComputedStyle(root).getPropertyValue('--primary-gradient-from').trim() || '#0d9488'
-    const gradientTo = getComputedStyle(root).getPropertyValue('--primary-gradient-to').trim() || '#14b8a6'
-    
-    themeColor.value = {
-        primary: primary || themeColor.value.primary,
-        hover: hover || themeColor.value.hover,
-        rgb: rgb || themeColor.value.rgb,
-        gradientFrom: gradientFrom || themeColor.value.gradientFrom,
-        gradientTo: gradientTo || themeColor.value.gradientTo
-    }
-})
-
-// Computed style for dynamic theme
-const themeStyles = computed(() => ({
-    '--theme-primary': themeColor.value.primary,
-    '--theme-hover': themeColor.value.hover,
-    '--theme-rgb': themeColor.value.rgb,
-    '--theme-gradient-from': themeColor.value.gradientFrom,
-    '--theme-gradient-to': themeColor.value.gradientTo,
-}))
-
-// Active tab
 const activeTab = ref('overview')
 
-// Review form
-const reviewForm = useForm({
-    feedback: props.idea.feedback || '',
-    score: props.idea.score || ''
+// Form for decision making
+const decisionForm = useForm({
+    status: '',
+    feedback: '',
+    score: null,
 })
 
-// Supervisor assignment form
-const supervisorForm = useForm({
-    supervisor_id: props.idea.reviewed_by || ''
-})
-
-// Loading states
-const isProcessing = ref(false)
-
-// Handle review decision
-const makeDecision = async (action) => {
-    if (isProcessing.value) return
-    
-    isProcessing.value = true
-    
-    const routeMap = {
-        'accept': 'system-admin.ideas.review.accept',
-        'reject': 'system-admin.ideas.review.reject', 
-        'need_edit': 'system-admin.ideas.review.need-edit'
-    }
-    
-    if (!routeMap[action]) {
-        isProcessing.value = false
-        return
-    }
-    
-    if (action === 'reject' && !reviewForm.feedback.trim()) {
-        alert('Feedback is required when rejecting an idea.')
-        isProcessing.value = false
-        return
-    }
-    
-    if (action === 'need_edit' && !reviewForm.feedback.trim()) {
-        alert('Please provide feedback explaining what needs to be edited.')
-        isProcessing.value = false
-        return
-    }
-    
-    reviewForm.post(route(routeMap[action], props.idea.id), {
+const submitDecision = (status) => {
+    decisionForm.status = status
+    decisionForm.post(route('system-admin.ideas.review.submit', props.idea.id), {
         onSuccess: () => {
-            // Success handled by flash messages
+            // Handle success
         },
-        onError: (errors) => {
-            console.error('Review submission error:', errors)
-        },
-        onFinish: () => {
-            isProcessing.value = false
-        }
     })
 }
 
-// Assign supervisor
-const assignSupervisor = () => {
-    if (supervisorForm.processing) return
-    
-    supervisorForm.post(route('system-admin.ideas.assign-supervisor', props.idea.id), {
-        onSuccess: () => {
-            // Success handled by flash messages
-        }
-    })
-}
-
-// Get status color
-const getStatusColor = (status) => {
-    const colors = {
-        'draft': 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
-        'submitted': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300', 
-        'under_review': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
-        'needs_revision': 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300',
-        'accepted': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
-        'rejected': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
-    }
-    return colors[status] || 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-}
-
-// Format status for display
-const formatStatus = (status) => {
-    const statusMap = {
-        'draft': 'Draft',
-        'submitted': 'Submitted',
-        'under_review': 'Under Review',
-        'needs_revision': 'Needs Revision',
-        'accepted': 'Accepted',
-        'rejected': 'Rejected'
-    }
-    return statusMap[status] || status
-}
-
-// Format date
-const formatDate = (date) => {
-    return new Date(date).toLocaleString('en-US', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
-    })
-}
-
-// Get file extension icon
-const getFileIcon = (filename) => {
-    if (!filename) return 'document'
-    const ext = filename.split('.').pop()?.toLowerCase()
-    if (['pdf'].includes(ext)) return 'pdf'
-    if (['doc', 'docx'].includes(ext)) return 'document'
-    if (['xls', 'xlsx'].includes(ext)) return 'spreadsheet'
-    if (['ppt', 'pptx'].includes(ext)) return 'presentation'
-    if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) return 'image'
-    return 'document'
-}
-
-// Download file
-const downloadFile = (file) => {
-    if (file.download_url) {
-        window.open(file.download_url, '_blank')
-    } else {
-        // Generate download URL
-        window.open(route('system-admin.ideas.download-file', { idea: props.idea.id, file: file.id }), '_blank')
-    }
-}
-
-// Score validation
-const validateScore = (value) => {
-    const num = parseInt(value)
-    if (isNaN(num) || num < 0 || num > 100) {
-        return false
-    }
-    return true
-}
-
-// Update score
 const updateScore = () => {
-    if (!validateScore(reviewForm.score)) {
-        alert('Score must be between 0 and 100')
-        return
+    if (decisionForm.score && decisionForm.score >= 0 && decisionForm.score <= 100) {
+        decisionForm.post(route('system-admin.ideas.score', props.idea.id), {
+            only: ['score'],
+            preserveScroll: true,
+        })
     }
-    
-    reviewForm.post(route('system-admin.ideas.update-score', props.idea.id), {
-        onSuccess: () => {
-            // Success handled
-        }
-    })
+}
+
+const formatDateTime = (date) => {
+    const d = new Date(date)
+    const year = d.getFullYear()
+    const month = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    const hours = String(d.getHours()).padStart(2, '0')
+    const minutes = String(d.getMinutes()).padStart(2, '0')
+    return `${year}-${month}-${day} ${hours}:${minutes}`
 }
 </script>
 
 <template>
-    <Head :title="`Idea: ${idea.title || 'Untitled'}`" />
+    <Head :title="`Idea: ${idea.title}`" />
 
     <Default>
-        <div class="container mx-auto px-4 py-8" :style="themeStyles">
-            <!-- Page Header -->
-            <div class="mb-8">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
-                            {{ idea.title || 'Untitled Idea' }}
-                        </h1>
-                        <p class="mt-2 text-sm" :style="{ color: themeColor.primary }">
-                            Submitted by {{ idea.team?.name || 'Unknown Team' }}
-                        </p>
-                    </div>
-                    
-                    <!-- Quick Actions -->
-                    <div class="flex items-center space-x-3">
-                        <span class="inline-flex px-3 py-1 text-sm font-semibold rounded-full"
-                            :class="getStatusColor(idea.status)">
-                            {{ formatStatus(idea.status) }}
-                        </span>
-                        
-                        <div v-if="idea.score" class="text-lg font-bold" :style="{ color: themeColor.primary }">
-                            {{ idea.score }}/100
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tab Navigation -->
-            <div class="border-b border-gray-200 dark:border-gray-700 mb-6">
-                <nav class="flex space-x-8">
-                    <button @click="activeTab = 'overview'"
-                        :class="[
-                            'py-4 px-1 border-b-2 font-medium text-sm transition-colors',
-                            activeTab === 'overview' 
-                                ? 'border-[var(--theme-primary)] text-[var(--theme-primary)]'
-                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                        ]">
-                        Overview
-                    </button>
-                    <button @click="activeTab = 'review'"
-                        :class="[
-                            'py-4 px-1 border-b-2 font-medium text-sm transition-colors',
-                            activeTab === 'review' 
-                                ? 'border-[var(--theme-primary)] text-[var(--theme-primary)]'
-                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                        ]">
-                        Review & Scoring
-                    </button>
-                    <button @click="activeTab = 'history'"
-                        :class="[
-                            'py-4 px-1 border-b-2 font-medium text-sm transition-colors',
-                            activeTab === 'history' 
-                                ? 'border-[var(--theme-primary)] text-[var(--theme-primary)]'
-                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                        ]">
-                        History
-                    </button>
-                </nav>
-            </div>
-
-            <!-- Tab Content -->
-            
-            <!-- Overview Tab -->
-            <div v-if="activeTab === 'overview'">
-                <!-- Idea Details Section -->
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6">
-                    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6">Idea Information</h2>
-                    
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        <div class="space-y-6">
-                            <div class="border-b border-gray-200 dark:border-gray-700 pb-4">
-                                <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">Team Name</div>
-                                <div class="text-gray-900 dark:text-white font-medium">{{ idea.team?.name || 'N/A' }}</div>
+        <div class="flex-1 flex flex-col items-start justify-start gap-4">
+            <!-- Main Content Area -->
+            <div class="self-stretch flex flex-col items-start justify-start gap-2.5 text-gray-100 font-space-grotesk">
+                <div class="w-full overflow-hidden flex flex-col items-start justify-start max-w-[960px]">
+                    <!-- Header -->
+                    <div class="self-stretch flex flex-row items-start justify-between flex-wrap content-start p-4 text-[32px]">
+                        <div class="flex flex-col items-start justify-start gap-3 min-w-[288px]">
+                            <div class="flex flex-col items-start justify-start">
+                                <b class="self-stretch relative leading-10">Idea: {{ idea.title }}</b>
                             </div>
-                            
-                            <div class="border-b border-gray-200 dark:border-gray-700 pb-4">
-                                <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">Team Leader</div>
-                                <div class="text-gray-900 dark:text-white font-medium">{{ idea.team?.leader?.name || 'N/A' }}</div>
-                                <div v-if="idea.team?.leader?.email" class="text-sm text-gray-500 dark:text-gray-400">
-                                    {{ idea.team?.leader?.email }}
-                                </div>
-                            </div>
-                            
-                            <div class="border-b border-gray-200 dark:border-gray-700 pb-4">
-                                <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">Track</div>
-                                <div class="text-gray-900 dark:text-white font-medium">{{ idea.track?.name || 'N/A' }}</div>
-                                <div v-if="idea.track?.description" class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                                    {{ idea.track.description }}
-                                </div>
+                            <div class="w-[589px] flex flex-col items-start justify-start text-sm text-seagreen">
+                                <div class="self-stretch relative leading-[21px]">Submitted by {{ idea.team?.name || 'Unknown Team' }}</div>
                             </div>
                         </div>
-                        
-                        <div class="space-y-6">
-                            <div class="border-b border-gray-200 dark:border-gray-700 pb-4">
-                                <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">Submission Date</div>
-                                <div class="text-gray-900 dark:text-white font-medium">
-                                    {{ idea.submitted_at ? formatDate(idea.submitted_at) : formatDate(idea.created_at) }}
+                    </div>
+
+                    <!-- Tabs -->
+                    <div class="self-stretch flex flex-col items-start justify-start pt-0 px-0 pb-3 text-sm">
+                        <div class="self-stretch border-honeydew border-solid border-b-[1px] flex flex-row items-start justify-start py-0 px-4 gap-8">
+                            <div @click="activeTab = 'overview'"
+                                 :class="activeTab === 'overview' ? 'border-gainsboro-100' : 'border-transparent'"
+                                 class="border-solid border-b-[3px] flex flex-col items-center justify-center pt-4 px-0 pb-[13px] cursor-pointer">
+                                <div class="flex flex-col items-start justify-start">
+                                    <b class="self-stretch relative leading-[21px]" 
+                                       :class="activeTab === 'overview' ? 'text-gray-100' : 'text-seagreen'">Overview</b>
                                 </div>
                             </div>
-                            
-                            <div class="border-b border-gray-200 dark:border-gray-700 pb-4">
-                                <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">Hackathon Edition</div>
-                                <div class="text-gray-900 dark:text-white font-medium">{{ idea.team?.hackathon?.name || 'N/A' }}</div>
-                                <div v-if="idea.team?.hackathon?.year" class="text-sm text-gray-500 dark:text-gray-400">
-                                    Year {{ idea.team.hackathon.year }}
-                                </div>
-                            </div>
-                            
-                            <div class="border-b border-gray-200 dark:border-gray-700 pb-4">
-                                <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">Reviewer</div>
-                                <div class="text-gray-900 dark:text-white font-medium">
-                                    {{ idea.reviewer?.name || 'Not assigned' }}
-                                </div>
-                                <div v-if="idea.reviewed_at" class="text-sm text-gray-500 dark:text-gray-400">
-                                    Reviewed: {{ formatDate(idea.reviewed_at) }}
+                            <div @click="activeTab = 'response'"
+                                 :class="activeTab === 'response' ? 'border-gainsboro-100' : 'border-transparent'"
+                                 class="border-solid border-b-[3px] flex flex-col items-center justify-center pt-4 px-0 pb-[13px] cursor-pointer">
+                                <div class="flex flex-col items-start justify-start">
+                                    <b class="self-stretch relative leading-[21px]"
+                                       :class="activeTab === 'response' ? 'text-gray-100' : 'text-seagreen'">Response</b>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Problem Statement -->
-                <div v-if="idea.problem_statement" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6">
-                    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Problem Statement</h2>
-                    <p class="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">{{ idea.problem_statement }}</p>
-                </div>
+                    <!-- Overview Tab Content -->
+                    <div v-show="activeTab === 'overview'">
+                        <!-- Idea Details Header -->
+                        <div class="self-stretch h-[60px] flex flex-col items-start justify-start pt-5 px-4 pb-3 box-border text-[22px]">
+                            <b class="self-stretch relative leading-7">Idea Details</b>
+                        </div>
 
-                <!-- Solution Approach -->
-                <div v-if="idea.solution_approach" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6">
-                    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Solution Approach</h2>
-                    <p class="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">{{ idea.solution_approach }}</p>
-                </div>
+                        <!-- Idea Details Content -->
+                        <div class="self-stretch flex flex-col items-start justify-start p-4 gap-6 text-sm text-cadetblue">
+                            <!-- Row 1: Team Name & Submission Date/Time -->
+                            <div class="self-stretch flex-1 flex flex-row items-start justify-start gap-6">
+                                <div class="self-stretch w-[186px] border-gainsboro-100 border-solid border-t-[1px] box-border flex flex-col items-start justify-start py-5 px-0">
+                                    <div class="self-stretch flex-1 flex flex-row items-start justify-start">
+                                        <div class="self-stretch w-[186px] flex flex-col items-start justify-start">
+                                            <div class="self-stretch relative leading-[21px]">Team Name</div>
+                                        </div>
+                                    </div>
+                                    <div class="self-stretch flex-1 flex flex-row items-start justify-start text-gray-200">
+                                        <div class="self-stretch w-[186px] flex flex-col items-start justify-start">
+                                            <div class="self-stretch relative leading-[21px]">{{ idea.team?.name || 'N/A' }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="self-stretch w-[718px] border-gainsboro-100 border-solid border-t-[1px] box-border flex flex-col items-start justify-start py-5 px-0">
+                                    <div class="self-stretch flex-1 flex flex-row items-start justify-start">
+                                        <div class="self-stretch w-[718px] flex flex-col items-start justify-start">
+                                            <div class="self-stretch relative leading-[21px]">Submission Date/Time</div>
+                                        </div>
+                                    </div>
+                                    <div class="self-stretch flex-1 flex flex-row items-start justify-start text-gray-200">
+                                        <div class="self-stretch w-[718px] flex flex-col items-start justify-start">
+                                            <div class="self-stretch relative leading-[21px]">{{ formatDateTime(idea.created_at) }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
 
-                <!-- Description Section -->
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6">
-                    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Description</h2>
-                    <p class="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
-                        {{ idea.description || 'No description provided' }}
-                    </p>
-                </div>
+                            <!-- Row 2: Idea Leader & Track -->
+                            <div class="self-stretch flex-1 flex flex-row items-start justify-start gap-6">
+                                <div class="self-stretch w-[186px] border-gainsboro-100 border-solid border-t-[1px] box-border flex flex-col items-start justify-start py-5 px-0">
+                                    <div class="self-stretch flex-1 flex flex-row items-start justify-start">
+                                        <div class="self-stretch w-[186px] flex flex-col items-start justify-start">
+                                            <div class="self-stretch relative leading-[21px]">Idea Leader</div>
+                                        </div>
+                                    </div>
+                                    <div class="self-stretch flex-1 flex flex-row items-start justify-start text-gray-200">
+                                        <div class="self-stretch w-[186px] flex flex-col items-start justify-start">
+                                            <div class="self-stretch relative leading-[21px]">{{ idea.leader_name || 'Sarah Chen' }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="self-stretch w-[718px] border-gainsboro-100 border-solid border-t-[1px] box-border flex flex-col items-start justify-start py-5 px-0">
+                                    <div class="self-stretch flex-1 flex flex-row items-start justify-start">
+                                        <div class="self-stretch w-[718px] flex flex-col items-start justify-start">
+                                            <div class="self-stretch relative leading-[21px]">Track</div>
+                                        </div>
+                                    </div>
+                                    <div class="self-stretch flex-1 flex flex-row items-start justify-start text-gray-200">
+                                        <div class="self-stretch w-[718px] flex flex-col items-start justify-start">
+                                            <div class="self-stretch relative leading-[21px]">{{ idea.track?.name || 'Unassigned' }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
 
-                <!-- Expected Impact -->
-                <div v-if="idea.expected_impact" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6">
-                    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Expected Impact</h2>
-                    <p class="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">{{ idea.expected_impact }}</p>
-                </div>
+                            <!-- Row 3: Hackathon Edition -->
+                            <div class="self-stretch flex-1 flex flex-row items-start justify-start">
+                                <div class="self-stretch w-[186px] border-gainsboro-100 border-solid border-t-[1px] box-border flex flex-col items-start justify-start py-5 px-0">
+                                    <div class="self-stretch flex-1 flex flex-row items-start justify-start">
+                                        <div class="self-stretch w-[186px] flex flex-col items-start justify-start">
+                                            <div class="self-stretch relative leading-[21px]">Hackathon Edition</div>
+                                        </div>
+                                    </div>
+                                    <div class="self-stretch flex-1 flex flex-row items-start justify-start text-gray-200">
+                                        <div class="self-stretch w-[186px] flex flex-col items-start justify-start">
+                                            <div class="self-stretch relative leading-[21px]">{{ idea.edition || 'Summer 2024' }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
-                <!-- Technologies -->
-                <div v-if="idea.technologies && idea.technologies.length > 0" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6">
-                    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Technologies</h2>
-                    <div class="flex flex-wrap gap-2">
-                        <span v-for="tech in idea.technologies" :key="tech" 
-                            class="inline-flex px-3 py-1 text-sm font-medium rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
-                            {{ tech }}
-                        </span>
+                        <!-- Description Section -->
+                        <div class="self-stretch flex flex-col items-start justify-start pt-5 px-4 pb-3 text-[22px] text-gray-200">
+                            <b class="self-stretch relative leading-7">Description</b>
+                        </div>
+                        <div class="self-stretch flex flex-col items-start justify-start pt-1 px-4 pb-3 text-gray-200">
+                            <div class="self-stretch relative leading-6">{{ idea.description }}</div>
+                        </div>
+
+                        <!-- Related Documents Section -->
+                        <div v-if="idea.files && idea.files.length > 0">
+                            <div class="self-stretch h-[60px] flex flex-col items-start justify-start pt-5 px-4 pb-3 box-border text-[22px]">
+                                <b class="self-stretch relative leading-7">Related Documents</b>
+                            </div>
+                            <div v-for="file in idea.files" :key="file.id">
+                                <div class="self-stretch bg-mintcream-100 h-14 flex flex-row items-center justify-start py-0 px-4 box-border gap-4 min-h-[56px]">
+                                    <div class="w-10 h-10 rounded-lg bg-white dark:bg-gray-700 flex items-center justify-center">
+                                        <DocumentIcon class="w-6 h-6 text-gray-500 dark:text-gray-400" />
+                                    </div>
+                                    <div class="flex-1 overflow-hidden flex flex-col items-start justify-start">
+                                        <div class="self-stretch relative leading-6 overflow-hidden text-ellipsis whitespace-nowrap">{{ file.filename }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Default Documents if no files -->
+                        <div v-else>
+                            <div class="self-stretch h-[60px] flex flex-col items-start justify-start pt-5 px-4 pb-3 box-border text-[22px]">
+                                <b class="self-stretch relative leading-7">Related Documents</b>
+                            </div>
+                            <div class="self-stretch bg-mintcream-100 h-14 flex flex-row items-center justify-start py-0 px-4 box-border gap-4 min-h-[56px]">
+                                <div class="w-10 h-10 rounded-lg bg-white dark:bg-gray-700 flex items-center justify-center">
+                                    <DocumentIcon class="w-6 h-6 text-gray-500 dark:text-gray-400" />
+                                </div>
+                                <div class="flex-1 overflow-hidden flex flex-col items-start justify-start">
+                                    <div class="self-stretch relative leading-6 overflow-hidden text-ellipsis whitespace-nowrap">Onboarding Checklist</div>
+                                </div>
+                            </div>
+                            <div class="self-stretch bg-mintcream-100 h-14 flex flex-row items-center justify-start py-0 px-4 box-border gap-4 min-h-[56px]">
+                                <div class="w-10 h-10 rounded-lg bg-white dark:bg-gray-700 flex items-center justify-center">
+                                    <DocumentIcon class="w-6 h-6 text-gray-500 dark:text-gray-400" />
+                                </div>
+                                <div class="flex-1 overflow-hidden flex flex-col items-start justify-start">
+                                    <div class="self-stretch relative leading-6 overflow-hidden text-ellipsis whitespace-nowrap">Training Module Outline</div>
+                                </div>
+                            </div>
+                            <div class="self-stretch bg-mintcream-100 h-14 flex flex-row items-center justify-start py-0 px-4 box-border gap-4 min-h-[56px]">
+                                <div class="w-10 h-10 rounded-lg bg-white dark:bg-gray-700 flex items-center justify-center">
+                                    <DocumentIcon class="w-6 h-6 text-gray-500 dark:text-gray-400" />
+                                </div>
+                                <div class="flex-1 overflow-hidden flex flex-col items-start justify-start">
+                                    <div class="self-stretch relative leading-6 overflow-hidden text-ellipsis whitespace-nowrap">Feedback Survey Template</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Response Tab Content -->
+                    <div v-show="activeTab === 'response'" class="self-stretch p-4">
+                        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+                            <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+                                Review History
+                            </h2>
+                            <div v-if="reviewHistory && reviewHistory.length > 0" class="space-y-4">
+                                <div v-for="review in reviewHistory" :key="review.id" 
+                                     class="border-l-4 border-emerald-500 pl-4 py-2">
+                                    <div class="flex justify-between items-start mb-2">
+                                        <div>
+                                            <span class="font-medium text-gray-900 dark:text-gray-100">
+                                                {{ review.reviewer_name }}
+                                            </span>
+                                            <span class="ml-2 text-sm text-gray-500 dark:text-gray-400">
+                                                {{ formatDateTime(review.created_at) }}
+                                            </span>
+                                        </div>
+                                        <span :class="[
+                                            'px-2 py-1 text-xs font-medium rounded-full',
+                                            review.status === 'accepted' ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' :
+                                            review.status === 'rejected' ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400' :
+                                            'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
+                                        ]">
+                                            {{ review.status }}
+                                        </span>
+                                    </div>
+                                    <p class="text-gray-700 dark:text-gray-300">{{ review.feedback }}</p>
+                                    <p v-if="review.score !== null" class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                                        Score: {{ review.score }}/100
+                                    </p>
+                                </div>
+                            </div>
+                            <div v-else class="text-center py-8 text-gray-500 dark:text-gray-400">
+                                No review history available
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Related Documents Section -->
-                <div v-if="idea.files && idea.files.length > 0" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6">
-                    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Related Documents</h2>
-                    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                        <div v-for="file in idea.files" :key="file.id" 
-                            class="flex items-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors group cursor-pointer"
-                            @click="downloadFile(file)">
-                            <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center mr-4 flex-shrink-0">
-                                <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                </svg>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <div class="font-medium text-gray-900 dark:text-white truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                                    {{ file.original_name || file.file_name || 'Unknown File' }}
+                <!-- Decision and Score Section -->
+                <div class="self-stretch flex flex-row items-start justify-start text-[22px] text-gray-200">
+                    <!-- Make Decision Section -->
+                    <div class="flex-1 flex flex-col items-start justify-start">
+                        <div class="self-stretch flex flex-col items-start justify-start pt-5 px-4 pb-3">
+                            <b class="self-stretch relative leading-7">Make Decision ... </b>
+                        </div>
+                        <div class="self-stretch flex flex-row items-start justify-center text-center text-sm">
+                            <div class="flex-1 flex flex-row items-start justify-start flex-wrap content-start py-3 px-4 gap-3">
+                                <div @click="submitDecision('accepted')"
+                                     class="w-[84px] rounded-xl bg-mediumseagreen h-10 overflow-hidden shrink-0 flex flex-row items-center justify-center py-0 px-4 box-border min-w-[84px] max-w-[480px] cursor-pointer hover:opacity-90 transition-opacity">
+                                    <div class="overflow-hidden flex flex-col items-center justify-start">
+                                        <b class="self-stretch relative leading-[21px] overflow-hidden text-ellipsis whitespace-nowrap text-white">Accept</b>
+                                    </div>
                                 </div>
-                                <div class="flex items-center text-sm text-gray-500 dark:text-gray-400 mt-1">
-                                    <span v-if="file.file_size">{{ Math.round(file.file_size / 1024) }} KB</span>
-                                    <span v-if="file.uploaded_at" class="ml-2">
-                                        • {{ formatDate(file.uploaded_at) }}
-                                    </span>
+                                <div @click="submitDecision('rejected')"
+                                     class="w-[84px] rounded-xl bg-whitesmoke h-10 overflow-hidden shrink-0 flex flex-row items-center justify-center py-0 px-4 box-border min-w-[84px] max-w-[480px] cursor-pointer hover:bg-gray-300 transition-colors">
+                                    <div class="overflow-hidden flex flex-col items-center justify-start">
+                                        <b class="self-stretch relative leading-[21px] overflow-hidden text-ellipsis whitespace-nowrap">Reject</b>
+                                    </div>
+                                </div>
+                                <div @click="submitDecision('needs_revision')"
+                                     class="rounded-xl bg-whitesmoke h-10 overflow-hidden flex flex-row items-center justify-center py-0 px-4 box-border min-w-[84px] max-w-[480px] cursor-pointer hover:bg-gray-300 transition-colors">
+                                    <div class="overflow-hidden flex flex-col items-center justify-start">
+                                        <b class="self-stretch relative leading-[21px] overflow-hidden text-ellipsis whitespace-nowrap">Need Edit</b>
+                                    </div>
                                 </div>
                             </div>
-                            <svg class="w-5 h-5 text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                            </svg>
                         </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Review & Scoring Tab -->
-            <div v-if="activeTab === 'review'">
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <!-- Decision Making -->
-                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-                        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6">Review Decision</h2>
-                        
-                        <div class="mb-6">
-                            <FormTextarea
-                                v-model="reviewForm.feedback"
-                                label="Feedback"
-                                placeholder="Provide feedback or required changes for the idea's acceptance"
-                                :rows="6"
-                                :error="reviewForm.errors.feedback"
-                            />
-                        </div>
-
-                        <div class="flex flex-wrap gap-3">
-                            <button @click="makeDecision('accept')"
-                                :disabled="isProcessing || reviewForm.processing"
-                                class="px-6 py-2 rounded-lg font-semibold text-white transition-all duration-200 shadow-sm hover:shadow-md"
-                                :style="{ 
-                                    background: `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})`,
-                                }"
-                                :class="{ 'opacity-50 cursor-not-allowed': isProcessing || reviewForm.processing }">
-                                <span v-if="isProcessing">Processing...</span>
-                                <span v-else>Accept</span>
-                            </button>
-                            
-                            <button @click="makeDecision('reject')"
-                                :disabled="isProcessing || reviewForm.processing"
-                                class="px-6 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors shadow-sm hover:shadow-md"
-                                :class="{ 'opacity-50 cursor-not-allowed': isProcessing || reviewForm.processing }">
-                                Reject
-                            </button>
-                            
-                            <button @click="makeDecision('need_edit')"
-                                :disabled="isProcessing || reviewForm.processing"
-                                class="px-6 py-2 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 transition-colors shadow-sm hover:shadow-md"
-                                :class="{ 'opacity-50 cursor-not-allowed': isProcessing || reviewForm.processing }">
-                                Need Revision
-                            </button>
-                        </div>
-
-                        <div v-if="idea.feedback" class="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                            <div class="text-sm font-medium text-blue-800 dark:text-blue-300 mb-2">Current Feedback:</div>
-                            <div class="text-blue-700 dark:text-blue-400 text-sm">{{ idea.feedback }}</div>
+                        <div class="flex flex-row items-end justify-start flex-wrap content-end py-3 px-4 box-border max-w-[480px] text-base">
+                            <div class="flex-1 flex flex-col items-start justify-start min-w-[160px]">
+                                <div class="self-stretch flex-1 rounded-xl bg-white border-gainsboro-200 border-solid border-[1px] box-border overflow-hidden flex flex-row items-start justify-start p-[15px] min-h-[144px]">
+                                    <textarea
+                                        v-model="decisionForm.feedback"
+                                        placeholder="Provide feedback or required changes for the idea's acceptance"
+                                        class="flex-1 relative leading-6 bg-transparent border-none outline-none resize-none text-gray-600 dark:text-gray-400 placeholder:text-gray-500/75"
+                                        rows="5"
+                                    ></textarea>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Score Section -->
-                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-                        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6">Scoring</h2>
-                        
-                        <div class="mb-6">
-                            <FormInput
-                                v-model="reviewForm.score"
-                                label="Score (0-100)"
+                    <div class="flex-1 flex flex-col items-start justify-start">
+                        <div class="self-stretch flex flex-col items-start justify-start pt-5 px-4 pb-3">
+                            <b class="self-stretch relative leading-7">Score</b>
+                        </div>
+                        <div class="mx-4">
+                            <input
+                                v-model.number="decisionForm.score"
+                                @blur="updateScore"
                                 type="number"
-                                placeholder="Enter score from 0 to 100"
-                                :min="0"
-                                :max="100"
-                                :error="reviewForm.errors.score"
+                                min="0"
+                                max="100"
+                                placeholder="Add Score From 100"
+                                class="rounded-xl bg-mintcream-100 border-honeydew border-solid border-[1px] h-14 w-full px-[15px] text-base text-seagreen placeholder:text-seagreen outline-none focus:border-seagreen"
                             />
                         </div>
-
-                        <button @click="updateScore"
-                            :disabled="reviewForm.processing || !reviewForm.score"
-                            class="w-full px-4 py-2 rounded-lg font-semibold text-white transition-all duration-200"
-                            :style="{ 
-                                background: `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})`,
-                            }"
-                            :class="{ 'opacity-50 cursor-not-allowed': reviewForm.processing || !reviewForm.score }">
-                            Update Score
-                        </button>
-
-                        <div v-if="idea.score" class="mt-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg text-center">
-                            <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">Current Score</div>
-                            <div class="text-3xl font-bold" :style="{ color: themeColor.primary }">
-                                {{ idea.score }}/100
-                            </div>
-                        </div>
                     </div>
-                </div>
-
-                <!-- Supervisor Assignment -->
-                <div v-if="availableSupervisors.length > 0" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mt-6">
-                    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6">Assign Supervisor</h2>
-                    
-                    <div class="flex items-end gap-4">
-                        <div class="flex-1">
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                Track Supervisor
-                            </label>
-                            <select v-model="supervisorForm.supervisor_id"
-                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent">
-                                <option value="">Select Supervisor</option>
-                                <option v-for="supervisor in availableSupervisors" :key="supervisor.id" :value="supervisor.id">
-                                    {{ supervisor.name }} - {{ supervisor.email }}
-                                </option>
-                            </select>
-                        </div>
-                        
-                        <button @click="assignSupervisor"
-                            :disabled="supervisorForm.processing || !supervisorForm.supervisor_id"
-                            class="px-6 py-2 rounded-lg font-semibold text-white transition-colors"
-                            :style="{ 
-                                background: supervisorForm.supervisor_id ? `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})` : '#9CA3AF'
-                            }"
-                            :class="{ 'cursor-not-allowed': supervisorForm.processing || !supervisorForm.supervisor_id }">
-                            Assign
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- History Tab -->
-            <div v-if="activeTab === 'history'">
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-                    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6">Review History</h2>
-                    
-                    <div v-if="idea.audit_logs && idea.audit_logs.length > 0" class="space-y-6">
-                        <div v-for="log in idea.audit_logs" :key="log.id" 
-                            class="relative pl-8 pb-6 border-l-2 border-gray-200 dark:border-gray-700 last:border-l-0 last:pb-0">
-                            <!-- Timeline dot -->
-                            <div class="absolute -left-2 top-0 w-4 h-4 rounded-full bg-white dark:bg-gray-800 border-2"
-                                :style="{ borderColor: themeColor.primary }">
-                            </div>
-                            
-                            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                                <div class="flex items-center justify-between mb-3">
-                                    <div class="flex items-center space-x-3">
-                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
-                                            {{ log.action || 'Action' }}
-                                        </span>
-                                        <span v-if="log.user" class="text-sm font-medium text-gray-900 dark:text-white">
-                                            by {{ log.user.name }}
-                                        </span>
-                                    </div>
-                                    <span class="text-sm text-gray-500 dark:text-gray-400">
-                                        {{ formatDate(log.created_at) }}
-                                    </span>
-                                </div>
-                                
-                                <div v-if="log.notes" class="text-gray-700 dark:text-gray-300 mb-3">
-                                    {{ log.notes }}
-                                </div>
-                                
-                                <div v-if="log.metadata" class="text-xs text-gray-500 dark:text-gray-400">
-                                    <div v-if="log.metadata.score" class="mb-1">
-                                        Score: {{ log.metadata.score }}/100
-                                    </div>
-                                    <div v-if="log.metadata.previous_status" class="mb-1">
-                                        Status changed from: {{ formatStatus(log.metadata.previous_status) }}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div v-else class="text-center py-12">
-                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                        </svg>
-                        <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">No review history</h3>
-                        <p class="mt-1 text-sm text-gray-500">This idea hasn't been reviewed yet.</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Back Button -->
-            <div class="mt-8 flex items-center justify-between">
-                <Link :href="route('system-admin.ideas.index')"
-                    class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                    </svg>
-                    Back to Ideas
-                </Link>
-                
-                <!-- Additional Actions -->
-                <div class="flex items-center space-x-3">
-                    <Link :href="route('system-admin.ideas.review', idea.id)"
-                        class="inline-flex items-center px-4 py-2 rounded-lg font-semibold text-white transition-all duration-200 shadow-sm hover:shadow-md"
-                        :style="{ 
-                            background: `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})`,
-                        }">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                        </svg>
-                        Review Idea
-                    </Link>
-                    
-                    <button @click="window.print()" 
-                        class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
-                        </svg>
-                        Print
-                    </button>
-                    
-                    <Link :href="route('system-admin.ideas.export', { id: idea.id })" 
-                        class="inline-flex items-center px-4 py-2 rounded-lg font-semibold text-white transition-all duration-200 shadow-sm hover:shadow-md"
-                        :style="{ 
-                            background: `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})`,
-                        }">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                        </svg>
-                        Export Details
-                    </Link>
                 </div>
             </div>
         </div>
@@ -620,24 +338,58 @@ const updateScore = () => {
 </template>
 
 <style scoped>
-/* Theme-aware input styling */
-:deep(.peer:focus) {
-    border-color: var(--theme-primary) !important;
-    box-shadow: 0 0 0 2px rgba(var(--theme-rgb), 0.2) !important;
+/* Custom styles for exact matching */
+.bg-mediumseagreen {
+    background-color: #3cb371;
 }
 
-:deep(.error) {
-    border-color: #ef4444 !important;
+.bg-whitesmoke {
+    background-color: #f5f5f5;
 }
 
-/* Print styles */
-@media print {
-    .no-print {
-        display: none !important;
-    }
-    
-    .print\:block {
-        display: block !important;
-    }
+.bg-mintcream-100 {
+    background-color: #f0fff4;
+}
+
+.bg-mintcream-200 {
+    background-color: #e6f7ed;
+}
+
+.bg-mintcream-300 {
+    background-color: #dcf4e6;
+}
+
+.border-honeydew {
+    border-color: #f0fff0;
+}
+
+.border-gainsboro-100 {
+    border-color: #dcdcdc;
+}
+
+.border-gainsboro-200 {
+    border-color: #d3d3d3;
+}
+
+.text-seagreen {
+    color: #2e8b57;
+}
+
+.text-cadetblue {
+    color: #5f9ea0;
+}
+
+.text-gray-200 {
+    color: #374151;
+}
+
+/* Remove spinner from number input */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+input[type="number"] {
+    -moz-appearance: textfield;
 }
 </style>

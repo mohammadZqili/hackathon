@@ -1,137 +1,180 @@
 <template>
-    <div>
-        <div class="flex items-center justify-between mb-6">
-            <h1 class="text-2xl font-bold text-gray-900">News Management (All Editions)</h1>
-            <Link :href="route('system-admin.news.create')"
-                  class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-blue-700">
-                Create News Article
-            </Link>
-        </div>
-        
-        <div class="bg-white shadow-sm rounded-lg overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h2 class="text-lg font-medium text-gray-900">All News Articles Across All Hackathon Editions</h2>
-                <p class="mt-1 text-sm text-gray-600">
-                    Create, manage, and publish news articles for all hackathon editions
-                </p>
-            </div>
-            
-            <div class="p-6">
-                <div v-if="news.data.length === 0" class="text-center py-8">
-                    <p class="text-gray-500">No news articles found.</p>
+    <Head title="News Management" />
+    <Default>
+        <div class="container mx-auto px-4 py-8" :style="themeStyles">
+            <!-- Page Header -->
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 dark:text-white">News Management</h1>
+                    <p class="mt-2 text-gray-600 dark:text-gray-400">
+                        Create, manage, and publish news articles for all hackathon editions
+                    </p>
                 </div>
-                
-                <div v-else class="space-y-4">
-                    <div v-for="article in news.data" :key="article.id"
-                         class="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
-                        <div class="flex items-start justify-between">
-                            <div class="flex-1">
-                                <div class="flex items-center space-x-2 mb-2">
-                                    <h3 class="text-lg font-medium text-gray-900">
-                                        {{ article.title || 'Untitled Article' }}
-                                    </h3>
-                                    <span v-if="article.status" 
-                                          class="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
-                                          :class="{
-                                              'bg-green-100 text-green-800': article.status === 'published',
-                                              'bg-yellow-100 text-yellow-800': article.status === 'draft',
-                                              'bg-blue-100 text-blue-800': article.status === 'scheduled'
-                                          }">
-                                        {{ article.status }}
-                                    </span>
-                                </div>
-                                
-                                <div class="text-sm text-gray-600 mb-3">
-                                    {{ article.content ? article.content.substring(0, 200) + '...' : 'No content' }}
-                                </div>
-                                
-                                <div class="flex items-center space-x-4 text-sm text-gray-500">
-                                    <span v-if="article.hackathon_edition">
-                                        Edition: {{ article.hackathon_edition.name }}
-                                    </span>
-                                    <span v-if="article.created_at">
-                                        Created: {{ new Date(article.created_at).toLocaleDateString() }}
-                                    </span>
-                                    <span v-if="article.published_at">
-                                        Published: {{ new Date(article.published_at).toLocaleDateString() }}
-                                    </span>
-                                    <span v-if="article.views_count" class="flex items-center">
-                                        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                            <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
-                                            <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/>
-                                        </svg>
-                                        {{ article.views_count }} views
-                                    </span>
-                                </div>
-                            </div>
-                            
-                            <div class="flex items-center space-x-2 ml-4">
-                                <Link :href="route('system-admin.news.show', article.id)"
-                                      class="text-blue-600 hover:text-blue-900 text-sm font-medium">
-                                    View
-                                </Link>
-                                <Link :href="route('system-admin.news.edit', article.id)"
-                                      class="text-green-600 hover:text-green-900 text-sm font-medium">
-                                    Edit
-                                </Link>
-                                <button v-if="article.status === 'draft'"
-                                        @click="publishArticle(article)"
-                                        class="text-purple-600 hover:text-purple-900 text-sm font-medium">
-                                    Publish
-                                </button>
-                                <button v-else-if="article.status === 'published'"
-                                        @click="unpublishArticle(article)"
-                                        class="text-orange-600 hover:text-orange-900 text-sm font-medium">
-                                    Unpublish
-                                </button>
-                                <button @click="deleteArticle(article)"
-                                        class="text-red-600 hover:text-red-900 text-sm font-medium">
-                                    Delete
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <!-- Tags or Categories if available -->
-                        <div v-if="article.tags && article.tags.length > 0" class="mt-3">
-                            <div class="flex flex-wrap gap-2">
-                                <span v-for="tag in article.tags" :key="tag"
-                                      class="inline-flex px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded">
-                                    {{ tag }}
-                                </span>
-                            </div>
-                        </div>
+
+                <Link :href="route('system-admin.news.create')"
+                      class="inline-flex items-center px-4 py-2 rounded-lg font-semibold text-white transition-all duration-200 shadow-sm hover:shadow-md mt-4 sm:mt-0"
+                      :style="{
+                          background: `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})`,
+                      }">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    Add New Article
+                </Link>
+            </div>
+
+            <!-- Tabs Navigation -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm mb-6">
+                <div class="border-b border-gray-200 dark:border-gray-700">
+                    <div class="flex gap-8 px-6">
+                        <Link :href="route('system-admin.news.create')"
+                              class="py-4 px-1 border-b-2 transition-colors"
+                              :class="false ? 'border-[var(--theme-primary)] text-[var(--theme-primary)]' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'">
+                            <span class="text-sm font-medium">Add News</span>
+                        </Link>
+                        <button class="py-4 px-1 border-b-2 transition-colors"
+                                :class="true ? 'border-[var(--theme-primary)] text-[var(--theme-primary)]' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'">
+                            <span class="text-sm font-medium">All News</span>
+                        </button>
+                        <Link :href="route('system-admin.news.media-center')"
+                              class="py-4 px-1 border-b-2 transition-colors border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
+                            <span class="text-sm font-medium">Media Center</span>
+                        </Link>
                     </div>
                 </div>
-                
+            </div>
+            <!-- News Table -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
+                <!-- Table Header -->
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead class="bg-gray-50 dark:bg-gray-700">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                    Title
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                    Date
+                                </th>
+                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                    Twitter
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                    Author
+                                </th>
+                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                    Actions
+                                </th>
+                            </tr>
+                        </thead>
+
+                        <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                            <tr v-if="!news.data || news.data.length === 0">
+                                <td colspan="5" class="text-center py-12 text-gray-500 dark:text-gray-400">
+                                    No news articles found.
+                                </td>
+                            </tr>
+                            <tr v-else v-for="article in news.data" :key="article.id"
+                                class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                <td class="px-6 py-4">
+                                    <div class="text-sm font-medium text-gray-900 dark:text-white">
+                                        {{ article.title || 'Untitled' }}
+                                    </div>
+                                    <div class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                        {{ article.content ? article.content.substring(0, 60) + '...' : '' }}
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="text-sm text-gray-900 dark:text-gray-300">{{ formatDate(article.created_at) }}</span>
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox"
+                                               :checked="article.publish_to_twitter"
+                                               @change="toggleTwitterPublish(article)"
+                                               class="sr-only peer">
+                                        <div class="w-11 h-6 bg-gray-200 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-opacity-50 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"
+                                             :class="article.publish_to_twitter ? 'peer-checked:bg-[var(--theme-primary)] peer-focus:ring-[var(--theme-primary)]' : ''"></div>
+                                    </label>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="text-sm text-gray-900 dark:text-gray-300">{{ article.author?.name || 'System Admin' }}</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-center">
+                                    <div class="flex items-center justify-center gap-3">
+                                        <Link :href="route('system-admin.news.edit', article.id)"
+                                              class="text-sm font-medium transition-colors"
+                                              :style="{ color: themeColor.primary }"
+                                              @mouseover="e => e.target.style.color = themeColor.hover"
+                                              @mouseleave="e => e.target.style.color = themeColor.primary">
+                                            Edit
+                                        </Link>
+                                        <button @click="deleteArticle(article)"
+                                                class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 text-sm font-medium transition-colors">
+                                            Delete
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
                 <!-- Pagination -->
-                <div v-if="news.links" class="mt-6">
-                    <nav class="flex items-center justify-between">
+                <div v-if="news.links" class="bg-white dark:bg-gray-800 px-4 py-3 border-t border-gray-200 dark:border-gray-700 sm:px-6">
+                    <div class="flex items-center justify-between">
                         <div class="flex-1 flex justify-between sm:hidden">
                             <Link v-if="news.prev_page_url" :href="news.prev_page_url"
-                                  class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                class="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
                                 Previous
                             </Link>
                             <Link v-if="news.next_page_url" :href="news.next_page_url"
-                                  class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
                                 Next
                             </Link>
                         </div>
                         <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                             <div>
-                                <p class="text-sm text-gray-700">
-                                    Showing {{ news.from }} to {{ news.to }} of {{ news.total }} results
+                                <p class="text-sm text-gray-700 dark:text-gray-300">
+                                    Showing <span class="font-medium">{{ news.from || 0 }}</span> to <span class="font-medium">{{ news.to || 0 }}</span> of <span class="font-medium">{{ news.total || 0 }}</span> results
                                 </p>
                             </div>
+                            <div>
+                                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                                    <template v-for="link in news.links" :key="link.label">
+                                        <Link v-if="link.url"
+                                            :href="link.url"
+                                            :class="[
+                                                'relative inline-flex items-center px-4 py-2 border text-sm font-medium transition-colors',
+                                                link.active
+                                                    ? 'z-10 border-[var(--theme-primary)] text-white'
+                                                    : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                                            ]"
+                                            :style="link.active ? { backgroundColor: themeColor.primary } : {}"
+                                            v-html="link.label">
+                                        </Link>
+                                        <span v-else
+                                            :class="[
+                                                'relative inline-flex items-center px-4 py-2 border text-sm font-medium cursor-default',
+                                                'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-300 dark:text-gray-500'
+                                            ]"
+                                            v-html="link.label">
+                                        </span>
+                                    </template>
+                                </nav>
+                            </div>
                         </div>
-                    </nav>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+    </Default>
 </template>
 
 <script setup>
-import { Link, useForm } from '@inertiajs/vue3'
+import { Head, Link, useForm, router } from '@inertiajs/vue3'
+import { ref, computed, onMounted } from 'vue'
+import Default from '../../../Layouts/Default.vue'
 
 const props = defineProps({
     news: {
@@ -140,16 +183,59 @@ const props = defineProps({
     }
 })
 
-const publishArticle = (article) => {
-    if (confirm(`Are you sure you want to publish "${article.title}"?`)) {
-        useForm({}).post(route('system-admin.news.publish', article.id))
+const activeTab = ref('all')
+
+// Get theme color from localStorage or default
+const themeColor = ref({
+    primary: '#0d9488',
+    hover: '#0f766e',
+    rgb: '13, 148, 136',
+    gradientFrom: '#0d9488',
+    gradientTo: '#14b8a6'
+})
+
+onMounted(() => {
+    // Get the current theme color from CSS variables
+    const root = document.documentElement
+    const primary = getComputedStyle(root).getPropertyValue('--primary-color').trim() || '#0d9488'
+    const hover = getComputedStyle(root).getPropertyValue('--primary-hover').trim() || '#0f766e'
+    const rgb = getComputedStyle(root).getPropertyValue('--primary-color-rgb').trim() || '13, 148, 136'
+    const gradientFrom = getComputedStyle(root).getPropertyValue('--primary-gradient-from').trim() || '#0d9488'
+    const gradientTo = getComputedStyle(root).getPropertyValue('--primary-gradient-to').trim() || '#14b8a6'
+
+    themeColor.value = {
+        primary: primary || themeColor.value.primary,
+        hover: hover || themeColor.value.hover,
+        rgb: rgb || themeColor.value.rgb,
+        gradientFrom: gradientFrom || themeColor.value.gradientFrom,
+        gradientTo: gradientTo || themeColor.value.gradientTo
     }
+})
+
+// Computed style for dynamic theme
+const themeStyles = computed(() => ({
+    '--theme-primary': themeColor.value.primary,
+    '--theme-hover': themeColor.value.hover,
+    '--theme-rgb': themeColor.value.rgb,
+    '--theme-gradient-from': themeColor.value.gradientFrom,
+    '--theme-gradient-to': themeColor.value.gradientTo,
+}))
+
+const formatDate = (date) => {
+    if (!date) return 'N/A'
+    return new Date(date).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    })
 }
 
-const unpublishArticle = (article) => {
-    if (confirm(`Are you sure you want to unpublish "${article.title}"?`)) {
-        useForm({}).post(route('system-admin.news.unpublish', article.id))
-    }
+const toggleTwitterPublish = (article) => {
+    useForm({
+        publish_to_twitter: !article.publish_to_twitter
+    }).patch(route('system-admin.news.update', article.id), {
+        preserveScroll: true
+    })
 }
 
 const deleteArticle = (article) => {
@@ -158,3 +244,11 @@ const deleteArticle = (article) => {
     }
 }
 </script>
+
+<style scoped>
+/* Theme-aware input styling */
+:deep(.peer:focus) {
+    border-color: var(--theme-primary) !important;
+    box-shadow: 0 0 0 2px rgba(var(--theme-rgb), 0.2) !important;
+}
+</style>

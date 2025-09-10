@@ -125,7 +125,7 @@ class IdeaController extends Controller
         ]);
 
         try {
-            $this->ideaService->assignSupervisor($idea, $request->supervisor_id);
+            $this->ideaService->assignSupervisor($idea, (int) $request->supervisor_id);
             
             return redirect()->back()->with('success', 'Supervisor assigned successfully.');
         } catch (\Exception $e) {
@@ -142,7 +142,7 @@ class IdeaController extends Controller
             'score' => 'required|numeric|min:0|max:100'
         ]);
 
-        $this->ideaService->updateScore($idea, $request->score);
+        $this->ideaService->updateScore($idea, (float) $request->score);
 
         return redirect()->back()->with('success', 'Score updated successfully.');
     }

@@ -70,7 +70,7 @@ const emit = defineEmits(['processfile', 'removefile'])
 
 <template>
     <div class="space-y-2">
-        <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 text-center">
+        <label v-if="label" class="block text-sm font-medium text-gray-600 dark:text-gray-300 text-center">
             {{ label }}
             <span class="text-xs text-gray-500 block mt-1">
                 ({{acceptedFileTypes.map(type => type.split('/')[1].toUpperCase()).join(', ')}}
@@ -88,19 +88,137 @@ const emit = defineEmits(['processfile', 'removefile'])
             :files="files"
             :credits="null" 
             :allow-pdf-preview="true" 
-            :label-idle="`Drop files here or <span class='filepond--label-action'>Browse</span>`"
-            :image-preview-height="100"
+            :label-idle="labelIdle || `Drop files here or <span class='filepond--label-action'>Browse</span>`"
+            :image-preview-height="allowMultiple ? 50 : 100"
             :image-crop-aspect-ratio="'1:1'"
-            :image-resize-target-width="50"
-            :image-resize-target-height="50"
-            :style-panel-layout="'rounded circle'"
+            :image-resize-target-width="100"
+            :image-resize-target-height="100"
+            :style-panel-layout="allowMultiple ? 'compact' : 'compact circle'"
             :style-load-indicator-position="'center bottom'"
             :style-button-remove-item-position="'center bottom'"
             :pdf-component-extra-params="'toolbar=0'" 
-            class="max-w-xs md:max-w-none"
+            :class="allowMultiple ? 'filepond-multiple' : 'max-w-xs'"
+            :style-panel-aspect-ratio="allowMultiple ? '1:1' : '1:1'"
             @processfile="(error, file) => $emit('processfile', error, file)"
             @removefile="(error, file) => $emit('removefile', error, file)" 
         />
     </div>
 </template>
 
+<style>
+/* Fixed small size for gallery */
+.filepond-multiple {
+    max-width: 100%;
+}
+
+.filepond-multiple .filepond--root {
+    max-height: 180px !important;
+    margin-bottom: 0;
+}
+
+.filepond-multiple .filepond--panel-root {
+    min-height: 120px !important;
+    max-height: 180px !important;
+}
+
+/* Very compact layout for multiple files - 5 columns */
+.filepond-multiple .filepond--item {
+    width: calc(20% - 0.25rem) !important;
+    margin: 0.125rem !important;
+}
+
+.filepond-multiple .filepond--item .filepond--item-panel {
+    aspect-ratio: 1;
+    background-size: cover !important;
+}
+
+/* Small image previews */
+.filepond-multiple .filepond--image-preview-wrapper {
+    height: 50px !important;
+}
+
+.filepond-multiple .filepond--file {
+    padding: 0 !important;
+}
+
+@media (max-width: 768px) {
+    .filepond-multiple .filepond--item {
+        width: calc(25% - 0.25rem) !important;
+    }
+}
+
+/* Limit height and add scroll for gallery */
+.filepond-multiple .filepond--list {
+    max-height: 150px !important;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* Hide file info for cleaner look */
+.filepond-multiple .filepond--file-info {
+    display: none;
+}
+
+.filepond-multiple .filepond--file-status {
+    display: none;
+}
+
+/* Smaller drop label */
+.filepond-multiple .filepond--drop-label {
+    font-size: 0.75rem !important;
+    padding: 0.5rem !important;
+    min-height: 2rem !important;
+}
+
+/* Smaller action buttons */
+.filepond-multiple .filepond--action-remove-item {
+    width: 20px !important;
+    height: 20px !important;
+}
+
+/* Style scrollbar */
+.filepond-multiple .filepond--list::-webkit-scrollbar {
+    width: 4px;
+}
+
+.filepond-multiple .filepond--list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 2px;
+}
+
+.filepond-multiple .filepond--list::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 2px;
+}
+
+.filepond-multiple .filepond--list::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Dark mode support */
+.dark .filepond--panel-root {
+    background-color: rgb(31 41 55);
+    border-color: rgb(75 85 99);
+}
+
+.dark .filepond--drop-label {
+    color: rgb(156 163 175);
+}
+
+.dark .filepond--label-action {
+    color: rgb(147 197 253);
+}
+
+.dark .filepond-multiple .filepond--list::-webkit-scrollbar-track {
+    background: rgb(31 41 55);
+}
+
+.dark .filepond-multiple .filepond--list::-webkit-scrollbar-thumb {
+    background: rgb(75 85 99);
+}
+
+/* Prevent overflow */
+.filepond--wrapper {
+    overflow: hidden;
+}
+</style>
