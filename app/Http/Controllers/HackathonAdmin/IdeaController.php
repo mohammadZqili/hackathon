@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\HackathonAdmin;
 
-use App\Http\Controllers\Controller;
 use App\Models\Idea;
 use App\Models\HackathonEdition;
 use App\Models\Hackathon;
@@ -13,22 +12,18 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class IdeaController extends Controller
+class IdeaController extends BaseController
 {
     /**
      * Display a listing of ideas for current hackathon edition.
      */
     public function index(Request $request): Response
     {
-        $currentEdition = HackathonEdition::where('is_current', true)->first();
-        
-        if (!$currentEdition) {
+        if (!$this->currentEdition) {
             return Inertia::render('HackathonAdmin/NoEdition');
         }
 
-        $query = Idea::whereHas('team', function($q) use ($currentEdition) {
-            $q->where('hackathon_id', $currentEdition->id);
-        })
+        $query = Idea::where('edition_id', $this->currentEdition->id)
         ->with(['team', 'track', 'supervisor']);
 
         // Apply filters
@@ -59,33 +54,19 @@ class IdeaController extends Controller
         $ideas = $query->latest()->paginate(15)->withQueryString();
 
         // Get statistics
+        $baseQuery = Idea::where('edition_id', $this->currentEdition->id);
         $statistics = [
-            'total' => Idea::whereHas('team', function($q) use ($currentEdition) {
-                $q->where('hackathon_id', $currentEdition->id);
-            })->count(),
-            'draft' => Idea::whereHas('team', function($q) use ($currentEdition) {
-                $q->where('hackathon_id', $currentEdition->id);
-            })->where('status', 'draft')->count(),
-            'submitted' => Idea::whereHas('team', function($q) use ($currentEdition) {
-                $q->where('hackathon_id', $currentEdition->id);
-            })->where('status', 'submitted')->count(),
-            'under_review' => Idea::whereHas('team', function($q) use ($currentEdition) {
-                $q->where('hackathon_id', $currentEdition->id);
-            })->where('status', 'under_review')->count(),
-            'accepted' => Idea::whereHas('team', function($q) use ($currentEdition) {
-                $q->where('hackathon_id', $currentEdition->id);
-            })->where('status', 'accepted')->count(),
-            'rejected' => Idea::whereHas('team', function($q) use ($currentEdition) {
-                $q->where('hackathon_id', $currentEdition->id);
-            })->where('status', 'rejected')->count(),
-            'needs_revision' => Idea::whereHas('team', function($q) use ($currentEdition) {
-                $q->where('hackathon_id', $currentEdition->id);
-            })->where('status', 'needs_revision')->count(),
+            'total' => $baseQuery->count(),
+            'draft' => (clone $baseQuery)->where('status', 'draft')->count(),
+            'submitted' => (clone $baseQuery)->where('status', 'submitted')->count(),
+            'under_review' => (clone $baseQuery)->where('status', 'under_review')->count(),
+            'accepted' => (clone $baseQuery)->where('status', 'accepted')->count(),
+            'rejected' => (clone $baseQuery)->where('status', 'rejected')->count(),
+            'needs_revision' => (clone $baseQuery)->where('status', 'needs_revision')->count(),
         ];
 
-        // Get the current hackathon to find tracks
-        $currentHackathon = Hackathon::where('is_current', true)->first();
-        $tracks = $currentHackathon ? Track::where('hackathon_id', $currentHackathon->id)->get() : collect();
+        // Get tracks for current edition
+        $tracks = Track::where('hackathon_edition_id', $this->currentEdition->id)->get();
         $supervisors = User::role('track_supervisor')->get();
 
         return Inertia::render('HackathonAdmin/Ideas/Index', [
@@ -102,6 +83,11 @@ class IdeaController extends Controller
      */
     public function show(Idea $idea): Response
     {
+        // Ensure idea belongs to current edition
+        if (!$this->checkEditionOwnership($idea)) {
+            abort(403);
+        }
+
         $idea->load(['team.members', 'track', 'supervisor', 'files']);
 
         // Get review history from audit logs
@@ -129,6 +115,10 @@ class IdeaController extends Controller
      */
     public function review(Idea $idea): Response
     {
+        if (!$this->checkEditionOwnership($idea)) {
+            abort(403);
+        }
+
         $idea->load(['team', 'track', 'files']);
 
         $supervisors = User::role('track_supervisor')
@@ -156,6 +146,10 @@ class IdeaController extends Controller
      */
     public function processReview(Request $request, Idea $idea)
     {
+        if (!$this->checkEditionOwnership($idea)) {
+            abort(403);
+        }
+
         $validated = $request->validate([
             'status' => 'required|in:draft,submitted,under_review,needs_revision,accepted,rejected,pending_review,in_progress,completed',
             'reviewed_by' => 'nullable|exists:users,id',
@@ -214,6 +208,10 @@ class IdeaController extends Controller
      */
     public function assignSupervisor(Request $request, Idea $idea)
     {
+        if (!$this->checkEditionOwnership($idea)) {
+            abort(403);
+        }
+
         $request->validate([
             'supervisor_id' => 'required|exists:users,id',
         ]);
@@ -230,6 +228,10 @@ class IdeaController extends Controller
      */
     public function updateScore(Request $request, Idea $idea)
     {
+        if (!$this->checkEditionOwnership($idea)) {
+            abort(403);
+        }
+
         $request->validate([
             'score' => 'required|numeric|min:0|max:100'
         ]);
@@ -253,15 +255,11 @@ class IdeaController extends Controller
      */
     public function export(Request $request)
     {
-        $currentEdition = HackathonEdition::where('is_current', true)->first();
-        
-        if (!$currentEdition) {
+        if (!$this->currentEdition) {
             return back()->with('error', 'No current hackathon edition found.');
         }
 
-        $ideas = Idea::whereHas('team', function($q) use ($currentEdition) {
-            $q->where('hackathon_id', $currentEdition->id);
-        })
+        $ideas = Idea::where('edition_id', $this->currentEdition->id)
         ->with(['team', 'track', 'supervisor'])
         ->get();
 

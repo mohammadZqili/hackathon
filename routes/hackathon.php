@@ -7,6 +7,7 @@ use App\Http\Controllers\SystemAdmin\DashboardController as SystemAdminDashboard
 use App\Http\Controllers\SystemAdmin\HackathonEditionController as SystemAdminEditionController;
 use App\Http\Controllers\SystemAdmin\UserController as SystemAdminUserController;
 use App\Http\Controllers\SystemAdmin\TeamController as SystemAdminTeamController;
+use App\Http\Controllers\SystemAdmin\TrackController as SystemAdminTrackController;
 use App\Http\Controllers\SystemAdmin\IdeaController as SystemAdminIdeaController;
 use App\Http\Controllers\SystemAdmin\WorkshopController as SystemAdminWorkshopController;
 use App\Http\Controllers\SystemAdmin\SpeakerController as SystemAdminSpeakerController;
@@ -19,6 +20,7 @@ use App\Http\Controllers\SystemAdmin\CheckinController as SystemAdminCheckinCont
 use App\Http\Controllers\HackathonAdmin\DashboardController as HackathonAdminDashboardController;
 use App\Http\Controllers\HackathonAdmin\TeamController as HackathonAdminTeamController;
 use App\Http\Controllers\HackathonAdmin\IdeaController as HackathonAdminIdeaController;
+use App\Http\Controllers\HackathonAdmin\TrackController as HackathonAdminTrackController;
 use App\Http\Controllers\HackathonAdmin\WorkshopController as HackathonAdminWorkshopController;
 use App\Http\Controllers\HackathonAdmin\NewsController as HackathonAdminNewsController;
 
@@ -64,6 +66,11 @@ Route::middleware(['auth', 'role:system_admin|permission:manage-hackathon-editio
     Route::delete('teams/{team}/remove-member/{user}', [SystemAdminTeamController::class, 'removeMember'])->name('teams.remove-member');
     Route::get('teams/export', [SystemAdminTeamController::class, 'export'])->name('teams.export');
     Route::get('users/search', [SystemAdminUserController::class, 'search'])->name('users.search');
+
+    // Global Track Management
+    Route::resource('tracks', SystemAdminTrackController::class);
+    Route::post('tracks/{track}/assign-supervisor', [SystemAdminTrackController::class, 'assignSupervisor'])->name('tracks.assign-supervisor');
+    Route::get('tracks/export', [SystemAdminTrackController::class, 'export'])->name('tracks.export');
 
     // Global Idea Management
     Route::resource('ideas', SystemAdminIdeaController::class)->only(['index', 'show', 'destroy']);
@@ -162,6 +169,10 @@ Route::middleware(['auth', 'role:hackathon_admin|permission:manage-current-editi
     Route::post('teams/bulk-approve', [HackathonAdminTeamController::class, 'bulkApprove'])->name('teams.bulk-approve');
     Route::post('teams/bulk-reject', [HackathonAdminTeamController::class, 'bulkReject'])->name('teams.bulk-reject');
     Route::get('teams/export', [HackathonAdminTeamController::class, 'export'])->name('teams.export');
+
+    // Track Management (Current Edition Only)
+    Route::resource('tracks', HackathonAdminTrackController::class);
+    Route::post('tracks/{track}/assign-supervisor', [HackathonAdminTrackController::class, 'assignSupervisor'])->name('tracks.assign-supervisor');
 
     // Idea Management (Current Edition Only)
     Route::resource('ideas', HackathonAdminIdeaController::class);

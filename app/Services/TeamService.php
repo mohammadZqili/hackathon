@@ -20,9 +20,9 @@ class TeamService implements TeamServiceInterface
     ) {}
 
     /**
-     * Create a new team with leader.
+     * Create a new team with leader (for team leaders).
      */
-    public function createTeam(array $data, User $leader): Team
+    public function createTeamWithLeader(array $data, User $leader): Team
     {
         return DB::transaction(function () use ($data, $leader) {
             // Validate hackathon is open for registration
@@ -329,5 +329,133 @@ class TeamService implements TeamServiceInterface
         return $team->hackathon->isIdeaSubmissionOpen() && 
                $team->status === 'active' &&
                $team->members()->where('status', 'accepted')->count() >= 2;
+    }
+
+    /**
+     * Create a team (for admins).
+     */
+    public function createTeam(array $data): Team
+    {
+        return DB::transaction(function () use ($data) {
+            // Generate invite code if not provided
+            if (!isset($data['invite_code'])) {
+                $data['invite_code'] = Str::upper(Str::random(8));
+            }
+
+            // Set default values
+            $data['status'] = $data['status'] ?? 'pending';
+            $data['max_members'] = $data['max_members'] ?? 5;
+            
+            $team = $this->teamRepo->create($data);
+            
+            // If leader is specified, add them as the first member
+            if (isset($data['leader_id'])) {
+                $team->members()->create([
+                    'user_id' => $data['leader_id'],
+                    'status' => 'accepted',
+                    'role' => 'leader',
+                    'joined_at' => now(),
+                ]);
+            }
+            
+            Log::info('Team created by admin', [
+                'team_id' => $team->id,
+                'edition_id' => $data['edition_id'] ?? null,
+            ]);
+            
+            return $team;
+        });
+    }
+
+    /**
+     * Update a team.
+     */
+    public function updateTeam(int $teamId, array $data): Team
+    {
+        $team = $this->teamRepo->update($teamId, $data);
+        
+        Log::info('Team updated', [
+            'team_id' => $teamId,
+            'updated_data' => array_keys($data),
+        ]);
+        
+        return $team;
+    }
+
+    /**
+     * Approve a team.
+     */
+    public function approveTeam(int $teamId): Team
+    {
+        $team = $this->teamRepo->update($teamId, [
+            'status' => 'approved',
+            'approved_at' => now(),
+        ]);
+        
+        Log::info('Team approved', ['team_id' => $teamId]);
+        
+        // TODO: Send notification to team leader
+        
+        return $team;
+    }
+
+    /**
+     * Reject a team.
+     */
+    public function rejectTeam(int $teamId, string $reason): Team
+    {
+        $team = $this->teamRepo->update($teamId, [
+            'status' => 'rejected',
+            'rejection_reason' => $reason,
+            'rejected_at' => now(),
+        ]);
+        
+        Log::info('Team rejected', [
+            'team_id' => $teamId,
+            'reason' => $reason,
+        ]);
+        
+        // TODO: Send notification to team leader with reason
+        
+        return $team;
+    }
+
+    /**
+     * Delete a team.
+     */
+    public function deleteTeam(int $teamId): bool
+    {
+        DB::transaction(function () use ($teamId) {
+            $team = $this->teamRepo->find($teamId);
+            
+            // Delete team members
+            $team->members()->delete();
+            
+            // Delete team
+            $this->teamRepo->delete($teamId);
+            
+            Log::info('Team deleted', ['team_id' => $teamId]);
+        });
+        
+        return true;
+    }
+
+    /**
+     * Get team statistics for an edition.
+     */
+    public function getTeamStatistics(int $editionId): array
+    {
+        $teams = Team::where('edition_id', $editionId)->get();
+        
+        return [
+            'total' => $teams->count(),
+            'pending' => $teams->where('status', 'pending')->count(),
+            'approved' => $teams->where('status', 'approved')->count(),
+            'rejected' => $teams->where('status', 'rejected')->count(),
+            'with_ideas' => $teams->whereNotNull('idea_id')->count(),
+            'average_members' => $teams->avg(function ($team) {
+                return $team->members()->where('status', 'accepted')->count();
+            }),
+        ];
     }
 }

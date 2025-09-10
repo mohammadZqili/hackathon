@@ -8,6 +8,8 @@ use App\Repositories\TrackRepository;
 use App\Services\Contracts\TrackServiceInterface;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class TrackService implements TrackServiceInterface
 {
@@ -136,6 +138,90 @@ class TrackService implements TrackServiceInterface
             }
         ]);
 
+        return $track;
+    }
+
+    /**
+     * Create a new track.
+     */
+    public function createTrack(array $data): Track
+    {
+        return DB::transaction(function () use ($data) {
+            $track = $this->trackRepo->create($data);
+            
+            Log::info('Track created', [
+                'track_id' => $track->id,
+                'edition_id' => $data['hackathon_edition_id'] ?? null,
+            ]);
+            
+            return $track;
+        });
+    }
+
+    /**
+     * Update a track.
+     */
+    public function updateTrack(int $trackId, array $data): Track
+    {
+        $track = $this->trackRepo->update($trackId, $data);
+        
+        // Clear cache
+        Cache::forget("track_{$trackId}_statistics");
+        
+        Log::info('Track updated', [
+            'track_id' => $trackId,
+            'updated_data' => array_keys($data),
+        ]);
+        
+        return $track;
+    }
+
+    /**
+     * Delete a track.
+     */
+    public function deleteTrack(int $trackId): bool
+    {
+        // Clear cache
+        Cache::forget("track_{$trackId}_statistics");
+        
+        $result = $this->trackRepo->delete($trackId);
+        
+        Log::info('Track deleted', ['track_id' => $trackId]);
+        
+        return $result;
+    }
+
+    /**
+     * Assign supervisor to track.
+     */
+    public function assignSupervisor(int $trackId, ?int $supervisorId): Track
+    {
+        $track = $this->trackRepo->update($trackId, [
+            'supervisor_id' => $supervisorId
+        ]);
+        
+        if ($supervisorId) {
+            $supervisor = User::find($supervisorId);
+            if ($supervisor && !$supervisor->hasRole('track_supervisor')) {
+                $supervisor->assignRole('track_supervisor');
+            }
+            
+            // Create track-supervisor relationship
+            DB::table('track_supervisors')->updateOrInsert(
+                ['track_id' => $trackId],
+                [
+                    'user_id' => $supervisorId,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]
+            );
+        }
+        
+        Log::info('Track supervisor assigned', [
+            'track_id' => $trackId,
+            'supervisor_id' => $supervisorId,
+        ]);
+        
         return $track;
     }
 }
