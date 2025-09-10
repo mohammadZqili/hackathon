@@ -24,6 +24,7 @@ use App\Http\Controllers\AdminSystemNoticeController;
 use App\Http\Controllers\AdminPermissionRoleController;
 use App\Http\Controllers\ForcePasswordChangeController;
 use App\Http\Controllers\AdminPersonalisationController;
+use App\Http\Controllers\NotificationController;
 
 Route::get('/terms', [PageController::class, 'terms'])->name('terms');
 Route::get('/', [PageController::class, 'home'])->name('home');
@@ -79,6 +80,17 @@ Route::middleware(['web', 'auth', 'auth.session'])->group(function () {
 
         // Chart Routes
         Route::get('charts', [ChartController::class, 'index'])->name('chart.index');
+        
+        // Notification Routes
+        Route::prefix('notifications')->name('notifications.')->controller(NotificationController::class)->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::post('/{id}/read', 'markAsRead')->name('read');
+            Route::post('/mark-all-read', 'markAllAsRead')->name('read.all');
+            Route::delete('/{id}', 'destroy')->name('destroy');
+            Route::get('/unread-count', 'unreadCount')->name('unread.count');
+            Route::post('/toggle', 'toggleNotifications')->name('toggle');
+            Route::post('/preferences', 'updatePreferences')->name('preferences');
+        });
 
         // Protected Routes requiring 2FA
         Route::middleware(['require.two.factor'])->group(function () {
