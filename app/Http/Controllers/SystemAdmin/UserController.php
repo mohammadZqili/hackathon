@@ -4,6 +4,7 @@ namespace App\Http\Controllers\SystemAdmin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Models\User;
 
 class UserController extends Controller
 {
@@ -61,5 +62,35 @@ class UserController extends Controller
     public function destroy(string $id)
     {
         //
+    }
+
+    /**
+     * Search users for autocomplete
+     */
+    public function search(Request $request)
+    {
+        $query = $request->get('q', '');
+        
+        if (strlen($query) < 2) {
+            return response()->json(['users' => []]);
+        }
+
+        $users = User::where('name', 'like', "%{$query}%")
+            ->orWhere('email', 'like', "%{$query}%")
+            ->select('id', 'name', 'email')
+            ->limit(10)
+            ->get();
+
+        // Add team information if user is already in a team
+        $users->transform(function ($user) {
+            $team = $user->teams()->first();
+            if ($team) {
+                $user->team_id = $team->id;
+                $user->team_name = $team->name;
+            }
+            return $user;
+        });
+
+        return response()->json(['users' => $users]);
     }
 }

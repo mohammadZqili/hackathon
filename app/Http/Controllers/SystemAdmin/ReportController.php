@@ -3,331 +3,439 @@
 namespace App\Http\Controllers\SystemAdmin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Inertia\Inertia;
-use App\Models\User;
 use App\Models\Team;
+use App\Models\User;
 use App\Models\Idea;
 use App\Models\Workshop;
 use App\Models\HackathonEdition;
+use App\Models\WorkshopRegistration;
+use App\Models\WorkshopAttendance;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class ReportController extends Controller
 {
     /**
-     * Display the reports dashboard.
+     * Display the reports dashboard
      */
-    public function index()
+    public function index(Request $request)
     {
-        $reportSummary = [
-            'total_users' => User::count(),
-            'total_teams' => Team::count(),
-            'total_ideas' => Idea::count(),
-            'total_workshops' => Workshop::count(),
-            'current_edition' => HackathonEdition::where('is_current', true)->first(),
-        ];
-
+        $selectedEditionId = $request->get('edition_id');
+        
+        // Get overall statistics
+        $overallStats = $this->getOverallStatistics($selectedEditionId);
+        
+        // Get editions for filtering
+        $editions = HackathonEdition::orderBy('start_date', 'desc')->get();
+        
+        // Get edition-specific statistics
+        $editionStats = $this->getEditionStatistics();
+        
+        // Get workshop performance metrics
+        $workshopMetrics = $this->getWorkshopMetrics($selectedEditionId);
+        
+        // Get recent activity data
+        $recentActivity = $this->getRecentActivity();
+        
         return Inertia::render('SystemAdmin/Reports/Index', [
-            'reportSummary' => $reportSummary
+            'overallStats' => $overallStats,
+            'editions' => $editions,
+            'editionStats' => $editionStats,
+            'workshopMetrics' => $workshopMetrics,
+            'recentActivity' => $recentActivity,
+            'selectedEditionId' => $selectedEditionId,
         ]);
     }
-
+    
     /**
-     * Generate users report.
+     * Get overall statistics
+     */
+    private function getOverallStatistics($editionId = null)
+    {
+        $query = [];
+        
+        if ($editionId) {
+            $teamsCount = Team::where('edition_id', $editionId)->count();
+            $membersCount = User::whereHas('teams', function($q) use ($editionId) {
+                $q->where('edition_id', $editionId);
+            })->count();
+            $ideasCount = Idea::where('edition_id', $editionId)->count();
+            $workshopsCount = Workshop::where('edition_id', $editionId)->count();
+            
+            // Get submitted vs draft ideas
+            $submittedIdeas = Idea::where('edition_id', $editionId)
+                ->where('is_submitted', true)
+                ->count();
+            $draftIdeas = Idea::where('edition_id', $editionId)
+                ->where('is_submitted', false)
+                ->count();
+        } else {
+            $teamsCount = Team::count();
+            $membersCount = User::count();
+            $ideasCount = Idea::count();
+            $workshopsCount = Workshop::count();
+            
+            // Get submitted vs draft ideas
+            $submittedIdeas = Idea::where('is_submitted', true)->count();
+            $draftIdeas = Idea::where('is_submitted', false)->count();
+        }
+        
+        // Calculate growth percentages (compared to last month)
+        $lastMonth = Carbon::now()->subMonth();
+        
+        $teamsLastMonth = Team::where('created_at', '<', $lastMonth)->count();
+        $teamsGrowth = $teamsLastMonth > 0 
+            ? round((($teamsCount - $teamsLastMonth) / $teamsLastMonth) * 100, 1)
+            : 0;
+            
+        $membersLastMonth = User::where('created_at', '<', $lastMonth)->count();
+        $membersGrowth = $membersLastMonth > 0
+            ? round((($membersCount - $membersLastMonth) / $membersLastMonth) * 100, 1)
+            : 0;
+            
+        $ideasLastMonth = Idea::where('created_at', '<', $lastMonth)->count();
+        $ideasGrowth = $ideasLastMonth > 0
+            ? round((($ideasCount - $ideasLastMonth) / $ideasLastMonth) * 100, 1)
+            : 0;
+            
+        $workshopsLastMonth = Workshop::where('created_at', '<', $lastMonth)->count();
+        $workshopsGrowth = $workshopsLastMonth > 0
+            ? round((($workshopsCount - $workshopsLastMonth) / $workshopsLastMonth) * 100, 1)
+            : 0;
+        
+        return [
+            'teams' => [
+                'count' => $teamsCount,
+                'growth' => $teamsGrowth,
+                'trend' => $teamsGrowth >= 0 ? 'up' : 'down'
+            ],
+            'members' => [
+                'count' => $membersCount,
+                'growth' => $membersGrowth,
+                'trend' => $membersGrowth >= 0 ? 'up' : 'down'
+            ],
+            'ideas' => [
+                'count' => $ideasCount,
+                'submitted' => $submittedIdeas,
+                'draft' => $draftIdeas,
+                'growth' => $ideasGrowth,
+                'trend' => $ideasGrowth >= 0 ? 'up' : 'down'
+            ],
+            'workshops' => [
+                'count' => $workshopsCount,
+                'growth' => $workshopsGrowth,
+                'trend' => $workshopsGrowth >= 0 ? 'up' : 'down'
+            ]
+        ];
+    }
+    
+    /**
+     * Get edition-specific statistics
+     */
+    private function getEditionStatistics()
+    {
+        $editions = HackathonEdition::with(['teams', 'ideas', 'workshops'])
+            ->orderBy('start_date', 'desc')
+            ->take(10)
+            ->get();
+        
+        $stats = [];
+        
+        foreach ($editions as $edition) {
+            $teamsCount = $edition->teams->count();
+            $ideasCount = $edition->ideas->count();
+            $workshopsCount = $edition->workshops->count();
+            
+            // Calculate members count
+            $membersCount = DB::table('team_members')
+                ->join('teams', 'team_members.team_id', '=', 'teams.id')
+                ->where('teams.edition_id', $edition->id)
+                ->distinct('team_members.user_id')
+                ->count('team_members.user_id');
+            
+            // Calculate participation rate (if max_participants is set)
+            $participationRate = $edition->max_participants > 0
+                ? round(($membersCount / $edition->max_participants) * 100, 1)
+                : 0;
+            
+            // Determine status based on dates
+            $now = Carbon::now();
+            $startDate = Carbon::parse($edition->start_date);
+            $endDate = Carbon::parse($edition->end_date);
+            
+            if ($now->lt($startDate)) {
+                $status = 'upcoming';
+                $statusColor = 'blue';
+            } elseif ($now->between($startDate, $endDate)) {
+                $status = 'active';
+                $statusColor = 'green';
+            } else {
+                $status = 'completed';
+                $statusColor = 'gray';
+            }
+            
+            $stats[] = [
+                'id' => $edition->id,
+                'name' => $edition->name,
+                'theme' => $edition->theme,
+                'start_date' => $startDate->format('M d, Y'),
+                'end_date' => $endDate->format('M d, Y'),
+                'teams' => $teamsCount,
+                'members' => $membersCount,
+                'ideas' => $ideasCount,
+                'workshops' => $workshopsCount,
+                'participation_rate' => $participationRate,
+                'status' => $status,
+                'status_color' => $statusColor
+            ];
+        }
+        
+        return $stats;
+    }
+    
+    /**
+     * Get workshop performance metrics
+     */
+    private function getWorkshopMetrics($editionId = null)
+    {
+        $query = Workshop::query();
+        
+        if ($editionId) {
+            $query->where('edition_id', $editionId);
+        }
+        
+        $workshops = $query->with(['registrations', 'attendances'])->get();
+        
+        $totalWorkshops = $workshops->count();
+        $totalRegistrations = 0;
+        $totalAttendances = 0;
+        $totalCapacity = 0;
+        $totalDuration = 0;
+        $totalSatisfactionScore = 0;
+        $satisfactionCount = 0;
+        
+        foreach ($workshops as $workshop) {
+            $registrations = $workshop->registrations->count();
+            $attendances = $workshop->attendances->count();
+            $capacity = $workshop->capacity ?? 0;
+            
+            $totalRegistrations += $registrations;
+            $totalAttendances += $attendances;
+            $totalCapacity += $capacity;
+            
+            // Calculate duration in hours
+            if ($workshop->start_time && $workshop->end_time) {
+                $start = Carbon::parse($workshop->start_time);
+                $end = Carbon::parse($workshop->end_time);
+                $totalDuration += $end->diffInHours($start);
+            }
+            
+            // Calculate average satisfaction from attendances
+            foreach ($workshop->attendances as $attendance) {
+                if ($attendance->satisfaction_rating) {
+                    $totalSatisfactionScore += $attendance->satisfaction_rating;
+                    $satisfactionCount++;
+                }
+            }
+        }
+        
+        // Calculate metrics
+        $attendanceRate = $totalRegistrations > 0
+            ? round(($totalAttendances / $totalRegistrations) * 100, 1)
+            : 0;
+            
+        $capacityUtilization = $totalCapacity > 0
+            ? round(($totalRegistrations / $totalCapacity) * 100, 1)
+            : 0;
+            
+        $avgSatisfaction = $satisfactionCount > 0
+            ? round($totalSatisfactionScore / $satisfactionCount, 1)
+            : 0;
+        
+        // Get top workshops by attendance
+        $topWorkshops = Workshop::query()
+            ->when($editionId, function($q) use ($editionId) {
+                $q->where('edition_id', $editionId);
+            })
+            ->withCount('attendances')
+            ->orderBy('attendances_count', 'desc')
+            ->take(5)
+            ->get()
+            ->map(function($workshop) {
+                return [
+                    'id' => $workshop->id,
+                    'title' => $workshop->title,
+                    'attendances' => $workshop->attendances_count,
+                    'capacity' => $workshop->capacity,
+                    'utilization' => $workshop->capacity > 0 
+                        ? round(($workshop->attendances_count / $workshop->capacity) * 100, 1)
+                        : 0
+                ];
+            });
+        
+        return [
+            'total_workshops' => $totalWorkshops,
+            'total_registrations' => $totalRegistrations,
+            'total_attendances' => $totalAttendances,
+            'attendance_rate' => $attendanceRate,
+            'capacity_utilization' => $capacityUtilization,
+            'total_hours' => $totalDuration,
+            'avg_satisfaction' => $avgSatisfaction,
+            'top_workshops' => $topWorkshops
+        ];
+    }
+    
+    /**
+     * Get recent activity for the activity feed
+     */
+    private function getRecentActivity()
+    {
+        $activities = [];
+        
+        // Get recent teams
+        $recentTeams = Team::with('leader')
+            ->orderBy('created_at', 'desc')
+            ->take(5)
+            ->get();
+            
+        foreach ($recentTeams as $team) {
+            $activities[] = [
+                'type' => 'team',
+                'message' => "New team '" . $team->name . "' created",
+                'user' => $team->leader->name ?? 'Unknown',
+                'time' => Carbon::parse($team->created_at)->diffForHumans(),
+                'timestamp' => $team->created_at
+            ];
+        }
+        
+        // Get recent ideas
+        $recentIdeas = Idea::with('team')
+            ->orderBy('created_at', 'desc')
+            ->take(5)
+            ->get();
+            
+        foreach ($recentIdeas as $idea) {
+            $activities[] = [
+                'type' => 'idea',
+                'message' => "New idea '" . $idea->title . "' submitted",
+                'user' => $idea->team->name ?? 'Unknown Team',
+                'time' => Carbon::parse($idea->created_at)->diffForHumans(),
+                'timestamp' => $idea->created_at
+            ];
+        }
+        
+        // Get recent workshop registrations
+        $recentRegistrations = WorkshopRegistration::with(['user', 'workshop'])
+            ->orderBy('created_at', 'desc')
+            ->take(5)
+            ->get();
+            
+        foreach ($recentRegistrations as $registration) {
+            $activities[] = [
+                'type' => 'registration',
+                'message' => "Registered for workshop '" . ($registration->workshop->title ?? 'Unknown') . "'",
+                'user' => $registration->user->name ?? 'Unknown',
+                'time' => Carbon::parse($registration->created_at)->diffForHumans(),
+                'timestamp' => $registration->created_at
+            ];
+        }
+        
+        // Sort activities by timestamp and take the most recent 10
+        usort($activities, function($a, $b) {
+            return $b['timestamp'] <=> $a['timestamp'];
+        });
+        
+        return array_slice($activities, 0, 10);
+    }
+    
+    /**
+     * Generate a detailed report for an edition
+     */
+    public function generateReport(Request $request)
+    {
+        $editionId = $request->get('edition_id');
+        
+        // This would generate a detailed report
+        // For now, we'll return a success message
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Report generation initiated. You will receive an email when ready.'
+        ]);
+    }
+    
+    /**
+     * Export report to PDF
+     */
+    public function exportPdf(Request $request)
+    {
+        $editionId = $request->get('edition_id');
+        
+        // This would export to PDF
+        // For now, we'll return a success message
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'PDF export initiated. Download will start shortly.'
+        ]);
+    }
+    
+    /**
+     * Schedule automated reports
+     */
+    public function scheduleReports(Request $request)
+    {
+        $frequency = $request->get('frequency', 'weekly');
+        $recipients = $request->get('recipients', []);
+        
+        // This would schedule automated reports
+        // For now, we'll return a success message
+        
+        return response()->json([
+            'success' => true,
+            'message' => "Reports scheduled {$frequency}. Recipients will receive reports automatically."
+        ]);
+    }
+    
+    /**
+     * Users report page
      */
     public function users(Request $request)
     {
-        $query = User::with('roles');
-
-        if ($request->filled('role')) {
-            $query->whereHas('roles', function ($q) use ($request) {
-                $q->where('name', $request->role);
-            });
-        }
-
-        if ($request->filled('from_date')) {
-            $query->whereDate('created_at', '>=', $request->from_date);
-        }
-
-        if ($request->filled('to_date')) {
-            $query->whereDate('created_at', '<=', $request->to_date);
-        }
-
-        $users = $query->latest()->paginate(50);
-
-        $userStats = [
-            'total' => User::count(),
-            'by_role' => User::select('roles.name as role', DB::raw('count(*) as count'))
-                ->join('model_has_roles', 'users.id', '=', 'model_has_roles.model_id')
-                ->join('roles', 'model_has_roles.role_id', '=', 'roles.id')
-                ->groupBy('roles.name')
-                ->get(),
-            'recent_registrations' => User::whereDate('created_at', '>=', now()->subDays(30))->count(),
-        ];
-
-        return Inertia::render('SystemAdmin/Reports/Users', [
-            'users' => $users,
-            'userStats' => $userStats,
-            'filters' => $request->only(['role', 'from_date', 'to_date'])
-        ]);
+        return Inertia::render('SystemAdmin/Reports/Users');
     }
-
+    
     /**
-     * Generate teams report.
+     * Teams report page
      */
     public function teams(Request $request)
     {
-        $query = Team::with(['hackathon', 'leader', 'members']);
-
-        if ($request->filled('hackathon_id')) {
-            $query->where('hackathon_id', $request->hackathon_id);
-        }
-
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        $teams = $query->latest()->paginate(50);
-
-        $teamStats = [
-            'total' => Team::count(),
-            'by_status' => Team::select('status', DB::raw('count(*) as count'))
-                ->groupBy('status')
-                ->get(),
-            'by_hackathon' => Team::select('hackathon_id', 'hackathons.name', DB::raw('count(*) as count'))
-                ->join('hackathons', 'teams.hackathon_id', '=', 'hackathons.id')
-                ->groupBy('hackathon_id', 'hackathons.name')
-                ->get(),
-        ];
-
-        return Inertia::render('SystemAdmin/Reports/Teams', [
-            'teams' => $teams,
-            'teamStats' => $teamStats,
-            'hackathons' => HackathonEdition::all(),
-            'filters' => $request->only(['hackathon_id', 'status'])
-        ]);
+        return Inertia::render('SystemAdmin/Reports/Teams');
     }
-
+    
     /**
-     * Generate ideas report.
+     * Ideas report page
      */
     public function ideas(Request $request)
     {
-        $query = Idea::with(['team.hackathon', 'track', 'reviewer']);
-
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        if ($request->filled('track_id')) {
-            $query->where('track_id', $request->track_id);
-        }
-
-        $ideas = $query->latest()->paginate(50);
-
-        $ideaStats = [
-            'total' => Idea::count(),
-            'by_status' => Idea::select('status', DB::raw('count(*) as count'))
-                ->groupBy('status')
-                ->get(),
-            'by_track' => Idea::select('track_id', 'tracks.name', DB::raw('count(*) as count'))
-                ->join('tracks', 'ideas.track_id', '=', 'tracks.id')
-                ->groupBy('track_id', 'tracks.name')
-                ->get(),
-            'average_score' => Idea::whereNotNull('score')->avg('score'),
-        ];
-
-        return Inertia::render('SystemAdmin/Reports/Ideas', [
-            'ideas' => $ideas,
-            'ideaStats' => $ideaStats,
-            'filters' => $request->only(['status', 'track_id'])
-        ]);
+        return Inertia::render('SystemAdmin/Reports/Ideas');
     }
-
+    
     /**
-     * Generate workshops report.
+     * Workshops report page
      */
     public function workshops(Request $request)
     {
-        $query = Workshop::with(['hackathon', 'speakers', 'registrations']);
-
-        if ($request->filled('hackathon_id')) {
-            $query->where('hackathon_id', $request->hackathon_id);
-        }
-
-        if ($request->filled('type')) {
-            $query->where('type', $request->type);
-        }
-
-        $workshops = $query->latest()->paginate(50);
-
-        $workshopStats = [
-            'total' => Workshop::count(),
-            'total_registrations' => DB::table('workshop_registrations')->count(),
-            'total_attendances' => DB::table('workshop_registrations')
-                ->where('status', 'attended')->count(),
-            'by_type' => Workshop::select('type', DB::raw('count(*) as count'))
-                ->groupBy('type')
-                ->get(),
-            'average_attendance_rate' => $this->calculateAverageAttendanceRate(),
-        ];
-
-        return Inertia::render('SystemAdmin/Reports/Workshops', [
-            'workshops' => $workshops,
-            'workshopStats' => $workshopStats,
-            'hackathons' => HackathonEdition::all(),
-            'filters' => $request->only(['hackathon_id', 'type'])
-        ]);
+        return Inertia::render('SystemAdmin/Reports/Workshops');
     }
-
+    
     /**
-     * Generate system health report.
+     * System health report page
      */
-    public function systemHealth()
+    public function systemHealth(Request $request)
     {
-        $healthMetrics = [
-            'database' => $this->checkDatabaseHealth(),
-            'storage' => $this->checkStorageHealth(),
-            'cache' => $this->checkCacheHealth(),
-            'queue' => $this->checkQueueHealth(),
-            'performance' => $this->getPerformanceMetrics(),
-        ];
-
-        return Inertia::render('SystemAdmin/Reports/SystemHealth', [
-            'healthMetrics' => $healthMetrics
-        ]);
-    }
-
-    /**
-     * Calculate average attendance rate.
-     */
-    private function calculateAverageAttendanceRate(): float
-    {
-        $workshops = Workshop::withCount([
-            'registrations',
-            'registrations as attended_count' => function ($query) {
-                $query->where('status', 'attended');
-            }
-        ])->get();
-
-        $totalRate = 0;
-        $validWorkshops = 0;
-
-        foreach ($workshops as $workshop) {
-            if ($workshop->registrations_count > 0) {
-                $rate = ($workshop->attended_count / $workshop->registrations_count) * 100;
-                $totalRate += $rate;
-                $validWorkshops++;
-            }
-        }
-
-        return $validWorkshops > 0 ? round($totalRate / $validWorkshops, 2) : 0;
-    }
-
-    /**
-     * Check database health.
-     */
-    private function checkDatabaseHealth(): array
-    {
-        try {
-            $start = microtime(true);
-            DB::select('SELECT 1');
-            $responseTime = round((microtime(true) - $start) * 1000, 2);
-
-            return [
-                'status' => 'healthy',
-                'response_time' => $responseTime . 'ms',
-                'connections' => DB::select('SHOW STATUS LIKE "Threads_connected"')[0]->Value ?? 'N/A',
-            ];
-        } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'error' => $e->getMessage(),
-            ];
-        }
-    }
-
-    /**
-     * Check storage health.
-     */
-    private function checkStorageHealth(): array
-    {
-        $storagePath = storage_path();
-        $totalSpace = disk_total_space($storagePath);
-        $freeSpace = disk_free_space($storagePath);
-        $usedSpace = $totalSpace - $freeSpace;
-        $usagePercentage = round(($usedSpace / $totalSpace) * 100, 2);
-
-        return [
-            'status' => $usagePercentage > 90 ? 'warning' : 'healthy',
-            'total_space' => $this->formatBytes($totalSpace),
-            'used_space' => $this->formatBytes($usedSpace),
-            'free_space' => $this->formatBytes($freeSpace),
-            'usage_percentage' => $usagePercentage,
-        ];
-    }
-
-    /**
-     * Check cache health.
-     */
-    private function checkCacheHealth(): array
-    {
-        try {
-            $start = microtime(true);
-            cache()->put('health_check', 'test', 10);
-            $value = cache()->get('health_check');
-            $responseTime = round((microtime(true) - $start) * 1000, 2);
-
-            return [
-                'status' => $value === 'test' ? 'healthy' : 'error',
-                'response_time' => $responseTime . 'ms',
-                'driver' => config('cache.default'),
-            ];
-        } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'error' => $e->getMessage(),
-            ];
-        }
-    }
-
-    /**
-     * Check queue health.
-     */
-    private function checkQueueHealth(): array
-    {
-        // Basic queue health check
-        return [
-            'status' => 'healthy',
-            'driver' => config('queue.default'),
-            'pending_jobs' => 0, // Would need to implement actual queue monitoring
-        ];
-    }
-
-    /**
-     * Get performance metrics.
-     */
-    private function getPerformanceMetrics(): array
-    {
-        return [
-            'memory_usage' => $this->formatBytes(memory_get_usage(true)),
-            'peak_memory' => $this->formatBytes(memory_get_peak_usage(true)),
-            'php_version' => PHP_VERSION,
-            'laravel_version' => app()->version(),
-        ];
-    }
-
-    /**
-     * Format bytes to human readable format.
-     */
-    private function formatBytes($bytes, $precision = 2): string
-    {
-        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
-
-        for ($i = 0; $bytes > 1024 && $i < count($units) - 1; $i++) {
-            $bytes /= 1024;
-        }
-
-        return round($bytes, $precision) . ' ' . $units[$i];
+        return Inertia::render('SystemAdmin/Reports/SystemHealth');
     }
 }

@@ -46,6 +46,14 @@ class Idea extends Model
     }
 
     /**
+     * Get the edition this idea belongs to.
+     */
+    public function edition(): BelongsTo
+    {
+        return $this->belongsTo(Edition::class, 'edition_id');
+    }
+
+    /**
      * Get the track this idea belongs to.
      */
     public function track(): BelongsTo

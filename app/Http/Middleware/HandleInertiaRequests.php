@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Models\Personalisation;
 use App\Models\SystemNotice;
+use App\Helpers\Settings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -93,6 +94,14 @@ class HandleInertiaRequests extends Middleware
 
                 'settings' => [
                     'passwordlessLogin' => DB::table('settings')->value('passwordless_login') ?? true,
+                    'branding' => Settings::getBrandingColors(),
+                    'app_name' => Settings::get('app.name', 'GuacPanel'),
+                    'notifications' => [
+                        'email_enabled' => Settings::emailNotificationsEnabled(),
+                        'sms_enabled' => Settings::smsNotificationsEnabled(),
+                        'push_enabled' => Settings::pushNotificationsEnabled(),
+                        'in_app_enabled' => Settings::inAppNotificationsEnabled(),
+                    ],
                 ],
 
                 'systemNotices' => SystemNotice::query()

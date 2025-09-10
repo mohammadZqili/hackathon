@@ -23,6 +23,9 @@ class AppServiceProvider extends ServiceProvider
      * Register any application services.
      */
     public function register(): void {
+        // Register the Settings Service Provider
+        $this->app->register(\App\Providers\SettingsServiceProvider::class);
+        
         Health::checks([
             UsedDiskSpaceCheck::new(),
             DatabaseCheck::new(),

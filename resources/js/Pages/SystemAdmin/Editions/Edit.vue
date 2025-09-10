@@ -1,247 +1,382 @@
-<script setup>
-import { Head, useForm, router } from '@inertiajs/vue3'
-import Default from '../../../Layouts/Default.vue'
-import { ref, computed } from 'vue'
-
-const props = defineProps({
-    edition: Object,
-    users: { type: Array, default: () => [] },
-    workshops: { type: Array, default: () => [] }
-})
-
-const form = useForm({
-    name: props.edition.name,
-    year: props.edition.year,
-    slug: props.edition.slug,
-    description: props.edition.description,
-    theme: props.edition.theme,
-    registration_start_date: props.edition.registration_start_date,
-    registration_end_date: props.edition.registration_end_date,
-    idea_submission_start_date: props.edition.idea_submission_start_date,
-    idea_submission_end_date: props.edition.idea_submission_end_date,
-    event_start_date: props.edition.event_start_date,
-    event_end_date: props.edition.event_end_date,
-    location: props.edition.location,
-    status: props.edition.status,
-    is_current: props.edition.is_current,
-    created_by: props.edition.created_by
-})
-
-const associatedWorkshops = ref(props.edition.workshops || [])
-
-const submitForm = () => {
-    form.put(route('system-admin.editions.update', props.edition.id), {
-        onSuccess: () => {
-            router.visit(route('system-admin.editions.index'))
-        }
-    })
-}
-
-const addWorkshop = () => {
-    // Placeholder for adding workshop functionality
-    alert('Add workshop functionality to be implemented')
-}
-
-const formatDate = (date) => {
-    if (!date) return 'Select Date'
-    return new Date(date).toLocaleDateString('en-US')
-}
-</script>
-
 <template>
     <Head title="Edit Edition" />
-    
     <Default>
-        <div class="flex-1 flex flex-col gap-4">
-            <!-- Form Container -->
-            <div class="w-full overflow-hidden flex flex-col items-start justify-start max-w-[960px] mx-auto">
-                <!-- Header -->
-                <div class="self-stretch flex flex-row items-start justify-between flex-wrap content-start p-4">
-                    <div class="flex flex-col items-start justify-start gap-3 min-w-[288px]">
-                        <div class="w-[421px] flex flex-col items-start justify-start">
-                            <h1 class="text-[32px] leading-10 font-bold text-gray-900 dark:text-white font-space-grotesk">Edit Edition Details</h1>
+        <div class="container mx-auto px-4 py-8" :style="themeStyles">
+            <!-- Page Header -->
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Edit Edition Details</h1>
+                <p class="mt-2" :style="{ color: themeColor.primary }">
+                    Edit hackathon edition with all the necessary details.
+                </p>
+            </div>
+
+            <!-- Form -->
+            <form @submit.prevent="submit" class="space-y-6">
+                <!-- Edition Name -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                    <div class="grid grid-cols-1 gap-6">
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Edition Name
+                            </label>
+                            <input v-model="form.name"
+                                   type="text"
+                                   id="name"
+                                   class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors"
+                                   :class="{ 'border-red-500': form.errors.name }"
+                                   :style="{ '--tw-ring-color': themeColor.primary }"
+                                   placeholder="Enter hackathon name">
+                            <p v-if="form.errors.name" class="mt-1 text-sm text-red-600 dark:text-red-400">
+                                {{ form.errors.name }}
+                            </p>
                         </div>
-                        <div class="flex flex-col items-start justify-start text-sm text-seagreen dark:text-green-400">
-                            <div class="self-stretch relative leading-[21px]">Edit hackathon edition with all the necessary details.</div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="year" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Year
+                                </label>
+                                <input v-model="form.year"
+                                       type="number"
+                                       id="year"
+                                       class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors"
+                                       :class="{ 'border-red-500': form.errors.year }"
+                                       :style="{ '--tw-ring-color': themeColor.primary }"
+                                       placeholder="2024">
+                                <p v-if="form.errors.year" class="mt-1 text-sm text-red-600 dark:text-red-400">
+                                    {{ form.errors.year }}
+                                </p>
+                            </div>
+
+                            <div>
+                                <label for="admin_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Hackathon Admin
+                                </label>
+                                <select v-model="form.admin_id"
+                                        id="admin_id"
+                                        class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors"
+                                        :style="{ '--tw-ring-color': themeColor.primary }">
+                                    <option value="">Select Admin</option>
+                                    <option v-for="admin in admins" :key="admin.id" :value="admin.id">
+                                        {{ admin.name }}
+                                    </option>
+                                </select>
+                                <p v-if="form.errors.admin_id" class="mt-1 text-sm text-red-600 dark:text-red-400">
+                                    {{ form.errors.admin_id }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="location" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Location
+                            </label>
+                            <input v-model="form.location"
+                                   type="text"
+                                   id="location"
+                                   class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors"
+                                   :style="{ '--tw-ring-color': themeColor.primary }"
+                                   placeholder="Enter hackathon location">
                         </div>
                     </div>
                 </div>
 
-                <form @submit.prevent="submitForm" class="w-full">
-                    <!-- Edition Name -->
-                    <div class="self-stretch flex flex-row items-end justify-start flex-wrap content-end py-3 px-4">
-                        <div class="flex-1 flex flex-col items-start justify-start min-w-[160px]">
-                            <div class="self-stretch flex flex-col items-start justify-start pt-0 px-0 pb-2">
-                                <div class="self-stretch relative leading-6 font-medium text-gray-900 dark:text-white">Edition Name</div>
-                            </div>
-                            <input v-model="form.name" 
-                                   type="text" 
-                                   required
-                                   class="self-stretch rounded-xl bg-mintcream-100 dark:bg-gray-800 border-honeydew dark:border-gray-700 border-solid border-[1px] box-border h-14 overflow-hidden shrink-0 flex flex-row items-center justify-start p-[15px] text-seagreen dark:text-green-400 focus:outline-none focus:ring-2 focus:ring-seagreen dark:focus:ring-green-400"
-                                   placeholder="Enter edition name" />
-                            <div v-if="form.errors.name" class="text-red-500 text-sm mt-1">{{ form.errors.name }}</div>
-                        </div>
-                    </div>
-
-                    <!-- Year and Hackathon Admin -->
-                    <div class="flex flex-row items-start justify-start">
-                        <div class="flex flex-row items-end justify-start flex-wrap content-end py-3 px-4 box-border max-w-[480px]">
-                            <div class="flex-1 flex flex-col items-start justify-start min-w-[160px]">
-                                <div class="self-stretch flex flex-col items-start justify-start pt-0 px-0 pb-2">
-                                    <div class="self-stretch relative leading-6 font-medium text-gray-900 dark:text-white">Year</div>
-                                </div>
-                                <input v-model="form.year" 
-                                       type="number" 
-                                       required 
-                                       min="2020" 
-                                       max="2030"
-                                       class="self-stretch rounded-xl bg-mintcream-100 dark:bg-gray-800 border-honeydew dark:border-gray-700 border-solid border-[1px] box-border h-14 overflow-hidden shrink-0 flex flex-row items-center justify-start p-[15px] text-seagreen dark:text-green-400 focus:outline-none focus:ring-2 focus:ring-seagreen dark:focus:ring-green-400" />
-                                <div v-if="form.errors.year" class="text-red-500 text-sm mt-1">{{ form.errors.year }}</div>
-                            </div>
-                        </div>
-                        <div class="w-[480px] flex flex-row items-end justify-start flex-wrap content-end py-3 px-4 box-border gap-4 max-w-[480px]">
-                            <div class="flex-1 flex flex-col items-start justify-start min-w-[160px]">
-                                <div class="self-stretch flex flex-col items-start justify-start pt-0 px-0 pb-2">
-                                    <div class="self-stretch relative leading-6 font-medium text-gray-900 dark:text-white">Hackathon Admin</div>
-                                </div>
-                                <select v-model="form.created_by"
-                                        class="w-full rounded-xl bg-mintcream-200 dark:bg-gray-700 h-14 overflow-hidden shrink-0 flex flex-row items-center justify-between p-4 text-seagreen dark:text-green-400 focus:outline-none focus:ring-2 focus:ring-seagreen dark:focus:ring-green-400">
-                                    <option :value="edition.created_by">{{ edition.creator?.name || 'Select Admin' }}</option>
-                                    <option v-for="user in users" :key="user.id" :value="user.id">{{ user.name }}</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Registration Dates and Idea Submission Dates -->
-                    <div class="flex flex-row items-start justify-start">
-                        <div class="flex flex-row items-end justify-start flex-wrap content-end py-3 px-4 box-border gap-4 max-w-[480px]">
-                            <div class="flex-1 flex flex-col items-start justify-start min-w-[160px]">
-                                <div class="self-stretch flex flex-col items-start justify-start pt-0 px-0 pb-2">
-                                    <div class="self-stretch relative leading-6 font-medium text-gray-900 dark:text-white">Registration Start Date</div>
-                                </div>
-                                <input v-model="form.registration_start_date" 
-                                       type="date" 
-                                       required
-                                       class="self-stretch rounded-xl bg-mintcream-100 dark:bg-gray-800 border-honeydew dark:border-gray-700 border-solid border-[1px] box-border h-14 overflow-hidden shrink-0 flex flex-row items-center justify-start p-[15px] text-seagreen dark:text-green-400 focus:outline-none focus:ring-2 focus:ring-seagreen dark:focus:ring-green-400" />
-                                <div v-if="form.errors.registration_start_date" class="text-red-500 text-sm mt-1">{{ form.errors.registration_start_date }}</div>
-                            </div>
-                            <div class="flex-1 flex flex-col items-start justify-start min-w-[160px]">
-                                <div class="self-stretch flex flex-col items-start justify-start pt-0 px-0 pb-2">
-                                    <div class="self-stretch relative leading-6 font-medium text-gray-900 dark:text-white">Registration End Date</div>
-                                </div>
-                                <input v-model="form.registration_end_date" 
-                                       type="date" 
-                                       required
-                                       class="self-stretch rounded-xl bg-mintcream-100 dark:bg-gray-800 border-honeydew dark:border-gray-700 border-solid border-[1px] box-border h-14 overflow-hidden shrink-0 flex flex-row items-center justify-start p-[15px] text-seagreen dark:text-green-400 focus:outline-none focus:ring-2 focus:ring-seagreen dark:focus:ring-green-400" />
-                                <div v-if="form.errors.registration_end_date" class="text-red-500 text-sm mt-1">{{ form.errors.registration_end_date }}</div>
-                            </div>
-                        </div>
-                        <div class="flex flex-row items-end justify-start flex-wrap content-end py-3 px-4 box-border gap-4 max-w-[480px]">
-                            <div class="flex-1 flex flex-col items-start justify-start min-w-[160px]">
-                                <div class="self-stretch flex flex-col items-start justify-start pt-0 px-0 pb-2">
-                                    <div class="self-stretch relative leading-6 font-medium text-gray-900 dark:text-white">Idea Submission Start Date</div>
-                                </div>
-                                <input v-model="form.idea_submission_start_date" 
-                                       type="date" 
-                                       required
-                                       class="self-stretch rounded-xl bg-mintcream-100 dark:bg-gray-800 border-honeydew dark:border-gray-700 border-solid border-[1px] box-border h-14 overflow-hidden shrink-0 flex flex-row items-center justify-start p-[15px] text-seagreen dark:text-green-400 focus:outline-none focus:ring-2 focus:ring-seagreen dark:focus:ring-green-400" />
-                                <div v-if="form.errors.idea_submission_start_date" class="text-red-500 text-sm mt-1">{{ form.errors.idea_submission_start_date }}</div>
-                            </div>
-                            <div class="flex-1 flex flex-col items-start justify-start min-w-[160px]">
-                                <div class="self-stretch flex flex-col items-start justify-start pt-0 px-0 pb-2">
-                                    <div class="self-stretch relative leading-6 font-medium text-gray-900 dark:text-white">Idea Submission End Date</div>
-                                </div>
-                                <input v-model="form.idea_submission_end_date" 
-                                       type="date" 
-                                       required
-                                       class="self-stretch rounded-xl bg-mintcream-100 dark:bg-gray-800 border-honeydew dark:border-gray-700 border-solid border-[1px] box-border h-14 overflow-hidden shrink-0 flex flex-row items-center justify-start p-[15px] text-seagreen dark:text-green-400 focus:outline-none focus:ring-2 focus:ring-seagreen dark:focus:ring-green-400" />
-                                <div v-if="form.errors.idea_submission_end_date" class="text-red-500 text-sm mt-1">{{ form.errors.idea_submission_end_date }}</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Associated Workshops -->
-                    <div class="self-stretch h-[60px] flex flex-col items-start justify-start pt-5 px-4 pb-3 box-border">
-                        <h2 class="self-stretch relative text-[22px] leading-7 font-bold text-gray-900 dark:text-white">Associated Workshops</h2>
-                    </div>
+                <!-- Date Settings -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Date Settings</h2>
                     
-                    <div class="self-stretch flex flex-col items-start justify-start py-3 px-4 text-sm">
-                        <div class="self-stretch rounded-xl bg-mintcream-100 dark:bg-gray-800 border-honeydew dark:border-gray-700 border-solid border-[1px] overflow-hidden">
-                            <div class="flex-1 flex flex-col items-start justify-start">
-                                <!-- Table Header -->
-                                <div class="self-stretch flex-1 bg-mintcream-100 dark:bg-gray-800 flex flex-row items-start justify-start">
-                                    <div class="self-stretch w-[242px] flex flex-col items-start justify-start py-3 px-4 box-border">
-                                        <div class="self-stretch relative leading-[21px] font-medium text-gray-900 dark:text-white">Workshop Name</div>
-                                    </div>
-                                    <div class="self-stretch w-[228px] flex flex-col items-start justify-start py-3 px-4 box-border">
-                                        <div class="self-stretch relative leading-[21px] font-medium text-gray-900 dark:text-white">Date</div>
-                                    </div>
-                                    <div class="self-stretch w-[226px] flex flex-col items-start justify-start py-3 px-4 box-border">
-                                        <div class="self-stretch relative leading-[21px] font-medium text-gray-900 dark:text-white">Time</div>
-                                    </div>
-                                    <div class="self-stretch w-[229px] flex flex-col items-start justify-start py-3 px-4 box-border">
-                                        <div class="self-stretch relative leading-[21px] font-medium text-gray-900 dark:text-white">Admin</div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Table Rows -->
-                                <div class="self-stretch flex flex-col items-start justify-start text-seagreen dark:text-green-400">
-                                    <div v-for="(workshop, index) in associatedWorkshops" :key="index" 
-                                         class="self-stretch border-gainsboro dark:border-gray-700 border-solid border-t-[1px] box-border h-[72px] flex flex-row items-start justify-start">
-                                        <div class="w-[242px] h-[72px] flex flex-col items-center justify-center py-2 px-4 box-border text-gray-900 dark:text-white">
-                                            <div class="self-stretch relative leading-[21px]">{{ workshop.name || `Workshop ${index + 1}` }}</div>
-                                        </div>
-                                        <div class="w-[228px] h-[72px] flex flex-col items-center justify-center py-2 px-4 box-border">
-                                            <div class="self-stretch relative leading-[21px]">{{ workshop.date || '2024-07-15' }}</div>
-                                        </div>
-                                        <div class="w-[226px] h-[72px] flex flex-col items-center justify-center py-2 px-4 box-border">
-                                            <div class="self-stretch relative leading-[21px]">{{ workshop.time || '10:00 AM' }}</div>
-                                        </div>
-                                        <div class="w-[229px] h-[72px] flex flex-col items-center justify-center py-2 px-4 box-border">
-                                            <div class="self-stretch relative leading-[21px]">{{ workshop.admin || 'Admin A' }}</div>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Placeholder rows if no workshops -->
-                                    <div v-if="associatedWorkshops.length === 0" 
-                                         class="self-stretch border-gainsboro dark:border-gray-700 border-solid border-t-[1px] box-border h-[72px] flex flex-row items-center justify-center">
-                                        <div class="text-gray-500 dark:text-gray-400">No workshops associated yet</div>
-                                    </div>
-                                </div>
-                            </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="registration_start_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Registration Start Date
+                            </label>
+                            <input v-model="form.registration_start_date"
+                                   type="date"
+                                   id="registration_start_date"
+                                   class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors"
+                                   :class="{ 'border-red-500': form.errors.registration_start_date }"
+                                   :style="{ '--tw-ring-color': themeColor.primary }">
+                            <p v-if="form.errors.registration_start_date" class="mt-1 text-sm text-red-600 dark:text-red-400">
+                                {{ form.errors.registration_start_date }}
+                            </p>
+                        </div>
+
+                        <div>
+                            <label for="registration_end_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Registration End Date
+                            </label>
+                            <input v-model="form.registration_end_date"
+                                   type="date"
+                                   id="registration_end_date"
+                                   class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors"
+                                   :class="{ 'border-red-500': form.errors.registration_end_date }"
+                                   :style="{ '--tw-ring-color': themeColor.primary }">
+                            <p v-if="form.errors.registration_end_date" class="mt-1 text-sm text-red-600 dark:text-red-400">
+                                {{ form.errors.registration_end_date }}
+                            </p>
+                        </div>
+
+                        <div>
+                            <label for="hackathon_start_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Hackathon Start Date
+                            </label>
+                            <input v-model="form.hackathon_start_date"
+                                   type="date"
+                                   id="hackathon_start_date"
+                                   class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors"
+                                   :class="{ 'border-red-500': form.errors.hackathon_start_date }"
+                                   :style="{ '--tw-ring-color': themeColor.primary }">
+                            <p v-if="form.errors.hackathon_start_date" class="mt-1 text-sm text-red-600 dark:text-red-400">
+                                {{ form.errors.hackathon_start_date }}
+                            </p>
+                        </div>
+
+                        <div>
+                            <label for="hackathon_end_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Hackathon End Date
+                            </label>
+                            <input v-model="form.hackathon_end_date"
+                                   type="date"
+                                   id="hackathon_end_date"
+                                   class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors"
+                                   :class="{ 'border-red-500': form.errors.hackathon_end_date }"
+                                   :style="{ '--tw-ring-color': themeColor.primary }">
+                            <p v-if="form.errors.hackathon_end_date" class="mt-1 text-sm text-red-600 dark:text-red-400">
+                                {{ form.errors.hackathon_end_date }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Configuration -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Configuration</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="max_teams" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Maximum Teams
+                            </label>
+                            <input v-model="form.max_teams"
+                                   type="number"
+                                   id="max_teams"
+                                   class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors"
+                                   :class="{ 'border-red-500': form.errors.max_teams }"
+                                   :style="{ '--tw-ring-color': themeColor.primary }"
+                                   placeholder="100">
+                            <p v-if="form.errors.max_teams" class="mt-1 text-sm text-red-600 dark:text-red-400">
+                                {{ form.errors.max_teams }}
+                            </p>
+                        </div>
+
+                        <div>
+                            <label for="max_team_members" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Maximum Team Members
+                            </label>
+                            <input v-model="form.max_team_members"
+                                   type="number"
+                                   id="max_team_members"
+                                   class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors"
+                                   :class="{ 'border-red-500': form.errors.max_team_members }"
+                                   :style="{ '--tw-ring-color': themeColor.primary }"
+                                   placeholder="5">
+                            <p v-if="form.errors.max_team_members" class="mt-1 text-sm text-red-600 dark:text-red-400">
+                                {{ form.errors.max_team_members }}
+                            </p>
                         </div>
                     </div>
 
-                    <!-- Add Workshop Button -->
-                    <div class="self-stretch flex flex-row items-start justify-start py-3 px-4 text-center text-sm">
-                        <button type="button"
-                                @click="addWorkshop"
-                                class="rounded-xl bg-mintcream-200 dark:bg-gray-700 h-10 overflow-hidden flex flex-row items-center justify-center py-0 px-4 box-border min-w-[84px] max-w-[480px] hover:bg-mintcream-300 dark:hover:bg-gray-600 transition-colors">
-                            <div class="overflow-hidden flex flex-col items-center justify-start">
-                                <span class="self-stretch relative leading-[21px] font-bold overflow-hidden text-ellipsis whitespace-nowrap text-gray-900 dark:text-white">Add Workshop</span>
-                            </div>
-                        </button>
+                    <div class="mt-6">
+                        <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Description
+                        </label>
+                        <textarea v-model="form.description"
+                                  id="description"
+                                  rows="4"
+                                  class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors"
+                                  :style="{ '--tw-ring-color': themeColor.primary }"
+                                  placeholder="Enter edition description..."></textarea>
                     </div>
 
-                    <!-- Submit Button -->
-                    <div class="self-stretch flex flex-row items-start justify-end py-3 px-4 gap-3 text-center text-sm">
-                        <a :href="route('system-admin.editions.index')"
-                           class="rounded-xl bg-gray-200 dark:bg-gray-700 h-10 overflow-hidden flex flex-row items-center justify-center py-0 px-6 box-border min-w-[84px] max-w-[480px] hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
-                            <div class="overflow-hidden flex flex-col items-center justify-start">
-                                <span class="self-stretch relative leading-[21px] font-bold overflow-hidden text-ellipsis whitespace-nowrap text-gray-900 dark:text-white">Cancel</span>
-                            </div>
-                        </a>
-                        <button type="submit"
-                                :disabled="form.processing"
-                                class="rounded-xl bg-mediumseagreen dark:bg-green-600 h-10 overflow-hidden flex flex-row items-center justify-center py-0 px-6 box-border min-w-[84px] max-w-[480px] hover:bg-seagreen dark:hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                            <div class="overflow-hidden flex flex-col items-center justify-start">
-                                <span class="self-stretch relative leading-[21px] font-bold overflow-hidden text-ellipsis whitespace-nowrap text-white">{{ form.processing ? 'Saving...' : 'Update Edition' }}</span>
-                            </div>
-                        </button>
+                    <div class="mt-6">
+                        <label class="flex items-center">
+                            <input v-model="form.is_active"
+                                   type="checkbox"
+                                   class="rounded border-gray-300 dark:border-gray-600 text-primary focus:ring-2 focus:ring-opacity-50"
+                                   :style="{ '--tw-text-opacity': 1, color: themeColor.primary }">
+                            <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                                Set as active edition
+                            </span>
+                        </label>
                     </div>
-                </form>
-            </div>
+                </div>
+
+                <!-- Associated Workshops (if any) -->
+                <div v-if="edition.workshops && edition.workshops.length > 0" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Associated Workshops</h2>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                            <thead class="bg-gray-50 dark:bg-gray-700">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        Workshop Name
+                                    </th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        Date
+                                    </th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        Time
+                                    </th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        Instructor
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                                <tr v-for="workshop in edition.workshops" :key="workshop.id">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                                        {{ workshop.title }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm" :style="{ color: themeColor.primary }">
+                                        {{ formatDate(workshop.date) }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm" :style="{ color: themeColor.primary }">
+                                        {{ workshop.start_time }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm" :style="{ color: themeColor.primary }">
+                                        {{ workshop.instructor }}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex justify-end gap-4">
+                    <Link :href="route('system-admin.editions.index')"
+                          class="px-6 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                        Cancel
+                    </Link>
+                    <button type="submit"
+                            :disabled="form.processing"
+                            class="px-6 py-2 rounded-lg text-white font-medium transition-all duration-200 disabled:opacity-50"
+                            :style="{
+                                background: `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})`,
+                            }">
+                        {{ form.processing ? 'Updating...' : 'Update Edition' }}
+                    </button>
+                </div>
+            </form>
         </div>
     </Default>
 </template>
+
+<script setup>
+import { Head, Link, useForm } from '@inertiajs/vue3'
+import { ref, computed, onMounted } from 'vue'
+import Default from '../../../Layouts/Default.vue'
+
+const props = defineProps({
+    edition: {
+        type: Object,
+        required: true
+    },
+    admins: {
+        type: Array,
+        default: () => []
+    }
+})
+
+// Format dates for form inputs
+const formatDateForInput = (date) => {
+    if (!date) return ''
+    const d = new Date(date)
+    const year = d.getFullYear()
+    const month = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+}
+
+const form = useForm({
+    name: props.edition.name || '',
+    year: props.edition.year || new Date().getFullYear(),
+    registration_start_date: formatDateForInput(props.edition.registration_start_date),
+    registration_end_date: formatDateForInput(props.edition.registration_end_date),
+    hackathon_start_date: formatDateForInput(props.edition.hackathon_start_date),
+    hackathon_end_date: formatDateForInput(props.edition.hackathon_end_date),
+    admin_id: props.edition.admin_id || '',
+    description: props.edition.description || '',
+    location: props.edition.location || '',
+    max_teams: props.edition.max_teams || 100,
+    max_team_members: props.edition.max_team_members || 5,
+    is_active: props.edition.is_active || false
+})
+
+// Get theme color from localStorage or default
+const themeColor = ref({
+    primary: '#0d9488',
+    hover: '#0f766e',
+    rgb: '13, 148, 136',
+    gradientFrom: '#0d9488',
+    gradientTo: '#14b8a6'
+})
+
+onMounted(() => {
+    // Get the current theme color from CSS variables
+    const root = document.documentElement
+    const primary = getComputedStyle(root).getPropertyValue('--primary-color').trim() || '#0d9488'
+    const hover = getComputedStyle(root).getPropertyValue('--primary-hover').trim() || '#0f766e'
+    const rgb = getComputedStyle(root).getPropertyValue('--primary-color-rgb').trim() || '13, 148, 136'
+    const gradientFrom = getComputedStyle(root).getPropertyValue('--primary-gradient-from').trim() || '#0d9488'
+    const gradientTo = getComputedStyle(root).getPropertyValue('--primary-gradient-to').trim() || '#14b8a6'
+
+    themeColor.value = {
+        primary: primary || themeColor.value.primary,
+        hover: hover || themeColor.value.hover,
+        rgb: rgb || themeColor.value.rgb,
+        gradientFrom: gradientFrom || themeColor.value.gradientFrom,
+        gradientTo: gradientTo || themeColor.value.gradientTo
+    }
+})
+
+// Computed style for dynamic theme
+const themeStyles = computed(() => ({
+    '--theme-primary': themeColor.value.primary,
+    '--theme-hover': themeColor.value.hover,
+    '--theme-rgb': themeColor.value.rgb,
+    '--theme-gradient-from': themeColor.value.gradientFrom,
+    '--theme-gradient-to': themeColor.value.gradientTo,
+}))
+
+const formatDate = (date) => {
+    if (!date) return 'N/A'
+    return new Date(date).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+    })
+}
+
+const submit = () => {
+    form.put(route('system-admin.editions.update', props.edition.id))
+}
+</script>
+
+<style scoped>
+/* Theme-aware custom styles */
+input[type="text"]:focus,
+input[type="number"]:focus,
+input[type="date"]:focus,
+select:focus,
+textarea:focus {
+    border-color: var(--theme-primary) !important;
+    box-shadow: 0 0 0 3px rgba(var(--theme-rgb), 0.1) !important;
+}
+
+input[type="checkbox"]:checked {
+    background-color: var(--theme-primary) !important;
+    border-color: var(--theme-primary) !important;
+}
+</style>

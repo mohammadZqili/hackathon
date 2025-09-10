@@ -5,8 +5,11 @@ namespace App\Http\Controllers\SystemAdmin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use App\Models\Setting;
+use App\Models\SystemSetting;
 use Illuminate\Support\Facades\Cache;
+use App\Providers\SettingsServiceProvider;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class SettingsController extends Controller
 {
@@ -20,6 +23,7 @@ class SettingsController extends Controller
             'branding' => $this->getBrandingSettings(),
             'twitter' => $this->getTwitterSettings(),
             'sms' => $this->getSmsSettings(),
+            'notifications' => $this->getNotificationSettings(),
         ];
 
         return Inertia::render('SystemAdmin/Settings/Index', [
@@ -44,27 +48,44 @@ class SettingsController extends Controller
      */
     public function updateSmtp(Request $request)
     {
-        $validated = $request->validate([
-            'mail_host' => 'required|string',
-            'mail_port' => 'required|integer',
-            'mail_username' => 'required|string',
-            'mail_password' => 'required|string',
-            'mail_encryption' => 'required|in:tls,ssl',
-            'mail_from_address' => 'required|email',
-            'mail_from_name' => 'required|string',
-        ]);
+        try {
+            $validated = $request->validate([
+                'mail_host' => 'nullable|string',
+                'mail_port' => 'nullable|integer',
+                'mail_username' => 'nullable|string',
+                'mail_password' => 'nullable|string',
+                'mail_encryption' => 'nullable|in:tls,ssl,',
+                'mail_from_address' => 'nullable|email',
+            ]);
 
-        foreach ($validated as $key => $value) {
-            Setting::updateOrCreate(
-                ['key' => $key],
-                ['value' => $value]
-            );
+            DB::beginTransaction();
+
+            foreach ($validated as $key => $value) {
+                if ($value !== null && $value !== '') {
+                    SystemSetting::updateOrCreate(
+                        ['key' => $key],
+                        ['value' => $value, 'group' => 'smtp']
+                    );
+                }
+            }
+
+            DB::commit();
+
+            // Clear all settings cache
+            SettingsServiceProvider::clearCache();
+            
+            // Clear config cache to apply new settings
+            \Artisan::call('config:clear');
+
+            return redirect()->route('system-admin.settings.index')
+                ->with('success', 'SMTP settings updated successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('SMTP settings update failed: ' . $e->getMessage());
+            
+            return redirect()->route('system-admin.settings.index')
+                ->with('error', 'Failed to update SMTP settings.');
         }
-
-        Cache::forget('smtp_settings');
-
-        return redirect()->route('system-admin.settings.smtp')
-            ->with('success', 'SMTP settings updated successfully.');
     }
 
     /**
@@ -84,36 +105,51 @@ class SettingsController extends Controller
      */
     public function updateBranding(Request $request)
     {
-        $validated = $request->validate([
-            'app_name' => 'required|string|max:255',
-            'app_logo' => 'nullable|image|max:2048',
-            'app_favicon' => 'nullable|image|max:1024',
-            'primary_color' => 'required|string|max:7',
-            'secondary_color' => 'required|string|max:7',
-        ]);
+        try {
+            $validated = $request->validate([
+                'app_name' => 'nullable|string|max:255',
+                'logo' => 'nullable|image|max:2048',
+                'primary_color' => 'nullable|string|max:7',
+                'secondary_color' => 'nullable|string|max:7',
+                'success_color' => 'nullable|string|max:7',
+                'danger_color' => 'nullable|string|max:7',
+            ]);
 
-        // Handle file uploads
-        if ($request->hasFile('app_logo')) {
-            $logoPath = $request->file('app_logo')->store('branding', 'public');
-            $validated['app_logo'] = $logoPath;
+            DB::beginTransaction();
+
+            // Handle file upload
+            if ($request->hasFile('logo')) {
+                $logoPath = $request->file('logo')->store('branding', 'public');
+                $validated['app_logo'] = $logoPath;
+                unset($validated['logo']);
+            }
+
+            foreach ($validated as $key => $value) {
+                if ($value !== null && $value !== '') {
+                    SystemSetting::updateOrCreate(
+                        ['key' => $key],
+                        ['value' => $value, 'group' => 'branding']
+                    );
+                }
+            }
+
+            DB::commit();
+
+            // Clear all settings cache
+            SettingsServiceProvider::clearCache();
+            
+            // Clear config cache to apply new settings
+            \Artisan::call('config:clear');
+
+            return redirect()->route('system-admin.settings.index')
+                ->with('success', 'Branding settings updated successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Branding settings update failed: ' . $e->getMessage());
+            
+            return redirect()->route('system-admin.settings.index')
+                ->with('error', 'Failed to update branding settings.');
         }
-
-        if ($request->hasFile('app_favicon')) {
-            $faviconPath = $request->file('app_favicon')->store('branding', 'public');
-            $validated['app_favicon'] = $faviconPath;
-        }
-
-        foreach ($validated as $key => $value) {
-            Setting::updateOrCreate(
-                ['key' => $key],
-                ['value' => $value]
-            );
-        }
-
-        Cache::forget('branding_settings');
-
-        return redirect()->route('system-admin.settings.branding')
-            ->with('success', 'Branding settings updated successfully.');
     }
 
     /**
@@ -133,25 +169,41 @@ class SettingsController extends Controller
      */
     public function updateTwitter(Request $request)
     {
-        $validated = $request->validate([
-            'twitter_api_key' => 'required|string',
-            'twitter_api_secret' => 'required|string',
-            'twitter_access_token' => 'required|string',
-            'twitter_access_token_secret' => 'required|string',
-            'twitter_auto_post' => 'boolean',
-        ]);
+        try {
+            $validated = $request->validate([
+                'twitter_api_key' => 'nullable|string',
+                'twitter_api_secret' => 'nullable|string',
+                'twitter_access_token' => 'nullable|string',
+                'twitter_access_token_secret' => 'nullable|string',
+                'twitter_auto_post' => 'boolean',
+            ]);
 
-        foreach ($validated as $key => $value) {
-            Setting::updateOrCreate(
-                ['key' => $key],
-                ['value' => $value]
-            );
+            DB::beginTransaction();
+
+            foreach ($validated as $key => $value) {
+                SystemSetting::updateOrCreate(
+                    ['key' => $key],
+                    ['value' => $value, 'group' => 'twitter']
+                );
+            }
+
+            DB::commit();
+
+            // Clear all settings cache
+            SettingsServiceProvider::clearCache();
+            
+            // Clear config cache to apply new settings
+            \Artisan::call('config:clear');
+
+            return redirect()->route('system-admin.settings.index')
+                ->with('success', 'Twitter settings updated successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Twitter settings update failed: ' . $e->getMessage());
+            
+            return redirect()->route('system-admin.settings.index')
+                ->with('error', 'Failed to update Twitter settings.');
         }
-
-        Cache::forget('twitter_settings');
-
-        return redirect()->route('system-admin.settings.twitter')
-            ->with('success', 'Twitter settings updated successfully.');
     }
 
     /**
@@ -171,24 +223,93 @@ class SettingsController extends Controller
      */
     public function updateSms(Request $request)
     {
-        $validated = $request->validate([
-            'sms_provider' => 'required|in:twilio,nexmo,textlocal',
-            'sms_api_key' => 'required|string',
-            'sms_api_secret' => 'required|string',
-            'sms_from_number' => 'required|string',
-        ]);
+        try {
+            $validated = $request->validate([
+                'sms_provider' => 'nullable|in:twilio,nexmo,messagebird,custom',
+                'sms_api_key' => 'nullable|string',
+                'sms_api_secret' => 'nullable|string',
+                'sms_from_number' => 'nullable|string',
+            ]);
 
-        foreach ($validated as $key => $value) {
-            Setting::updateOrCreate(
-                ['key' => $key],
-                ['value' => $value]
-            );
+            DB::beginTransaction();
+
+            foreach ($validated as $key => $value) {
+                SystemSetting::updateOrCreate(
+                    ['key' => $key],
+                    ['value' => $value, 'group' => 'sms']
+                );
+            }
+
+            DB::commit();
+
+            // Clear all settings cache
+            SettingsServiceProvider::clearCache();
+            
+            // Clear config cache to apply new settings
+            \Artisan::call('config:clear');
+
+            return redirect()->route('system-admin.settings.index')
+                ->with('success', 'SMS settings updated successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('SMS settings update failed: ' . $e->getMessage());
+            
+            return redirect()->route('system-admin.settings.index')
+                ->with('error', 'Failed to update SMS settings.');
         }
+    }
 
-        Cache::forget('sms_settings');
-
-        return redirect()->route('system-admin.settings.sms')
-            ->with('success', 'SMS settings updated successfully.');
+    /**
+     * Update notification settings.
+     */
+    public function updateNotifications(Request $request)
+    {
+        try {
+            Log::info('Notification settings update request received', $request->all());
+            
+            DB::beginTransaction();
+            
+            // Process all notification settings
+            $notifications = [
+                'notification_email_enabled' => $request->boolean('email_enabled') ? '1' : '0',
+                'notification_sms_enabled' => $request->boolean('sms_enabled') ? '1' : '0',
+                'notification_push_enabled' => $request->boolean('push_enabled') ? '1' : '0',
+                'notification_in_app_enabled' => $request->boolean('in_app_enabled') ? '1' : '0',
+            ];
+            
+            foreach ($notifications as $key => $value) {
+                SystemSetting::updateOrCreate(
+                    ['key' => $key],
+                    [
+                        'value' => $value,
+                        'group' => 'notifications',
+                        'type' => 'boolean'
+                    ]
+                );
+                
+                Log::info("Notification setting updated: {$key} = {$value}");
+            }
+            
+            DB::commit();
+            
+            // Clear all settings cache
+            SettingsServiceProvider::clearCache();
+            
+            // Clear config cache to apply new settings
+            \Artisan::call('config:clear');
+            
+            Log::info('Notification settings updated successfully');
+            
+            return redirect()->route('system-admin.settings.index')
+                ->with('success', 'Notification settings updated successfully.');
+                
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Notification settings update failed: ' . $e->getMessage());
+            
+            return redirect()->route('system-admin.settings.index')
+                ->with('error', 'Failed to update notification settings: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -197,14 +318,18 @@ class SettingsController extends Controller
     private function getSmtpSettings(): array
     {
         return Cache::remember('smtp_settings', 3600, function () {
+            $settings = SystemSetting::where('group', 'smtp')
+                ->pluck('value', 'key')
+                ->toArray();
+            
             return [
-                'mail_host' => Setting::where('key', 'mail_host')->value('value') ?? '',
-                'mail_port' => Setting::where('key', 'mail_port')->value('value') ?? '587',
-                'mail_username' => Setting::where('key', 'mail_username')->value('value') ?? '',
-                'mail_password' => Setting::where('key', 'mail_password')->value('value') ?? '',
-                'mail_encryption' => Setting::where('key', 'mail_encryption')->value('value') ?? 'tls',
-                'mail_from_address' => Setting::where('key', 'mail_from_address')->value('value') ?? '',
-                'mail_from_name' => Setting::where('key', 'mail_from_name')->value('value') ?? '',
+                'mail_host' => $settings['mail_host'] ?? '',
+                'mail_port' => $settings['mail_port'] ?? 587,
+                'mail_username' => $settings['mail_username'] ?? '',
+                'mail_password' => $settings['mail_password'] ?? '',
+                'mail_encryption' => $settings['mail_encryption'] ?? 'tls',
+                'mail_from_address' => $settings['mail_from_address'] ?? '',
+                'mail_from_name' => $settings['mail_from_name'] ?? '',
             ];
         });
     }
@@ -215,12 +340,21 @@ class SettingsController extends Controller
     private function getBrandingSettings(): array
     {
         return Cache::remember('branding_settings', 3600, function () {
+            $settings = SystemSetting::where('group', 'branding')
+                ->pluck('value', 'key')
+                ->toArray();
+            
+            $logo = $settings['app_logo'] ?? '';
+            
             return [
-                'app_name' => Setting::where('key', 'app_name')->value('value') ?? 'Ruman Hackathon',
-                'app_logo' => Setting::where('key', 'app_logo')->value('value') ?? '',
-                'app_favicon' => Setting::where('key', 'app_favicon')->value('value') ?? '',
-                'primary_color' => Setting::where('key', 'primary_color')->value('value') ?? '#3B82F6',
-                'secondary_color' => Setting::where('key', 'secondary_color')->value('value') ?? '#10B981',
+                'app_name' => $settings['app_name'] ?? 'GuacPanel',
+                'app_logo' => $logo,
+                'logo_url' => $logo ? asset('storage/' . $logo) : null,
+                'app_favicon' => $settings['app_favicon'] ?? '',
+                'primary_color' => $settings['primary_color'] ?? '#0d9488',
+                'secondary_color' => $settings['secondary_color'] ?? '#14b8a6',
+                'success_color' => $settings['success_color'] ?? '#10b981',
+                'danger_color' => $settings['danger_color'] ?? '#ef4444',
             ];
         });
     }
@@ -231,12 +365,16 @@ class SettingsController extends Controller
     private function getTwitterSettings(): array
     {
         return Cache::remember('twitter_settings', 3600, function () {
+            $settings = SystemSetting::where('group', 'twitter')
+                ->pluck('value', 'key')
+                ->toArray();
+            
             return [
-                'twitter_api_key' => Setting::where('key', 'twitter_api_key')->value('value') ?? '',
-                'twitter_api_secret' => Setting::where('key', 'twitter_api_secret')->value('value') ?? '',
-                'twitter_access_token' => Setting::where('key', 'twitter_access_token')->value('value') ?? '',
-                'twitter_access_token_secret' => Setting::where('key', 'twitter_access_token_secret')->value('value') ?? '',
-                'twitter_auto_post' => Setting::where('key', 'twitter_auto_post')->value('value') ?? false,
+                'twitter_api_key' => $settings['twitter_api_key'] ?? '',
+                'twitter_api_secret' => $settings['twitter_api_secret'] ?? '',
+                'twitter_access_token' => $settings['twitter_access_token'] ?? '',
+                'twitter_access_token_secret' => $settings['twitter_access_token_secret'] ?? '',
+                'twitter_auto_post' => isset($settings['twitter_auto_post']) && $settings['twitter_auto_post'] === '1',
             ];
         });
     }
@@ -247,11 +385,35 @@ class SettingsController extends Controller
     private function getSmsSettings(): array
     {
         return Cache::remember('sms_settings', 3600, function () {
+            $settings = SystemSetting::where('group', 'sms')
+                ->pluck('value', 'key')
+                ->toArray();
+            
             return [
-                'sms_provider' => Setting::where('key', 'sms_provider')->value('value') ?? 'twilio',
-                'sms_api_key' => Setting::where('key', 'sms_api_key')->value('value') ?? '',
-                'sms_api_secret' => Setting::where('key', 'sms_api_secret')->value('value') ?? '',
-                'sms_from_number' => Setting::where('key', 'sms_from_number')->value('value') ?? '',
+                'sms_provider' => $settings['sms_provider'] ?? 'twilio',
+                'sms_api_key' => $settings['sms_api_key'] ?? '',
+                'sms_api_secret' => $settings['sms_api_secret'] ?? '',
+                'sms_from_number' => $settings['sms_from_number'] ?? '',
+            ];
+        });
+    }
+
+    /**
+     * Get notification settings.
+     */
+    private function getNotificationSettings(): array
+    {
+        return Cache::remember('notification_settings', 3600, function () {
+            // Get all notification settings
+            $settings = SystemSetting::where('group', 'notifications')
+                ->pluck('value', 'key')
+                ->toArray();
+            
+            return [
+                'email_enabled' => isset($settings['notification_email_enabled']) && $settings['notification_email_enabled'] === '1',
+                'sms_enabled' => isset($settings['notification_sms_enabled']) && $settings['notification_sms_enabled'] === '1',
+                'push_enabled' => isset($settings['notification_push_enabled']) && $settings['notification_push_enabled'] === '1',
+                'in_app_enabled' => isset($settings['notification_in_app_enabled']) && $settings['notification_in_app_enabled'] === '1',
             ];
         });
     }

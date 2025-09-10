@@ -21,6 +21,7 @@ class Team extends Model
         'user_id',  // For Jetstream compatibility
         'personal_team',  // For Jetstream compatibility
         'hackathon_id',
+        'edition_id',
         'leader_id',
         'track_id',
         'invite_code',
@@ -52,6 +53,14 @@ class Team extends Model
     public function hackathon(): BelongsTo
     {
         return $this->belongsTo(Hackathon::class);
+    }
+
+    /**
+     * Get the edition this team belongs to.
+     */
+    public function edition(): BelongsTo
+    {
+        return $this->belongsTo(Edition::class, 'edition_id');
     }
 
     /**

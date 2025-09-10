@@ -6,23 +6,41 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\Workshop;
+use App\Models\Speaker;
+use App\Models\Organization;
 
 class WorkshopController extends Controller
 {
     public function index()
     {
-        $workshops = Workshop::with(['hackathon', 'speakers', 'organizations', 'registrations'])
+        $workshops = Workshop::with(['speakers', 'organizations'])
             ->latest()
             ->paginate(15);
+            
+        $speakers = Speaker::orderBy('name')->get();
+        $organizations = Organization::orderBy('name')->get();
 
         return Inertia::render('SystemAdmin/Workshops/Index', [
-            'workshops' => $workshops
+            'workshops' => $workshops,
+            'speakers' => $speakers,
+            'organizations' => $organizations
         ]);
     }
 
     public function create()
     {
-        return Inertia::render('SystemAdmin/Workshops/Create');
+        $speakers = Speaker::orderBy('name')->get();
+        $organizations = Organization::orderBy('name')->get();
+        
+        \Log::info('Workshop Create Data', [
+            'speakers_count' => $speakers->count(),
+            'organizations_count' => $organizations->count()
+        ]);
+        
+        return Inertia::render('SystemAdmin/Workshops/Create', [
+            'speakers' => $speakers,
+            'organizations' => $organizations
+        ]);
     }
 
     public function store(Request $request)
@@ -43,8 +61,14 @@ class WorkshopController extends Controller
 
     public function edit(Workshop $workshop)
     {
+        $speakers = Speaker::orderBy('name')->get();
+        $organizations = Organization::orderBy('name')->get();
+        $workshop->load(['speakers', 'organizations']);
+        
         return Inertia::render('SystemAdmin/Workshops/Edit', [
-            'workshop' => $workshop
+            'workshop' => $workshop,
+            'speakers' => $speakers,
+            'organizations' => $organizations
         ]);
     }
 

@@ -1,14 +1,9 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code when working with this repository.
 
 ## Project Overview
-
-GuacPanel is a Laravel Vue.js admin starter kit built with:
-- **Backend**: Laravel 11 with Fortify for authentication
-- **Frontend**: Vue.js 3 + Inertia.js + Tailwind CSS v4
-- **Testing**: PHPUnit with Pest
-- **Key Features**: Role-based permissions (Spatie), audit logging, backup management, 2FA, magic link auth, dark mode, charts, data tables
+GuacPanel - Hackathon Management System built with Laravel 11 and Vue.js 3
 
 ## Development Commands
 
@@ -28,84 +23,170 @@ php artisan migrate:fresh --seed     # Fresh migration with seeding
 
 ### Testing
 ```bash
-vendor/bin/phpunit          # Run PHPUnit tests (configured via phpunit.xml)
-vendor/bin/pest             # Run Pest tests (preferred testing framework)
+vendor/bin/phpunit          # Run PHPUnit tests
+vendor/bin/pest             # Run Pest tests
 ```
 
-### Common Artisan Commands
-```bash
-php artisan key:generate           # Generate application key
-php artisan storage:link           # Link storage directory
-php artisan backup:run             # Run backup (Spatie Backup)
-php artisan backup:clean           # Clean old backups
-php artisan permission:cache-reset # Clear permission cache
+## Project-Specific Instructions
+
+### System Admin Page Development Guidelines
+
+#### Layout Requirements
+- Always use Default layout with header and sidebar: `import Default from '../../../Layouts/Default.vue'`
+- Use `<Head title="[Page Title]" />` for page titles
+- Wrap content in `<Default>` component
+
+#### Theme Color Implementation
+All System Admin pages must use dynamic GuacPanel theme colors. Add this to every page:
+
+```javascript
+// Add to script setup
+const themeColor = ref({
+    primary: '#0d9488',
+    hover: '#0f766e',
+    rgb: '13, 148, 136',
+    gradientFrom: '#0d9488',
+    gradientTo: '#14b8a6'
+})
+
+onMounted(() => {
+    const root = document.documentElement
+    const primary = getComputedStyle(root).getPropertyValue('--primary-color').trim() || '#0d9488'
+    const hover = getComputedStyle(root).getPropertyValue('--primary-hover').trim() || '#0f766e'
+    const rgb = getComputedStyle(root).getPropertyValue('--primary-color-rgb').trim() || '13, 148, 136'
+    const gradientFrom = getComputedStyle(root).getPropertyValue('--primary-gradient-from').trim() || '#0d9488'
+    const gradientTo = getComputedStyle(root).getPropertyValue('--primary-gradient-to').trim() || '#14b8a6'
+
+    themeColor.value = {
+        primary: primary || themeColor.value.primary,
+        hover: hover || themeColor.value.hover,
+        rgb: rgb || themeColor.value.rgb,
+        gradientFrom: gradientFrom || themeColor.value.gradientFrom,
+        gradientTo: gradientTo || themeColor.value.gradientTo
+    }
+})
+
+const themeStyles = computed(() => ({
+    '--theme-primary': themeColor.value.primary,
+    '--theme-hover': themeColor.value.hover,
+    '--theme-rgb': themeColor.value.rgb,
+    '--theme-gradient-from': themeColor.value.gradientFrom,
+    '--theme-gradient-to': themeColor.value.gradientTo,
+}))
 ```
 
-## Architecture Overview
+#### Color Application Rules
+- **Never use hardcoded colors** like `text-blue-500` or `bg-green-100`
+- Primary text/links: `:style="{ color: themeColor.primary }"`
+- Buttons: `:style="{ background: \`linear-gradient(135deg, \${themeColor.gradientFrom}, \${themeColor.gradientTo})\` }"`
+- Focus states: `:style="{ '--tw-ring-color': themeColor.primary }"`
+- Active/selected states: Use theme primary color
+- Status badges: Use theme color with appropriate opacity
 
-### Authentication System
-- **Laravel Fortify** handles authentication, registration, password resets, and 2FA
-- **Magic Link Authentication** via `MagicLinkController` and email templates
-- **Two-Factor Authentication** with recovery codes
-- **Password Policies** with expiry enforcement via `CheckPasswordExpiry` middleware
-- **Login History** tracking in `LoginHistory` model
+#### Form Styling
+```vue
+<style scoped>
+input[type="text"]:focus,
+input[type="number"]:focus,
+input[type="date"]:focus,
+select:focus,
+textarea:focus {
+    border-color: var(--theme-primary) !important;
+    box-shadow: 0 0 0 3px rgba(var(--theme-rgb), 0.1) !important;
+}
 
-### Authorization & Permissions  
-- **Spatie Laravel Permission** for role-based access control
-- Custom traits: `HasProtectedRoles`, `HasProtectedPermission`
-- Visual role/permission management in admin interface
-- Protected system roles and permissions cannot be deleted
-
-### Data Management
-- **TanStack Vue Table** for data tables with server-side pagination/sorting
-- **Laravel Auditing** for tracking model changes
-- **Spatie Backup** for database and file backups
-- **Laravel Scout + Typesense** for search functionality
-
-### Frontend Architecture
-- **Inertia.js** provides SPA experience with server-side routing
-- **Vue.js 3 Composition API** components
-- **Tailwind CSS v4** with dark mode support
-- **ApexCharts** for data visualization
-- **FilePond** for file uploads
-
-### Key Directories
-```
-app/
-├── Actions/Fortify/          # Fortify authentication actions
-├── Http/Controllers/         # Controllers (Admin*, Auth/, User*)
-├── Http/Middleware/          # Custom middleware (2FA, password checks)
-├── Models/                   # Eloquent models
-├── Policies/                 # Authorization policies
-└── Traits/                   # Reusable traits
-
-resources/js/
-├── Components/               # Reusable Vue components
-├── Layouts/                  # Page layouts (Auth, Default, Public)
-├── Pages/                    # Inertia.js pages
-└── utils/                    # JavaScript utilities
-
-database/
-├── migrations/               # Database schema migrations
-└── seeders/                  # Database seeders
+input[type="checkbox"]:checked {
+    background-color: var(--theme-primary) !important;
+    border-color: var(--theme-primary) !important;
+}
+</style>
 ```
 
-### Important Models
-- **User**: Enhanced with 2FA, login history, permissions
-- **Setting**: Application-wide configuration
-- **Personalisation**: User-specific preferences
-- **LoginHistory**: Authentication audit trail
-- **FinancialMetric**: Sample data for charts/widgets
+#### Dark Mode Support
+Always include dark mode variants:
+- `text-gray-900 dark:text-white` for main text
+- `bg-white dark:bg-gray-800` for cards/containers
+- `border-gray-300 dark:border-gray-600` for borders
+- `text-gray-600 dark:text-gray-400` for secondary text
 
-### Middleware Stack
-- `RequireTwoFactor`: Enforces 2FA when enabled
-- `CheckPasswordExpiry`: Forces password changes
-- `ForcePasswordChange`: Redirects to password change
-- `DisableAccount`: Blocks disabled users
-- `HandleInertiaRequests`: Shares data with frontend
+#### Design Sources
+- Page structures: `/design_files/vue_files_tailwind/Admin role/[FOLDER_NAME]/`
+- Design images: `/design_files/figma_images/Admin/`
+- Use exact content structure from design files BUT replace static colors with theme colors
 
-### Configuration Files
-- **Tailwind**: `tailwind.config.js` with CSS v4 configuration
-- **Vite**: `vite.config.js` for asset building
-- **PHPUnit**: `phpunit.xml` for testing configuration
-- **PostCSS**: `postcss.config.js` for CSS processing
+#### Reusable Components
+Always use existing components when available:
+- FilePondUploader for file uploads
+- RichTextEditor for text editing (TipTap)
+- Existing table components with theme colors
+- Modal/dialog components from the codebase
+
+#### Reference Pages
+- **Ideas Page** (theme integration example): `/resources/js/Pages/SystemAdmin/Ideas/Index.vue`
+- **Editions Pages** (complete CRUD): `/resources/js/Pages/SystemAdmin/Editions/`
+- **News Pages** (media handling): `/resources/js/Pages/SystemAdmin/News/`
+
+### Important Development Notes
+- Always use real data, not mock data
+- Ensure all CRUD operations are functional
+- Test with different theme colors by changing GuacPanel settings
+- Verify dark mode works correctly
+- Maintain responsive design
+- Check form focus states use theme colors
+- Always track tasks in TASKS.md with prompt, time, and description
+- Technical notes and preferences should be documented in CLAUDE.md
+
+## Settings System Implementation Notes
+
+### Database Structure
+The settings system uses a key-value structure in the `system_settings` table:
+- `key`: Unique identifier for the setting
+- `value`: String value (booleans stored as '1' or '0')
+- `group`: Category (smtp, branding, notifications, sms, twitter)
+- `type`: Data type hint (string, boolean, integer, json)
+
+### Settings Access Pattern
+```php
+// PHP access via helper
+use App\Helpers\Settings;
+$appName = Settings::get('app.name');
+$emailEnabled = Settings::emailNotificationsEnabled();
+
+// Vue component access
+$page.props.settings.app_name
+$page.props.settings.notifications.email_enabled
+```
+
+### Boolean Handling
+- Always store booleans as '1' (true) or '0' (false) strings in database
+- Use `$request->boolean()` in controllers for checkbox handling
+- Convert to proper boolean when retrieving: `$value === '1'`
+
+### Cache Strategy
+- Settings cached for 3600 seconds (1 hour)
+- Cache cleared on any update via `SettingsServiceProvider::clearCache()`
+- Config cache also cleared with `\Artisan::call('config:clear')`
+
+### Form Handling with Inertia
+```javascript
+// Use useForm for proper form handling
+const form = useForm({
+    field: props.settings?.field || defaultValue
+})
+
+// Transform data if needed
+form.transform(() => processedData).post(route('route.name'))
+```
+
+### Transaction Safety
+All settings updates wrapped in database transactions:
+```php
+DB::beginTransaction();
+try {
+    // Update settings
+    DB::commit();
+} catch (\Exception $e) {
+    DB::rollBack();
+    // Handle error
+}
+```

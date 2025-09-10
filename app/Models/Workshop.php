@@ -64,6 +64,14 @@ class Workshop extends Model
     }
 
     /**
+     * Get the edition this workshop belongs to.
+     */
+    public function edition(): BelongsTo
+    {
+        return $this->belongsTo(Edition::class, 'hackathon_edition_id');
+    }
+
+    /**
      * Get the organizations associated with this workshop.
      */
     public function organizations(): BelongsToMany

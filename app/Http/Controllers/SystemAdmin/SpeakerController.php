@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\Speaker;
+use App\Models\Organization;
+use App\Models\Workshop;
 
 class SpeakerController extends Controller
 {
@@ -20,7 +22,13 @@ class SpeakerController extends Controller
 
     public function create()
     {
-        return Inertia::render('SystemAdmin/Speakers/Create');
+        $organizations = Organization::orderBy('name')->get();
+        $workshops = Workshop::orderBy('title')->get();
+        
+        return Inertia::render('SystemAdmin/Speakers/Create', [
+            'organizations' => $organizations,
+            'workshops' => $workshops
+        ]);
     }
 
     public function store(Request $request)
@@ -39,8 +47,14 @@ class SpeakerController extends Controller
 
     public function edit(Speaker $speaker)
     {
+        $organizations = Organization::orderBy('name')->get();
+        $workshops = Workshop::orderBy('title')->get();
+        $speaker->load('organization');
+        
         return Inertia::render('SystemAdmin/Speakers/Edit', [
-            'speaker' => $speaker
+            'speaker' => $speaker,
+            'organizations' => $organizations,
+            'workshops' => $workshops
         ]);
     }
 

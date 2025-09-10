@@ -51,22 +51,22 @@ class HackathonEdition extends Model
 
     public function teams(): HasMany
     {
-        return $this->hasMany(Team::class);
+        return $this->hasMany(Team::class, 'edition_id');
     }
 
     public function workshops(): HasMany
     {
-        return $this->hasMany(Workshop::class);
+        return $this->hasMany(Workshop::class, 'hackathon_edition_id');
     }
 
     public function tracks(): HasMany
     {
-        return $this->hasMany(Track::class);
+        return $this->hasMany(Track::class, 'hackathon_edition_id');
     }
 
     public function news(): HasMany
     {
-        return $this->hasMany(News::class);
+        return $this->hasMany(News::class, 'hackathon_id');
     }
 
     // Scopes

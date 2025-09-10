@@ -157,7 +157,7 @@ class IdeaController extends Controller
     public function processReview(Request $request, Idea $idea)
     {
         $validated = $request->validate([
-            'status' => 'required|in:draft,submitted,under_review,needs_revision,accepted,rejected',
+            'status' => 'required|in:draft,submitted,under_review,needs_revision,accepted,rejected,pending_review,in_progress,completed',
             'reviewed_by' => 'nullable|exists:users,id',
             'feedback' => 'nullable|string',
             'scores' => 'nullable|array',
@@ -205,7 +205,7 @@ class IdeaController extends Controller
             // TODO: Trigger notification service here
         }
 
-        return redirect()->route('hackathon-admin.ideas.index')
+        return redirect()->route('hackathon-admin.ideas.show', $idea->id)
             ->with('success', 'Idea review completed successfully.');
     }
 
@@ -223,6 +223,29 @@ class IdeaController extends Controller
         $idea->save();
 
         return back()->with('success', 'Supervisor assigned successfully.');
+    }
+
+    /**
+     * Update score for an idea.
+     */
+    public function updateScore(Request $request, Idea $idea)
+    {
+        $request->validate([
+            'score' => 'required|numeric|min:0|max:100'
+        ]);
+
+        $idea->score = $request->score;
+        $idea->save();
+
+        $idea->logAction(
+            'score_updated',
+            'score',
+            $request->score,
+            'Score updated',
+            auth()->user()
+        );
+
+        return response()->json(['success' => true, 'message' => 'Score updated successfully.']);
     }
 
     /**

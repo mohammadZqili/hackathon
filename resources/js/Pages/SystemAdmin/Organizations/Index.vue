@@ -1,158 +1,220 @@
 <template>
-    <div class="flex flex-col gap-4">
-        <!-- Page Header -->
-        <div class="flex flex-row items-start justify-between flex-wrap gap-3 p-4">
-            <div class="min-w-[288px]">
-                <h1 class="text-[32px] font-bold text-gray-900">Workshops</h1>
-            </div>
-        </div>
-
-        <!-- Tabs Navigation -->
-        <div class="flex flex-col">
-            <div class="border-b border-gray-200 flex flex-row items-start justify-start px-4 gap-8">
-                <Link :href="route('system-admin.workshops.index')"
-                      class="border-b-[3px] border-transparent text-gray-500 hover:text-gray-700 flex flex-col items-center justify-center pt-4 pb-[13px] transition-colors">
-                    <span class="text-sm font-bold">Workshops</span>
+    <Head title="Organizations Management" />
+    <Default>
+        <div class="container mx-auto px-4 py-8" :style="themeStyles">
+            <!-- Page Header -->
+            <div class="flex flex-row items-start justify-between flex-wrap content-start p-4 gap-x-0 gap-y-3">
+                <div class="w-72 flex flex-col items-start justify-start min-w-[288px]">
+                    <h1 class="text-[32px] font-bold text-gray-900 dark:text-white leading-10">Organizations</h1>
+                </div>
+                <Link :href="route('system-admin.organizations.create')"
+                      class="rounded-xl h-8 overflow-hidden flex flex-row items-center justify-center py-0 px-4 min-w-[84px] max-w-[480px] text-center text-sm text-white font-medium transition-all duration-200 hover:shadow-md"
+                      :style="{
+                          background: `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})`,
+                      }">
+                    <div class="overflow-hidden flex flex-col items-center justify-start">
+                        <div class="self-stretch relative leading-[21px] font-medium overflow-hidden text-ellipsis whitespace-nowrap">Add Organization</div>
+                    </div>
                 </Link>
-                <Link :href="route('system-admin.speakers.index')"
-                      class="border-b-[3px] border-transparent text-gray-500 hover:text-gray-700 flex flex-col items-center justify-center pt-4 pb-[13px] transition-colors">
-                    <span class="text-sm font-bold">Speakers</span>
-                </Link>
-                <button class="border-b-[3px] border-emerald-500 text-gray-900 flex flex-col items-center justify-center pt-4 pb-[13px] transition-colors">
-                    <span class="text-sm font-bold">Organizations</span>
-                </button>
             </div>
-        </div>
 
-        <!-- Organization Management Header -->
-        <div class="px-4">
-            <h2 class="text-xl font-semibold text-gray-900">Organization Management</h2>
-        </div>
-
-        <!-- Search Bar -->
-        <div class="px-4">
-            <div class="h-12 flex flex-row rounded-xl overflow-hidden bg-emerald-50 max-w-2xl">
-                <div class="w-10 flex items-center justify-center bg-emerald-100">
-                    <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                    </svg>
+            <!-- Search Bar -->
+            <div class="flex flex-col items-start justify-start py-3 px-4">
+                <div class="self-stretch h-12 flex flex-col items-start justify-start min-w-[160px] max-w-2xl">
+                    <div class="self-stretch flex-1 rounded-xl flex flex-row items-start justify-start">
+                        <div class="self-stretch w-10 rounded-tl-xl rounded-tr-none rounded-br-none rounded-bl-xl flex items-center justify-center"
+                             :style="{ backgroundColor: themeColor.primary + '20' }">
+                            <svg class="w-5 h-5" :style="{ color: themeColor.primary }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
+                        <div class="self-stretch flex-1 rounded-tl-none rounded-tr-xl rounded-br-xl rounded-bl-none bg-gray-100 dark:bg-gray-700 overflow-hidden flex flex-row items-center justify-start py-2 pl-2 pr-4">
+                            <input v-model="searchQuery"
+                                   @input="handleSearch"
+                                   type="text"
+                                   placeholder="Search organizations"
+                                   class="w-full bg-transparent text-gray-700 dark:text-gray-300 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none">
+                        </div>
+                    </div>
                 </div>
-                <input v-model="searchQuery"
-                       @input="handleSearch"
-                       type="text"
-                       placeholder="Search organizations"
-                       class="flex-1 bg-transparent px-3 py-2 text-gray-700 placeholder-gray-500 focus:outline-none">
             </div>
-        </div>
 
-        <!-- Organizations Table -->
-        <div class="px-4">
-            <div class="rounded-xl bg-white border border-gray-200 overflow-hidden shadow-sm">
-                <!-- Table Header -->
-                <div class="bg-emerald-50 flex flex-row border-b border-gray-200">
-                    <div class="flex-1 py-3 px-6">
-                        <span class="text-sm font-medium text-gray-700">Organization Name</span>
+            <!-- Organizations Table -->
+            <div class="flex flex-col items-start justify-start py-3 px-4">
+                <div class="self-stretch rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <!-- Table Header -->
+                    <div class="flex flex-row items-start justify-start" :style="{ backgroundColor: themeColor.primary + '10' }">
+                        <div class="w-64 py-3 px-4">
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Name</span>
+                        </div>
+                        <div class="flex-1 py-3 px-4">
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Description</span>
+                        </div>
+                        <div class="w-48 py-3 px-4">
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Industry</span>
+                        </div>
+                        <div class="w-48 py-3 px-4">
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Website</span>
+                        </div>
+                        <div class="w-40 py-3 px-4">
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Contact</span>
+                        </div>
+                        <div class="w-32 py-3 px-4 text-center">
+                            <span class="text-sm font-medium" :style="{ color: themeColor.primary }">Actions</span>
+                        </div>
                     </div>
-                    <div class="w-48 py-3 px-6">
-                        <span class="text-sm font-medium text-gray-700">Associated Speakers</span>
+
+                    <!-- Table Body -->
+                    <div v-if="!organizations.data || organizations.data.length === 0" class="text-center py-12">
+                        <p class="text-gray-500 dark:text-gray-400">No organizations found. Click "Add Organization" to add your first organization.</p>
                     </div>
-                    <div class="w-64 py-3 px-6">
-                        <span class="text-sm font-medium text-gray-700">Linked Workshops</span>
-                    </div>
-                    <div class="w-32 py-3 px-6 text-center">
-                        <span class="text-sm font-medium text-gray-700">Actions</span>
+                    <div v-else class="divide-y divide-gray-200 dark:divide-gray-700">
+                        <div v-for="org in organizations.data" :key="org.id"
+                             class="flex flex-row hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                            <div class="w-64 py-4 px-4">
+                                <div class="flex items-center gap-3">
+                                    <div v-if="org.logo_url" class="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700">
+                                        <img :src="org.logo_url" :alt="org.name" class="w-full h-full object-cover">
+                                    </div>
+                                    <div v-else class="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold"
+                                         :style="{ backgroundColor: themeColor.primary }">
+                                        {{ org.name ? org.name.charAt(0).toUpperCase() : 'O' }}
+                                    </div>
+                                    <span class="text-sm text-gray-900 dark:text-white font-medium">{{ org.name || 'Unnamed' }}</span>
+                                </div>
+                            </div>
+                            <div class="flex-1 py-4 px-4">
+                                <span class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{{ org.description || 'No description' }}</span>
+                            </div>
+                            <div class="w-48 py-4 px-4">
+                                <span class="text-sm" :style="{ color: themeColor.primary }">{{ org.industry || 'Not specified' }}</span>
+                            </div>
+                            <div class="w-48 py-4 px-4">
+                                <a v-if="org.website" :href="org.website" target="_blank" 
+                                   class="text-sm hover:underline"
+                                   :style="{ color: themeColor.primary }">
+                                    {{ formatWebsite(org.website) }}
+                                </a>
+                                <span v-else class="text-sm text-gray-400">N/A</span>
+                            </div>
+                            <div class="w-40 py-4 px-4">
+                                <div class="text-sm" :style="{ color: themeColor.primary }">{{ org.contact_email || 'N/A' }}</div>
+                                <div v-if="org.contact_phone" class="text-xs text-gray-500 dark:text-gray-400">{{ org.contact_phone }}</div>
+                            </div>
+                            <div class="w-32 py-4 px-4">
+                                <div class="flex items-center justify-center gap-2">
+                                    <button @click="editOrganization(org)"
+                                            class="font-bold hover:underline transition-colors text-sm"
+                                            :style="{ color: themeColor.primary }">
+                                        Edit
+                                    </button>
+                                    <span :style="{ color: themeColor.primary }">|</span>
+                                    <button @click="deleteOrganization(org)"
+                                            class="font-bold hover:underline transition-colors text-sm"
+                                            :style="{ color: themeColor.primary }">
+                                        Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Table Body -->
-                <div v-if="!organizations.data || organizations.data.length === 0" class="text-center py-12">
-                    <p class="text-gray-500">No organizations found.</p>
-                </div>
-                <div v-else class="divide-y divide-gray-200">
-                    <div v-for="organization in organizations.data" :key="organization.id"
-                         class="flex flex-row hover:bg-gray-50 transition-colors">
-                        <div class="flex-1 py-4 px-6">
-                            <span class="text-sm text-gray-900 font-medium">{{ organization.name || 'Unnamed Organization' }}</span>
-                        </div>
-                        <div class="w-48 py-4 px-6">
-                            <span class="text-sm text-emerald-600">{{ getSpeakerNames(organization) }}</span>
-                        </div>
-                        <div class="w-64 py-4 px-6">
-                            <span class="text-sm text-emerald-600">{{ getWorkshopTitles(organization) }}</span>
-                        </div>
-                        <div class="w-32 py-4 px-6 flex items-center justify-center gap-1">
-                            <Link :href="route('system-admin.organizations.edit', organization.id)"
-                                  class="text-emerald-600 hover:text-emerald-700 text-sm font-medium transition-colors">
-                                Edit
+            <!-- Pagination -->
+            <div v-if="organizations.links && organizations.total > organizations.per_page" 
+                 class="px-6 py-3">
+                <nav class="flex items-center justify-between">
+                    <div class="text-sm text-gray-700 dark:text-gray-300">
+                        Showing {{ organizations.from }} to {{ organizations.to }} of {{ organizations.total }} results
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <template v-for="link in organizations.links" :key="link.label">
+                            <Link v-if="link.url"
+                                  :href="link.url"
+                                  class="px-3 py-1 rounded-md text-sm font-medium transition-colors"
+                                  :style="link.active ? {
+                                      backgroundColor: themeColor.primary,
+                                      color: 'white'
+                                  } : {}"
+                                  :class="!link.active ? 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600' : ''"
+                                  v-html="link.label">
                             </Link>
-                            <span class="text-gray-300">|</span>
-                            <button @click="deleteOrganization(organization)"
-                                    class="text-red-500 hover:text-red-600 text-sm font-medium transition-colors">
-                                Delete
-                            </button>
-                        </div>
+                            <span v-else
+                                  class="px-3 py-1 rounded-md text-sm font-medium text-gray-400 dark:text-gray-500"
+                                  v-html="link.label">
+                            </span>
+                        </template>
                     </div>
-                </div>
-
-                <!-- Add New Organization Button -->
-                <div class="px-6 py-4 border-t border-gray-200 bg-gray-50">
-                    <Link :href="route('system-admin.organizations.create')"
-                          class="inline-flex items-center justify-center w-full py-2 px-4 border border-emerald-300 rounded-lg text-emerald-700 font-medium hover:bg-emerald-50 transition-colors">
-                        Add New Organization
-                    </Link>
-                </div>
+                </nav>
             </div>
-        </div>
 
-        <!-- Pagination -->
-        <div v-if="organizations.links && organizations.total > organizations.per_page" class="px-4">
-            <nav class="flex items-center justify-center gap-2">
-                <Link v-for="link in organizations.links" :key="link.label"
-                      :href="link.url"
-                      :class="link.active ? 'bg-emerald-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'"
-                      class="px-3 py-1 rounded-md text-sm font-medium transition-colors"
-                      v-html="link.label">
-                </Link>
-            </nav>
+            <!-- Create/Edit Modal -->
+            <OrganizationModal v-if="showModal" 
+                               :organization="selectedOrganization"
+                               :theme-color="themeColor"
+                               @close="closeModal"
+                               @success="handleSuccess" />
         </div>
-    </div>
+    </Default>
 </template>
 
 <script setup>
-import { Link, useForm, router } from '@inertiajs/vue3'
-import { ref } from 'vue'
+import { Head, Link, useForm, router } from '@inertiajs/vue3'
+import { ref, computed, onMounted } from 'vue'
+import Default from '../../../Layouts/Default.vue'
+import OrganizationModal from './OrganizationModal.vue'
 
 const props = defineProps({
     organizations: {
         type: Object,
-        required: true
+        default: () => ({ data: [] })
     }
 })
 
 const searchQuery = ref('')
+const showModal = ref(false)
+const selectedOrganization = ref(null)
 
-const deleteOrganization = (organization) => {
-    if (confirm(`Are you sure you want to delete the organization "${organization.name}"?`)) {
-        useForm({}).delete(route('system-admin.organizations.destroy', organization.id))
-    }
-}
+// Get theme color from localStorage or default
+const themeColor = ref({
+    primary: '#0d9488',
+    hover: '#0f766e',
+    rgb: '13, 148, 136',
+    gradientFrom: '#0d9488',
+    gradientTo: '#14b8a6'
+})
 
-const getSpeakerNames = (organization) => {
-    if (!organization.speakers || organization.speakers.length === 0) {
-        return 'No speakers'
-    }
-    return organization.speakers.map(s => s.name).join(', ')
-}
+onMounted(() => {
+    // Get the current theme color from CSS variables
+    const root = document.documentElement
+    const primary = getComputedStyle(root).getPropertyValue('--primary-color').trim() || '#0d9488'
+    const hover = getComputedStyle(root).getPropertyValue('--primary-hover').trim() || '#0f766e'
+    const rgb = getComputedStyle(root).getPropertyValue('--primary-color-rgb').trim() || '13, 148, 136'
+    const gradientFrom = getComputedStyle(root).getPropertyValue('--primary-gradient-from').trim() || '#0d9488'
+    const gradientTo = getComputedStyle(root).getPropertyValue('--primary-gradient-to').trim() || '#14b8a6'
 
-const getWorkshopTitles = (organization) => {
-    if (!organization.workshops || organization.workshops.length === 0) {
-        return 'No workshops'
+    themeColor.value = {
+        primary: primary || themeColor.value.primary,
+        hover: hover || themeColor.value.hover,
+        rgb: rgb || themeColor.value.rgb,
+        gradientFrom: gradientFrom || themeColor.value.gradientFrom,
+        gradientTo: gradientTo || themeColor.value.gradientTo
     }
-    const titles = organization.workshops.slice(0, 2).map(w => w.title)
-    if (organization.workshops.length > 2) {
-        titles.push(`+${organization.workshops.length - 2} more`)
-    }
-    return titles.join(', ')
+})
+
+// Computed style for dynamic theme
+const themeStyles = computed(() => ({
+    '--theme-primary': themeColor.value.primary,
+    '--theme-hover': themeColor.value.hover,
+    '--theme-rgb': themeColor.value.rgb,
+    '--theme-gradient-from': themeColor.value.gradientFrom,
+    '--theme-gradient-to': themeColor.value.gradientTo,
+}))
+
+const formatWebsite = (url) => {
+    if (!url) return 'N/A'
+    return url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')
 }
 
 const handleSearch = () => {
@@ -163,4 +225,31 @@ const handleSearch = () => {
         preserveScroll: true
     })
 }
+
+const editOrganization = (org) => {
+    router.visit(route('system-admin.organizations.edit', org.id))
+}
+
+const deleteOrganization = (org) => {
+    if (confirm(`Are you sure you want to delete organization "${org.name}"?`)) {
+        useForm({}).delete(route('system-admin.organizations.destroy', org.id))
+    }
+}
+
+const closeModal = () => {
+    showModal.value = false
+    selectedOrganization.value = null
+}
+
+const handleSuccess = () => {
+    closeModal()
+    router.reload({ preserveScroll: true })
+}
 </script>
+
+<style scoped>
+input[type="text"]:focus {
+    border-color: var(--theme-primary) !important;
+    box-shadow: 0 0 0 3px rgba(var(--theme-rgb), 0.1) !important;
+}
+</style>

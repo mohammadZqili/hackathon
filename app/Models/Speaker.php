@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Str;
 
@@ -19,6 +20,7 @@ class Speaker extends Model
         'photo_path',
         'email',
         'phone',
+        'organization_id',
         'expertise_areas',
         'social_media',
         'is_active',
@@ -43,6 +45,14 @@ class Speaker extends Model
                 $speaker->slug = Str::slug($speaker->name);
             }
         });
+    }
+
+    /**
+     * Get the organization this speaker belongs to.
+     */
+    public function organization(): BelongsTo
+    {
+        return $this->belongsTo(Organization::class);
     }
 
     /**

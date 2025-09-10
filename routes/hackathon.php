@@ -58,17 +58,22 @@ Route::middleware(['auth', 'role:system_admin|permission:manage-hackathon-editio
     Route::get('users/export', [SystemAdminUserController::class, 'export'])->name('users.export');
 
     // Global Team Management
-    Route::resource('teams', SystemAdminTeamController::class)->only(['index', 'show', 'destroy']);
+    Route::resource('teams', SystemAdminTeamController::class);
+    Route::post('teams/{team}/add-member', [SystemAdminTeamController::class, 'addMember'])->name('teams.add-member');
+    Route::delete('teams/{team}/remove-member/{user}', [SystemAdminTeamController::class, 'removeMember'])->name('teams.remove-member');
     Route::get('teams/export', [SystemAdminTeamController::class, 'export'])->name('teams.export');
+    Route::get('users/search', [SystemAdminUserController::class, 'search'])->name('users.search');
 
     // Global Idea Management
     Route::resource('ideas', SystemAdminIdeaController::class)->only(['index', 'show', 'destroy']);
     Route::get('ideas/{idea}/review', [SystemAdminIdeaController::class, 'review'])->name('ideas.review');
+    Route::post('ideas/{idea}/process-review', [SystemAdminIdeaController::class, 'processReview'])->name('ideas.process-review');
     Route::post('ideas/{idea}/review/accept', [SystemAdminIdeaController::class, 'accept'])->name('ideas.review.accept');
     Route::post('ideas/{idea}/review/reject', [SystemAdminIdeaController::class, 'reject'])->name('ideas.review.reject');
     Route::post('ideas/{idea}/review/need-edit', [SystemAdminIdeaController::class, 'needEdit'])->name('ideas.review.need-edit');
     Route::post('ideas/{idea}/assign-supervisor', [SystemAdminIdeaController::class, 'assignSupervisor'])->name('ideas.assign-supervisor');
     Route::post('ideas/{idea}/update-score', [SystemAdminIdeaController::class, 'updateScore'])->name('ideas.update-score');
+    Route::post('ideas/{idea}/score', [SystemAdminIdeaController::class, 'updateScore'])->name('ideas.score');
     Route::get('ideas/{idea}/files/{file}/download', [SystemAdminIdeaController::class, 'downloadFile'])->name('ideas.download-file');
     Route::get('ideas/statistics', [SystemAdminIdeaController::class, 'statistics'])->name('ideas.statistics');
     Route::get('ideas/export', [SystemAdminIdeaController::class, 'export'])->name('ideas.export');
@@ -110,6 +115,7 @@ Route::middleware(['auth', 'role:system_admin|permission:manage-hackathon-editio
         Route::post('/twitter', [SystemAdminSettingsController::class, 'updateTwitter'])->name('twitter.update');
         Route::get('/sms', [SystemAdminSettingsController::class, 'sms'])->name('sms');
         Route::post('/sms', [SystemAdminSettingsController::class, 'updateSms'])->name('sms.update');
+        Route::post('/notifications', [SystemAdminSettingsController::class, 'updateNotifications'])->name('notifications.update');
     });
 
     // Reports & Analytics
@@ -120,6 +126,9 @@ Route::middleware(['auth', 'role:system_admin|permission:manage-hackathon-editio
         Route::get('/ideas', [SystemAdminReportController::class, 'ideas'])->name('ideas');
         Route::get('/workshops', [SystemAdminReportController::class, 'workshops'])->name('workshops');
         Route::get('/system-health', [SystemAdminReportController::class, 'systemHealth'])->name('system-health');
+        Route::post('/generate', [SystemAdminReportController::class, 'generateReport'])->name('generate');
+        Route::post('/export-pdf', [SystemAdminReportController::class, 'exportPdf'])->name('export-pdf');
+        Route::post('/schedule', [SystemAdminReportController::class, 'scheduleReports'])->name('schedule');
     });
 });
 
@@ -146,6 +155,8 @@ Route::middleware(['auth', 'role:hackathon_admin|permission:manage-current-editi
     Route::resource('ideas', HackathonAdminIdeaController::class);
     Route::get('ideas/{idea}/review', [HackathonAdminIdeaController::class, 'review'])->name('ideas.review');
     Route::post('ideas/{idea}/process-review', [HackathonAdminIdeaController::class, 'processReview'])->name('ideas.process-review');
+    Route::post('ideas/{idea}/review.submit', [HackathonAdminIdeaController::class, 'processReview'])->name('ideas.review.submit');
+    Route::post('ideas/{idea}/score', [HackathonAdminIdeaController::class, 'updateScore'])->name('ideas.score');
     Route::post('ideas/{idea}/assign-supervisor', [HackathonAdminIdeaController::class, 'assignSupervisor'])->name('ideas.assign-supervisor');
     Route::get('ideas/export', [HackathonAdminIdeaController::class, 'export'])->name('ideas.export');
 
