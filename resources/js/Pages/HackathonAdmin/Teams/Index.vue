@@ -1,7 +1,10 @@
 <script setup>
 import { Head, useForm, router } from '@inertiajs/vue3'
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import Default from '../../../Layouts/Default.vue'
+import PageHeader from '@/Components/Shared/PageHeader.vue'
+import SearchBar from '@/Components/Shared/SearchBar.vue'
+import DataTable from '@/Components/Shared/DataTable.vue'
 import { ChevronDownIcon, MagnifyingGlassIcon, PlusIcon, EyeIcon, PencilIcon, TrashIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/vue/24/outline'
 
 const props = defineProps({
@@ -20,11 +23,104 @@ const searchForm = useForm({
 const showDeleteModal = ref(false)
 const teamToDelete = ref(null)
 
+// Theme colors
+const themeColor = ref({
+    primary: '#0d9488',
+    hover: '#0f766e',
+    rgb: '13, 148, 136',
+    gradientFrom: '#0d9488',
+    gradientTo: '#14b8a6'
+})
+
+onMounted(() => {
+    const root = document.documentElement
+    const primary = getComputedStyle(root).getPropertyValue('--primary-color').trim() || '#0d9488'
+    const hover = getComputedStyle(root).getPropertyValue('--primary-hover').trim() || '#0f766e'
+    const rgb = getComputedStyle(root).getPropertyValue('--primary-color-rgb').trim() || '13, 148, 136'
+    const gradientFrom = getComputedStyle(root).getPropertyValue('--primary-gradient-from').trim() || '#0d9488'
+    const gradientTo = getComputedStyle(root).getPropertyValue('--primary-gradient-to').trim() || '#14b8a6'
+
+    themeColor.value = {
+        primary: primary || themeColor.value.primary,
+        hover: hover || themeColor.value.hover,
+        rgb: rgb || themeColor.value.rgb,
+        gradientFrom: gradientFrom || themeColor.value.gradientFrom,
+        gradientTo: gradientTo || themeColor.value.gradientTo
+    }
+})
+
+const themeStyles = computed(() => ({
+    '--theme-primary': themeColor.value.primary,
+    '--theme-hover': themeColor.value.hover,
+    '--theme-rgb': themeColor.value.rgb,
+    '--theme-gradient-from': themeColor.value.gradientFrom,
+    '--theme-gradient-to': themeColor.value.gradientTo,
+}))
+
 const statusColors = {
     pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400',
     approved: 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400',
     rejected: 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400',
     active: 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400',
+}
+
+// Table configuration for DataTable component
+const columns = [
+    {
+        key: 'name',
+        label: 'Team Name',
+        width: 'w-[246px]'
+    },
+    {
+        key: 'leader.name',
+        label: 'Team Leader',
+        width: 'w-[200px]',
+        defaultValue: 'No Leader'
+    },
+    {
+        key: 'track.name',
+        label: 'Track',
+        width: 'w-40',
+        defaultValue: 'Not Assigned'
+    },
+    {
+        key: 'members_count',
+        label: 'Members',
+        width: 'w-24',
+        formatter: (item) => `${item.members?.length || 0}/5`
+    },
+    {
+        key: 'status',
+        label: 'Status',
+        width: 'w-32'
+    },
+    {
+        key: 'idea_status',
+        label: 'Idea',
+        width: 'w-32'
+    },
+    {
+        key: 'actions',
+        label: 'Actions',
+        width: 'w-[180px]'
+    }
+]
+
+const handleSearch = () => {
+    clearTimeout(window.searchTimeout)
+    window.searchTimeout = setTimeout(filterTeams, 300)
+}
+
+const formatDate = (date) => {
+    return new Date(date).toLocaleDateString()
+}
+
+const getStatusBadgeClass = (status) => {
+    return statusColors[status] || statusColors.pending
+}
+
+const openCreateModal = () => {
+    router.visit(route('hackathon-admin.teams.create'))
 }
 
 const filterTeams = () => {
@@ -73,97 +169,118 @@ watch(() => searchForm.search, () => {
 </script>
 
 <template>
-    <Head title="Team Management" />
+    <Head title="Team Management - Hackathon Admin" />
 
     <Default>
-        <div class="max-w-7xl mx-auto">
-            <!-- Header -->
-            <div class="mb-8">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Team Management</h1>
-                        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                            Manage hackathon teams and participants
-                        </p>
-                    </div>
-                    <a :href="route('hackathon-admin.teams.create')"
-                       class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors">
-                        <PlusIcon class="w-5 h-5 mr-2" />
-                        Create Team
-                    </a>
-                </div>
-            </div>
+        <div class="container mx-auto px-4 py-8" :style="themeStyles">
+            <!-- Page Header -->
+            <PageHeader 
+                title="Team Management"
+                subtitle="Manage teams for current hackathon edition"
+                :show-action-button="true"
+                action-button-text="Create Team"
+                @action="openCreateModal"
+            />
 
             <!-- Statistics Cards -->
-            <div v-if="statistics" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow">
-                    <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Teams</div>
-                    <div class="mt-1 text-2xl font-semibold text-gray-900 dark:text-white">{{ statistics.total }}</div>
+            <div v-if="statistics" class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6 px-4">
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                    <div class="flex items-center">
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Teams</p>
+                            <p class="text-2xl font-bold" :style="{ color: themeColor.primary }">{{ statistics.total || 0 }}</p>
+                        </div>
+                        <div class="w-12 h-12 rounded-lg flex items-center justify-center" 
+                             :style="{ backgroundColor: themeColor.primary + '20' }">
+                            <svg class="w-6 h-6" :style="{ color: themeColor.primary }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
                 </div>
-                <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow">
-                    <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Pending</div>
-                    <div class="mt-1 text-2xl font-semibold text-yellow-600 dark:text-yellow-400">{{ statistics.pending }}</div>
+
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                    <div class="flex items-center">
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Pending</p>
+                            <p class="text-2xl font-bold text-yellow-600">{{ statistics.pending || 0 }}</p>
+                        </div>
+                        <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
                 </div>
-                <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow">
-                    <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Approved</div>
-                    <div class="mt-1 text-2xl font-semibold text-green-600 dark:text-green-400">{{ statistics.approved }}</div>
+
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                    <div class="flex items-center">
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Approved</p>
+                            <p class="text-2xl font-bold text-green-600">{{ statistics.approved || 0 }}</p>
+                        </div>
+                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
                 </div>
-                <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow">
-                    <div class="text-sm font-medium text-gray-500 dark:text-gray-400">With Ideas</div>
-                    <div class="mt-1 text-2xl font-semibold text-blue-600 dark:text-blue-400">{{ statistics.with_ideas }}</div>
+
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                    <div class="flex items-center">
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">With Ideas</p>
+                            <p class="text-2xl font-bold" :style="{ color: themeColor.primary }">{{ statistics.with_ideas || 0 }}</p>
+                        </div>
+                        <div class="w-12 h-12 rounded-lg flex items-center justify-center"
+                             :style="{ backgroundColor: themeColor.primary + '20' }">
+                            <svg class="w-6 h-6" :style="{ color: themeColor.primary }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                            </svg>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <!-- Filters -->
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow mb-6">
-                <div class="p-4 border-b border-gray-200 dark:border-gray-700">
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <!-- Search -->
-                        <div class="relative">
-                            <MagnifyingGlassIcon class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                            <input
-                                v-model="searchForm.search"
-                                type="text"
-                                placeholder="Search teams..."
-                                class="pl-10 pr-3 py-2 w-full border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                            />
-                        </div>
-
-                        <!-- Status Filter -->
-                        <select
-                            v-model="searchForm.status"
-                            @change="filterTeams"
-                            class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                        >
+            <div class="px-4 mb-4">
+                <div class="flex flex-wrap gap-4">
+                    <!-- Status Filter -->
+                    <div class="min-w-[200px]">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
+                        <select v-model="searchForm.status" 
+                                @change="filterTeams"
+                                class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:border-primary focus:ring-primary">
                             <option value="">All Status</option>
                             <option value="pending">Pending</option>
                             <option value="approved">Approved</option>
                             <option value="rejected">Rejected</option>
                             <option value="active">Active</option>
                         </select>
+                    </div>
 
-                        <!-- Track Filter -->
-                        <select
-                            v-model="searchForm.track_id"
-                            @change="filterTeams"
-                            class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                        >
+                    <!-- Track Filter -->
+                    <div class="min-w-[200px]">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Track</label>
+                        <select v-model="searchForm.track_id"
+                                @change="filterTeams"
+                                class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:border-primary focus:ring-primary">
                             <option value="">All Tracks</option>
                             <option v-for="track in tracks" :key="track.id" :value="track.id">
                                 {{ track.name }}
                             </option>
                         </select>
-
-                        <!-- Clear Filters -->
-                        <button
-                            @click="searchForm.reset(); filterTeams()"
-                            class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
-                        >
-                            Clear Filters
-                        </button>
                     </div>
                 </div>
             </div>
+
+            <!-- Search Bar -->
+            <SearchBar 
+                v-model="searchForm.search"
+                placeholder="Search teams by name or leader"
+                @update:model-value="handleSearch"
+            />
 
             <!-- Teams Table -->
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">

@@ -14,6 +14,7 @@ class Track extends Model
 
     protected $fillable = [
         'hackathon_id',
+        'edition_id',
         'name',
         'description',
         'icon',
@@ -37,6 +38,14 @@ class Track extends Model
     public function hackathon(): BelongsTo
     {
         return $this->belongsTo(Hackathon::class);
+    }
+
+    /**
+     * Get the edition that owns this track.
+     */
+    public function edition(): BelongsTo
+    {
+        return $this->belongsTo(HackathonEdition::class, 'edition_id');
     }
 
     /**

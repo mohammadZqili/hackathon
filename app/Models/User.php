@@ -136,10 +136,10 @@ class User extends Authenticatable implements Auditable
     public function getCreatedAtFormattedAttribute(): string
     {
         // Ensure created_at is a Carbon instance
-        $createdAt = $this->created_at instanceof Carbon 
-            ? $this->created_at 
+        $createdAt = $this->created_at instanceof Carbon
+            ? $this->created_at
             : ($this->created_at ? Carbon::parse($this->created_at) : null);
-            
+
         return $this->formatDateStyle($createdAt);
     }
 
@@ -255,14 +255,14 @@ class User extends Authenticatable implements Auditable
         return $this->hasMany(WorkshopRegistration::class);
     }
 
-    /**
-     * Get tracks this user supervises.
-     */
-    public function supervisedTracks(): BelongsToMany
-    {
-        return $this->belongsToMany(Track::class, 'track_supervisors')
-            ->withTimestamps();
-    }
+//    /**
+//     * Get tracks this user supervises.
+//     */
+//    public function supervisedTracks(): BelongsToMany
+//    {
+//        return $this->belongsToMany(Track::class, 'track_supervisors')
+//            ->withTimestamps();
+//    }
 
     /**
      * Get ideas reviewed by this user.
@@ -381,5 +381,43 @@ class User extends Authenticatable implements Auditable
             'visitor' => 'زائر',
             default => 'مستخدم',
         };
+    }
+
+    // =====================================================
+    // Hackathon Role Relationships
+    // =====================================================
+
+    /**
+     * Get supervised tracks for track supervisors
+     */
+    public function supervisedTracks()
+    {
+        return $this->belongsToMany(Track::class, 'track_supervisors', 'user_id', 'track_id')
+                    ->withTimestamps();
+    }
+
+    /**
+     * Get supervised workshops for workshop supervisors
+     */
+    public function supervisedWorkshops()
+    {
+        return $this->belongsToMany(Workshop::class, 'workshop_supervisors', 'user_id', 'workshop_id')
+                    ->withTimestamps();
+    }
+
+    /**
+     * Get the user's role (alias for user_type)
+     */
+    public function getRoleAttribute()
+    {
+        return $this->user_type;
+    }
+
+    /**
+     * Set the user's role (alias for user_type)
+     */
+    public function setRoleAttribute($value)
+    {
+        $this->user_type = $value;
     }
 }

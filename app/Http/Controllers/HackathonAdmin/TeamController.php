@@ -6,8 +6,6 @@ use App\Http\Requests\HackathonAdmin\UpdateTeamRequest;
 use App\Http\Requests\HackathonAdmin\ApproveTeamRequest;
 use App\Services\TeamService;
 use App\Models\Team;
-use App\Models\HackathonEdition;
-use App\Models\Hackathon;
 use App\Models\Track;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -68,7 +66,7 @@ class TeamController extends BaseController
         $tracks = Track::where('hackathon_edition_id', $this->currentEdition->id)
             ->where('status', 'active')
             ->get();
-        
+
         $users = User::whereDoesntHave('teams', function ($query) {
             $query->where('edition_id', $this->currentEdition->id);
         })->get();
@@ -84,7 +82,7 @@ class TeamController extends BaseController
     {
         $data = $request->validated();
         $data['edition_id'] = $this->currentEdition->id;
-        
+
         try {
             $team = $this->teamService->createTeam($data);
             return redirect()->route('hackathon-admin.teams.index')
@@ -109,7 +107,7 @@ class TeamController extends BaseController
         if (!$this->checkEditionOwnership($team)) {
             abort(403);
         }
-        
+
         // Get tracks for current edition
         $tracks = Track::where('hackathon_edition_id', $this->currentEdition->id)
             ->where('status', 'active')

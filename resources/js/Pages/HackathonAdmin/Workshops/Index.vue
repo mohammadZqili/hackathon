@@ -1,25 +1,18 @@
 <script setup>
 import { Head, useForm, router } from '@inertiajs/vue3'
-import { ref, computed } from 'vue'
-import Default from '../../../Layouts/Default.vue'
-import { 
-    AcademicCapIcon, 
-    PlusIcon, 
-    MagnifyingGlassIcon, 
-    ClockIcon,
-    MapPinIcon,
-    UsersIcon,
-    CalendarIcon,
-    EyeIcon,
-    PencilIcon,
-    TrashIcon
-} from '@heroicons/vue/24/outline'
+import { ref, computed, watch, onMounted } from 'vue'
+import Default from '@/Layouts/Default.vue'
+import PageHeader from '@/Components/Shared/PageHeader.vue'
+import SearchBar from '@/Components/Shared/SearchBar.vue'
+import DataTable from '@/Components/Shared/DataTable.vue'
 
 const props = defineProps({
     workshops: Object,
     statistics: Object,
     speakers: Array,
+    organizations: Array,
     filters: Object,
+    permissions: Object
 })
 
 const searchForm = useForm({
@@ -28,339 +21,392 @@ const searchForm = useForm({
     date: props.filters?.date || '',
 })
 
-const submitSearch = () => {
-    searchForm.get(route('hackathon-admin.workshops.index'), {
+// Theme colors
+const themeColor = ref({
+    primary: '#0d9488',
+    hover: '#0f766e',
+    rgb: '13, 148, 136',
+    gradientFrom: '#0d9488',
+    gradientTo: '#14b8a6'
+})
+
+onMounted(() => {
+    const root = document.documentElement
+    const primary = getComputedStyle(root).getPropertyValue('--primary-color').trim() || '#0d9488'
+    const hover = getComputedStyle(root).getPropertyValue('--primary-hover').trim() || '#0f766e'
+    const rgb = getComputedStyle(root).getPropertyValue('--primary-color-rgb').trim() || '13, 148, 136'
+    const gradientFrom = getComputedStyle(root).getPropertyValue('--primary-gradient-from').trim() || '#0d9488'
+    const gradientTo = getComputedStyle(root).getPropertyValue('--primary-gradient-to').trim() || '#14b8a6'
+
+    themeColor.value = {
+        primary: primary || themeColor.value.primary,
+        hover: hover || themeColor.value.hover,
+        rgb: rgb || themeColor.value.rgb,
+        gradientFrom: gradientFrom || themeColor.value.gradientFrom,
+        gradientTo: gradientTo || themeColor.value.gradientTo
+    }
+})
+
+const themeStyles = computed(() => ({
+    '--theme-primary': themeColor.value.primary,
+    '--theme-hover': themeColor.value.hover,
+    '--theme-rgb': themeColor.value.rgb,
+    '--theme-gradient-from': themeColor.value.gradientFrom,
+    '--theme-gradient-to': themeColor.value.gradientTo,
+}))
+
+// Workshop status logic
+const getWorkshopStatus = (workshop) => {
+    const now = new Date()
+    const workshopDateTime = new Date(`${workshop.date} ${workshop.start_time}`)
+    const endDateTime = new Date(`${workshop.date} ${workshop.end_time}`)
+    
+    if (now < workshopDateTime) {
+        return { status: 'upcoming', label: 'Upcoming' }
+    } else if (now >= workshopDateTime && now <= endDateTime) {
+        return { status: 'ongoing', label: 'Ongoing' }
+    } else {
+        return { status: 'completed', label: 'Completed' }
+    }
+}
+
+const getStatusBadgeClass = (status) => {
+    const statusClasses = {
+        upcoming: 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400',
+        ongoing: 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400',
+        completed: 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400'
+    }
+    return statusClasses[status] || statusClasses.upcoming
+}
+
+// Table configuration
+const columns = [
+    {
+        key: 'title',
+        label: 'Workshop Title',
+        width: 'w-[280px]'
+    },
+    {
+        key: 'speakers',
+        label: 'Speaker(s)',
+        width: 'w-[180px]'
+    },
+    {
+        key: 'date',
+        label: 'Date',
+        width: 'w-[120px]',
+        formatter: (item) => formatDate(item.date)
+    },
+    {
+        key: 'time',
+        label: 'Time',
+        width: 'w-[140px]',
+        formatter: (item) => `${item.start_time} - ${item.end_time}`
+    },
+    {
+        key: 'location',
+        label: 'Location',
+        width: 'w-[150px]',
+        defaultValue: 'Online'
+    },
+    {
+        key: 'capacity',
+        label: 'Capacity',
+        width: 'w-[100px]',
+        formatter: (item) => `${item.registered_count || 0}/${item.max_capacity}`
+    },
+    {
+        key: 'status',
+        label: 'Status',
+        width: 'w-[120px]'
+    },
+    {
+        key: 'actions',
+        label: 'Actions',
+        width: 'w-[200px]'
+    }
+]
+
+const handleSearch = () => {
+    clearTimeout(window.searchTimeout)
+    window.searchTimeout = setTimeout(filterWorkshops, 300)
+}
+
+const filterWorkshops = () => {
+    router.get(route('hackathon-admin.workshops.index'), {
+        search: searchForm.search,
+        status: searchForm.status,
+        date: searchForm.date,
+    }, {
         preserveState: true,
-        replace: true,
+        preserveScroll: true,
     })
 }
 
-const getStatusColor = (status) => {
-    const now = new Date()
-    const startTime = new Date(status.start_time)
-    const endTime = new Date(status.end_time)
-    
-    if (now < startTime) {
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400'
-    } else if (now >= startTime && now <= endTime) {
-        return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
-    } else {
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400'
-    }
+watch(() => searchForm.status, filterWorkshops)
+watch(() => searchForm.date, filterWorkshops)
+
+const formatDate = (date) => {
+    return date ? new Date(date).toLocaleDateString() : ''
 }
 
-const getStatusText = (workshop) => {
-    const now = new Date()
-    const startTime = new Date(workshop.start_time)
-    const endTime = new Date(workshop.end_time)
-    
-    if (now < startTime) {
-        return 'Upcoming'
-    } else if (now >= startTime && now <= endTime) {
-        return 'Ongoing'
-    } else {
-        return 'Completed'
-    }
+const formatTime = (time) => {
+    return time ? new Date(`2000-01-01 ${time}`).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''
 }
 
-const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
+const openCreateModal = () => {
+    router.visit(route('hackathon-admin.workshops.create'))
+}
+
+const viewWorkshop = (workshop) => {
+    router.visit(route('hackathon-admin.workshops.show', workshop.id))
+}
+
+const editWorkshop = (workshop) => {
+    router.visit(route('hackathon-admin.workshops.edit', workshop.id))
+}
+
+const viewAttendance = (workshop) => {
+    router.visit(route('hackathon-admin.workshops.attendance', workshop.id))
+}
+
+const generateQR = (workshop) => {
+    router.post(route('hackathon-admin.workshops.generate-qr', workshop.id), {}, {
+        preserveScroll: true
     })
 }
 
 const deleteWorkshop = (workshop) => {
-    if (confirm(`Are you sure you want to delete "${workshop.title}"?`)) {
+    if (confirm('Are you sure you want to delete this workshop? This action cannot be undone.')) {
         router.delete(route('hackathon-admin.workshops.destroy', workshop.id))
     }
 }
 </script>
 
 <template>
-    <Head title="Workshops Management" />
-    
+    <Head title="Workshops Management - Hackathon Admin" />
+
     <Default>
-        <div class="max-w-7xl mx-auto">
-            <!-- Header -->
-            <div class="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                    <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Workshops Management</h1>
-                    <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                        Manage workshops, speakers, and attendance tracking
-                    </p>
-                </div>
-                <a 
-                    :href="route('hackathon-admin.workshops.create')" 
-                    class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
-                >
-                    <PlusIcon class="w-5 h-5 mr-2" />
-                    Create Workshop
-                </a>
-            </div>
+        <div class="container mx-auto px-4 py-8" :style="themeStyles">
+            <!-- Page Header -->
+            <PageHeader 
+                title="Workshops Management"
+                subtitle="Manage workshops for current hackathon edition"
+                :show-action-button="permissions?.canCreate"
+                action-button-text="New Workshop"
+                @action="openCreateModal"
+            />
 
             <!-- Statistics Cards -->
-            <div v-if="statistics" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+            <div v-if="statistics" class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6 px-4">
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
                     <div class="flex items-center">
-                        <div class="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
-                            <AcademicCapIcon class="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Workshops</p>
+                            <p class="text-2xl font-bold" :style="{ color: themeColor.primary }">{{ statistics.total || 0 }}</p>
                         </div>
-                        <div class="ml-4">
-                            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ statistics.total || 0 }}</p>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Total Workshops</p>
+                        <div class="w-12 h-12 rounded-lg flex items-center justify-center" 
+                             :style="{ backgroundColor: themeColor.primary + '20' }">
+                            <svg class="w-6 h-6" :style="{ color: themeColor.primary }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222"></path>
+                            </svg>
                         </div>
                     </div>
                 </div>
-                
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
                     <div class="flex items-center">
-                        <div class="p-2 bg-green-100 dark:bg-green-900/20 rounded-lg">
-                            <ClockIcon class="w-6 h-6 text-green-600 dark:text-green-400" />
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Upcoming</p>
+                            <p class="text-2xl font-bold text-blue-600">{{ statistics.upcoming || 0 }}</p>
                         </div>
-                        <div class="ml-4">
-                            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ statistics.upcoming || 0 }}</p>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Upcoming</p>
+                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
                         </div>
                     </div>
                 </div>
-                
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
                     <div class="flex items-center">
-                        <div class="p-2 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg">
-                            <ClockIcon class="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Ongoing</p>
+                            <p class="text-2xl font-bold text-green-600">{{ statistics.ongoing || 0 }}</p>
                         </div>
-                        <div class="ml-4">
-                            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ statistics.ongoing || 0 }}</p>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Ongoing</p>
+                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
                         </div>
                     </div>
                 </div>
-                
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
                     <div class="flex items-center">
-                        <div class="p-2 bg-gray-100 dark:bg-gray-700 rounded-lg">
-                            <ClockIcon class="w-6 h-6 text-gray-600 dark:text-gray-400" />
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Registrations</p>
+                            <p class="text-2xl font-bold" :style="{ color: themeColor.primary }">{{ statistics.total_registrations || 0 }}</p>
                         </div>
-                        <div class="ml-4">
-                            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ statistics.completed || 0 }}</p>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Completed</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                    <div class="flex items-center">
-                        <div class="p-2 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
-                            <UsersIcon class="w-6 h-6 text-purple-600 dark:text-purple-400" />
-                        </div>
-                        <div class="ml-4">
-                            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ statistics.total_registrations || 0 }}</p>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Total Registrations</p>
+                        <div class="w-12 h-12 rounded-lg flex items-center justify-center"
+                             :style="{ backgroundColor: themeColor.primary + '20' }">
+                            <svg class="w-6 h-6" :style="{ color: themeColor.primary }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                            </svg>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Filters -->
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-8">
-                <form @submit.prevent="submitSearch" class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Search Workshops
-                        </label>
-                        <div class="relative">
-                            <MagnifyingGlassIcon class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                            <input
-                                v-model="searchForm.search"
-                                type="text"
-                                placeholder="Search by title or description..."
-                                class="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                            />
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Status
-                        </label>
-                        <select
-                            v-model="searchForm.status"
-                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                        >
+            <div class="px-4 mb-4">
+                <div class="flex flex-wrap gap-4">
+                    <!-- Status Filter -->
+                    <div class="min-w-[200px]">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
+                        <select v-model="searchForm.status" 
+                                class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:border-primary focus:ring-primary">
                             <option value="">All Status</option>
                             <option value="upcoming">Upcoming</option>
                             <option value="ongoing">Ongoing</option>
                             <option value="completed">Completed</option>
                         </select>
                     </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Date
-                        </label>
-                        <input
-                            v-model="searchForm.date"
-                            type="date"
-                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                        />
+
+                    <!-- Date Filter -->
+                    <div class="min-w-[200px]">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date</label>
+                        <input v-model="searchForm.date"
+                               type="date"
+                               class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:border-primary focus:ring-primary">
                     </div>
-                    
-                    <div class="flex items-end">
-                        <button
-                            type="submit"
-                            class="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
-                        >
-                            Filter
-                        </button>
-                    </div>
-                </form>
+                </div>
             </div>
 
-            <!-- Workshops List -->
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow">
-                <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                    <h3 class="text-lg font-medium text-gray-900 dark:text-white">
-                        Workshops ({{ workshops?.data?.length || 0 }})
-                    </h3>
-                </div>
+            <!-- Search Bar -->
+            <SearchBar 
+                v-model="searchForm.search"
+                placeholder="Search workshops by title, description or speaker"
+                @update:model-value="handleSearch"
+            />
 
-                <div v-if="workshops?.data?.length > 0" class="divide-y divide-gray-200 dark:divide-gray-700">
-                    <div
-                        v-for="workshop in workshops.data"
-                        :key="workshop.id"
-                        class="p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-                    >
-                        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-                            <div class="flex-1">
-                                <div class="flex items-start justify-between">
-                                    <div>
-                                        <h4 class="text-lg font-medium text-gray-900 dark:text-white">
-                                            {{ workshop.title }}
-                                        </h4>
-                                        <p class="mt-1 text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-                                            {{ workshop.description }}
-                                        </p>
-                                    </div>
-                                    <span 
-                                        :class="getStatusColor(workshop)"
-                                        class="ml-4 px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap"
-                                    >
-                                        {{ getStatusText(workshop) }}
-                                    </span>
-                                </div>
-                                
-                                <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
-                                    <div class="flex items-center text-gray-600 dark:text-gray-400">
-                                        <CalendarIcon class="w-4 h-4 mr-2" />
-                                        {{ formatDate(workshop.start_time) }}
-                                    </div>
-                                    
-                                    <div class="flex items-center text-gray-600 dark:text-gray-400">
-                                        <MapPinIcon class="w-4 h-4 mr-2" />
-                                        {{ workshop.location || 'TBD' }}
-                                    </div>
-                                    
-                                    <div class="flex items-center text-gray-600 dark:text-gray-400">
-                                        <UsersIcon class="w-4 h-4 mr-2" />
-                                        {{ workshop.registrations_count || 0 }} / {{ workshop.max_attendees || 'Unlimited' }}
-                                    </div>
-                                    
-                                    <div class="flex items-center text-gray-600 dark:text-gray-400">
-                                        <AcademicCapIcon class="w-4 h-4 mr-2" />
-                                        {{ workshop.speakers?.[0]?.name || 'TBD' }}
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Actions -->
-                            <div class="mt-4 lg:mt-0 lg:ml-6 flex items-center space-x-2">
-                                <a
-                                    :href="route('hackathon-admin.workshops.show', workshop.id)"
-                                    class="p-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
-                                    title="View Details"
-                                >
-                                    <EyeIcon class="w-4 h-4" />
-                                </a>
-                                <a
-                                    :href="route('hackathon-admin.workshops.edit', workshop.id)"
-                                    class="p-2 text-gray-400 hover:text-green-600 dark:hover:text-green-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
-                                    title="Edit Workshop"
-                                >
-                                    <PencilIcon class="w-4 h-4" />
-                                </a>
-                                <button
-                                    @click="deleteWorkshop(workshop)"
-                                    class="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
-                                    title="Delete Workshop"
-                                >
-                                    <TrashIcon class="w-4 h-4" />
-                                </button>
+            <!-- Workshops Table -->
+            <DataTable
+                :data="workshops?.data || []"
+                :columns="columns"
+                empty-message="No workshops found for your hackathon edition. Click 'New Workshop' to create the first workshop."
+            >
+                <!-- Speakers Column -->
+                <template #speakers="{ item }">
+                    <div v-if="item.speakers && item.speakers.length > 0">
+                        <div v-for="(speaker, index) in item.speakers" :key="speaker.id" class="text-sm">
+                            <span class="text-gray-900 dark:text-white">{{ speaker.name }}</span>
+                            <span v-if="speaker.organization" class="text-gray-500 dark:text-gray-400 text-xs block">{{ speaker.organization.name }}</span>
+                        </div>
+                    </div>
+                    <span v-else class="text-sm text-gray-500 dark:text-gray-400">No Speaker</span>
+                </template>
+
+                <!-- Capacity Column -->
+                <template #capacity="{ item }">
+                    <div class="text-sm">
+                        <span class="font-medium" :style="{ color: themeColor.primary }">
+                            {{ item.registered_count || 0 }}
+                        </span>
+                        <span class="text-gray-500 dark:text-gray-400">
+                            /{{ item.max_capacity }}
+                        </span>
+                        <div v-if="item.max_capacity" class="mt-1">
+                            <div class="w-16 bg-gray-200 rounded-full h-1">
+                                <div class="h-1 rounded-full"
+                                     :style="{ 
+                                         backgroundColor: themeColor.primary, 
+                                         width: `${Math.min(100, ((item.registered_count || 0) / item.max_capacity) * 100)}%` 
+                                     }"></div>
                             </div>
                         </div>
                     </div>
-                </div>
+                </template>
 
-                <!-- Empty State -->
-                <div v-else class="p-12 text-center">
-                    <AcademicCapIcon class="mx-auto w-12 h-12 text-gray-400 dark:text-gray-600 mb-4" />
-                    <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No workshops found</h3>
-                    <p class="text-gray-600 dark:text-gray-400 mb-4">
-                        {{ searchForm.search || searchForm.status || searchForm.date 
-                            ? 'Try adjusting your search filters.' 
-                            : 'Get started by creating your first workshop.' }}
-                    </p>
-                    <a
-                        :href="route('hackathon-admin.workshops.create')"
-                        class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
-                    >
-                        <PlusIcon class="w-4 h-4 mr-2" />
-                        Create Workshop
-                    </a>
-                </div>
+                <!-- Status Column -->
+                <template #status="{ item }">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                          :class="getStatusBadgeClass(getWorkshopStatus(item).status)">
+                        {{ getWorkshopStatus(item).label }}
+                    </span>
+                </template>
 
-                <!-- Pagination -->
-                <div v-if="workshops?.links && workshops.data?.length > 0" class="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
-                    <nav class="flex items-center justify-between">
-                        <div class="flex-1 flex justify-between sm:hidden">
-                            <component 
-                                :is="workshops.links.prev ? 'a' : 'span'" 
-                                :href="workshops.links.prev"
-                                :class="[
-                                    'relative inline-flex items-center px-4 py-2 border text-sm font-medium rounded-md',
-                                    workshops.links.prev 
-                                        ? 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600'
-                                        : 'border-gray-300 bg-gray-100 text-gray-500 cursor-not-allowed dark:bg-gray-800 dark:border-gray-600 dark:text-gray-500'
-                                ]"
-                            >
-                                Previous
-                            </component>
-                            <component 
-                                :is="workshops.links.next ? 'a' : 'span'" 
-                                :href="workshops.links.next"
-                                :class="[
-                                    'ml-3 relative inline-flex items-center px-4 py-2 border text-sm font-medium rounded-md',
-                                    workshops.links.next 
-                                        ? 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600'
-                                        : 'border-gray-300 bg-gray-100 text-gray-500 cursor-not-allowed dark:bg-gray-800 dark:border-gray-600 dark:text-gray-500'
-                                ]"
-                            >
-                                Next
-                            </component>
-                        </div>
-                        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                            <div>
-                                <p class="text-sm text-gray-700 dark:text-gray-300">
-                                    Showing {{ workshops.from || 0 }} to {{ workshops.to || 0 }} of {{ workshops.total || 0 }} results
-                                </p>
-                            </div>
-                        </div>
-                    </nav>
+                <!-- Actions Column -->
+                <template #actions="{ item }">
+                    <div class="flex items-center gap-2">
+                        <button @click="viewWorkshop(item)"
+                                class="font-bold hover:underline transition-colors text-sm"
+                                :style="{ color: themeColor.primary }">
+                            View
+                        </button>
+                        
+                        <span v-if="permissions?.canEdit" :style="{ color: themeColor.primary }">|</span>
+                        <button v-if="permissions?.canEdit" 
+                                @click="editWorkshop(item)"
+                                class="font-bold hover:underline transition-colors text-sm"
+                                :style="{ color: themeColor.primary }">
+                            Edit
+                        </button>
+
+                        <span :style="{ color: themeColor.primary }">|</span>
+                        <button @click="viewAttendance(item)"
+                                class="font-bold hover:underline transition-colors text-sm text-blue-600">
+                            Attendance
+                        </button>
+
+                        <span :style="{ color: themeColor.primary }">|</span>
+                        <button @click="generateQR(item)"
+                                class="font-bold hover:underline transition-colors text-sm text-green-600">
+                            QR Code
+                        </button>
+
+                        <span v-if="permissions?.canDelete" :style="{ color: themeColor.primary }">|</span>
+                        <button v-if="permissions?.canDelete"
+                                @click="deleteWorkshop(item)"
+                                class="font-bold hover:underline transition-colors text-sm text-red-600">
+                            Delete
+                        </button>
+                    </div>
+                </template>
+            </DataTable>
+
+            <!-- Pagination -->
+            <div v-if="workshops?.links" class="px-4 py-3">
+                <div class="flex items-center justify-between">
+                    <div class="text-sm text-gray-700 dark:text-gray-300">
+                        Showing {{ workshops.from }} to {{ workshops.to }} of {{ workshops.total }} results
+                    </div>
+                    <div class="flex space-x-1">
+                        <template v-for="(link, index) in workshops.links" :key="index">
+                            <button v-if="link.url && link.label !== '&laquo; Previous' && link.label !== 'Next &raquo;'"
+                                    @click="router.visit(link.url)"
+                                    class="px-3 py-2 text-sm font-medium rounded-md transition-colors"
+                                    :class="link.active 
+                                        ? 'text-white shadow-sm' 
+                                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'"
+                                    :style="link.active ? {
+                                        background: `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})`
+                                    } : {}">
+                                {{ link.label }}
+                            </button>
+                        </template>
+                    </div>
                 </div>
             </div>
         </div>
     </Default>
 </template>
+
+<style scoped>
+input[type="text"]:focus,
+input[type="date"]:focus,
+select:focus {
+    border-color: var(--theme-primary) !important;
+    box-shadow: 0 0 0 3px rgba(var(--theme-rgb), 0.1) !important;
+}
+</style>

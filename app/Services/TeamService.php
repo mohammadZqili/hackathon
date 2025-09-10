@@ -1,461 +1,236 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\TeamLead;
 
+use App\Repositories\TeamRepository;
+use App\Repositories\IdeaRepository;
+use App\Repositories\UserRepository;
 use App\Models\Team;
 use App\Models\User;
-use App\Repositories\TeamRepository;
-use App\Repositories\HackathonRepository;
-use App\Services\Contracts\TeamServiceInterface;
+use App\Models\Idea;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Log;
 
-class TeamService implements TeamServiceInterface
+class TeamLeadService
 {
+    protected TeamRepository $teamRepository;
+    protected IdeaRepository $ideaRepository;
+    protected UserRepository $userRepository;
+
     public function __construct(
-        private TeamRepository $teamRepo,
-        private HackathonRepository $hackathonRepo
-    ) {}
+        TeamRepository $teamRepository,
+        IdeaRepository $ideaRepository,
+        UserRepository $userRepository
+    ) {
+        $this->teamRepository = $teamRepository;
+        $this->ideaRepository = $ideaRepository;
+        $this->userRepository = $userRepository;
+    }
 
     /**
-     * Create a new team with leader (for team leaders).
+     * Get the team led by the user
      */
-    public function createTeamWithLeader(array $data, User $leader): Team
+    public function getMyTeam(User $user): ?Team
     {
-        return DB::transaction(function () use ($data, $leader) {
-            // Validate hackathon is open for registration
-            $hackathon = $this->hackathonRepo->find($data['hackathon_id']);
-            
-            if (!$hackathon || !$hackathon->isRegistrationOpen()) {
-                throw new \Exception('التسجيل مغلق حالياً');
-            }
+        return $this->teamRepository->getTeamsByLeader($user->id)->first();
+    }
 
-            // Check if user already leads a team in this hackathon
-            $existingTeam = $this->teamRepo->findByQuery([
-                'leader_id' => $leader->id,
-                'hackathon_id' => $hackathon->id
-            ]);
-            
-            if ($existingTeam) {
-                throw new \Exception('لديك فريق بالفعل في هذا الهاكاثون');
-            }
+    /**
+     * Get dashboard statistics for team leader
+     */
+    public function getDashboardStats(User $user): array
+    {
+        $team = $this->getMyTeam($user);
+        
+        if (!$team) {
+            return [
+                'has_team' => false,
+                'team_name' => null,
+                'members_count' => 0,
+                'idea_status' => null,
+                'pending_members' => 0,
+                'track_name' => null,
+                'edition_name' => null,
+            ];
+        }
 
-            // Create team
-            $data['leader_id'] = $leader->id;
-            $data['invite_code'] = Str::upper(Str::random(8));
-            $data['status'] = 'active';
-            $data['max_members'] = $data['max_members'] ?? 5;
-            
-            $team = $this->teamRepo->create($data);
-            
-            // Add leader as first member with accepted status
-            $team->members()->create([
-                'user_id' => $leader->id,
-                'status' => 'accepted',
-                'role' => 'leader',
-                'joined_at' => now(),
-            ]);
-            
-            // Update user type if needed
-            if ($leader->user_type === 'visitor') {
-                $leader->update(['user_type' => 'team_leader']);
-            }
-            
-            Log::info('Team created', [
-                'team_id' => $team->id,
-                'leader_id' => $leader->id,
-                'hackathon_id' => $hackathon->id,
-            ]);
-            
-            return $team;
+        return [
+            'has_team' => true,
+            'team_name' => $team->name,
+            'members_count' => $team->acceptedMembers()->count() + 1, // +1 for leader
+            'idea_status' => $team->idea?->status ?? 'not_submitted',
+            'pending_members' => $team->pendingMembers()->count(),
+            'track_name' => $team->track?->name,
+            'edition_name' => $team->hackathon?->name,
+            'team_status' => $team->status,
+            'created_at' => $team->created_at,
+        ];
+    }
+
+    /**
+     * Get team members with their details
+     */
+    public function getTeamMembers(Team $team): Collection
+    {
+        return $team->members()->with('user')->get()->map(function ($member) {
+            return [
+                'id' => $member->user->id,
+                'name' => $member->user->name,
+                'email' => $member->user->email,
+                'status' => $member->pivot->status,
+                'role' => $member->pivot->role,
+                'joined_at' => $member->pivot->joined_at,
+            ];
         });
     }
 
     /**
-     * Join team using invite code.
+     * Add a new team member
      */
-    public function joinTeamByCode(string $code, User $user): array
+    public function addTeamMember(Team $team, string $email): array
     {
-        $team = $this->teamRepo->findByQuery(['invite_code' => $code]);
-        
-        if (!$team) {
-            return ['success' => false, 'message' => 'كود الدعوة غير صحيح'];
-        }
-
-        // Check if user can join the team
-        $canJoin = $this->canUserJoinTeam($team, $user);
-        if (!$canJoin['can_join']) {
-            return ['success' => false, 'message' => $canJoin['reason']];
-        }
-
-        // Check if already requested to join
-        $existingMember = $team->members()->where('user_id', $user->id)->first();
-        if ($existingMember) {
-            if ($existingMember->status === 'pending') {
-                return ['success' => false, 'message' => 'طلبك قيد المراجعة'];
-            } elseif ($existingMember->status === 'accepted') {
-                return ['success' => false, 'message' => 'أنت عضو في هذا الفريق بالفعل'];
+        DB::beginTransaction();
+        try {
+            $user = $this->userRepository->findByEmail($email);
+            
+            if (!$user) {
+                DB::rollBack();
+                return ['success' => false, 'message' => 'User not found with this email'];
             }
-        }
 
-        // Add as pending member
-        $team->members()->create([
-            'user_id' => $user->id,
-            'status' => 'pending',
-            'role' => 'member',
-            'joined_at' => null,
-        ]);
-        
-        Log::info('Team join request', [
-            'team_id' => $team->id,
-            'user_id' => $user->id,
-        ]);
-        
-        return ['success' => true, 'message' => 'تم إرسال طلب الانضمام', 'team' => $team];
+            // Check if user is already in another team for this hackathon
+            $existingTeam = $this->teamRepository->getTeamsForUser($user->id)
+                ->where('hackathon_id', $team->hackathon_id)
+                ->first();
+                
+            if ($existingTeam) {
+                DB::rollBack();
+                return ['success' => false, 'message' => 'User is already in another team for this hackathon'];
+            }
+
+            // Check if team is full
+            if ($team->isFull()) {
+                DB::rollBack();
+                return ['success' => false, 'message' => 'Team is already full'];
+            }
+
+            $success = $this->teamRepository->addMember($team->id, $user->id, 'pending');
+            
+            if ($success) {
+                DB::commit();
+                // TODO: Send invitation email to user
+                return ['success' => true, 'message' => 'Invitation sent successfully'];
+            }
+
+            DB::rollBack();
+            return ['success' => false, 'message' => 'Failed to add member'];
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return ['success' => false, 'message' => 'An error occurred: ' . $e->getMessage()];
+        }
     }
 
     /**
-     * Accept a member to the team.
+     * Remove a team member
      */
-    public function acceptMember(int $teamId, int $userId, User $leader): bool
+    public function removeTeamMember(Team $team, int $memberId): bool
     {
-        $team = $this->teamRepo->find($teamId);
-        
-        if (!$team || $team->leader_id !== $leader->id) {
-            throw new \Exception('غير مصرح لك بهذا الإجراء');
-        }
-
-        // Check team capacity
-        $acceptedCount = $team->members()->where('status', 'accepted')->count();
-        if ($acceptedCount >= $team->max_members) {
-            throw new \Exception('الفريق ممتلئ');
-        }
-
-        $member = $team->members()->where('user_id', $userId)->first();
-        if (!$member || $member->status !== 'pending') {
-            throw new \Exception('طلب الانضمام غير موجود');
-        }
-
-        $member->update([
-            'status' => 'accepted',
-            'joined_at' => now(),
-        ]);
-        
-        // Update user type if needed
-        $user = User::find($userId);
-        if ($user && $user->user_type === 'visitor') {
-            $user->update(['user_type' => 'team_member']);
-        }
-        
-        Log::info('Team member accepted', [
-            'team_id' => $teamId,
-            'user_id' => $userId,
-            'leader_id' => $leader->id,
-        ]);
-        
-        return true;
-    }
-
-    /**
-     * Reject a member from joining the team.
-     */
-    public function rejectMember(int $teamId, int $userId, User $leader): bool
-    {
-        $team = $this->teamRepo->find($teamId);
-        
-        if (!$team || $team->leader_id !== $leader->id) {
-            throw new \Exception('غير مصرح لك بهذا الإجراء');
-        }
-
-        $member = $team->members()->where('user_id', $userId)->first();
-        if (!$member || $member->status !== 'pending') {
-            throw new \Exception('طلب الانضمام غير موجود');
-        }
-
-        $member->delete();
-        
-        Log::info('Team member rejected', [
-            'team_id' => $teamId,
-            'user_id' => $userId,
-            'leader_id' => $leader->id,
-        ]);
-        
-        return true;
-    }
-
-    /**
-     * Remove a member from the team.
-     */
-    public function removeFromTeam(int $teamId, int $userId, User $leader): bool
-    {
-        $team = $this->teamRepo->find($teamId);
-        
-        if (!$team || $team->leader_id !== $leader->id) {
-            throw new \Exception('غير مصرح لك بهذا الإجراء');
-        }
-
         // Cannot remove the leader
-        if ($userId === $leader->id) {
-            throw new \Exception('لا يمكن إزالة قائد الفريق');
-        }
-
-        $member = $team->members()->where('user_id', $userId)->first();
-        if (!$member) {
-            throw new \Exception('العضو غير موجود في الفريق');
-        }
-
-        $member->delete();
-        
-        Log::info('Team member removed', [
-            'team_id' => $teamId,
-            'user_id' => $userId,
-            'leader_id' => $leader->id,
-        ]);
-        
-        return true;
-    }
-
-    /**
-     * Get all teams that user is part of.
-     */
-    public function getUserTeams(User $user): Collection
-    {
-        return $this->teamRepo->getTeamsForUser($user->id);
-    }
-
-    /**
-     * Check if user can create a team.
-     */
-    public function canUserCreateTeam(User $user): bool
-    {
-        // Check if current hackathon is open
-        $currentHackathon = $this->hackathonRepo->findByQuery(['is_current' => true]);
-        
-        if (!$currentHackathon || !$currentHackathon->isRegistrationOpen()) {
+        if ($team->leader_id === $memberId) {
             return false;
         }
 
-        // Check if user already has a team in current hackathon
-        $existingTeam = $this->teamRepo->findByQuery([
-            'leader_id' => $user->id,
-            'hackathon_id' => $currentHackathon->id
-        ]);
-        
-        return !$existingTeam;
+        return $this->teamRepository->removeMember($team->id, $memberId);
     }
 
     /**
-     * Regenerate team invite code.
+     * Accept a pending member
      */
-    public function regenerateInviteCode(int $teamId, User $leader): string
+    public function acceptMember(Team $team, int $memberId): bool
     {
-        $team = $this->teamRepo->find($teamId);
-        
-        if (!$team || $team->leader_id !== $leader->id) {
-            throw new \Exception('غير مصرح لك بهذا الإجراء');
-        }
-
-        $newCode = Str::upper(Str::random(8));
-        $this->teamRepo->update($teamId, ['invite_code' => $newCode]);
-        
-        Log::info('Team invite code regenerated', [
-            'team_id' => $teamId,
-            'leader_id' => $leader->id,
-        ]);
-        
-        return $newCode;
+        return $this->teamRepository->acceptMember($team->id, $memberId);
     }
 
     /**
-     * Get team statistics.
+     * Reject a pending member
      */
-    public function getTeamStatistics(int $teamId): array
+    public function rejectMember(Team $team, int $memberId): bool
     {
-        $team = $this->teamRepo->findOrFail($teamId);
-        
-        $members = $team->members;
-        $idea = $team->idea;
-        
-        return [
-            'member_count' => [
-                'total' => $members->count(),
-                'accepted' => $members->where('status', 'accepted')->count(),
-                'pending' => $members->where('status', 'pending')->count(),
-            ],
-            'idea_status' => $idea ? $idea->status : 'not_started',
-            'capacity' => [
-                'max' => $team->max_members,
-                'available' => $team->max_members - $members->where('status', 'accepted')->count(),
-            ],
-            'timeline' => [
-                'created_at' => $team->created_at,
-                'can_submit_idea' => $this->canTeamSubmitIdea($team),
-            ],
-        ];
+        return $this->teamRepository->rejectMember($team->id, $memberId);
     }
 
     /**
-     * Check if user can join a specific team.
+     * Submit team idea
      */
-    private function canUserJoinTeam(Team $team, User $user): array
+    public function submitIdea(Team $team, array $data): array
     {
-        // Check if hackathon registration is open
-        if (!$team->hackathon->isRegistrationOpen()) {
-            return ['can_join' => false, 'reason' => 'التسجيل مغلق حالياً'];
-        }
-
-        // Check if user already in a team for this hackathon
-        $existingMembership = $this->teamRepo->getUserTeamInHackathon($user->id, $team->hackathon_id);
-        if ($existingMembership) {
-            return ['can_join' => false, 'reason' => 'أنت عضو في فريق آخر بالفعل'];
-        }
-
-        // Check team capacity
-        $acceptedCount = $team->members()->where('status', 'accepted')->count();
-        if ($acceptedCount >= $team->max_members) {
-            return ['can_join' => false, 'reason' => 'الفريق ممتلئ'];
-        }
-
-        return ['can_join' => true, 'reason' => null];
-    }
-
-    /**
-     * Check if team can submit idea.
-     */
-    private function canTeamSubmitIdea(Team $team): bool
-    {
-        return $team->hackathon->isIdeaSubmissionOpen() && 
-               $team->status === 'active' &&
-               $team->members()->where('status', 'accepted')->count() >= 2;
-    }
-
-    /**
-     * Create a team (for admins).
-     */
-    public function createTeam(array $data): Team
-    {
-        return DB::transaction(function () use ($data) {
-            // Generate invite code if not provided
-            if (!isset($data['invite_code'])) {
-                $data['invite_code'] = Str::upper(Str::random(8));
+        DB::beginTransaction();
+        try {
+            // Check if team already has an idea
+            if ($team->idea) {
+                // Update existing idea
+                $idea = $this->ideaRepository->update($team->idea->id, $data);
+            } else {
+                // Create new idea
+                $data['team_id'] = $team->id;
+                $data['status'] = 'draft';
+                $data['submitted_at'] = now();
+                $idea = $this->ideaRepository->create($data);
             }
 
-            // Set default values
-            $data['status'] = $data['status'] ?? 'pending';
-            $data['max_members'] = $data['max_members'] ?? 5;
+            // Update team status
+            $this->teamRepository->updateStatus($team->id, 'submitted');
+
+            DB::commit();
+            return ['success' => true, 'idea' => $idea];
             
-            $team = $this->teamRepo->create($data);
-            
-            // If leader is specified, add them as the first member
-            if (isset($data['leader_id'])) {
-                $team->members()->create([
-                    'user_id' => $data['leader_id'],
-                    'status' => 'accepted',
-                    'role' => 'leader',
-                    'joined_at' => now(),
-                ]);
-            }
-            
-            Log::info('Team created by admin', [
-                'team_id' => $team->id,
-                'edition_id' => $data['edition_id'] ?? null,
-            ]);
-            
-            return $team;
-        });
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return ['success' => false, 'message' => 'Failed to submit idea: ' . $e->getMessage()];
+        }
     }
 
     /**
-     * Update a team.
+     * Update team idea
      */
-    public function updateTeam(int $teamId, array $data): Team
+    public function updateIdea(Idea $idea, array $data): Idea
     {
-        $team = $this->teamRepo->update($teamId, $data);
-        
-        Log::info('Team updated', [
-            'team_id' => $teamId,
-            'updated_data' => array_keys($data),
-        ]);
-        
-        return $team;
+        return $this->ideaRepository->update($idea->id, $data);
     }
 
     /**
-     * Approve a team.
+     * Get team's idea
      */
-    public function approveTeam(int $teamId): Team
+    public function getTeamIdea(Team $team): ?Idea
     {
-        $team = $this->teamRepo->update($teamId, [
-            'status' => 'approved',
-            'approved_at' => now(),
-        ]);
-        
-        Log::info('Team approved', ['team_id' => $teamId]);
-        
-        // TODO: Send notification to team leader
-        
-        return $team;
+        return $team->idea()->with(['files', 'auditLogs'])->first();
     }
 
     /**
-     * Reject a team.
+     * Check if user can manage team
      */
-    public function rejectTeam(int $teamId, string $reason): Team
+    public function canManageTeam(User $user, Team $team): bool
     {
-        $team = $this->teamRepo->update($teamId, [
-            'status' => 'rejected',
-            'rejection_reason' => $reason,
-            'rejected_at' => now(),
-        ]);
-        
-        Log::info('Team rejected', [
-            'team_id' => $teamId,
-            'reason' => $reason,
-        ]);
-        
-        // TODO: Send notification to team leader with reason
-        
-        return $team;
+        return $team->leader_id === $user->id;
     }
 
     /**
-     * Delete a team.
+     * Get available tracks for team
      */
-    public function deleteTeam(int $teamId): bool
+    public function getAvailableTracks(int $hackathonId): Collection
     {
-        DB::transaction(function () use ($teamId) {
-            $team = $this->teamRepo->find($teamId);
-            
-            // Delete team members
-            $team->members()->delete();
-            
-            // Delete team
-            $this->teamRepo->delete($teamId);
-            
-            Log::info('Team deleted', ['team_id' => $teamId]);
-        });
-        
-        return true;
+        return DB::table('tracks')
+            ->where('hackathon_edition_id', $hackathonId)
+            ->where('status', 'active')
+            ->get();
     }
 
     /**
-     * Get team statistics for an edition.
+     * Update team details
      */
-    public function getTeamStatistics(int $editionId): array
+    public function updateTeamDetails(Team $team, array $data): Team
     {
-        $teams = Team::where('edition_id', $editionId)->get();
-        
-        return [
-            'total' => $teams->count(),
-            'pending' => $teams->where('status', 'pending')->count(),
-            'approved' => $teams->where('status', 'approved')->count(),
-            'rejected' => $teams->where('status', 'rejected')->count(),
-            'with_ideas' => $teams->whereNotNull('idea_id')->count(),
-            'average_members' => $teams->avg(function ($team) {
-                return $team->members()->where('status', 'accepted')->count();
-            }),
-        ];
+        return $this->teamRepository->update($team->id, $data);
     }
 }
