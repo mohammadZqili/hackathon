@@ -3,8 +3,10 @@
 namespace App\Services;
 
 use App\Models\User;
+use App\Models\SystemSetting;
 use App\Repositories\SettingRepository;
 use App\Repositories\HackathonEditionRepository;
+use App\Providers\SettingsServiceProvider;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Collection;
@@ -20,6 +22,351 @@ class SettingService extends BaseService
     ) {
         $this->settingRepository = $settingRepository;
         $this->editionRepository = $editionRepository;
+    }
+
+    /**
+     * Get all system settings
+     */
+    public function getAllSettings(User $user): array
+    {
+        // Check if user is system admin
+        if ($user->user_type !== 'system_admin') {
+            throw new \Exception('You do not have permission to access system settings.');
+        }
+        
+        return [
+            'smtp' => SystemSetting::getGroup('smtp'),
+            'branding' => SystemSetting::getGroup('branding'),
+            'notifications' => SystemSetting::getGroup('notifications'),
+            'sms' => SystemSetting::getGroup('sms'),
+            'twitter' => SystemSetting::getGroup('twitter'),
+            'app_name' => SystemSetting::get('app_name', config('app.name')),
+            'app_logo' => SystemSetting::get('app_logo'),
+            'primary_color' => SystemSetting::get('primary_color', '#0d9488'),
+            'secondary_color' => SystemSetting::get('secondary_color', '#14b8a6'),
+        ];
+    }
+
+    /**
+     * Get branding settings
+     */
+    public function getBrandingSettings(User $user): array
+    {
+        // Check if user is system admin
+        if ($user->user_type !== 'system_admin') {
+            throw new \Exception('You do not have permission to access branding settings.');
+        }
+        
+        return [
+            'app_name' => SystemSetting::get('app_name', config('app.name')),
+            'app_logo' => SystemSetting::get('app_logo'),
+            'primary_color' => SystemSetting::get('primary_color', '#0d9488'),
+            'secondary_color' => SystemSetting::get('secondary_color', '#14b8a6'),
+            'footer_text' => SystemSetting::get('footer_text'),
+        ];
+    }
+
+    /**
+     * Update branding settings
+     */
+    public function updateBrandingSettings(array $data, User $user): array
+    {
+        // Check if user is system admin
+        if ($user->user_type !== 'system_admin') {
+            throw new \Exception('You do not have permission to update branding settings.');
+        }
+        
+        DB::beginTransaction();
+        try {
+            // Update each branding setting
+            SystemSetting::set('app_name', $data['app_name'], 'branding');
+            SystemSetting::set('app_logo', $data['app_logo'] ?? null, 'branding');
+            SystemSetting::set('primary_color', $data['primary_color'], 'branding');
+            SystemSetting::set('secondary_color', $data['secondary_color'], 'branding');
+            SystemSetting::set('footer_text', $data['footer_text'] ?? null, 'branding');
+            
+            // Clear settings cache
+            SettingsServiceProvider::clearCache();
+            
+            DB::commit();
+            
+            return [
+                'success' => true,
+                'message' => 'Branding settings updated successfully.'
+            ];
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to update branding settings', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+                'data' => $data
+            ]);
+            throw $e;
+        }
+    }
+
+    /**
+     * Get SMTP settings
+     */
+    public function getSmtpSettings(User $user): array
+    {
+        // Check if user is system admin
+        if ($user->user_type !== 'system_admin') {
+            throw new \Exception('You do not have permission to access SMTP settings.');
+        }
+        
+        return [
+            'smtp_host' => SystemSetting::get('mail_host', config('mail.mailers.smtp.host')),
+            'smtp_port' => SystemSetting::get('mail_port', config('mail.mailers.smtp.port')),
+            'smtp_username' => SystemSetting::get('mail_username', config('mail.mailers.smtp.username')),
+            'smtp_password' => SystemSetting::get('mail_password'),
+            'smtp_encryption' => SystemSetting::get('mail_encryption', config('mail.mailers.smtp.encryption')),
+            'smtp_from_address' => SystemSetting::get('mail_from_address', config('mail.from.address')),
+            'smtp_from_name' => SystemSetting::get('mail_from_name', config('mail.from.name')),
+        ];
+    }
+
+    /**
+     * Update SMTP settings
+     */
+    public function updateSmtpSettings(array $data, User $user): array
+    {
+        // Check if user is system admin
+        if ($user->user_type !== 'system_admin') {
+            throw new \Exception('You do not have permission to update SMTP settings.');
+        }
+        
+        DB::beginTransaction();
+        try {
+            // Update each SMTP setting
+            SystemSetting::set('mail_host', $data['smtp_host'], 'smtp');
+            SystemSetting::set('mail_port', $data['smtp_port'], 'smtp');
+            SystemSetting::set('mail_username', $data['smtp_username'], 'smtp');
+            
+            // Only update password if provided
+            if (!empty($data['smtp_password'])) {
+                SystemSetting::set('mail_password', $data['smtp_password'], 'smtp');
+            }
+            
+            SystemSetting::set('mail_encryption', $data['smtp_encryption'] ?? null, 'smtp');
+            SystemSetting::set('mail_from_address', $data['smtp_from_address'], 'smtp');
+            SystemSetting::set('mail_from_name', $data['smtp_from_name'], 'smtp');
+            
+            // Clear settings cache
+            SettingsServiceProvider::clearCache();
+            
+            DB::commit();
+            
+            return [
+                'success' => true,
+                'message' => 'SMTP settings updated successfully.'
+            ];
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to update SMTP settings', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+                'data' => array_diff_key($data, ['smtp_password' => '']) // Don't log password
+            ]);
+            throw $e;
+        }
+    }
+
+    /**
+     * Get notification settings
+     */
+    public function getNotificationSettings(User $user): array
+    {
+        // Check if user is system admin
+        if ($user->user_type !== 'system_admin') {
+            throw new \Exception('You do not have permission to access notification settings.');
+        }
+        
+        return [
+            'email_enabled' => SystemSetting::get('notification_email_enabled', '1') === '1',
+            'sms_enabled' => SystemSetting::get('notification_sms_enabled', '0') === '1',
+            'push_enabled' => SystemSetting::get('notification_push_enabled', '0') === '1',
+            'in_app_enabled' => SystemSetting::get('notification_in_app_enabled', '1') === '1',
+            'email_digest' => SystemSetting::get('notification_email_digest', 'daily'),
+            'quiet_hours_enabled' => SystemSetting::get('notification_quiet_hours_enabled', '0') === '1',
+            'quiet_hours_start' => SystemSetting::get('notification_quiet_hours_start', '22:00'),
+            'quiet_hours_end' => SystemSetting::get('notification_quiet_hours_end', '08:00'),
+        ];
+    }
+
+    /**
+     * Update notification settings
+     */
+    public function updateNotificationSettings(array $data, User $user): array
+    {
+        // Check if user is system admin
+        if ($user->user_type !== 'system_admin') {
+            throw new \Exception('You do not have permission to update notification settings.');
+        }
+        
+        DB::beginTransaction();
+        try {
+            // Update notification settings - store booleans as '1' or '0'
+            SystemSetting::set('notification_email_enabled', $data['email_enabled'] ? '1' : '0', 'notifications');
+            SystemSetting::set('notification_sms_enabled', $data['sms_enabled'] ? '1' : '0', 'notifications');
+            SystemSetting::set('notification_push_enabled', $data['push_enabled'] ? '1' : '0', 'notifications');
+            SystemSetting::set('notification_in_app_enabled', $data['in_app_enabled'] ? '1' : '0', 'notifications');
+            
+            if (isset($data['email_digest'])) {
+                SystemSetting::set('notification_email_digest', $data['email_digest'], 'notifications');
+            }
+            
+            SystemSetting::set('notification_quiet_hours_enabled', $data['quiet_hours_enabled'] ? '1' : '0', 'notifications');
+            
+            if (isset($data['quiet_hours_start'])) {
+                SystemSetting::set('notification_quiet_hours_start', $data['quiet_hours_start'], 'notifications');
+            }
+            
+            if (isset($data['quiet_hours_end'])) {
+                SystemSetting::set('notification_quiet_hours_end', $data['quiet_hours_end'], 'notifications');
+            }
+            
+            // Clear settings cache
+            SettingsServiceProvider::clearCache();
+            
+            DB::commit();
+            
+            return [
+                'success' => true,
+                'message' => 'Notification settings updated successfully.'
+            ];
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to update notification settings', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+                'data' => $data
+            ]);
+            throw $e;
+        }
+    }
+
+    /**
+     * Get SMS settings
+     */
+    public function getSmsSettings(User $user): array
+    {
+        // Check if user is system admin
+        if ($user->user_type !== 'system_admin') {
+            throw new \Exception('You do not have permission to access SMS settings.');
+        }
+        
+        return [
+            'sms_provider' => SystemSetting::get('sms_provider', 'twilio'),
+            'sms_api_key' => SystemSetting::get('sms_api_key'),
+            'sms_api_secret' => SystemSetting::get('sms_api_secret'),
+            'sms_from_number' => SystemSetting::get('sms_from_number'),
+        ];
+    }
+
+    /**
+     * Update SMS settings
+     */
+    public function updateSmsSettings(array $data, User $user): array
+    {
+        // Check if user is system admin
+        if ($user->user_type !== 'system_admin') {
+            throw new \Exception('You do not have permission to update SMS settings.');
+        }
+        
+        DB::beginTransaction();
+        try {
+            // Update SMS settings
+            SystemSetting::set('sms_provider', $data['sms_provider'], 'sms');
+            SystemSetting::set('sms_api_key', $data['sms_api_key'], 'sms');
+            SystemSetting::set('sms_api_secret', $data['sms_api_secret'] ?? null, 'sms');
+            SystemSetting::set('sms_from_number', $data['sms_from_number'], 'sms');
+            
+            // Clear settings cache
+            SettingsServiceProvider::clearCache();
+            
+            DB::commit();
+            
+            return [
+                'success' => true,
+                'message' => 'SMS settings updated successfully.'
+            ];
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to update SMS settings', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+                'data' => array_diff_key($data, ['sms_api_key' => '', 'sms_api_secret' => '']) // Don't log credentials
+            ]);
+            throw $e;
+        }
+    }
+
+    /**
+     * Get Twitter settings
+     */
+    public function getTwitterSettings(User $user): array
+    {
+        // Check if user is system admin
+        if ($user->user_type !== 'system_admin') {
+            throw new \Exception('You do not have permission to access Twitter settings.');
+        }
+        
+        return [
+            'twitter_api_key' => SystemSetting::get('twitter_api_key'),
+            'twitter_api_secret' => SystemSetting::get('twitter_api_secret'),
+            'twitter_access_token' => SystemSetting::get('twitter_access_token'),
+            'twitter_access_token_secret' => SystemSetting::get('twitter_access_token_secret'),
+            'twitter_auto_post' => SystemSetting::get('twitter_auto_post', '0') === '1',
+        ];
+    }
+
+    /**
+     * Update Twitter settings
+     */
+    public function updateTwitterSettings(array $data, User $user): array
+    {
+        // Check if user is system admin
+        if ($user->user_type !== 'system_admin') {
+            throw new \Exception('You do not have permission to update Twitter settings.');
+        }
+        
+        DB::beginTransaction();
+        try {
+            // Update Twitter settings
+            if (isset($data['twitter_api_key'])) {
+                SystemSetting::set('twitter_api_key', $data['twitter_api_key'], 'twitter');
+            }
+            if (isset($data['twitter_api_secret'])) {
+                SystemSetting::set('twitter_api_secret', $data['twitter_api_secret'], 'twitter');
+            }
+            if (isset($data['twitter_access_token'])) {
+                SystemSetting::set('twitter_access_token', $data['twitter_access_token'], 'twitter');
+            }
+            if (isset($data['twitter_access_token_secret'])) {
+                SystemSetting::set('twitter_access_token_secret', $data['twitter_access_token_secret'], 'twitter');
+            }
+            
+            SystemSetting::set('twitter_auto_post', isset($data['twitter_auto_post']) && $data['twitter_auto_post'] ? '1' : '0', 'twitter');
+            
+            // Clear settings cache
+            SettingsServiceProvider::clearCache();
+            
+            DB::commit();
+            
+            return [
+                'success' => true,
+                'message' => 'Twitter settings updated successfully.'
+            ];
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to update Twitter settings', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+                'data' => array_diff_key($data, ['twitter_api_key' => '', 'twitter_api_secret' => '', 'twitter_access_token' => '', 'twitter_access_token_secret' => '']) // Don't log credentials
+            ]);
+            throw $e;
+        }
     }
 
     /**

@@ -89,22 +89,22 @@ const currentEdition = props.statistics?.current_edition
                     <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4"
                         :class="{ 'text-right': isRTL, 'text-left': !isRTL }">{{ t('admin.dashboard.quick_actions') }}</h2>
                     <div class="space-y-3">
-                        <a href="/system-admin/editions" 
+                        <a href="/system-admin/editions"
                            class="block w-full px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                            :class="{ 'text-right': isRTL, 'text-left': !isRTL }">
                             {{ t('admin.dashboard.manage_editions') }}
                         </a>
-                        <a href="/system-admin/users" 
+                        <a href="/admin/users"
                            class="block w-full px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                            :class="{ 'text-right': isRTL, 'text-left': !isRTL }">
                             {{ t('admin.dashboard.manage_users') }}
                         </a>
-                        <a href="/system-admin/settings" 
-                           class="block w-full px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-                           :class="{ 'text-right': isRTL, 'text-left': !isRTL }">
-                            {{ t('admin.dashboard.system_settings') }}
-                        </a>
-                        <a href="/system-admin/reports" 
+<!--                        <a href="/system-admin/settings"-->
+<!--                           class="block w-full px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 rounded-lg transition-colors"-->
+<!--                           :class="{ 'text-right': isRTL, 'text-left': !isRTL }">-->
+<!--                            {{ t('admin.dashboard.system_settings') }}-->
+<!--                        </a>-->
+                        <a href="/system-admin/reports"
                            class="block w-full px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                            :class="{ 'text-right': isRTL, 'text-left': !isRTL }">
                             {{ t('admin.dashboard.view_reports') }}
