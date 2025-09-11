@@ -38,6 +38,7 @@ class Kernel extends HttpKernel
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             HandleInertiaRequests::class,
+            \App\Http\Middleware\SetLocale::class,
         ],
 
         'api' => [
@@ -78,7 +79,8 @@ class Kernel extends HttpKernel
         'check_hackathon_admin' => \App\Http\Middleware\CheckHackathonAdminRole::class,
         'check_track_supervisor' => \App\Http\Middleware\CheckTrackSupervisorRole::class,
         'track_supervisor' => \App\Http\Middleware\TrackSupervisorMiddleware::class,
-        'team_leader' => \App\Http\Middleware\TeamLeaderMiddleware::class,
         'team_member' => \App\Http\Middleware\TeamMemberMiddleware::class,
+        'team.lead' => \App\Http\Middleware\TeamLeaderMiddleware::class,
+        'team.member' => \App\Http\Middleware\TeamMemberMiddleware::class,
     ];
 }

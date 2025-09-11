@@ -46,6 +46,8 @@ class User extends Authenticatable implements Auditable
         'password_changed_at',
         'force_password_change',
         'disable_account',
+        'social_logins',
+        'avatar',
         // Hackathon fields
         'date_of_birth',
         'phone',
@@ -67,6 +69,7 @@ class User extends Authenticatable implements Auditable
         'deleted_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+        'social_logins' => 'array',
         // Hackathon casts
         'date_of_birth' => 'date',
         'is_active' => 'boolean',

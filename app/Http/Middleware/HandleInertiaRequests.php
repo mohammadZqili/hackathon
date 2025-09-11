@@ -8,6 +8,8 @@ use App\Helpers\Settings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\App;
 use Inertia\Middleware;
 use Laravolt\Avatar\Avatar;
 
@@ -116,7 +118,34 @@ class HandleInertiaRequests extends Middleware
                     })
                     ->orderBy('created_at', 'desc')
                     ->get(),
+
+                // Localization data
+                'locale' => App::getLocale(),
+                'direction' => Session::get('direction', 'ltr'),
+                'available_locales' => ['en', 'ar'],
+                'translations' => $this->loadTranslations(),
             ],
         );
+    }
+
+    /**
+     * Load translations for current locale
+     */
+    protected function loadTranslations()
+    {
+        $locale = App::getLocale();
+        $translations = [];
+        
+        // Load dashboard translations
+        if (file_exists(resource_path("lang/{$locale}/dashboard.php"))) {
+            $translations = array_merge($translations, include resource_path("lang/{$locale}/dashboard.php"));
+        }
+        
+        // You can add more translation files here as needed
+        // if (file_exists(resource_path("lang/{$locale}/validation.php"))) {
+        //     $translations['validation'] = include resource_path("lang/{$locale}/validation.php");
+        // }
+        
+        return $translations;
     }
 }

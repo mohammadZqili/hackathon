@@ -1,0 +1,201 @@
+/* RTL Support Styles */
+
+/* Base RTL styles */
+[dir="rtl"] {
+    direction: rtl;
+    text-align: right;
+}
+
+[dir="ltr"] {
+    direction: ltr;
+    text-align: left;
+}
+
+/* Tailwind RTL utility classes */
+.rtl\:text-right[dir="rtl"] { text-align: right; }
+.rtl\:text-left[dir="rtl"] { text-align: left; }
+.ltr\:text-right[dir="ltr"] { text-align: right; }
+.ltr\:text-left[dir="ltr"] { text-align: left; }
+
+/* Margin utilities for RTL */
+.rtl\:ml-0[dir="rtl"] { margin-left: 0; }
+.rtl\:mr-0[dir="rtl"] { margin-right: 0; }
+.rtl\:ml-auto[dir="rtl"] { margin-left: auto; }
+.rtl\:mr-auto[dir="rtl"] { margin-right: auto; }
+
+/* Padding utilities for RTL */
+.rtl\:pl-0[dir="rtl"] { padding-left: 0; }
+.rtl\:pr-0[dir="rtl"] { padding-right: 0; }
+
+/* Border utilities for RTL */
+.rtl\:border-l-0[dir="rtl"] { border-left-width: 0; }
+.rtl\:border-r-0[dir="rtl"] { border-right-width: 0; }
+.rtl\:border-l[dir="rtl"] { border-left-width: 1px; }
+.rtl\:border-r[dir="rtl"] { border-right-width: 1px; }
+
+/* Rounded corners for RTL */
+.rtl\:rounded-l-none[dir="rtl"] { 
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+.rtl\:rounded-r-none[dir="rtl"] { 
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+.rtl\:rounded-l-lg[dir="rtl"] { 
+    border-top-left-radius: 0.5rem;
+    border-bottom-left-radius: 0.5rem;
+}
+.rtl\:rounded-r-lg[dir="rtl"] { 
+    border-top-right-radius: 0.5rem;
+    border-bottom-right-radius: 0.5rem;
+}
+
+/* Flex utilities for RTL */
+.rtl\:flex-row-reverse[dir="rtl"] { flex-direction: row-reverse; }
+.rtl\:space-x-reverse[dir="rtl"] > :not([hidden]) ~ :not([hidden]) {
+    --tw-space-x-reverse: 1;
+}
+
+/* Transform utilities for RTL */
+.rtl\:scale-x-\[-1\][dir="rtl"] { transform: scaleX(-1); }
+.rtl\:rotate-180[dir="rtl"] { transform: rotate(180deg); }
+
+/* Position utilities for RTL */
+.rtl\:left-0[dir="rtl"] { left: 0; }
+.rtl\:right-0[dir="rtl"] { right: 0; }
+.rtl\:left-auto[dir="rtl"] { left: auto; }
+.rtl\:right-auto[dir="rtl"] { right: auto; }
+
+/* Icons and directional elements */
+[dir="rtl"] .flip-rtl {
+    transform: scaleX(-1);
+}
+
+[dir="rtl"] .chevron-right {
+    transform: rotate(180deg);
+}
+
+[dir="rtl"] .chevron-left {
+    transform: rotate(180deg);
+}
+
+/* Sidebar adjustments for RTL */
+[dir="rtl"] .sidebar-left {
+    left: auto;
+    right: 0;
+}
+
+[dir="rtl"] .sidebar-right {
+    right: auto;
+    left: 0;
+}
+
+/* Table adjustments for RTL */
+[dir="rtl"] table {
+    text-align: right;
+}
+
+[dir="rtl"] th,
+[dir="rtl"] td {
+    text-align: inherit;
+}
+
+/* Form elements for RTL */
+[dir="rtl"] input[type="text"],
+[dir="rtl"] input[type="email"],
+[dir="rtl"] input[type="password"],
+[dir="rtl"] input[type="number"],
+[dir="rtl"] input[type="tel"],
+[dir="rtl"] input[type="search"],
+[dir="rtl"] textarea,
+[dir="rtl"] select {
+    text-align: right;
+    direction: rtl;
+}
+
+/* Placeholder text alignment */
+[dir="rtl"] input::placeholder,
+[dir="rtl"] textarea::placeholder {
+    text-align: right;
+}
+
+/* Dropdown and select adjustments */
+[dir="rtl"] select {
+    background-position: left 0.5rem center;
+    padding-right: 0.75rem;
+    padding-left: 2.5rem;
+}
+
+/* Toast notifications for RTL */
+[dir="rtl"] .toast-container {
+    left: auto;
+    right: 1rem;
+}
+
+/* Modal adjustments for RTL */
+[dir="rtl"] .modal-close {
+    left: 1rem;
+    right: auto;
+}
+
+/* Pagination for RTL */
+[dir="rtl"] .pagination {
+    flex-direction: row-reverse;
+}
+
+/* Progress bars for RTL */
+[dir="rtl"] .progress-bar {
+    transform-origin: right;
+}
+
+/* Breadcrumbs for RTL */
+[dir="rtl"] .breadcrumb-item::before {
+    content: "\\";
+    transform: scaleX(-1);
+    display: inline-block;
+}
+
+/* Cards and panels */
+[dir="rtl"] .card-header,
+[dir="rtl"] .panel-header {
+    text-align: right;
+}
+
+/* Badges and labels positioning */
+[dir="rtl"] .badge-right {
+    right: auto;
+    left: 0.5rem;
+}
+
+[dir="rtl"] .badge-left {
+    left: auto;
+    right: 0.5rem;
+}
+
+/* Animation adjustments for RTL */
+[dir="rtl"] .slide-in-left {
+    animation-name: slideInRight;
+}
+
+[dir="rtl"] .slide-in-right {
+    animation-name: slideInLeft;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+    }
+    to {
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideInLeft {
+    from {
+        transform: translateX(-100%);
+    }
+    to {
+        transform: translateX(0);
+    }
+}

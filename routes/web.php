@@ -209,6 +209,12 @@ Route::middleware(['guest', 'web'])->group(function () {
     });
 });
 
+// OAuth Authentication Routes
+Route::middleware(['guest', 'web'])->group(function () {
+    Route::get('/auth/{provider}', [App\Http\Controllers\Auth\SocialAuthController::class, 'redirect'])->name('auth.provider');
+    Route::get('/auth/{provider}/callback', [App\Http\Controllers\Auth\SocialAuthController::class, 'callback'])->name('auth.callback');
+});
+
 // Hackathon Routes (Load from separate file for better organization)
 require __DIR__.'/hackathon.php';
 
@@ -217,6 +223,19 @@ require __DIR__.'/hackathon-admin.php';
 
 // TrackSupervisor Routes
 require __DIR__.'/track-supervisor.php';
+
+// TeamLead Routes
+require __DIR__.'/team-lead.php';
+
+// TeamMember Routes
+require __DIR__.'/team-member.php';
+
+// Visitor Routes
+require __DIR__.'/visitor.php';
+
+// Language switching routes
+Route::post('/language/{locale}', [App\Http\Controllers\LanguageController::class, 'switch'])->name('language.switch');
+Route::get('/language/current', [App\Http\Controllers\LanguageController::class, 'current'])->name('language.current');
 
 // Debug route for testing roles
 Route::get('/test-role', [App\Http\Controllers\TestRoleController::class, 'checkRole'])->middleware('auth');
