@@ -1,5 +1,5 @@
 <template>
-    <Head title="Workshops Management" />
+    <Head :title="t('admin.workshops.title')" />
     <Default>
         <div class="container mx-auto px-4 py-8" :style="themeStyles">
             <!-- Page Header -->
@@ -83,10 +83,10 @@
                             <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Description</span>
                         </div>
                         <div class="w-32 py-3 px-4">
-                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Date</span>
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('admin.workshops.date') }}</span>
                         </div>
                         <div class="w-36 py-3 px-4">
-                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Speaker</span>
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('admin.workshops.speaker') }}</span>
                         </div>
                         <div class="w-40 py-3 px-4">
                             <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Organization</span>

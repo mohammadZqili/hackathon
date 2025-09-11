@@ -12,31 +12,31 @@ const props = defineProps({
 
 const stats = computed(() => [
     {
-        name: 'Total Editions',
+        name: t('admin.dashboard.total_editions'),
         value: props.statistics.total_editions,
         icon: 'calendar',
         color: 'bg-blue-500',
     },
     {
-        name: 'Total Users',
+        name: t('admin.dashboard.total_users'),
         value: props.statistics.total_users,
         icon: 'users',
         color: 'bg-green-500',
     },
     {
-        name: 'Total Teams',
+        name: t('admin.dashboard.total_teams'),
         value: props.statistics.total_teams,
         icon: 'user-group',
         color: 'bg-purple-500',
     },
     {
-        name: 'Total Ideas',
+        name: t('admin.dashboard.total_ideas'),
         value: props.statistics.total_ideas,
         icon: 'light-bulb',
         color: 'bg-yellow-500',
     },
     {
-        name: 'Total Workshops',
+        name: t('admin.dashboard.total_workshops'),
         value: props.statistics.total_workshops,
         icon: 'academic-cap',
         color: 'bg-indigo-500',
@@ -45,15 +45,15 @@ const stats = computed(() => [
 </script>
 
 <template>
-    <Head title="System Admin Dashboard" />
+    <Head :title="t('admin.dashboard.title')" />
     
     <Default>
         <div class="max-w-7xl mx-auto">
             <!-- Header -->
             <div class="mb-8">
-                <h1 class="text-3xl font-bold text-gray-900 dark:text-white">System Admin Dashboard</h1>
+                <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ t('admin.dashboard.title') }}</h1>
                 <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                    Manage hackathon editions and system-wide settings
+                    {{ t('admin.dashboard.description', 'Manage hackathon editions and system-wide settings') }}
                 </p>
             </div>
 
@@ -64,13 +64,13 @@ const stats = computed(() => [
                         <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
                     </svg>
                     <div>
-                        <h3 class="text-sm font-medium text-blue-800 dark:text-blue-200">Current Edition</h3>
+                        <h3 class="text-sm font-medium text-blue-800 dark:text-blue-200">{{ t('admin.dashboard.current_edition') }}</h3>
                         <p class="text-sm text-blue-600 dark:text-blue-400">
                             {{ statistics.current_edition.name }} ({{ statistics.current_edition.year }}) - 
                             <span class="font-semibold">{{ statistics.current_edition.status }}</span>
                         </p>
                         <p class="text-xs text-blue-500 dark:text-blue-300 mt-1">
-                            Teams: {{ statistics.current_edition.teams_count }} | Ideas: {{ statistics.current_edition.ideas_count }}
+                            {{ t('admin.teams.title') }}: {{ statistics.current_edition.teams_count }} | {{ t('admin.ideas.title') }}: {{ statistics.current_edition.ideas_count }}
                         </p>
                     </div>
                 </div>

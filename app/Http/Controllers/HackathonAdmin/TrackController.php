@@ -86,7 +86,8 @@ class TrackController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'hackathon_edition_id' => 'required|exists:hackathon_editions,id',
+            'edition_id' => 'nullable|exists:hackathon_editions,id',
+            'hackathon_id' => 'required|exists:hackathons,id',
             'name' => 'required|string|max:255',
             'description' => 'required|string',
             'max_teams' => 'nullable|integer|min:1',
@@ -99,7 +100,7 @@ class TrackController extends Controller
 
             // Track created successfully
 
-            return redirect()->route('system-admin.tracks.index')
+            return redirect()->route('hackathon-admin.tracks.index')
                 ->with('success', 'Track created successfully.');
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()])->withInput();
@@ -129,7 +130,8 @@ class TrackController extends Controller
     public function update(Request $request, Track $track)
     {
         $validated = $request->validate([
-            'hackathon_edition_id' => 'required|exists:hackathon_editions,id',
+            'edition_id' => 'nullable|exists:hackathon_editions,id',
+            'hackathon_id' => 'required|exists:hackathons,id',
             'name' => 'required|string|max:255',
             'description' => 'required|string',
             'max_teams' => 'nullable|integer|min:1',
@@ -142,7 +144,7 @@ class TrackController extends Controller
 
             // Track updated successfully
 
-            return redirect()->route('system-admin.tracks.show', $track)
+            return redirect()->route('hackathon-admin.tracks.show', $track)
                 ->with('success', 'Track updated successfully.');
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()])->withInput();
@@ -158,40 +160,24 @@ class TrackController extends Controller
 
         try {
             $this->trackService->deleteTrack($track->id);
-            return redirect()->route('system-admin.tracks.index')
+            return redirect()->route('hackathon-admin.tracks.index')
                 ->with('success', 'Track deleted successfully.');
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()]);
         }
     }
 
-    /**
-     * Assign supervisor to track
-     */
-    public function assignSupervisor(Request $request, Track $track)
-    {
-        $request->validate([
-            'supervisor_id' => 'required|exists:users,id',
-        ]);
-
-        try {
-            $this->trackService->assignSupervisor($track->id, $request->supervisor_id);
-            return back()->with('success', 'Supervisor assigned successfully.');
-        } catch (\Exception $e) {
-            return back()->withErrors(['error' => $e->getMessage()]);
-        }
-    }
 
     /**
      * Export tracks to CSV
      */
     public function export(Request $request)
     {
-        $query = Track::with(['supervisor', 'edition'])
+        $query = Track::with(['edition', 'hackathon'])
             ->withCount(['teams', 'ideas']);
 
         if ($request->filled('edition_id')) {
-            $query->where('hackathon_edition_id', $request->get('edition_id'));
+            $query->where('edition_id', $request->get('edition_id'));
         }
 
         $tracks = $query->get();
@@ -203,7 +189,7 @@ class TrackController extends Controller
 
         $callback = function() use ($tracks) {
             $file = fopen('php://output', 'w');
-            fputcsv($file, ['ID', 'Name', 'Edition', 'Description', 'Supervisor', 'Teams Count', 'Ideas Count', 'Status', 'Created At']);
+            fputcsv($file, ['ID', 'Name', 'Edition', 'Description', 'Teams Count', 'Ideas Count', 'Status', 'Created At']);
 
             foreach ($tracks as $track) {
                 fputcsv($file, [
@@ -211,7 +197,6 @@ class TrackController extends Controller
                     $track->name,
                     $track->edition->name ?? 'N/A',
                     $track->description,
-                    $track->supervisor->name ?? 'Not Assigned',
                     $track->teams_count,
                     $track->ideas_count,
                     $track->is_active ? 'Active' : 'Inactive',

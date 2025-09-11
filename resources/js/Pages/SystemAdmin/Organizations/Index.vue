@@ -1,5 +1,5 @@
 <template>
-    <Head title="Organizations Management" />
+    <Head :title="t('admin.organizations.title')" />
     <Default>
         <div class="container mx-auto px-4 py-8" :style="themeStyles">
             <!-- Page Header -->

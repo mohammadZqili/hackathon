@@ -77,13 +77,13 @@ class SettingsController extends Controller
             // Clear config cache to apply new settings
             \Artisan::call('config:clear');
 
-            return redirect()->route('system-admin.settings.index')
+            return redirect()->route('hackathon-admin.settings.index')
                 ->with('success', 'SMTP settings updated successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('SMTP settings update failed: ' . $e->getMessage());
 
-            return redirect()->route('system-admin.settings.index')
+            return redirect()->route('hackathon-admin.settings.index')
                 ->with('error', 'Failed to update SMTP settings.');
         }
     }
@@ -141,13 +141,13 @@ class SettingsController extends Controller
             // Clear config cache to apply new settings
             \Artisan::call('config:clear');
 
-            return redirect()->route('system-admin.settings.index')
+            return redirect()->route('hackathon-admin.settings.index')
                 ->with('success', 'Branding settings updated successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Branding settings update failed: ' . $e->getMessage());
 
-            return redirect()->route('system-admin.settings.index')
+            return redirect()->route('hackathon-admin.settings.index')
                 ->with('error', 'Failed to update branding settings.');
         }
     }
@@ -195,13 +195,13 @@ class SettingsController extends Controller
             // Clear config cache to apply new settings
             \Artisan::call('config:clear');
 
-            return redirect()->route('system-admin.settings.index')
+            return redirect()->route('hackathon-admin.settings.index')
                 ->with('success', 'Twitter settings updated successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Twitter settings update failed: ' . $e->getMessage());
 
-            return redirect()->route('system-admin.settings.index')
+            return redirect()->route('hackathon-admin.settings.index')
                 ->with('error', 'Failed to update Twitter settings.');
         }
     }
@@ -248,13 +248,13 @@ class SettingsController extends Controller
             // Clear config cache to apply new settings
             \Artisan::call('config:clear');
 
-            return redirect()->route('system-admin.settings.index')
+            return redirect()->route('hackathon-admin.settings.index')
                 ->with('success', 'SMS settings updated successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('SMS settings update failed: ' . $e->getMessage());
 
-            return redirect()->route('system-admin.settings.index')
+            return redirect()->route('hackathon-admin.settings.index')
                 ->with('error', 'Failed to update SMS settings.');
         }
     }
@@ -300,14 +300,14 @@ class SettingsController extends Controller
 
             Log::info('Notification settings updated successfully');
 
-            return redirect()->route('system-admin.settings.index')
+            return redirect()->route('hackathon-admin.settings.index')
                 ->with('success', 'Notification settings updated successfully.');
 
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Notification settings update failed: ' . $e->getMessage());
 
-            return redirect()->route('system-admin.settings.index')
+            return redirect()->route('hackathon-admin.settings.index')
                 ->with('error', 'Failed to update notification settings: ' . $e->getMessage());
         }
     }

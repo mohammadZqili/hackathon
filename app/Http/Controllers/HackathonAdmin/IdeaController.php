@@ -187,7 +187,7 @@ class IdeaController extends Controller
             // TODO: Trigger notification service here
         }
 
-        return redirect()->route('system-admin.ideas.show', $idea->id)
+        return redirect()->route('hackathon-admin.ideas.show', $idea->id)
             ->with('success', 'Idea review completed successfully.');
     }
 
@@ -321,7 +321,7 @@ class IdeaController extends Controller
         // Delete the idea (cascade will handle related records)
         $idea->delete();
 
-        return redirect()->route('system-admin.ideas.index')
+        return redirect()->route('hackathon-admin.ideas.index')
             ->with('success', 'Idea deleted successfully.');
     }
 

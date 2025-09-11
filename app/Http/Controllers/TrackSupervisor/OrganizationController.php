@@ -31,7 +31,7 @@ class OrganizationController extends Controller
     public function store(Request $request)
     {
         // TODO: Implement store functionality
-        return redirect()->route('system-admin.organizations.index')
+        return redirect()->route('track-supervisor.organizations.index')
             ->with('success', 'Organization created successfully.');
     }
 
@@ -56,7 +56,7 @@ class OrganizationController extends Controller
     public function update(Request $request, Organization $organization)
     {
         // TODO: Implement update functionality
-        return redirect()->route('system-admin.organizations.index')
+        return redirect()->route('track-supervisor.organizations.index')
             ->with('success', 'Organization updated successfully.');
     }
 
@@ -64,7 +64,7 @@ class OrganizationController extends Controller
     {
         $organization->delete();
 
-        return redirect()->route('system-admin.organizations.index')
+        return redirect()->route('track-supervisor.organizations.index')
             ->with('success', 'Organization deleted successfully.');
     }
 

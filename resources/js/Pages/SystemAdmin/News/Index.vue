@@ -1,11 +1,11 @@
 <template>
-    <Head title="News Management" />
+    <Head :title="t('admin.news.title')" />
     <Default>
         <div class="container mx-auto px-4 py-8" :style="themeStyles">
             <!-- Page Header -->
             <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8">
                 <div>
-                    <h1 class="text-3xl font-bold text-gray-900 dark:text-white">News Management</h1>
+                    <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ t('admin.news.title') }}</h1>
                     <p class="mt-2 text-gray-600 dark:text-gray-400">
                         Create, manage, and publish news articles for all hackathon editions
                     </p>

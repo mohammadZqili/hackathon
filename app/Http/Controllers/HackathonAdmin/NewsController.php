@@ -105,7 +105,7 @@ class NewsController extends Controller
             ]
         ]);
 
-        return redirect()->route('system-admin.news.index')
+        return redirect()->route('hackathon-admin.news.index')
             ->with('success', 'News article created successfully.');
     }
 
@@ -153,7 +153,7 @@ class NewsController extends Controller
                 'auto_post_twitter' => $request->boolean('publish_to_twitter')
             ]);
 
-            return redirect()->route('system-admin.news.index')
+            return redirect()->route('hackathon-admin.news.index')
                 ->with('success', 'Twitter publishing setting updated.');
         }
 
@@ -224,7 +224,7 @@ class NewsController extends Controller
             ]
         ]);
 
-        return redirect()->route('system-admin.news.index')
+        return redirect()->route('hackathon-admin.news.index')
             ->with('success', 'News article updated successfully.');
     }
 
@@ -232,7 +232,7 @@ class NewsController extends Controller
     {
         $news->delete();
 
-        return redirect()->route('system-admin.news.index')
+        return redirect()->route('hackathon-admin.news.index')
             ->with('success', 'News article deleted successfully.');
     }
 
@@ -240,7 +240,7 @@ class NewsController extends Controller
     {
         $news->publish();
 
-        return redirect()->route('system-admin.news.index')
+        return redirect()->route('hackathon-admin.news.index')
             ->with('success', 'News article published successfully.');
     }
 
@@ -248,7 +248,7 @@ class NewsController extends Controller
     {
         $news->update(['status' => 'draft']);
 
-        return redirect()->route('system-admin.news.index')
+        return redirect()->route('hackathon-admin.news.index')
             ->with('success', 'News article unpublished successfully.');
     }
 

@@ -52,7 +52,7 @@ class EditionController extends Controller
 
         Edition::create($validated);
 
-        return redirect()->route('system-admin.editions.index')
+        return redirect()->route('track-supervisor.editions.index')
             ->with('success', 'Edition created successfully.');
     }
 
@@ -89,7 +89,7 @@ class EditionController extends Controller
 
         $edition->update($validated);
 
-        return redirect()->route('system-admin.editions.index')
+        return redirect()->route('track-supervisor.editions.index')
             ->with('success', 'Edition updated successfully.');
     }
 
@@ -102,7 +102,7 @@ class EditionController extends Controller
 
         $edition->delete();
 
-        return redirect()->route('system-admin.editions.index')
+        return redirect()->route('track-supervisor.editions.index')
             ->with('success', 'Edition deleted successfully.');
     }
 
@@ -114,7 +114,7 @@ class EditionController extends Controller
         // Activate this edition
         $edition->update(['is_active' => true]);
 
-        return redirect()->route('system-admin.editions.index')
+        return redirect()->route('track-supervisor.editions.index')
             ->with('success', 'Edition activated successfully.');
     }
 }

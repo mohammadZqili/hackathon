@@ -1,5 +1,5 @@
 <template>
-    <Head title="Teams Management" />
+    <Head :title="t('admin.teams.title')" />
     <Default>
         <div class="container mx-auto px-4 py-8" :style="themeStyles">
             <!-- Page Header -->
@@ -46,16 +46,16 @@
                         <div class="self-stretch flex flex-col items-start justify-start">
                             <div class="self-stretch flex-1 bg-white dark:bg-gray-800 flex flex-row items-start justify-start">
                                 <div class="self-stretch w-[246px] flex flex-col items-start justify-start py-3 px-4 box-border">
-                                    <div class="self-stretch relative leading-[21px] font-medium text-sm text-gray-700 dark:text-gray-300">Team Name</div>
+                                    <div class="self-stretch relative leading-[21px] font-medium text-sm text-gray-700 dark:text-gray-300">{{ t('admin.teams.name') }}</div>
                                 </div>
                                 <div class="self-stretch w-[253px] flex flex-col items-start justify-start py-3 px-4 box-border">
                                     <div class="self-stretch relative leading-[21px] font-medium text-sm text-gray-700 dark:text-gray-300">Founding Date</div>
                                 </div>
                                 <div class="self-stretch w-64 flex flex-col items-start justify-start py-3 px-4 box-border">
-                                    <div class="self-stretch relative leading-[21px] font-medium text-sm text-gray-700 dark:text-gray-300">Team Leader</div>
+                                    <div class="self-stretch relative leading-[21px] font-medium text-sm text-gray-700 dark:text-gray-300">{{ t('admin.teams.leader') }}</div>
                                 </div>
                                 <div class="self-stretch w-[171px] flex flex-col items-start justify-start py-3 px-4 box-border">
-                                    <div class="self-stretch relative leading-[21px] font-medium text-sm" :style="{ color: themeColor.primary }">Actions</div>
+                                    <div class="self-stretch relative leading-[21px] font-medium text-sm" :style="{ color: themeColor.primary }">{{ t('admin.teams.actions') }}</div>
                                 </div>
                             </div>
                         </div>

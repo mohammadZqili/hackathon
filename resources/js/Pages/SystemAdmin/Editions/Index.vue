@@ -1,13 +1,13 @@
 <template>
-    <Head title="Editions Management" />
+    <Head :title="t('admin.editions.title')" />
     <Default>
         <div class="container mx-auto px-4 py-8" :style="themeStyles">
             <!-- Page Header -->
             <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8">
                 <div>
-                    <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Editions</h1>
+                    <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ t('admin.editions.title') }}</h1>
                     <p class="mt-2 text-gray-600 dark:text-gray-400">
-                        Manage hackathon editions and their configurations
+                        {{ t('admin.editions.description', 'Manage hackathon editions and their configurations') }}
                     </p>
                 </div>
 
@@ -19,7 +19,7 @@
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                     </svg>
-                    Add Edition
+                    {{ t('admin.editions.create') }}
                 </Link>
             </div>
 
@@ -30,32 +30,32 @@
                         <thead class="bg-gray-50 dark:bg-gray-700">
                             <tr>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                    Hackathon Name
+                                    {{ t('admin.editions.name') }}
                                 </th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                    Year
+                                    {{ t('admin.editions.year', 'Year') }}
                                 </th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                    Registration Dates
+                                    {{ t('admin.editions.registration_dates', 'Registration Dates') }}
                                 </th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                    Teams Count
+                                    {{ t('admin.teams.title') }}
                                 </th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                    Hackathon Admin
+                                    {{ t('admin.editions.hackathon_admin', 'Hackathon Admin') }}
                                 </th>
                                 <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                    Status
+                                    {{ t('admin.editions.status') }}
                                 </th>
                                 <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                    Action
+                                    {{ t('admin.editions.actions') }}
                                 </th>
                             </tr>
                         </thead>
                         <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                             <tr v-if="!editions.data || editions.data.length === 0">
                                 <td colspan="7" class="text-center py-12 text-gray-500 dark:text-gray-400">
-                                    No editions found. Click "Add Edition" to create your first hackathon edition.
+                                    {{ t('admin.editions.no_editions', 'No editions found. Click "Add Edition" to create your first hackathon edition.') }}
                                 </td>
                             </tr>
                             <tr v-else v-for="edition in editions.data" :key="edition.id"
@@ -97,11 +97,11 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-center">
                                     <span v-if="edition.is_active"
                                           class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">
-                                        Active
+                                        {{ t('admin.editions.active') }}
                                     </span>
                                     <span v-else
                                           class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
-                                        Inactive
+                                        {{ t('admin.editions.inactive') }}
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-center">
@@ -111,7 +111,7 @@
                                               :style="{ color: themeColor.primary }"
                                               @mouseover="e => e.target.style.color = themeColor.hover"
                                               @mouseleave="e => e.target.style.color = themeColor.primary">
-                                            Edit
+                                            {{ t('admin.actions.edit') }}
                                         </Link>
                                         <span class="font-bold" :style="{ color: themeColor.primary }">|</span>
                                         <button @click="deleteEdition(edition)"
@@ -119,7 +119,7 @@
                                                 :style="{ color: themeColor.primary }"
                                                 @mouseover="e => e.target.style.color = themeColor.hover"
                                                 @mouseleave="e => e.target.style.color = themeColor.primary">
-                                            Delete
+                                            {{ t('admin.actions.delete') }}
                                         </button>
                                     </div>
                                 </td>
@@ -135,19 +135,17 @@
                         <div class="flex-1 flex justify-between sm:hidden">
                             <Link v-if="editions.prev_page_url" :href="editions.prev_page_url"
                                   class="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
-                                Previous
+                                {{ t('messages.previous') }}
                             </Link>
                             <Link v-if="editions.next_page_url" :href="editions.next_page_url"
                                   class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
-                                Next
+                                {{ t('messages.next') }}
                             </Link>
                         </div>
                         <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                             <div>
                                 <p class="text-sm text-gray-700 dark:text-gray-300">
-                                    Showing <span class="font-medium">{{ editions.from || 0 }}</span> to 
-                                    <span class="font-medium">{{ editions.to || 0 }}</span> of 
-                                    <span class="font-medium">{{ editions.total || 0 }}</span> results
+                                    {{ t('admin.table.showing_results', { from: editions.from || 0, to: editions.to || 0, total: editions.total || 0 }) }}
                                 </p>
                             </div>
                             <div>

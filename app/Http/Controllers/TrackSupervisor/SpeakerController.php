@@ -34,7 +34,7 @@ class SpeakerController extends Controller
     public function store(Request $request)
     {
         // TODO: Implement store functionality
-        return redirect()->route('system-admin.speakers.index')
+        return redirect()->route('track-supervisor.speakers.index')
             ->with('success', 'Speaker created successfully.');
     }
 
@@ -61,7 +61,7 @@ class SpeakerController extends Controller
     public function update(Request $request, Speaker $speaker)
     {
         // TODO: Implement update functionality
-        return redirect()->route('system-admin.speakers.index')
+        return redirect()->route('track-supervisor.speakers.index')
             ->with('success', 'Speaker updated successfully.');
     }
 
@@ -69,7 +69,7 @@ class SpeakerController extends Controller
     {
         $speaker->delete();
 
-        return redirect()->route('system-admin.speakers.index')
+        return redirect()->route('track-supervisor.speakers.index')
             ->with('success', 'Speaker deleted successfully.');
     }
 

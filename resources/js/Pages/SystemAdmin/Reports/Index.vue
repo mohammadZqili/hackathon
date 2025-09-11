@@ -1,5 +1,5 @@
 <template>
-    <Head title="Reports" />
+    <Head :title="t('admin.reports.title')" />
     <Default>
         <div class="container mx-auto px-4 py-8" :style="themeStyles">
             <!-- Page Header -->

@@ -99,50 +99,50 @@ const deleteIdea = (idea) => {
                     {{ t('admin.ideas.title') }}
                 </h1>
                 <p class="text-sm text-gray-600 dark:text-gray-400">
-                    Manage all ideas across all hackathon editions.
+                    {{ t('admin.ideas.description', 'Manage all ideas across all hackathon editions.') }}
                 </p>
             </div>
 
             <!-- Statistics Cards -->
             <div v-if="statistics" class="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-10 gap-4 mb-6">
                 <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
-                    <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total</div>
+                    <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ t('admin.ideas.total', 'Total') }}</div>
                     <div class="mt-1 text-2xl font-semibold text-gray-900 dark:text-white">{{ statistics.total || 0 }}</div>
                 </div>
                 <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
-                    <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Draft</div>
+                    <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ t('admin.ideas.draft') }}</div>
                     <div class="mt-1 text-2xl font-semibold text-gray-600 dark:text-gray-300">{{ statistics.draft || 0 }}</div>
                 </div>
                 <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
-                    <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Submitted</div>
+                    <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ t('admin.ideas.submitted') }}</div>
                     <div class="mt-1 text-2xl font-semibold text-blue-600 dark:text-blue-400">{{ statistics.submitted || 0 }}</div>
                 </div>
                 <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
-                    <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Review</div>
+                    <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ t('admin.ideas.under_review') }}</div>
                     <div class="mt-1 text-2xl font-semibold text-amber-600 dark:text-amber-400">{{ statistics.under_review || 0 }}</div>
                 </div>
                 <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
-                    <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Accepted</div>
+                    <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ t('admin.ideas.accepted') }}</div>
                     <div class="mt-1 text-2xl font-semibold text-emerald-600 dark:text-emerald-400">{{ statistics.accepted || 0 }}</div>
                 </div>
                 <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
-                    <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Rejected</div>
+                    <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ t('admin.ideas.rejected') }}</div>
                     <div class="mt-1 text-2xl font-semibold text-red-600 dark:text-red-400">{{ statistics.rejected || 0 }}</div>
                 </div>
                 <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
-                    <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Revision</div>
+                    <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ t('admin.ideas.needs_revision') }}</div>
                     <div class="mt-1 text-2xl font-semibold text-orange-600 dark:text-orange-400">{{ statistics.needs_revision || 0 }}</div>
                 </div>
                 <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
-                    <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Pending</div>
+                    <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ t('admin.ideas.pending') }}</div>
                     <div class="mt-1 text-2xl font-semibold text-blue-600 dark:text-blue-400">{{ statistics.pending_review || 0 }}</div>
                 </div>
                 <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
-                    <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Progress</div>
+                    <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ t('admin.ideas.in_progress') }}</div>
                     <div class="mt-1 text-2xl font-semibold text-indigo-600 dark:text-indigo-400">{{ statistics.in_progress || 0 }}</div>
                 </div>
                 <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
-                    <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Done</div>
+                    <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ t('admin.ideas.completed') }}</div>
                     <div class="mt-1 text-2xl font-semibold text-gray-600 dark:text-gray-300">{{ statistics.completed || 0 }}</div>
                 </div>
             </div>
@@ -159,7 +159,7 @@ const deleteIdea = (idea) => {
                             <input
                                 v-model="searchForm.search"
                                 type="text"
-                                placeholder="Search ideas by title, team, or description..."
+                                :placeholder="t('admin.ideas.search')"
                                 class="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                             />
                         </div>
@@ -170,16 +170,16 @@ const deleteIdea = (idea) => {
                         <select v-model="searchForm.status"
                                 @change="filterIdeas"
                                 class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
-                            <option value="">All Statuses</option>
-                            <option value="draft">Draft</option>
-                            <option value="submitted">Submitted</option>
-                            <option value="under_review">Under Review</option>
-                            <option value="accepted">Accepted</option>
-                            <option value="rejected">Rejected</option>
-                            <option value="needs_revision">Needs Revision</option>
-                            <option value="pending_review">Pending Review</option>
-                            <option value="in_progress">In Progress</option>
-                            <option value="completed">Completed</option>
+                            <option value="">{{ t('admin.ideas.filter_by_status') }}</option>
+                            <option value="draft">{{ t('admin.ideas.draft') }}</option>
+                            <option value="submitted">{{ t('admin.ideas.submitted') }}</option>
+                            <option value="under_review">{{ t('admin.ideas.under_review') }}</option>
+                            <option value="accepted">{{ t('admin.ideas.accepted') }}</option>
+                            <option value="rejected">{{ t('admin.ideas.rejected') }}</option>
+                            <option value="needs_revision">{{ t('admin.ideas.needs_revision') }}</option>
+                            <option value="pending_review">{{ t('admin.ideas.pending') }}</option>
+                            <option value="in_progress">{{ t('admin.ideas.in_progress') }}</option>
+                            <option value="completed">{{ t('admin.ideas.completed') }}</option>
                         </select>
                     </div>
 
@@ -188,7 +188,7 @@ const deleteIdea = (idea) => {
                         <select v-model="searchForm.track_id"
                                 @change="filterIdeas"
                                 class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
-                            <option value="">All Tracks</option>
+                            <option value="">{{ t('admin.ideas.filter_by_track') }}</option>
                             <option v-for="track in tracks" :key="track.id" :value="track.id">
                                 {{ track.name }}
                             </option>

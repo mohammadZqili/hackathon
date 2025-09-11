@@ -79,7 +79,7 @@ class TeamController extends Controller
             }
         }
 
-        return redirect()->route('system-admin.teams.index')
+        return redirect()->route('hackathon-admin.teams.index')
             ->with('success', 'Team created successfully.');
     }
 
@@ -119,7 +119,7 @@ class TeamController extends Controller
 
         $team->update($validated);
 
-        return redirect()->route('system-admin.teams.index')
+        return redirect()->route('hackathon-admin.teams.index')
             ->with('success', 'Team updated successfully.');
     }
 
@@ -127,7 +127,7 @@ class TeamController extends Controller
     {
         $team->delete();
 
-        return redirect()->route('system-admin.teams.index')
+        return redirect()->route('hackathon-admin.teams.index')
             ->with('success', 'Team deleted successfully.');
     }
 

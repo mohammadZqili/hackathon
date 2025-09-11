@@ -24,7 +24,7 @@ const stopScanning = () => {
 </script>
 
 <template>
-    <Head title="QR Scanner" />
+    <Head :title="t('admin.qr_scanner.title')" />
     
     <Default>
         <div class="container mx-auto px-4 py-8">

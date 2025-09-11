@@ -22,16 +22,17 @@ class TrackController extends Controller
 
     public function index(Request $request): Response
     {
-        $query = Track::with(['supervisor', 'teams', 'ideas', 'edition'])
+        $query = Track::with(['teams', 'ideas', 'edition', 'hackathon'])
             ->withCount(['teams', 'ideas']);
 
         // Apply filters
         if ($request->filled('edition_id')) {
-            $query->where('hackathon_edition_id', $request->get('edition_id'));
+            $query->where('edition_id', $request->get('edition_id'));
         }
 
         if ($request->filled('status')) {
-            $query->where('status', $request->get('status'));
+            $isActive = $request->get('status') === 'active' ? 1 : 0;
+            $query->where('is_active', $isActive);
         }
 
         if ($request->filled('search')) {
@@ -50,9 +51,9 @@ class TrackController extends Controller
         // Get statistics
         $statistics = [
             'total' => Track::count(),
-            'active' => Track::where('status', 'active')->count(),
-            'inactive' => Track::where('status', 'inactive')->count(),
-            'with_supervisor' => Track::whereNotNull('supervisor_id')->count(),
+            'active' => Track::where('is_active', true)->count(),
+            'inactive' => Track::where('is_active', false)->count(),
+            'with_teams' => Track::has('teams')->count(),
             'total_teams' => Track::withCount('teams')->get()->sum('teams_count'),
             'total_ideas' => Track::withCount('ideas')->get()->sum('ideas_count'),
         ];
@@ -70,40 +71,29 @@ class TrackController extends Controller
         // Get all editions
         $editions = HackathonEdition::orderBy('created_at', 'desc')->get();
 
-        // Get potential track supervisors
-        $supervisors = User::whereIn('role', ['track_supervisor'])
-            ->orWhereHas('roles', function($q) {
-                $q->where('name', 'track_supervisor');
-            })
-            ->get();
-
         return Inertia::render('TrackSupervisor/Tracks/Create', [
             'editions' => $editions,
-            'supervisors' => $supervisors,
         ]);
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'hackathon_edition_id' => 'required|exists:hackathon_editions,id',
+            'edition_id' => 'nullable|exists:hackathon_editions,id',
+            'hackathon_id' => 'required|exists:hackathons,id',
             'name' => 'required|string|max:255',
             'description' => 'required|string',
             'max_teams' => 'nullable|integer|min:1',
-            'supervisor_id' => 'nullable|exists:users,id',
             'evaluation_criteria' => 'nullable|array',
-            'status' => 'required|in:active,inactive',
+            'is_active' => 'required|boolean',
         ]);
 
         try {
             $track = $this->trackService->createTrack($validated);
 
-            // Assign supervisor if selected
-            if ($request->supervisor_id) {
-                $this->trackService->assignSupervisor($track->id, $request->supervisor_id);
-            }
+            // Track created successfully
 
-            return redirect()->route('system-admin.tracks.index')
+            return redirect()->route('track-supervisor.tracks.index')
                 ->with('success', 'Track created successfully.');
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()])->withInput();
@@ -112,7 +102,7 @@ class TrackController extends Controller
 
     public function show(Track $track): Response
     {
-        $track->load(['supervisor', 'teams.members', 'ideas.team', 'edition']);
+        $track->load(['teams.members', 'ideas.team', 'edition', 'hackathon']);
 
         return Inertia::render('TrackSupervisor/Tracks/Show', [
             'track' => $track,
@@ -124,41 +114,30 @@ class TrackController extends Controller
         // Get all editions
         $editions = HackathonEdition::orderBy('created_at', 'desc')->get();
 
-        // Get potential track supervisors
-        $supervisors = User::whereIn('role', ['track_supervisor'])
-            ->orWhereHas('roles', function($q) {
-                $q->where('name', 'track_supervisor');
-            })
-            ->get();
-
         return Inertia::render('TrackSupervisor/Tracks/Edit', [
             'track' => $track,
             'editions' => $editions,
-            'supervisors' => $supervisors,
         ]);
     }
 
     public function update(Request $request, Track $track)
     {
         $validated = $request->validate([
-            'hackathon_edition_id' => 'required|exists:hackathon_editions,id',
+            'edition_id' => 'nullable|exists:hackathon_editions,id',
+            'hackathon_id' => 'required|exists:hackathons,id',
             'name' => 'required|string|max:255',
             'description' => 'required|string',
             'max_teams' => 'nullable|integer|min:1',
-            'supervisor_id' => 'nullable|exists:users,id',
             'evaluation_criteria' => 'nullable|array',
-            'status' => 'required|in:active,inactive',
+            'is_active' => 'required|boolean',
         ]);
 
         try {
             $track = $this->trackService->updateTrack($track->id, $validated);
 
-            // Update supervisor if changed
-            if ($request->supervisor_id !== $track->supervisor_id) {
-                $this->trackService->assignSupervisor($track->id, $request->supervisor_id);
-            }
+            // Track updated successfully
 
-            return redirect()->route('system-admin.tracks.show', $track)
+            return redirect()->route('track-supervisor.tracks.show', $track)
                 ->with('success', 'Track updated successfully.');
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()])->withInput();
@@ -174,40 +153,24 @@ class TrackController extends Controller
 
         try {
             $this->trackService->deleteTrack($track->id);
-            return redirect()->route('system-admin.tracks.index')
+            return redirect()->route('track-supervisor.tracks.index')
                 ->with('success', 'Track deleted successfully.');
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()]);
         }
     }
 
-    /**
-     * Assign supervisor to track
-     */
-    public function assignSupervisor(Request $request, Track $track)
-    {
-        $request->validate([
-            'supervisor_id' => 'required|exists:users,id',
-        ]);
-
-        try {
-            $this->trackService->assignSupervisor($track->id, $request->supervisor_id);
-            return back()->with('success', 'Supervisor assigned successfully.');
-        } catch (\Exception $e) {
-            return back()->withErrors(['error' => $e->getMessage()]);
-        }
-    }
 
     /**
      * Export tracks to CSV
      */
     public function export(Request $request)
     {
-        $query = Track::with(['supervisor', 'edition'])
+        $query = Track::with(['edition', 'hackathon'])
             ->withCount(['teams', 'ideas']);
 
         if ($request->filled('edition_id')) {
-            $query->where('hackathon_edition_id', $request->get('edition_id'));
+            $query->where('edition_id', $request->get('edition_id'));
         }
 
         $tracks = $query->get();
@@ -219,7 +182,7 @@ class TrackController extends Controller
 
         $callback = function() use ($tracks) {
             $file = fopen('php://output', 'w');
-            fputcsv($file, ['ID', 'Name', 'Edition', 'Description', 'Supervisor', 'Teams Count', 'Ideas Count', 'Status', 'Created At']);
+            fputcsv($file, ['ID', 'Name', 'Edition', 'Description', 'Teams Count', 'Ideas Count', 'Status', 'Created At']);
 
             foreach ($tracks as $track) {
                 fputcsv($file, [
@@ -227,10 +190,9 @@ class TrackController extends Controller
                     $track->name,
                     $track->edition->name ?? 'N/A',
                     $track->description,
-                    $track->supervisor->name ?? 'Not Assigned',
                     $track->teams_count,
                     $track->ideas_count,
-                    $track->status,
+                    $track->is_active ? 'Active' : 'Inactive',
                     $track->created_at->format('Y-m-d H:i'),
                 ]);
             }

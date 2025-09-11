@@ -1,5 +1,5 @@
 <template>
-    <Head title="Speakers Management" />
+    <Head :title="t('admin.speakers.title')" />
     <Default>
         <div class="container mx-auto px-4 py-8" :style="themeStyles">
             <!-- Page Header -->
@@ -13,7 +13,7 @@
                           background: `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})`,
                       }">
                     <div class="overflow-hidden flex flex-col items-center justify-start">
-                        <div class="self-stretch relative leading-[21px] font-medium overflow-hidden text-ellipsis whitespace-nowrap">Add Speaker</div>
+                        <div class="self-stretch relative leading-[21px] font-medium overflow-hidden text-ellipsis whitespace-nowrap">{{ t('admin.speakers.create') }}</div>
                     </div>
                 </Link>
             </div>

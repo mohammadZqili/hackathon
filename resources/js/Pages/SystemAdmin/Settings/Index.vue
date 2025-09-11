@@ -1,5 +1,5 @@
 <template>
-    <Head title="System Settings" />
+    <Head :title="t('admin.settings.title')" />
     <Default>
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" :style="themeStyles">
             <!-- Success/Error Messages -->
@@ -46,7 +46,7 @@
                 <!-- SMTP Tab -->
                 <div v-show="activeTab === 'smtp'" class="space-y-6">
                     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-6">SMTP Settings</h2>
+                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-6">{{ t('admin.settings.smtp') }}</h2>
                         
                         <form @submit.prevent="saveSmtpSettings" class="space-y-6">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">

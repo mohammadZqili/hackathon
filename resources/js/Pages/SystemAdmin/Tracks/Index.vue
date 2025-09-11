@@ -143,7 +143,7 @@
                         <table class="min-w-full">
                             <thead>
                                 <tr :style="{ backgroundColor: `rgba(${themeColor.rgb}, 0.05)` }">
-                                    <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Track Name</th>
+                                    <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">{{ t('admin.tracks.name') }}</th>
                                     <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Edition</th>
                                     <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Description</th>
                                     <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Assigned Supervisor</th>

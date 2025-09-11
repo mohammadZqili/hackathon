@@ -45,7 +45,7 @@ class WorkshopController extends Controller
 
     public function store(Request $request)
     {
-        return redirect()->route('system-admin.workshops.index')
+        return redirect()->route('track-supervisor.workshops.index')
             ->with('success', 'Workshop created successfully.');
     }
 
@@ -74,7 +74,7 @@ class WorkshopController extends Controller
     public function update(Request $request, Workshop $workshop)
     {
         // TODO: Implement update functionality
-        return redirect()->route('system-admin.workshops.index')
+        return redirect()->route('track-supervisor.workshops.index')
             ->with('success', 'Workshop updated successfully.');
     }
 
@@ -82,7 +82,7 @@ class WorkshopController extends Controller
     {
         $workshop->delete();
 
-        return redirect()->route('system-admin.workshops.index')
+        return redirect()->route('track-supervisor.workshops.index')
             ->with('success', 'Workshop deleted successfully.');
     }
 

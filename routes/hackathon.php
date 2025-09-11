@@ -84,7 +84,6 @@ Route::middleware(['auth', 'role:system_admin|permission:manage-hackathon-editio
 
     // Global Track Management
     Route::resource('tracks', SystemAdminTrackController::class);
-    Route::post('tracks/{track}/assign-supervisor', [SystemAdminTrackController::class, 'assignSupervisor'])->name('tracks.assign-supervisor');
     Route::get('tracks/export', [SystemAdminTrackController::class, 'export'])->name('tracks.export');
 
     // Global Idea Management
@@ -199,7 +198,6 @@ Route::middleware(['auth', 'role:hackathon_admin|permission:manage-current-editi
 
     // Global Track Management
     Route::resource('tracks', HackathonAdminTrackController::class);
-    Route::post('tracks/{track}/assign-supervisor', [HackathonAdminTrackController::class, 'assignSupervisor'])->name('tracks.assign-supervisor');
     Route::get('tracks/export', [HackathonAdminTrackController::class, 'export'])->name('tracks.export');
 
     // Global Idea Management
