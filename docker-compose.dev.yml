@@ -1,0 +1,57 @@
+version: '3.8'
+
+# Docker Compose override for development
+# This file extends docker-compose.yml for development purposes
+# Use: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  app:
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - LOG_LEVEL=debug
+    volumes:
+      # Mount source code for development (hot reload)
+      - .:/var/www/html
+      # Exclude vendor and node_modules to avoid conflicts
+      - /var/www/html/vendor
+      - /var/www/html/node_modules
+    # Override the command to use development settings
+    command: >
+      sh -c "
+        composer install &&
+        npm install &&
+        npm run dev &
+        php artisan serve --host=0.0.0.0 --port=8000
+      "
+
+  # Add phpMyAdmin for database management
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: guacpanel-phpmyadmin
+    restart: unless-stopped
+    environment:
+      - PMA_HOST=mysql
+      - PMA_PORT=3306
+      - PMA_USER=root
+      - PMA_PASSWORD=root_password
+    ports:
+      - "8080:80"
+    depends_on:
+      - mysql
+    networks:
+      - guacpanel-network
+
+  # Add Redis Commander for Redis management
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: guacpanel-redis-commander
+    restart: unless-stopped
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+    networks:
+      - guacpanel-network

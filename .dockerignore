@@ -1,0 +1,68 @@
+# .dockerignore - Optimize Docker build by excluding unnecessary files
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+docs/
+README.md
+CHANGELOG.md
+
+# Development files
+.env
+.env.local
+.env.example
+docker-compose.dev.yml
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Laravel
+/storage/logs/*
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/storage/app/public/*
+bootstrap/cache/*
+.phpunit.result.cache
+
+# Vendor (will be installed during build)
+vendor/
+
+# Compiled assets (will be built during build)
+public/build/
+public/hot
+
+# Test files
+tests/
+phpunit.xml
+.phpunit.result.cache
+
+# Development scripts
+*.sh
+!docker/start.sh
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.log
+
+# Build artifacts
+public/mix-manifest.json
