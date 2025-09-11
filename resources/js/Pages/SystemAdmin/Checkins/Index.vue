@@ -1,12 +1,12 @@
 <template>
-    <Head title="Check-ins Management" />
+    <Head :title="t('admin.checkins.title')" />
     <Default>
         <div class="container mx-auto px-4 py-8" :style="themeStyles">
             <div class="flex flex-col lg:flex-row gap-6">
                 <!-- Left Panel - Check-in Actions -->
                 <div class="w-full lg:w-1/3">
                     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
-                        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Check-In</h2>
+                        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">{{ t('admin.checkins.title') }}</h2>
                         
                         <!-- Scanner Actions -->
                         <div class="space-y-4">
@@ -24,7 +24,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
                                           d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                                 </svg>
-                                <span>Open QR Scanner</span>
+                                <span>{{ t('admin.checkins.qr_scanner') }}</span>
                             </button>
 
                             <!-- Scan Barcode Button -->
@@ -41,13 +41,13 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
                                           d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h2M8 20H6m-2-4v-2m0-2v-2m0-2V6m4-2h2M4 8h16M4 16h16" />
                                 </svg>
-                                <span>Scan Barcode</span>
+                                <span>{{ t('admin.checkins.scan_qr') }}</span>
                             </button>
 
                             <!-- Workshop Selection -->
                             <div class="mt-6">
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Select Workshop
+                                    {{ t('admin.workshops.title') }}
                                 </label>
                                 <select 
                                     v-model="selectedWorkshop"
@@ -56,7 +56,7 @@
                                         '--tw-ring-color': themeColor.primary
                                     }"
                                 >
-                                    <option value="">Choose a workshop...</option>
+                                    <option value="">{{ t('admin.form.placeholder.select_option') }}</option>
                                     <option v-for="workshop in workshops" :key="workshop.id" :value="workshop.id">
                                         {{ workshop.title }}
                                     </option>
@@ -65,11 +65,11 @@
 
                             <!-- Manual Check-in -->
                             <div class="mt-6 pt-6 border-t dark:border-gray-700">
-                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Manual Check-in</h3>
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ t('admin.checkins.manual_checkin') }}</h3>
                                 <input
                                     v-model="manualCode"
                                     type="text"
-                                    placeholder="Enter registration code..."
+                                    :placeholder="t('admin.checkins.participant_email')"
                                     class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white mb-3"
                                     @keyup.enter="checkInManual"
                                 />
@@ -80,7 +80,7 @@
                                         background: `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})`
                                     }"
                                 >
-                                    Check In
+                                    {{ t('admin.checkins.checked_in') }}
                                 </button>
                             </div>
                             <!-- QR Generator Section -->
@@ -98,20 +98,20 @@
                 <div class="flex-1">
                     <!-- Header -->
                     <div class="mb-6">
-                        <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Workshop Attendance</h1>
+                        <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">{{ t('admin.workshops.title') + ' ' + t('admin.statistics.attendance') }}</h1>
                         <p class="text-gray-600 dark:text-gray-400" :style="{ color: themeColor.primary }">
-                            Confirm attendance for the workshop
+                            {{ t('admin.checkins.attendance_overview') }}
                         </p>
                     </div>
 
                     <!-- Statistics Cards -->
                     <div class="mb-6">
-                        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Attendance Overview</h2>
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">{{ t('admin.statistics.overview') }}</h2>
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <!-- Registered Card -->
                             <div class="bg-white dark:bg-gray-800 rounded-xl border-2 p-6"
                                  :style="{ borderColor: themeColor.primary + '30' }">
-                                <div class="text-gray-600 dark:text-gray-400 font-medium mb-2">Registered</div>
+                                <div class="text-gray-600 dark:text-gray-400 font-medium mb-2">{{ t('admin.workshops.registered') }}</div>
                                 <div class="text-3xl font-bold" :style="{ color: themeColor.primary }">
                                     {{ statistics.registered }}
                                 </div>
@@ -120,7 +120,7 @@
                             <!-- Attendees Card -->
                             <div class="bg-white dark:bg-gray-800 rounded-xl border-2 p-6"
                                  :style="{ borderColor: themeColor.primary + '30' }">
-                                <div class="text-gray-600 dark:text-gray-400 font-medium mb-2">Attendees</div>
+                                <div class="text-gray-600 dark:text-gray-400 font-medium mb-2">{{ t('admin.statistics.attendance') }}</div>
                                 <div class="text-3xl font-bold" :style="{ color: themeColor.primary }">
                                     {{ statistics.attendees }}
                                 </div>
@@ -129,7 +129,7 @@
                             <!-- Unregistered Card -->
                             <div class="bg-white dark:bg-gray-800 rounded-xl border-2 p-6"
                                  :style="{ borderColor: themeColor.primary + '30' }">
-                                <div class="text-gray-600 dark:text-gray-400 font-medium mb-2">Unregistered</div>
+                                <div class="text-gray-600 dark:text-gray-400 font-medium mb-2">{{ t('admin.checkins.walk_in') }}</div>
                                 <div class="text-3xl font-bold" :style="{ color: themeColor.primary }">
                                     {{ statistics.unregistered }}
                                 </div>
@@ -145,17 +145,17 @@
                                     <tr class="border-b dark:border-gray-700" 
                                         :style="{ backgroundColor: themeColor.primary + '10' }">
                                         <th class="text-left py-4 px-6 font-semibold text-gray-900 dark:text-white">
-                                            Visitor Name
+                                            {{ t('admin.checkins.participant_name') }}
                                         </th>
                                         <th class="text-left py-4 px-6 font-semibold text-gray-900 dark:text-white">
-                                            Workshop
+                                            {{ t('admin.workshops.title') }}
                                         </th>
                                         <th class="text-left py-4 px-6 font-semibold" 
                                             :style="{ color: themeColor.primary }">
-                                            Attendance Time/Date
+                                            {{ t('admin.checkins.checkin_time') }}
                                         </th>
                                         <th class="text-left py-4 px-6 font-semibold text-gray-900 dark:text-white">
-                                            Status
+                                            {{ t('admin.form.status') }}
                                         </th>
                                     </tr>
                                 </thead>
@@ -177,7 +177,7 @@
                                                   :style="{ 
                                                       backgroundColor: attendee.registered ? themeColor.primary : '#9CA3AF'
                                                   }">
-                                                {{ attendee.registered ? 'Registered' : 'Walk-in' }}
+                                                {{ attendee.registered ? t('admin.workshops.registered') : t('admin.checkins.walk_in') }}
                                             </span>
                                         </td>
                                     </tr>
@@ -188,14 +188,14 @@
                         <!-- Pagination -->
                         <div class="px-6 py-4 flex items-center justify-between border-t dark:border-gray-700">
                             <div class="text-sm text-gray-600 dark:text-gray-400">
-                                Showing {{ recentAttendees.length }} of {{ totalAttendees }} attendees
+                                {{ t('admin.pagination.showing_results', { from: 1, to: recentAttendees.length, total: totalAttendees }) }}
                             </div>
                             <div class="flex gap-2">
                                 <button 
                                     @click="previousPage"
                                     :disabled="currentPage === 1"
                                     class="px-4 py-2 rounded-lg border dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                                    Previous
+                                    {{ t('admin.pagination.previous') }}
                                 </button>
                                 <button 
                                     @click="nextPage"
@@ -204,7 +204,7 @@
                                     :style="{
                                         background: `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})`
                                     }">
-                                    Next
+                                    {{ t('admin.pagination.next') }}
                                 </button>
                             </div>
                         </div>
@@ -342,7 +342,7 @@ const recentAttendees = computed(() => {
 // Methods
 const openQRScanner = () => {
     if (!selectedWorkshop.value) {
-        alert('Please select a workshop first')
+        alert(t('admin.checkins.select_workshop_first'))
         return
     }
     showQRScanner.value = true
@@ -358,13 +358,13 @@ const handleScanSuccess = (data) => {
     
     // Show success message
     if (data.name) {
-        alert(`Successfully checked in: ${data.name}`)
+        alert(t('admin.checkins.scan_success') + `: ${data.name}`)
     }
 }
 
 const checkInManual = () => {
     if (!manualCode.value || !selectedWorkshop.value) {
-        alert('Please enter a registration code and select a workshop')
+        alert(t('admin.checkins.enter_code_and_workshop'))
         return
     }
 

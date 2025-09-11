@@ -1,10 +1,10 @@
 <template>
-    <Head title="Add New Organization" />
+    <Head :title="t('admin.organizations.create')" />
     <Default>
         <div class="container mx-auto px-4 py-8">
             <!-- Page Header -->
             <div class="mb-6">
-                <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Add New Organization</h1>
+                <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ t('admin.organizations.create') }}</h1>
             </div>
 
             <!-- Form Content -->
@@ -14,11 +14,11 @@
                     <!-- Organization Name -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Organization Name
+                            {{ t('admin.organizations.name') }}
                         </label>
                         <input v-model="form.name"
                                type="text"
-                               placeholder="Enter organization name"
+                               :placeholder="t('admin.form.placeholder.enter_organization_name')"
                                class="w-full rounded-lg bg-teal-50 dark:bg-gray-800 border border-teal-100 dark:border-gray-600 px-4 py-3 text-gray-900 dark:text-white placeholder-teal-600/50 dark:placeholder-gray-400 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                                required>
                         <p v-if="form.errors.name" class="mt-1 text-sm text-red-600">
@@ -29,7 +29,7 @@
                     <!-- Logo Upload -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Upload Organization Logo
+                            {{ t('admin.form.upload_logo') }}
                         </label>
                         <div class="relative">
                             <div v-if="!previewUrl" 
@@ -42,10 +42,10 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
                                     </svg>
                                     <p class="text-sm text-gray-700 dark:text-gray-300 mb-1">
-                                        Drag and drop or browse to upload an organization logo
+                                        {{ t('admin.form.placeholder.drag_drop_logo') }}
                                     </p>
                                     <button type="button" class="px-4 py-2 bg-teal-100 dark:bg-gray-700 text-teal-700 dark:text-teal-400 rounded-lg text-sm font-medium hover:bg-teal-200 dark:hover:bg-gray-600 transition-colors">
-                                        Browse
+                                        {{ t('admin.actions.browse') }}
                                     </button>
                                 </div>
                             </div>
@@ -73,18 +73,18 @@
                     <!-- Description -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Description
+                            {{ t('admin.form.description') }}
                         </label>
                         <textarea v-model="form.description"
                                   rows="6"
-                                  placeholder="Brief description about the organization..."
+                                  :placeholder="t('admin.form.placeholder.organization_description')"
                                   class="w-full rounded-lg bg-teal-50 dark:bg-gray-800 border border-teal-100 dark:border-gray-600 px-4 py-3 text-gray-900 dark:text-white placeholder-teal-600/50 dark:placeholder-gray-400 focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none"></textarea>
                     </div>
 
                     <!-- Associated Speakers -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Associated Speakers
+                            {{ t('admin.form.associated_speakers') }}
                         </label>
                         <div class="relative">
                             <select v-model="form.speaker_ids"
@@ -102,7 +102,7 @@
                             </div>
                         </div>
                         <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                            Hold Ctrl/Cmd to select multiple speakers
+                            {{ t('admin.form.multiple_select_help') }}
                         </p>
                     </div>
                 </div>
@@ -112,12 +112,12 @@
                     <!-- Website -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Website
+                            {{ t('admin.organizations.website') }}
                         </label>
                         <div class="relative">
                             <input v-model="form.website"
                                    type="url"
-                                   placeholder="https://domain.com"
+                                   :placeholder="t('admin.form.placeholder.website')"
                                    class="w-full rounded-lg bg-teal-50 dark:bg-gray-800 border border-teal-100 dark:border-gray-600 px-4 py-3 text-gray-900 dark:text-white placeholder-teal-600/50 dark:placeholder-gray-400 focus:ring-2 focus:ring-teal-500 focus:border-transparent pr-10">
                             <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                                 <svg class="w-5 h-5 text-teal-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -130,11 +130,11 @@
                     <!-- Further Information -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Further Information
+                            {{ t('admin.form.further_information') }}
                         </label>
                         <textarea v-model="form.further_info"
                                   rows="6"
-                                  placeholder="Any additional information..."
+                                  :placeholder="t('admin.form.placeholder.additional_info')"
                                   class="w-full rounded-lg bg-teal-50 dark:bg-gray-800 border border-teal-100 dark:border-gray-600 px-4 py-3 text-gray-900 dark:text-white placeholder-teal-600/50 dark:placeholder-gray-400 focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none"></textarea>
                     </div>
                 </div>
@@ -144,11 +144,11 @@
                     <!-- Contact Email -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Contact Email
+                            {{ t('admin.organizations.email') }}
                         </label>
                         <input v-model="form.email"
                                type="email"
-                               placeholder="contact@organization.com"
+                               :placeholder="t('admin.form.placeholder.contact_email')"
                                class="w-full rounded-lg bg-teal-50 dark:bg-gray-800 border border-teal-100 dark:border-gray-600 px-4 py-3 text-gray-900 dark:text-white placeholder-teal-600/50 dark:placeholder-gray-400 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                                required>
                         <p v-if="form.errors.email" class="mt-1 text-sm text-red-600">
@@ -159,11 +159,11 @@
                     <!-- Phone Number -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Phone Number
+                            {{ t('admin.organizations.phone') }}
                         </label>
                         <input v-model="form.phone"
                                type="tel"
-                               placeholder="+1 234 567 8900"
+                               :placeholder="t('admin.form.placeholder.enter_phone')"
                                class="w-full rounded-lg bg-teal-50 dark:bg-gray-800 border border-teal-100 dark:border-gray-600 px-4 py-3 text-gray-900 dark:text-white placeholder-teal-600/50 dark:placeholder-gray-400 focus:ring-2 focus:ring-teal-500 focus:border-transparent">
                     </div>
                 </div>
@@ -173,36 +173,36 @@
                     <!-- Industry/Type -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Industry/Type
+                            {{ t('admin.organizations.industry') }}/{{ t('admin.organizations.type') }}
                         </label>
                         <select v-model="form.type"
                                 class="w-full rounded-lg bg-teal-50 dark:bg-gray-800 border border-teal-100 dark:border-gray-600 px-4 py-3 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent">
-                            <option value="technology">Technology</option>
-                            <option value="education">Education</option>
-                            <option value="finance">Finance</option>
-                            <option value="healthcare">Healthcare</option>
-                            <option value="manufacturing">Manufacturing</option>
-                            <option value="retail">Retail</option>
-                            <option value="nonprofit">Non-Profit</option>
-                            <option value="government">Government</option>
-                            <option value="other">Other</option>
+                            <option value="technology">{{ t('admin.form.technology') }}</option>
+                            <option value="education">{{ t('admin.form.education') }}</option>
+                            <option value="finance">{{ t('admin.form.finance') }}</option>
+                            <option value="healthcare">{{ t('admin.form.healthcare') }}</option>
+                            <option value="manufacturing">{{ t('admin.form.manufacturing') }}</option>
+                            <option value="retail">{{ t('admin.form.retail') }}</option>
+                            <option value="nonprofit">{{ t('admin.form.nonprofit') }}</option>
+                            <option value="government">{{ t('admin.form.government') }}</option>
+                            <option value="other">{{ t('admin.form.other') }}</option>
                         </select>
                     </div>
 
                     <!-- Partnership Level -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Partnership Level
+                            {{ t('admin.organizations.partnership_level') }}
                         </label>
                         <select v-model="form.partnership_level"
                                 class="w-full rounded-lg bg-teal-50 dark:bg-gray-800 border border-teal-100 dark:border-gray-600 px-4 py-3 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent">
-                            <option value="">Select Level</option>
-                            <option value="platinum">Platinum</option>
-                            <option value="gold">Gold</option>
-                            <option value="silver">Silver</option>
-                            <option value="bronze">Bronze</option>
-                            <option value="partner">Partner</option>
-                            <option value="supporter">Supporter</option>
+                            <option value="">{{ t('admin.form.placeholder.select_level') }}</option>
+                            <option value="platinum">{{ t('admin.form.platinum') }}</option>
+                            <option value="gold">{{ t('admin.organizations.gold') }}</option>
+                            <option value="silver">{{ t('admin.organizations.silver') }}</option>
+                            <option value="bronze">{{ t('admin.organizations.bronze') }}</option>
+                            <option value="partner">{{ t('admin.organizations.partner') }}</option>
+                            <option value="supporter">{{ t('admin.form.supporter') }}</option>
                         </select>
                     </div>
                 </div>
@@ -211,12 +211,12 @@
                 <div class="flex justify-between">
                     <Link :href="route('system-admin.organizations.index')"
                           class="px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                        Cancel
+                        {{ t('admin.actions.cancel') }}
                     </Link>
                     <button type="submit"
                             :disabled="form.processing"
                             class="px-8 py-3 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg font-semibold hover:from-teal-700 hover:to-teal-600 disabled:opacity-50 transition-all shadow-lg hover:shadow-xl">
-                        {{ form.processing ? 'Creating...' : 'Add Organization' }}
+                        {{ form.processing ? t('admin.actions.creating') : t('admin.organizations.create') }}
                     </button>
                 </div>
             </form>

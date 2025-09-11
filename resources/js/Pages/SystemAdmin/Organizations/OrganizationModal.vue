@@ -5,7 +5,7 @@
             <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                 <div class="flex items-center justify-between">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                        {{ organization ? 'Edit Organization' : 'Add New Organization' }}
+                        {{ organization ? t('admin.organizations.edit') : t('admin.organizations.create') }}
                     </h3>
                     <button @click="$emit('close')"
                             class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 transition-colors">
@@ -21,11 +21,11 @@
                 <!-- Organization Name -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Organization Name *
+                        {{ t('admin.organizations.name') }} *
                     </label>
                     <input v-model="form.name"
                            type="text"
-                           placeholder="Enter organization name"
+                           :placeholder="t('admin.form.placeholder.enter_organization_name')"
                            class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors"
                            :style="{ '--tw-ring-color': themeColor.primary }"
                            required>
@@ -37,11 +37,11 @@
                 <!-- Description -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Description
+                        {{ t('admin.form.description') }}
                     </label>
                     <textarea v-model="form.description"
                               rows="4"
-                              placeholder="Brief description of the organization..."
+                              :placeholder="t('admin.form.placeholder.organization_description')"
                               class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors resize-none"
                               :style="{ '--tw-ring-color': themeColor.primary }"></textarea>
                 </div>
@@ -50,11 +50,11 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Contact Email *
+                            {{ t('admin.organizations.email') }} *
                         </label>
                         <input v-model="form.contact_email"
                                type="email"
-                               placeholder="contact@organization.com"
+                               :placeholder="t('admin.form.placeholder.contact_email')"
                                class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors"
                                :style="{ '--tw-ring-color': themeColor.primary }"
                                required>
@@ -64,11 +64,11 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Contact Phone
+                            {{ t('admin.organizations.phone') }}
                         </label>
                         <input v-model="form.contact_phone"
                                type="tel"
-                               placeholder="+1234567890"
+                               :placeholder="t('admin.form.placeholder.enter_phone')"
                                class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors"
                                :style="{ '--tw-ring-color': themeColor.primary }">
                     </div>
@@ -77,11 +77,11 @@
                 <!-- Website -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Website
+                        {{ t('admin.organizations.website') }}
                     </label>
                     <input v-model="form.website"
                            type="url"
-                           placeholder="https://www.organization.com"
+                           :placeholder="t('admin.form.placeholder.website')"
                            class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors"
                            :style="{ '--tw-ring-color': themeColor.primary }">
                 </div>
@@ -89,11 +89,11 @@
                 <!-- Address -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Address
+                        {{ t('admin.organizations.address') }}
                     </label>
                     <input v-model="form.address"
                            type="text"
-                           placeholder="123 Main St, City, State, ZIP"
+                           :placeholder="t('admin.form.placeholder.enter_address')"
                            class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors"
                            :style="{ '--tw-ring-color': themeColor.primary }">
                 </div>
@@ -102,27 +102,27 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Organization Type
+                            {{ t('admin.organizations.type') }}
                         </label>
                         <select v-model="form.type"
                                 class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors"
                                 :style="{ '--tw-ring-color': themeColor.primary }">
-                            <option value="">Select Type</option>
-                            <option value="company">Company</option>
-                            <option value="startup">Startup</option>
-                            <option value="nonprofit">Non-Profit</option>
-                            <option value="educational">Educational Institution</option>
-                            <option value="government">Government</option>
-                            <option value="other">Other</option>
+                            <option value="">{{ t('admin.form.placeholder.select_type') }}</option>
+                            <option value="company">{{ t('admin.form.company') }}</option>
+                            <option value="startup">{{ t('admin.form.startup') }}</option>
+                            <option value="nonprofit">{{ t('admin.form.nonprofit') }}</option>
+                            <option value="educational">{{ t('admin.form.educational') }}</option>
+                            <option value="government">{{ t('admin.form.government') }}</option>
+                            <option value="other">{{ t('admin.form.other') }}</option>
                         </select>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Industry
+                            {{ t('admin.organizations.industry') }}
                         </label>
                         <input v-model="form.industry"
                                type="text"
-                               placeholder="Technology, Healthcare, Finance, etc."
+                               :placeholder="t('admin.form.placeholder.industry')"
                                class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors"
                                :style="{ '--tw-ring-color': themeColor.primary }">
                     </div>
@@ -131,11 +131,11 @@
                 <!-- Logo URL -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Logo URL
+                        {{ t('admin.organizations.logo') }}
                     </label>
                     <input v-model="form.logo_url"
                            type="url"
-                           placeholder="https://www.organization.com/logo.png"
+                           :placeholder="t('admin.form.placeholder.logo_url')"
                            class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors"
                            :style="{ '--tw-ring-color': themeColor.primary }">
                 </div>
@@ -143,17 +143,17 @@
                 <!-- Social Links -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Social Links
+                        {{ t('admin.speakers.social_media') }}
                     </label>
                     <div class="space-y-2">
                         <input v-model="form.linkedin"
                                type="url"
-                               placeholder="LinkedIn Company Page URL"
+                               :placeholder="t('admin.form.placeholder.linkedin_company')"
                                class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors"
                                :style="{ '--tw-ring-color': themeColor.primary }">
                         <input v-model="form.twitter"
                                type="url"
-                               placeholder="Twitter/X Company Page URL"
+                               :placeholder="t('admin.form.placeholder.twitter_company')"
                                class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors"
                                :style="{ '--tw-ring-color': themeColor.primary }">
                     </div>
@@ -163,7 +163,7 @@
                 <div class="flex justify-end gap-4 pt-4">
                     <button @click="$emit('close')" type="button"
                             class="px-6 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                        Cancel
+                        {{ t('admin.actions.cancel') }}
                     </button>
                     <button type="submit"
                             :disabled="form.processing"
@@ -171,7 +171,7 @@
                             :style="{
                                 background: `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})`,
                             }">
-                        {{ form.processing ? 'Saving...' : (organization ? 'Update Organization' : 'Add Organization') }}
+                        {{ form.processing ? t('admin.actions.saving') : (organization ? t('admin.actions.update') : t('admin.organizations.create')) }}
                     </button>
                 </div>
             </form>

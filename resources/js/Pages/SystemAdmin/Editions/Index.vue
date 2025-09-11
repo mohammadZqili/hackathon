@@ -5,8 +5,8 @@
             <!-- Page Header -->
             <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8">
                 <div>
-                    <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ t('admin.editions.title') }}</h1>
-                    <p class="mt-2 text-gray-600 dark:text-gray-400">
+                    <h1 class="text-3xl font-bold text-gray-900 dark:text-white" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">{{ t('admin.editions.title') }}</h1>
+                    <p class="mt-2 text-gray-600 dark:text-gray-400" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">
                         {{ t('admin.editions.description', 'Manage hackathon editions and their configurations') }}
                     </p>
                 </div>
@@ -29,26 +29,26 @@
                     <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                         <thead class="bg-gray-50 dark:bg-gray-700">
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                    {{ t('admin.editions.name') }}
+                                <th class="px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">
+                                    {{ t('admin.form.name') }}
                                 </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                    {{ t('admin.editions.year', 'Year') }}
+                                <th class="px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">
+                                    {{ t('admin.editions.year') }}
                                 </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                    {{ t('admin.editions.registration_dates', 'Registration Dates') }}
+                                <th class="px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">
+                                    {{ t('admin.editions.registration_dates') }}
                                 </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                <th class="px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">
                                     {{ t('admin.teams.title') }}
                                 </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                    {{ t('admin.editions.hackathon_admin', 'Hackathon Admin') }}
+                                <th class="px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">
+                                    {{ t('admin.editions.hackathon_admin') }}
                                 </th>
                                 <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                    {{ t('admin.editions.status') }}
+                                    {{ t('admin.form.status') }}
                                 </th>
                                 <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                    {{ t('admin.editions.actions') }}
+                                    {{ t('admin.table.actions') }}
                                 </th>
                             </tr>
                         </thead>
@@ -60,7 +60,7 @@
                             </tr>
                             <tr v-else v-for="edition in editions.data" :key="edition.id"
                                 class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                                <td class="px-6 py-4 whitespace-nowrap">
+                                <td class="px-6 py-4 whitespace-nowrap" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">
                                     <div class="text-sm font-medium" :style="{ color: themeColor.primary }">
                                         {{ edition.name }}
                                     </div>
@@ -68,19 +68,19 @@
                                         {{ edition.location }}
                                     </div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
+                                <td class="px-6 py-4 whitespace-nowrap" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">
                                     <span class="text-sm text-gray-900 dark:text-gray-300">{{ edition.year }}</span>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
+                                <td class="px-6 py-4 whitespace-nowrap" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">
                                     <div class="text-sm" :style="{ color: themeColor.primary }">
                                         {{ formatDate(edition.registration_start_date) }} - {{ formatDate(edition.registration_end_date) }}
                                     </div>
                                     <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                        Event: {{ formatDate(edition.hackathon_start_date) }} - {{ formatDate(edition.hackathon_end_date) }}
+                                        {{ t('admin.editions.event') }}: {{ formatDate(edition.hackathon_start_date) }} - {{ formatDate(edition.hackathon_end_date) }}
                                     </div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
+                                <td class="px-6 py-4 whitespace-nowrap" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">
+                                    <div class="flex items-center" :class="{ 'justify-end': isRTL, 'justify-start': !isRTL }">
                                         <span class="text-sm font-medium" :style="{ color: themeColor.primary }">
                                             {{ edition.teams_count || 0 }}
                                         </span>
@@ -89,19 +89,19 @@
                                         </span>
                                     </div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
+                                <td class="px-6 py-4 whitespace-nowrap" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">
                                     <span class="text-sm" :style="{ color: themeColor.primary }">
-                                        {{ edition.admin?.name || 'Not Assigned' }}
+                                        {{ edition.admin?.name || t('admin.common.not_assigned') }}
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-center">
                                     <span v-if="edition.is_active"
                                           class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">
-                                        {{ t('admin.editions.active') }}
+                                        {{ t('admin.status.active') }}
                                     </span>
                                     <span v-else
                                           class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
-                                        {{ t('admin.editions.inactive') }}
+                                        {{ t('admin.status.inactive') }}
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-center">
@@ -232,7 +232,7 @@ const themeStyles = computed(() => ({
 }))
 
 const formatDate = (date) => {
-    if (!date) return 'N/A'
+    if (!date) return t('admin.common.not_available')
     return new Date(date).toLocaleDateString('en-US', {
         month: 'short',
         day: 'numeric'
@@ -240,7 +240,7 @@ const formatDate = (date) => {
 }
 
 const deleteEdition = (edition) => {
-    if (confirm(`Are you sure you want to delete the edition "${edition.name} ${edition.year}"? This action cannot be undone.`)) {
+    if (confirm(t('admin.editions.confirm_delete', { name: `${edition.name} ${edition.year}` }))) {
         useForm({}).delete(route('system-admin.editions.destroy', edition.id))
     }
 }

@@ -14,7 +14,6 @@ use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\UserAccountController;
 use App\Http\Controllers\AdminSessionController;
 use App\Http\Controllers\AdminSettingController;
-use App\Http\Controllers\DocumentationController;
 use App\Http\Controllers\Auth\MagicLinkController;
 use App\Http\Controllers\BrowserSessionController;
 use App\Http\Controllers\AdminPermissionController;
@@ -27,7 +26,26 @@ use App\Http\Controllers\AdminPersonalisationController;
 use App\Http\Controllers\NotificationController;
 
 Route::get('/terms', [PageController::class, 'terms'])->name('terms');
-Route::get('/', [PageController::class, 'home'])->name('home');
+Route::get('/', function () {
+    if (auth()->check()) {
+        // Get user's primary role and redirect to appropriate dashboard
+        $user = auth()->user();
+        $primaryRole = $user->primary_role ?? 'team_member';
+        
+        $roleRoutes = [
+            'system_admin' => 'system-admin.dashboard',
+            'hackathon_admin' => 'hackathon-admin.dashboard',
+            'track_supervisor' => 'track-supervisor.dashboard',
+            'team_leader' => 'team-lead.dashboard',
+            'team_member' => 'team-member.dashboard',
+        ];
+        
+        $route = $roleRoutes[$primaryRole] ?? 'dashboard';
+        return redirect()->route($route);
+    }
+    
+    return redirect()->route('login');
+})->name('home');
 
 // Authenticated Routes
 Route::middleware(['web', 'auth', 'auth.session'])->group(function () {
@@ -187,15 +205,6 @@ Route::middleware(['web', 'auth', 'auth.session'])->group(function () {
     });
 });
 
-// Documentation Routes
-Route::prefix('documentation')->name('documentation.')->group(function () {
-    Route::controller(DocumentationController::class)->group(function () {
-        Route::get('/', 'index')->name('index');
-        Route::get('/installation', 'installation')->name('installation');
-        Route::get('/features', 'features')->name('features');
-        Route::get('/components', 'components')->name('components');
-    });
-});
 
 // Magic Link Authentication Routes
 Route::middleware(['guest', 'web'])->group(function () {
@@ -222,7 +231,7 @@ require __DIR__.'/hackathon.php';
 //require __DIR__.'/hackathon-admin.php';
 
 // TrackSupervisor Routes
-require __DIR__.'/track-supervisor.php';
+//require __DIR__.'/track-supervisor.php';
 
 // TeamLead Routes
 require __DIR__.'/team-lead.php';
@@ -239,3 +248,8 @@ Route::get('/language/current', [App\Http\Controllers\LanguageController::class,
 
 // Debug route for testing roles
 Route::get('/test-role', [App\Http\Controllers\TestRoleController::class, 'checkRole'])->middleware('auth');
+
+// Test route for translations
+Route::get('/test-translations', function () {
+    return Inertia::render('TestTranslations');
+})->middleware(['web']);

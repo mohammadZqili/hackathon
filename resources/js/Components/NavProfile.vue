@@ -53,20 +53,6 @@ const menuItems = [
     { type: 'separator' },
     {
         type: 'link',
-        label: 'Help',
-        icon: 'help',
-        href: route('admin.setting.index')
-    },
-    {
-        type: 'link',
-        label: 'Documentation',
-        icon: 'book',
-        href: route('documentation.index'),
-        target: '_blank'
-    },
-    { type: 'separator' },
-    {
-        type: 'link',
         label: 'Sign out',
         icon: 'logout',
         href: route('logout'),
@@ -184,7 +170,7 @@ const icons = {
                     <Link :href="item.href" :method="item.method" :as="item.as" :target="item.target" @click="closeMenu"
                         class="group flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                         :class="item.class">
-                        <svg class="mr-3 h-5 w-5 text-gray-600 dark:text-gray-500" 
+                        <svg class="mr-3 h-5 w-5 text-gray-600 dark:text-gray-500"
                             :class="[item.label === 'Sign out' ? '' : hoverColor, item.iconClass]"
                             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" v-html="icons[item.icon]" />
                         <span :class="item.label === 'Sign out' ? '' : hoverColor">{{ item.label }}</span>

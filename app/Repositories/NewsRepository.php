@@ -14,6 +14,65 @@ class NewsRepository extends BaseRepository
     }
 
     /**
+     * Get paginated news with filters (for consistency with other repositories)
+     */
+    public function getPaginatedWithFilters(array $filters = [], int $perPage = 15): LengthAwarePaginator
+    {
+        $query = $this->model->with(['author']);
+
+        // Apply search filter
+        if (!empty($filters['search'])) {
+            $search = $filters['search'];
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('excerpt', 'like', "%{$search}%")
+                  ->orWhere('content', 'like', "%{$search}%");
+            });
+        }
+
+        // Apply status filter
+        if (!empty($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        // Apply featured filter
+        if (isset($filters['featured'])) {
+            $query->where('is_featured', $filters['featured']);
+        }
+
+        // Apply hackathon filter
+        if (!empty($filters['hackathon_id'])) {
+            $query->where('hackathon_id', $filters['hackathon_id']);
+        }
+
+        // Apply author filter
+        if (!empty($filters['author_id'])) {
+            $query->where('author_id', $filters['author_id']);
+        }
+
+        // Apply tags filter (using tags instead of category)
+        if (!empty($filters['tags'])) {
+            $query->whereJsonContains('tags', $filters['tags']);
+        }
+
+        // Apply date range filter
+        if (!empty($filters['date_from'])) {
+            $query->where('published_at', '>=', $filters['date_from']);
+        }
+
+        if (!empty($filters['date_to'])) {
+            $query->where('published_at', '<=', $filters['date_to']);
+        }
+
+        // Apply sorting
+        $sortBy = $filters['sort_by'] ?? 'published_at';
+        $sortDirection = $filters['sort_direction'] ?? 'desc';
+        $query->orderBy($sortBy, $sortDirection);
+
+        return $query->paginate($perPage);
+    }
+
+    /**
      * Get news articles with optional filters
      */
     public function getNews(array $filters = []): array
@@ -50,9 +109,9 @@ class NewsRepository extends BaseRepository
             $query->where('author_id', $filters['author_id']);
         }
 
-        // Apply category filter
-        if (!empty($filters['category'])) {
-            $query->where('category', $filters['category']);
+        // Apply tags filter (using tags instead of category)
+        if (!empty($filters['tags'])) {
+            $query->whereJsonContains('tags', $filters['tags']);
         }
 
         // Apply date range filter
@@ -101,7 +160,7 @@ class NewsRepository extends BaseRepository
     /**
      * Find news article by ID
      */
-    public function findById(int $newsId): ?News
+    public function findById(string $newsId): ?News
     {
         return $this->model->with(['author'])->find($newsId);
     }
@@ -117,7 +176,7 @@ class NewsRepository extends BaseRepository
     /**
      * Update an existing news article and return the updated model
      */
-    public function updateAndReturn(int $newsId, array $newsData): News
+    public function updateAndReturn(string $newsId, array $newsData): News
     {
         $news = $this->model->findOrFail($newsId);
         $news->update($newsData);
@@ -127,7 +186,7 @@ class NewsRepository extends BaseRepository
     /**
      * Delete a news article
      */
-    public function delete(int $newsId): bool
+    public function delete(string $newsId): bool
     {
         $news = $this->model->findOrFail($newsId);
         return $news->delete();
@@ -150,12 +209,8 @@ class NewsRepository extends BaseRepository
         $draftNews = $query->where('status', 'draft')->count();
         $featuredNews = $query->where('is_featured', true)->count();
 
-        // Get news by category
-        $newsByCategory = $this->model
-            ->selectRaw('category, COUNT(*) as count')
-            ->groupBy('category')
-            ->orderBy('count', 'desc')
-            ->get();
+        // Get news by tags (instead of category)
+        $newsByTags = [];
 
         // Get latest news
         $latestNews = $this->model
@@ -176,30 +231,31 @@ class NewsRepository extends BaseRepository
             'published_news' => $publishedNews,
             'draft_news' => $draftNews,
             'featured_news' => $featuredNews,
-            'news_by_category' => $newsByCategory,
+            'news_by_tags' => $newsByTags,
             'latest_news' => $latestNews,
             'most_viewed_news' => $mostViewedNews,
         ];
     }
 
     /**
-     * Get news categories
+     * Get news tags
      */
-    public function getCategories(): Collection
+    public function getTags(): Collection
     {
         return $this->model
-            ->selectRaw('DISTINCT category')
-            ->whereNotNull('category')
-            ->where('category', '!=', '')
-            ->orderBy('category')
+            ->whereNotNull('tags')
             ->get()
-            ->pluck('category');
+            ->pluck('tags')
+            ->flatten()
+            ->unique()
+            ->filter()
+            ->values();
     }
 
     /**
      * Increment view count
      */
-    public function incrementViews(int $newsId): bool
+    public function incrementViews(string $newsId): bool
     {
         $news = $this->model->find($newsId);
         if ($news) {
@@ -212,7 +268,7 @@ class NewsRepository extends BaseRepository
     /**
      * Get related news articles
      */
-    public function getRelatedNews(int $newsId, int $limit = 3): Collection
+    public function getRelatedNews(string $newsId, int $limit = 3): Collection
     {
         $currentNews = $this->model->find($newsId);
 
@@ -223,10 +279,7 @@ class NewsRepository extends BaseRepository
         return $this->model
             ->where('id', '!=', $newsId)
             ->where('status', 'published')
-            ->where(function ($query) use ($currentNews) {
-                $query->where('category', $currentNews->category)
-                      ->orWhere('author_id', $currentNews->author_id);
-            })
+            ->where('author_id', $currentNews->author_id)
             ->orderBy('published_at', 'desc')
             ->limit($limit)
             ->get();

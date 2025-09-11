@@ -1,10 +1,10 @@
 <template>
-    <Head title="Add Workshop" />
+    <Head :title="t('admin.workshops.create')" />
     <Default>
         <div class="container mx-auto px-4 py-8">
             <!-- Page Header -->
             <div class="mb-6">
-                <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Add Workshop</h1>
+                <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ t('admin.workshops.create') }}</h1>
             </div>
 
             <!-- Form Content -->
@@ -12,11 +12,11 @@
                 <!-- Workshop Title -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Workshop Title
+                        {{ t('admin.form.workshop_title') }}
                     </label>
                     <input v-model="form.title"
                            type="text"
-                           placeholder="Enter workshop title"
+                           :placeholder="t('admin.form.placeholder.enter_workshop_title')"
                            class="w-full rounded-lg bg-teal-50 dark:bg-gray-800 border border-teal-100 dark:border-gray-600 px-4 py-3 text-gray-900 dark:text-white placeholder-teal-600/50 dark:placeholder-gray-400 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                            required>
                     <p v-if="form.errors.title" class="mt-1 text-sm text-red-600">
@@ -27,11 +27,11 @@
                 <!-- Description -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Description
+                        {{ t('admin.form.description') }}
                     </label>
                     <textarea v-model="form.description"
                               rows="4"
-                              placeholder="Describe the workshop content and objectives..."
+                              :placeholder="t('admin.form.placeholder.workshop_description')"
                               class="w-full rounded-lg bg-teal-50 dark:bg-gray-800 border border-teal-100 dark:border-gray-600 px-4 py-3 text-gray-900 dark:text-white placeholder-teal-600/50 dark:placeholder-gray-400 focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none"></textarea>
                 </div>
 
@@ -39,7 +39,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Date
+                            {{ t('admin.form.date') }}
                         </label>
                         <input v-model="form.start_date"
                                type="date"
@@ -48,7 +48,7 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Time
+                            {{ t('admin.form.time') }}
                         </label>
                         <input v-model="form.start_time"
                                type="time"
@@ -60,7 +60,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Duration (hours)
+                            {{ t('admin.form.duration_hours') }}
                         </label>
                         <input v-model="form.duration"
                                type="number"
@@ -72,7 +72,7 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Max Attendees
+                            {{ t('admin.form.max_attendees') }}
                         </label>
                         <input v-model="form.max_attendees"
                                type="number"
@@ -86,11 +86,11 @@
                 <!-- Speaker Selection -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Speaker
+                        {{ t('admin.workshops.speaker') }}
                     </label>
                     <select v-model="form.speaker_id"
                             class="w-full rounded-lg bg-teal-50 dark:bg-gray-800 border border-teal-100 dark:border-gray-600 px-4 py-3 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent">
-                        <option value="">Select Speaker</option>
+                        <option value="">{{ t('admin.form.placeholder.select_speaker') }}</option>
                         <option v-for="speaker in speakers" :key="speaker.id" :value="speaker.id">
                             {{ speaker.name }}
                         </option>
@@ -100,11 +100,11 @@
                 <!-- Organization Selection -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Organization
+                        {{ t('admin.form.organization') }}
                     </label>
                     <select v-model="form.organization_id"
                             class="w-full rounded-lg bg-teal-50 dark:bg-gray-800 border border-teal-100 dark:border-gray-600 px-4 py-3 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent">
-                        <option value="">Select Organization</option>
+                        <option value="">{{ t('admin.form.placeholder.select_organization') }}</option>
                         <option v-for="org in organizations" :key="org.id" :value="org.id">
                             {{ org.name }}
                         </option>
@@ -114,24 +114,24 @@
                 <!-- Location -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Location
+                        {{ t('admin.form.location') }}
                     </label>
                     <input v-model="form.location"
                            type="text"
-                           placeholder="Room 101, Building A"
+                           :placeholder="t('admin.form.placeholder.location')"
                            class="w-full rounded-lg bg-teal-50 dark:bg-gray-800 border border-teal-100 dark:border-gray-600 px-4 py-3 text-gray-900 dark:text-white placeholder-teal-600/50 dark:placeholder-gray-400 focus:ring-2 focus:ring-teal-500 focus:border-transparent">
                 </div>
 
                 <!-- Workshop Type -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Workshop Type
+                        {{ t('admin.form.workshop_type') }}
                     </label>
                     <select v-model="form.type"
                             class="w-full rounded-lg bg-teal-50 dark:bg-gray-800 border border-teal-100 dark:border-gray-600 px-4 py-3 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent">
-                        <option value="technical">Technical</option>
-                        <option value="business">Business</option>
-                        <option value="soft-skills">Soft Skills</option>
+                        <option value="technical">{{ t('admin.form.technical') }}</option>
+                        <option value="business">{{ t('admin.form.business') }}</option>
+                        <option value="soft-skills">{{ t('admin.form.soft_skills') }}</option>
                     </select>
                 </div>
 
@@ -139,12 +139,12 @@
                 <div class="flex justify-between pt-6">
                     <Link :href="route('system-admin.workshops.index')"
                           class="px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                        Cancel
+                        {{ t('admin.actions.cancel') }}
                     </Link>
                     <button type="submit"
                             :disabled="form.processing"
                             class="px-8 py-3 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg font-semibold hover:from-teal-700 hover:to-teal-600 disabled:opacity-50 transition-all shadow-lg hover:shadow-xl">
-                        {{ form.processing ? 'Creating...' : 'Create Workshop' }}
+                        {{ form.processing ? t('admin.actions.creating') : t('admin.actions.create') + ' ' + t('admin.workshops.title') }}
                     </button>
                 </div>
             </form>

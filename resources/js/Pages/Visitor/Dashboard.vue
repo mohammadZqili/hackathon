@@ -87,7 +87,7 @@ const isRegistered = (workshop) => {
     <Default>
         <div class="max-w-7xl mx-auto" :style="themeStyles">
             <PageHeader 
-                title="Welcome to GuacPanel"
+                title="Welcome to Ruman Hackathon"
                 :description="`Discover upcoming workshops and enhance your skills at ${currentEdition?.name || 'the current hackathon edition'}`"
                 :show-action="false"
             />

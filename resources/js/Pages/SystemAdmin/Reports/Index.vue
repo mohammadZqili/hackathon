@@ -5,12 +5,12 @@
             <!-- Page Header -->
             <div class="mb-6">
                 <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                    {{ activeTab === 'overall' ? 'Reporting' : 'Hackathon Edition Report' }}
+                    {{ activeTab === 'overall' ? t('admin.reports.title') : t('admin.editions.edit') + ' ' + t('admin.reports.title') }}
                 </h1>
                 <p class="text-sm" :style="{ color: themeColor.primary }">
                     {{ activeTab === 'overall' 
-                        ? 'Overall statistics across all hackathon editions' 
-                        : `Detailed report for ${selectedEditionName}` }}
+                        ? t('admin.reports.overall_statistics') 
+                        : t('admin.reports.detailed_report_for') + ' ' + selectedEditionName }}
                 </p>
             </div>
 
@@ -31,7 +31,7 @@
                         } : {
                             color: '#6b7280'
                         }">
-                        Overall Reports
+                        {{ t('admin.reports.overall_reports') }}
                     </button>
                     <button
                         @click="activeTab = 'edition'"
@@ -47,7 +47,7 @@
                         } : {
                             color: '#6b7280'
                         }">
-                        Edition Report
+                        {{ t('admin.editions.edit') + ' ' + t('admin.reports.title') }}
                     </button>
                 </nav>
             </div>
@@ -56,12 +56,12 @@
             <div v-show="activeTab === 'overall'">
                 <!-- Overall Statistics -->
                 <div class="mb-8">
-                    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Overall Statistics</h2>
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">{{ t('admin.reports.overall_statistics') }}</h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         <!-- Participating Teams -->
                         <div class="rounded-lg border border-teal-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-6">
                             <div class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
-                                Participating Teams
+                                {{ t('admin.statistics.teams') }}
                             </div>
                             <div class="text-2xl font-bold text-gray-900 dark:text-white">
                                 {{ overallStats?.teams?.count || 0 }}
@@ -74,7 +74,7 @@
                         <!-- Members -->
                         <div class="rounded-lg border border-teal-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-6">
                             <div class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
-                                Members
+                                {{ t('admin.teams.members') }}
                             </div>
                             <div class="text-2xl font-bold text-gray-900 dark:text-white">
                                 {{ overallStats?.members?.count || 0 }}
@@ -87,13 +87,13 @@
                         <!-- Submitted Ideas -->
                         <div class="rounded-lg border border-teal-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-6">
                             <div class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
-                                Ideas
+                                {{ t('admin.ideas.title') }}
                             </div>
                             <div class="text-2xl font-bold text-gray-900 dark:text-white">
                                 {{ overallStats?.ideas?.count || 0 }}
                             </div>
                             <div class="text-xs text-gray-500">
-                                {{ overallStats?.ideas?.submitted || 0 }} submitted, {{ overallStats?.ideas?.draft || 0 }} draft
+                                {{ overallStats?.ideas?.submitted || 0 }} {{ t('admin.ideas.submitted') }}, {{ overallStats?.ideas?.draft || 0 }} {{ t('admin.ideas.draft') }}
                             </div>
                             <div class="text-xs mt-1" :class="overallStats?.ideas?.trend === 'up' ? 'text-green-600' : 'text-red-600'">
                                 {{ overallStats?.ideas?.trend === 'up' ? '↑' : '↓' }} {{ Math.abs(overallStats?.ideas?.growth || 0) }}%
@@ -103,7 +103,7 @@
                         <!-- Workshops -->
                         <div class="rounded-lg border border-teal-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-6">
                             <div class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
-                                Workshops
+                                {{ t('admin.workshops.title') }}
                             </div>
                             <div class="text-2xl font-bold text-gray-900 dark:text-white">
                                 {{ overallStats?.workshops?.count || 0 }}
@@ -129,7 +129,7 @@
                             :style="selectedEdition === 'all' ? {
                                 background: `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})`
                             } : {}">
-                            All Editions
+                            {{ t('admin.editions.all_editions') }}
                         </button>
                         <button 
                             v-for="edition in editions"
@@ -151,14 +151,14 @@
 
                 <!-- Edition-Specific Statistics Table -->
                 <div class="mb-8">
-                    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Edition-Specific Statistics</h2>
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">{{ t('admin.statistics.edition_specific') }}</h2>
                     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
                         <div class="overflow-x-auto">
                             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                                 <thead class="bg-gray-50 dark:bg-gray-900">
                                     <tr>
                                         <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" 
-                                            :style="{ color: themeColor.primary }">Edition</th>
+                                            :style="{ color: themeColor.primary }">{{ t('admin.editions.title') }}</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Teams</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Members</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ideas</th>
@@ -311,7 +311,7 @@
                             :style="{ 
                                 background: `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})`
                             }">
-                        Generate Report
+                        {{ t('admin.reports.generate') }}
                     </button>
                     <button @click="exportToPDF"
                             :disabled="loading"
@@ -320,7 +320,7 @@
                                 borderColor: themeColor.primary,
                                 color: themeColor.primary
                             }">
-                        Export to PDF
+                        {{ t('admin.reports.export') + ' ' + t('admin.reports.pdf') }}
                     </button>
                     <button @click="scheduleReports"
                             :disabled="loading"
@@ -329,7 +329,7 @@
                                 borderColor: themeColor.primary,
                                 color: themeColor.primary
                             }">
-                        Schedule Reports
+                        {{ t('admin.reports.schedule_reports') }}
                     </button>
                 </div>
             </div>
@@ -339,7 +339,7 @@
                 <!-- Edition Selector -->
                 <div class="mb-6">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Select Edition
+                        {{ t('admin.editions.select_edition') }}
                     </label>
                     <select v-model="selectedEditionForReport" 
                             @change="loadEditionReport"
@@ -408,7 +408,7 @@
                             :style="{ 
                                 background: `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})`
                             }">
-                        Download Edition Report
+                        {{ t('admin.reports.download') + ' ' + t('admin.editions.title') + ' ' + t('admin.reports.title') }}
                     </button>
                 </div>
             </div>
@@ -493,7 +493,7 @@ const filterByEdition = (editionId) => {
     loading.value = true
     
     if (editionId === 'all') {
-        selectedEditionName.value = 'All Editions'
+        selectedEditionName.value = t('admin.editions.all_editions')
         router.visit('/system-admin/reports', {
             preserveState: true,
             preserveScroll: true,
@@ -520,7 +520,7 @@ const generateReport = async () => {
         alert(response.data.message)
     } catch (error) {
         console.error('Error generating report:', error)
-        alert('Error generating report')
+        alert(t('admin.reports.error_generating'))
     } finally {
         loading.value = false
     }
@@ -536,7 +536,7 @@ const exportToPDF = async () => {
         alert(response.data.message)
     } catch (error) {
         console.error('Error exporting to PDF:', error)
-        alert('Error exporting to PDF')
+        alert(t('admin.reports.error_exporting'))
     } finally {
         loading.value = false
     }
@@ -553,7 +553,7 @@ const scheduleReports = async () => {
         alert(response.data.message)
     } catch (error) {
         console.error('Error scheduling reports:', error)
-        alert('Error scheduling reports')
+        alert(t('admin.reports.error_scheduling'))
     } finally {
         loading.value = false
     }
@@ -574,7 +574,7 @@ const downloadEditionReport = async () => {
         alert(response.data.message)
     } catch (error) {
         console.error('Error downloading edition report:', error)
-        alert('Error downloading edition report')
+        alert(t('admin.reports.error_downloading'))
     } finally {
         loading.value = false
     }

@@ -29,7 +29,7 @@ const handleNoticeHeightChange = (height) => {
 }
 
 const isMobile = () => window.innerWidth < 768
-const searchPlaceholder = "Search users and financial..."
+const searchPlaceholder = computed(() => t('layout.search_placeholder'))
 
 const toggleSidebar = () => {
     isSidebarOpen.value = !isSidebarOpen.value
@@ -113,11 +113,11 @@ onUnmounted(() => {
     <div class="min-h-screen theme-bg-base" role="document" :dir="direction">
         <!-- Sidebar Overlay -->
         <div v-if="isSidebarOpen && isMobile()" class="fixed inset-0 bg-black/30 z-30" @click.stop="closeSidebar"
-            role="dialog" aria-modal="true" aria-label="Mobile navigation menu" aria-hidden="true">
+            role="dialog" aria-modal="true" :aria-label="t('layout.mobile_navigation_menu')" aria-hidden="true">
         </div>
 
         <!-- Main Sidebar Navigation -->
-        <div data-sidebar role="navigation" aria-label="Main sidebar" :aria-expanded="isSidebarOpen"
+        <div data-sidebar role="navigation" :aria-label="t('layout.main_sidebar')" :aria-expanded="isSidebarOpen"
             :aria-hidden="!isSidebarOpen"
             class="fixed top-6 w-80 h-[calc(100vh-48px)] transition-transform duration-200 z-40 shadow-[0px_0px_8px_rgba(0,_0,_0,_0.05)] rounded-2xl overflow-hidden"
             :class="[
@@ -142,7 +142,7 @@ onUnmounted(() => {
 
                 <!-- Navigation -->
                 <nav class="shadow-[0px_0px_8px_1px_rgba(0,_0,_0,_0.08)] rounded-2xl theme-bg-card h-16 flex items-center justify-between py-[7px] px-4 border border-gray-200/50 dark:border-gray-700/50 backdrop-blur-sm" 
-                    role="navigation" aria-label="Primary navigation">
+                    role="navigation" :aria-label="t('layout.primary_navigation')">
                     <!-- Menu Toggle and Search -->
                     <section class="flex items-center gap-4" aria-label="Menu and search controls">
                         <button type="button" data-menu-button
@@ -204,7 +204,7 @@ onUnmounted(() => {
                                 class="w-7 h-7 rounded-[10px] theme-bg-accent flex items-center justify-center group relative theme-bg-accent-hover cursor-pointer">
                                 <span
                                     class="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
-                                    Settings
+                                    {{ t('admin.layout.settings_tooltip') }}
                                 </span>
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                                     stroke="currentColor" class="w-[18px] h-[18px] text-gray-600 dark:text-gray-400">
@@ -225,8 +225,8 @@ onUnmounted(() => {
                             <NavProfile :user="user" />
                         </div>
                         <Link v-else href="/login" class="text-sm font-medium text-gray-700 hover:text-gray-900 dark:text-white"
-                            aria-label="Login to your account">
-                            Login
+                            :aria-label="t('admin.layout.login')">
+                            {{ t('admin.layout.login') }}
                         </Link>
                     </section>
                 </nav>

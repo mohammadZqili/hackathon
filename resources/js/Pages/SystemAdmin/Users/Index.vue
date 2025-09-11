@@ -15,26 +15,26 @@ const props = defineProps({
 </script>
 
 <template>
-    <Head title="User Management" />
+    <Head :title="t('admin.users.title')" />
     
     <Default>
         <div class="container mx-auto px-4 py-8">
             
             <div class="mb-6 flex justify-between items-center">
-                <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Users</h1>
+                <h1 class="text-3xl font-bold text-gray-900 dark:text-white" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">{{ t('admin.users.title') }}</h1>
                 <a :href="route('system-admin.users.create')"
                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                    Add New User
+                    {{ t('admin.users.add_new') }}
                 </a>
             </div>
 
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow">
                 <div class="p-6 border-b border-gray-200 dark:border-gray-700">
                     <div class="flex space-x-4">
-                        <input type="text" placeholder="Search users..."
-                               class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg" />
+                        <input type="text" :placeholder="t('admin.users.search_placeholder')"
+                               class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg" :class="{ 'text-right': isRTL, 'text-left': !isRTL }" />
                         <select class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg">
-                            <option value="">All Roles</option>
+                            <option value="">{{ t('admin.users.all_roles') }}</option>
                             <option v-for="role in roles" :key="role.id" :value="role.id">
                                 {{ role.name }}
                             </option>
@@ -46,31 +46,31 @@ const props = defineProps({
                     <table class="w-full">
                         <thead class="bg-gray-50 dark:bg-gray-700">
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{{ t('admin.users.name') }}</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{{ t('admin.users.email') }}</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{{ t('admin.users.role') }}</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{{ t('admin.users.status') }}</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">{{ t('admin.users.actions') }}</th>
+                                <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">{{ t('admin.form.name') }}</th>
+                                <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">{{ t('admin.form.email') }}</th>
+                                <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">{{ t('admin.form.role') }}</th>
+                                <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">{{ t('admin.form.status') }}</th>
+                                <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase" :class="{ 'text-left': isRTL, 'text-right': !isRTL }">{{ t('admin.table.actions') }}</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                             <tr v-for="user in users.data" :key="user.id">
-                                <td class="px-6 py-4">{{ user.name }}</td>
-                                <td class="px-6 py-4">{{ user.email }}</td>
-                                <td class="px-6 py-4">
+                                <td class="px-6 py-4" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">{{ user.name }}</td>
+                                <td class="px-6 py-4" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">{{ user.email }}</td>
+                                <td class="px-6 py-4" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">
                                     <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
                                         {{ user.role }}
                                     </span>
                                 </td>
-                                <td class="px-6 py-4">
+                                <td class="px-6 py-4" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">
                                     <span class="px-2 py-1 text-xs rounded-full"
                                           :class="user.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
-                                        {{ user.is_active ? 'Active' : 'Inactive' }}
+                                        {{ user.is_active ? t('admin.status.active') : t('admin.status.inactive') }}
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 text-right space-x-2">
+                                <td class="px-6 py-4 space-x-2" :class="{ 'text-left': isRTL, 'text-right': !isRTL }">
                                     <a :href="route('system-admin.users.edit', user.id)"
-                                       class="text-blue-600 hover:text-blue-900">Edit</a>
+                                       class="text-blue-600 hover:text-blue-900">{{ t('admin.actions.edit') }}</a>
                                 </td>
                             </tr>
                         </tbody>

@@ -119,6 +119,23 @@ class Workshop extends Model
     }
 
     /**
+     * Get the supervisors for this workshop.
+     */
+    public function supervisors(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'workshop_supervisors')
+            ->withTimestamps();
+    }
+
+    /**
+     * Get the primary supervisor for this workshop (attribute accessor).
+     */
+    public function getSupervisorAttribute()
+    {
+        return $this->supervisors()->first();
+    }
+
+    /**
      * Get confirmed attendees.
      */
     public function confirmedAttendees(): BelongsToMany

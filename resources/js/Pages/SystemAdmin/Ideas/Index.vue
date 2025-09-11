@@ -203,58 +203,58 @@ const deleteIdea = (idea) => {
                     <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                         <thead class="bg-gray-50 dark:bg-gray-900/50">
                             <tr>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    Title
+                                <th scope="col" class="px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">
+                                    {{ t('admin.ideas.title_column') }}
                                 </th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    Team
+                                <th scope="col" class="px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">
+                                    {{ t('admin.form.team') }}
                                 </th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    Submission Date
+                                <th scope="col" class="px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">
+                                    {{ t('admin.ideas.submission_date') }}
                                 </th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    Track
+                                <th scope="col" class="px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">
+                                    {{ t('admin.form.track') }}
                                 </th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    Status
+                                <th scope="col" class="px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">
+                                    {{ t('admin.form.status') }}
                                 </th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    Score
+                                <th scope="col" class="px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">
+                                    {{ t('admin.ideas.score') }}
                                 </th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    Actions
+                                <th scope="col" class="px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider" :class="{ 'text-left': isRTL, 'text-right': !isRTL }">
+                                    {{ t('admin.table.actions') }}
                                 </th>
                             </tr>
                         </thead>
                         <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                             <tr v-for="idea in ideas.data" :key="idea.id" class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                <td class="px-6 py-4 whitespace-nowrap">
+                                <td class="px-6 py-4 whitespace-nowrap" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">
                                     <div class="text-sm font-medium text-gray-900 dark:text-white">
                                         {{ idea.title }}
                                     </div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
+                                <td class="px-6 py-4 whitespace-nowrap" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">
                                     <div class="text-sm text-gray-600 dark:text-gray-400">
-                                        {{ idea.team?.name || 'N/A' }}
+                                        {{ idea.team?.name || t('admin.common.not_available') }}
                                     </div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
+                                <td class="px-6 py-4 whitespace-nowrap" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">
                                     <div class="text-sm text-gray-600 dark:text-gray-400">
                                         {{ formatDate(idea.created_at) }}
                                     </div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
+                                <td class="px-6 py-4 whitespace-nowrap" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">
                                     <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
-                                        {{ idea.track?.name || 'Unassigned' }}
+                                        {{ idea.track?.name || t('admin.common.unassigned') }}
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
+                                <td class="px-6 py-4 whitespace-nowrap" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">
                                     <span :class="statusColors[idea.status] || statusColors.draft"
                                           class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full border">
                                         {{ statusDisplayNames[idea.status] || idea.status }}
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
+                                <td class="px-6 py-4 whitespace-nowrap" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">
                                     <div class="text-sm text-gray-900 dark:text-white">
                                         <span v-if="idea.score" class="font-semibold text-emerald-600 dark:text-emerald-400">
                                             {{ idea.score }}/100
@@ -262,18 +262,18 @@ const deleteIdea = (idea) => {
                                         <span v-else class="text-gray-400">-</span>
                                     </div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium" :class="{ 'text-left': isRTL, 'text-right': !isRTL }">
                                     <button @click="viewDetails(idea)" 
                                             class="text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 mr-3">
-                                        View
+                                        {{ t('admin.actions.view') }}
                                     </button>
                                     <button @click="editIdea(idea)"
                                             class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 mr-3">
-                                        Review
+                                        {{ t('admin.actions.review') }}
                                     </button>
                                     <button @click="deleteIdea(idea)"
                                             class="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300">
-                                        Delete
+                                        {{ t('admin.actions.delete') }}
                                     </button>
                                 </td>
                             </tr>
@@ -285,7 +285,7 @@ const deleteIdea = (idea) => {
                                         <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                         </svg>
-                                        <p class="mt-2 text-sm">No ideas found</p>
+                                        <p class="mt-2 text-sm">{{ t('admin.empty_state.ideas') }}</p>
                                     </div>
                                 </td>
                             </tr>
@@ -297,7 +297,7 @@ const deleteIdea = (idea) => {
             <!-- Pagination -->
             <div v-if="ideas.links && ideas.links.length > 3" class="mt-6 flex items-center justify-between">
                 <div class="text-sm text-gray-600 dark:text-gray-400">
-                    Showing {{ ideas.from }} to {{ ideas.to }} of {{ ideas.total }} results
+                    {{ t('admin.pagination.showing', { from: ideas.from, to: ideas.to, total: ideas.total }) }}
                 </div>
                 <div class="flex space-x-2">
                     <template v-for="link in ideas.links" :key="link.label">

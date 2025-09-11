@@ -5,7 +5,7 @@
             <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                 <div class="flex items-center justify-between">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                        Add New Speaker
+                        {{ t('admin.speakers.create') }}
                     </h3>
                     <button @click="$emit('close')"
                             class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 transition-colors">
@@ -21,11 +21,11 @@
                 <!-- Speaker Name -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Full Name *
+                        {{ t('admin.form.name') }} *
                     </label>
                     <input v-model="form.name"
                            type="text"
-                           placeholder="Enter speaker's full name"
+                           :placeholder="t('admin.form.placeholder.enter_name')"
                            class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors"
                            :style="{ '--tw-ring-color': themeColor.primary }"
                            required>
@@ -38,11 +38,11 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Email Address *
+                            {{ t('admin.form.email') }} *
                         </label>
                         <input v-model="form.email"
                                type="email"
-                               placeholder="speaker@example.com"
+                               :placeholder="t('admin.form.placeholder.enter_email')"
                                class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors"
                                :style="{ '--tw-ring-color': themeColor.primary }"
                                required>
@@ -52,11 +52,11 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Phone Number
+                            {{ t('admin.form.phone') }}
                         </label>
                         <input v-model="form.phone"
                                type="tel"
-                               placeholder="+1234567890"
+                               :placeholder="t('admin.form.placeholder.enter_phone')"
                                class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors"
                                :style="{ '--tw-ring-color': themeColor.primary }">
                     </div>
@@ -66,22 +66,22 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Title/Position
+                            {{ t('admin.speakers.title_position') }}
                         </label>
                         <input v-model="form.title"
                                type="text"
-                               placeholder="CEO, CTO, Developer, etc."
+                               :placeholder="t('admin.form.placeholder.enter_title')"
                                class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors"
                                :style="{ '--tw-ring-color': themeColor.primary }">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Organization
+                            {{ t('admin.form.organization') }}
                         </label>
                         <select v-model="form.organization_id"
                                 class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors"
                                 :style="{ '--tw-ring-color': themeColor.primary }">
-                            <option value="">Select Organization</option>
+                            <option value="">{{ t('admin.form.placeholder.select_organization') }}</option>
                             <option v-for="org in organizations" :key="org.id" :value="org.id">
                                 {{ org.name }}
                             </option>
@@ -92,11 +92,11 @@
                 <!-- Bio -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Biography
+                        {{ t('admin.speakers.bio') }}
                     </label>
                     <textarea v-model="form.bio"
                               rows="4"
-                              placeholder="Brief bio about the speaker's background and expertise..."
+                              :placeholder="t('admin.form.placeholder.speaker_bio')"
                               class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors resize-none"
                               :style="{ '--tw-ring-color': themeColor.primary }"></textarea>
                 </div>
@@ -104,22 +104,22 @@
                 <!-- Social Links -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Social Links
+                        {{ t('admin.speakers.social_media') }}
                     </label>
                     <div class="space-y-2">
                         <input v-model="form.linkedin"
                                type="url"
-                               placeholder="LinkedIn Profile URL"
+                               :placeholder="t('admin.form.placeholder.linkedin')"
                                class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors"
                                :style="{ '--tw-ring-color': themeColor.primary }">
                         <input v-model="form.twitter"
                                type="url"
-                               placeholder="Twitter/X Profile URL"
+                               :placeholder="t('admin.form.placeholder.twitter')"
                                class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors"
                                :style="{ '--tw-ring-color': themeColor.primary }">
                         <input v-model="form.website"
                                type="url"
-                               placeholder="Personal Website URL"
+                               :placeholder="t('admin.form.placeholder.website')"
                                class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors"
                                :style="{ '--tw-ring-color': themeColor.primary }">
                     </div>
@@ -128,11 +128,11 @@
                 <!-- Expertise Areas -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Areas of Expertise
+                        {{ t('admin.speakers.expertise') }}
                     </label>
                     <input v-model="form.expertise"
                            type="text"
-                           placeholder="AI, Machine Learning, Blockchain, etc. (comma separated)"
+                           :placeholder="t('admin.form.placeholder.expertise')"
                            class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors"
                            :style="{ '--tw-ring-color': themeColor.primary }">
                 </div>
@@ -141,7 +141,7 @@
                 <div class="flex justify-end gap-4 pt-4">
                     <button @click="$emit('close')" type="button"
                             class="px-6 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                        Cancel
+                        {{ t('admin.actions.cancel') }}
                     </button>
                     <button type="submit"
                             :disabled="form.processing"
@@ -149,7 +149,7 @@
                             :style="{
                                 background: `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})`,
                             }">
-                        {{ form.processing ? 'Adding...' : 'Add Speaker' }}
+                        {{ form.processing ? t('admin.actions.adding') : t('admin.speakers.create') }}
                     </button>
                 </div>
             </form>

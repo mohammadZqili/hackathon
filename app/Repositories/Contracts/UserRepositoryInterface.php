@@ -41,12 +41,12 @@ interface UserRepositoryInterface extends BaseRepositoryInterface
     /**
      * Update user status
      */
-    public function updateStatus(int $userId, bool $isActive): bool;
+    public function updateStatus(string $userId, bool $isActive): bool;
 
     /**
      * Update last login time
      */
-    public function updateLastLogin(int $userId): bool;
+    public function updateLastLogin(string $userId): bool;
 
     /**
      * Search users by name or email

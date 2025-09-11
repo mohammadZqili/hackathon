@@ -10,14 +10,14 @@ class WorkshopRepository
 {
     public function getAll()
     {
-        return Workshop::with(['supervisor', 'registrations'])->get();
+        return Workshop::with(['supervisors', 'registrations'])->get();
     }
 
     public function getUpcoming()
     {
         return Workshop::where('start_time', '>=', now())
             ->orderBy('start_time', 'asc')
-            ->with('supervisor')
+            ->with('supervisors')
             ->get();
     }
 
@@ -30,7 +30,7 @@ class WorkshopRepository
     {
         return Workshop::whereHas('registrations', function ($query) use ($userId) {
             $query->where('user_id', $userId);
-        })->with('supervisor')->get();
+        })->with('supervisors')->get();
     }
 
     public function isUserRegistered($userId, $workshopId)
@@ -42,18 +42,19 @@ class WorkshopRepository
 
     public function registerUser($userId, $workshopId)
     {
-        DB::transaction(function () use ($userId, $workshopId) {
-            WorkshopRegistration::create([
-                'user_id' => $userId,
-                'workshop_id' => $workshopId,
-                'registered_at' => now()
-            ]);
-
-            Workshop::where('id', $workshopId)
-                ->increment('current_participants');
+        return DB::transaction(function () use ($userId, $workshopId) {
+            $workshop = Workshop::findOrFail($workshopId);
+            $user = \App\Models\User::findOrFail($userId);
+            
+            // Use the workshop's registerUser method which handles barcode generation
+            $registration = $workshop->registerUser($user);
+            
+            if (!$registration) {
+                throw new \Exception('Registration failed');
+            }
+            
+            return $registration;
         });
-
-        return true;
     }
 
     public function unregisterUser($userId, $workshopId)
@@ -64,7 +65,7 @@ class WorkshopRepository
                 ->delete();
 
             Workshop::where('id', $workshopId)
-                ->decrement('current_participants');
+                ->decrement('current_attendees');
         });
 
         return true;
@@ -73,5 +74,35 @@ class WorkshopRepository
     public function countUserWorkshops($userId)
     {
         return WorkshopRegistration::where('user_id', $userId)->count();
+    }
+
+    /**
+     * Count workshops with filters
+     */
+    public function count(array $filters = []): int
+    {
+        $query = $this->query();
+
+        if (!empty($filters['edition_id'])) {
+            $query->where('hackathon_edition_id', $filters['edition_id']);
+        }
+
+        if (!empty($filters['status'])) {
+            if ($filters['status'] === 'scheduled') {
+                $query->where('is_active', true)->where('start_time', '>', now());
+            } elseif ($filters['status'] === 'completed') {
+                $query->where('end_time', '<', now());
+            }
+        }
+
+        if (!empty($filters['date_after'])) {
+            $query->where('start_time', '>', $filters['date_after']);
+        }
+
+        if (!empty($filters['force_empty'])) {
+            $query->whereRaw('1 = 0');
+        }
+
+        return $query->count();
     }
 }

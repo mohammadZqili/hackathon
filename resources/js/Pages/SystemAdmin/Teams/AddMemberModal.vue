@@ -5,7 +5,7 @@
             <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                 <div class="flex items-center justify-between">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                        Add Member to {{ team.name }}
+                        {{ t('admin.teams.add_member') }} {{ team.name }}
                     </h3>
                     <button @click="$emit('close')"
                             class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 transition-colors">
@@ -21,13 +21,13 @@
                 <!-- Search User -->
                 <div class="mb-6">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Search User
+                        {{ t('admin.form.search_user') }}
                     </label>
                     <div class="relative">
                         <input v-model="searchQuery"
                                @input="searchUsers"
                                type="text"
-                               placeholder="Type to search users..."
+                               :placeholder="t('admin.teams.search_users_placeholder')"
                                class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors pl-10"
                                :style="{ '--tw-ring-color': themeColor.primary }">
                         <svg class="absolute left-3 top-3 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -48,7 +48,7 @@
                                 </div>
                                 <span v-if="user.team_id" 
                                       class="text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100">
-                                    In Team
+                                    {{ t('admin.teams.in_team') }}
                                 </span>
                             </div>
                         </div>
@@ -58,7 +58,7 @@
                 <!-- Selected User -->
                 <div v-if="form.user_id" class="mb-6">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Selected User
+                        {{ t('admin.form.selected_user') }}
                     </label>
                     <div class="p-4 rounded-lg border border-gray-200 dark:border-gray-600">
                         <div class="flex items-center justify-between">
@@ -79,14 +79,14 @@
                 <!-- Role Selection -->
                 <div class="mb-6">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Member Role
+                        {{ t('admin.form.member_role') }}
                     </label>
                     <select v-model="form.role"
                             class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors"
                             :style="{ '--tw-ring-color': themeColor.primary }">
-                        <option value="member">Team Member</option>
-                        <option value="leader">Team Leader</option>
-                        <option value="co-leader">Co-Leader</option>
+                        <option value="member">{{ t('admin.teams.team_member') }}</option>
+                        <option value="leader">{{ t('admin.teams.team_leader') }}</option>
+                        <option value="co-leader">{{ t('admin.teams.co_leader') }}</option>
                     </select>
                 </div>
 
@@ -102,7 +102,7 @@
                 <div class="flex justify-end gap-4">
                     <button @click="$emit('close')" type="button"
                             class="px-6 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                        Cancel
+                        {{ t('admin.actions.cancel') }}
                     </button>
                     <button type="submit"
                             :disabled="!form.user_id || form.processing"
@@ -110,7 +110,7 @@
                             :style="{
                                 background: `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})`,
                             }">
-                        {{ form.processing ? 'Adding...' : 'Add Member' }}
+                        {{ form.processing ? t('admin.actions.adding') : t('admin.teams.add_member') }}
                     </button>
                 </div>
             </form>
@@ -172,7 +172,7 @@ const searchUsers = async () => {
 
 const selectUser = (user) => {
     if (user.team_id && user.team_id !== props.team.id) {
-        if (!confirm(`${user.name} is already in another team. Do you want to move them to this team?`)) {
+        if (!confirm(t('admin.teams.confirm_move_member', { name: user.name }))) {
             return
         }
     }

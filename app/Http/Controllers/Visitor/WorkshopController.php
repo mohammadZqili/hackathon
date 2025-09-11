@@ -19,7 +19,7 @@ class WorkshopController extends Controller
     public function index()
     {
         $workshops = $this->workshopService->getAllWorkshops();
-        
+
         return Inertia::render('Visitor/Workshops/All', [
             'workshops' => $workshops
         ]);
@@ -28,7 +28,7 @@ class WorkshopController extends Controller
     public function myWorkshops()
     {
         $workshops = $this->workshopService->getUserWorkshops(auth()->id());
-        
+
         return Inertia::render('Visitor/Workshops/My', [
             'workshops' => $workshops
         ]);

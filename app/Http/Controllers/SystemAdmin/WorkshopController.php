@@ -45,6 +45,50 @@ class WorkshopController extends Controller
 
     public function store(Request $request)
     {
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'type' => 'nullable|string|max:50',
+            'start_time' => 'required|date',
+            'end_time' => 'required|date|after:start_time',
+            'format' => 'nullable|in:online,offline,hybrid',
+            'location' => 'nullable|string|max:255',
+            'max_attendees' => 'nullable|integer|min:1',
+            'prerequisites' => 'nullable|string',
+            'materials' => 'nullable|array',
+            'is_active' => 'boolean',
+            'requires_registration' => 'boolean',
+            'registration_deadline' => 'nullable|date|before:start_time',
+            'speaker_ids' => 'nullable|array',
+            'speaker_ids.*' => 'exists:speakers,id',
+            'organization_ids' => 'nullable|array',
+            'organization_ids.*' => 'exists:organizations,id',
+        ]);
+
+        // Remove relation fields from validated data
+        $workshopData = collect($validated)->except(['speaker_ids', 'organization_ids'])->toArray();
+        
+        // Create the workshop
+        $workshop = Workshop::create($workshopData);
+
+        // Attach speakers if provided
+        if (!empty($validated['speaker_ids'])) {
+            $speakerData = [];
+            foreach ($validated['speaker_ids'] as $index => $speakerId) {
+                $speakerData[$speakerId] = ['role' => 'main_speaker', 'order' => $index + 1];
+            }
+            $workshop->speakers()->attach($speakerData);
+        }
+
+        // Attach organizations if provided
+        if (!empty($validated['organization_ids'])) {
+            $orgData = [];
+            foreach ($validated['organization_ids'] as $orgId) {
+                $orgData[$orgId] = ['role' => 'organizer'];
+            }
+            $workshop->organizations()->attach($orgData);
+        }
+
         return redirect()->route('system-admin.workshops.index')
             ->with('success', 'Workshop created successfully.');
     }
@@ -73,7 +117,50 @@ class WorkshopController extends Controller
 
     public function update(Request $request, Workshop $workshop)
     {
-        // TODO: Implement update functionality
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'type' => 'nullable|string|max:50',
+            'start_time' => 'required|date',
+            'end_time' => 'required|date|after:start_time',
+            'format' => 'nullable|in:online,offline,hybrid',
+            'location' => 'nullable|string|max:255',
+            'max_attendees' => 'nullable|integer|min:1',
+            'prerequisites' => 'nullable|string',
+            'materials' => 'nullable|array',
+            'is_active' => 'boolean',
+            'requires_registration' => 'boolean',
+            'registration_deadline' => 'nullable|date|before:start_time',
+            'speaker_ids' => 'nullable|array',
+            'speaker_ids.*' => 'exists:speakers,id',
+            'organization_ids' => 'nullable|array',
+            'organization_ids.*' => 'exists:organizations,id',
+        ]);
+
+        // Remove relation fields from validated data
+        $workshopData = collect($validated)->except(['speaker_ids', 'organization_ids'])->toArray();
+        
+        // Update the workshop
+        $workshop->update($workshopData);
+
+        // Sync speakers if provided
+        if (isset($validated['speaker_ids'])) {
+            $speakerData = [];
+            foreach ($validated['speaker_ids'] as $index => $speakerId) {
+                $speakerData[$speakerId] = ['role' => 'main_speaker', 'order' => $index + 1];
+            }
+            $workshop->speakers()->sync($speakerData);
+        }
+
+        // Sync organizations if provided
+        if (isset($validated['organization_ids'])) {
+            $orgData = [];
+            foreach ($validated['organization_ids'] as $orgId) {
+                $orgData[$orgId] = ['role' => 'organizer'];
+            }
+            $workshop->organizations()->sync($orgData);
+        }
+
         return redirect()->route('system-admin.workshops.index')
             ->with('success', 'Workshop updated successfully.');
     }

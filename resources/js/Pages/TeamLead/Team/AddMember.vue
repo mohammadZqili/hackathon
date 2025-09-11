@@ -113,8 +113,7 @@ const themeStyles = computed(() => ({
 const form = useForm({
     name: '',
     email: '',
-    phone: '',
-    role: 'developer'
+    phone: ''
 })
 
 const processing = ref(false)
@@ -122,7 +121,7 @@ const processing = ref(false)
 const submitForm = () => {
     if (form.name && form.email) {
         processing.value = true
-        form.post(route('team-lead.team.add-member'), {
+        form.post(route('team-lead.team.add-member.store'), {
             onSuccess: () => {
                 processing.value = false
                 form.reset()

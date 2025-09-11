@@ -10,6 +10,7 @@ const props = defineProps({
     statistics: Object,
 })
 
+// Use computed to make translations reactive
 const stats = computed(() => [
     {
         name: t('admin.dashboard.total_editions'),

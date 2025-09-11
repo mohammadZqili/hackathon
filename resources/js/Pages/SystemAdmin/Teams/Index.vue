@@ -5,7 +5,7 @@
             <!-- Page Header -->
             <div class="flex flex-row items-start justify-between flex-wrap content-start p-4 gap-x-0 gap-y-3">
                 <div class="w-72 flex flex-col items-start justify-start min-w-[288px]">
-                    <h1 class="text-[32px] font-bold text-gray-900 dark:text-white leading-10">Teams</h1>
+                    <h1 class="text-[32px] font-bold text-gray-900 dark:text-white leading-10" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">{{ t('admin.teams.title') }}</h1>
                 </div>
                 <button @click="openCreateModal"
                         class="rounded-xl h-8 overflow-hidden flex flex-row items-center justify-center py-0 px-4 min-w-[84px] max-w-[480px] text-center text-sm text-white font-medium transition-all duration-200 hover:shadow-md"
@@ -13,7 +13,7 @@
                             background: `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})`,
                         }">
                     <div class="overflow-hidden flex flex-col items-center justify-start">
-                        <div class="self-stretch relative leading-[21px] font-medium overflow-hidden text-ellipsis whitespace-nowrap">New Team</div>
+                        <div class="self-stretch relative leading-[21px] font-medium overflow-hidden text-ellipsis whitespace-nowrap">{{ t('admin.teams.add_new') }}</div>
                     </div>
                 </button>
             </div>
@@ -32,7 +32,7 @@
                             <input v-model="searchQuery"
                                    @input="handleSearch"
                                    type="text"
-                                   placeholder="Search teams"
+                                   :placeholder="t('admin.teams.search_placeholder')"
                                    class="w-full bg-transparent text-gray-700 dark:text-gray-300 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none">
                         </div>
                     </div>
@@ -46,54 +46,54 @@
                         <div class="self-stretch flex flex-col items-start justify-start">
                             <div class="self-stretch flex-1 bg-white dark:bg-gray-800 flex flex-row items-start justify-start">
                                 <div class="self-stretch w-[246px] flex flex-col items-start justify-start py-3 px-4 box-border">
-                                    <div class="self-stretch relative leading-[21px] font-medium text-sm text-gray-700 dark:text-gray-300">{{ t('admin.teams.name') }}</div>
+                                    <div class="self-stretch relative leading-[21px] font-medium text-sm text-gray-700 dark:text-gray-300" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">{{ t('admin.form.name') }}</div>
                                 </div>
                                 <div class="self-stretch w-[253px] flex flex-col items-start justify-start py-3 px-4 box-border">
-                                    <div class="self-stretch relative leading-[21px] font-medium text-sm text-gray-700 dark:text-gray-300">Founding Date</div>
+                                    <div class="self-stretch relative leading-[21px] font-medium text-sm text-gray-700 dark:text-gray-300" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">{{ t('admin.teams.founding_date') }}</div>
                                 </div>
                                 <div class="self-stretch w-64 flex flex-col items-start justify-start py-3 px-4 box-border">
-                                    <div class="self-stretch relative leading-[21px] font-medium text-sm text-gray-700 dark:text-gray-300">{{ t('admin.teams.leader') }}</div>
+                                    <div class="self-stretch relative leading-[21px] font-medium text-sm text-gray-700 dark:text-gray-300" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">{{ t('admin.teams.leader') }}</div>
                                 </div>
                                 <div class="self-stretch w-[171px] flex flex-col items-start justify-start py-3 px-4 box-border">
-                                    <div class="self-stretch relative leading-[21px] font-medium text-sm" :style="{ color: themeColor.primary }">{{ t('admin.teams.actions') }}</div>
+                                    <div class="self-stretch relative leading-[21px] font-medium text-sm" :style="{ color: themeColor.primary }" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">{{ t('admin.table.actions') }}</div>
                                 </div>
                             </div>
                         </div>
                         <div class="self-stretch flex flex-col items-start justify-start">
                             <div v-if="!teams.data || teams.data.length === 0" class="self-stretch border-t border-gray-200 dark:border-gray-700 box-border h-[72px] flex flex-row items-center justify-center">
                                 <div class="text-center py-12 text-gray-500 dark:text-gray-400">
-                                    No teams found. Click "New Team" to create your first team.
+                                    {{ t('admin.empty_state.teams') }}
                                 </div>
                             </div>
                             <div v-else v-for="team in teams.data" :key="team.id"
                                  class="self-stretch border-t border-gray-200 dark:border-gray-700 box-border h-[72px] flex flex-row items-start justify-start hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                                 <div class="w-[246px] h-[72px] flex flex-col items-center justify-center py-2 px-4 box-border">
-                                    <div class="self-stretch relative leading-[21px] text-gray-900 dark:text-white">{{ team.name }}</div>
+                                    <div class="self-stretch relative leading-[21px] text-gray-900 dark:text-white" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">{{ team.name }}</div>
                                 </div>
                                 <div class="w-[253px] h-[72px] flex flex-col items-center justify-center py-2 px-4 box-border">
-                                    <div class="self-stretch relative leading-[21px]" :style="{ color: themeColor.primary }">{{ formatDate(team.created_at) }}</div>
+                                    <div class="self-stretch relative leading-[21px]" :style="{ color: themeColor.primary }" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">{{ formatDate(team.created_at) }}</div>
                                 </div>
                                 <div class="w-64 h-[72px] flex flex-col items-center justify-center py-2 px-4 box-border">
-                                    <div class="self-stretch relative leading-[21px]" :style="{ color: themeColor.primary }">{{ team.leader?.name || 'No Leader' }}</div>
+                                    <div class="self-stretch relative leading-[21px]" :style="{ color: themeColor.primary }" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">{{ team.leader?.name || t('admin.common.no_leader') }}</div>
                                 </div>
                                 <div class="w-[171px] h-[72px] flex flex-col items-center justify-center py-2 px-4 box-border">
                                     <div class="flex items-center gap-2">
                                         <button @click="() => router.visit(route('system-admin.teams.edit', team.id))"
                                                 class="font-bold hover:underline transition-colors text-sm"
                                                 :style="{ color: themeColor.primary }">
-                                            Edit
+                                            {{ t('admin.actions.edit') }}
                                         </button>
                                         <span :style="{ color: themeColor.primary }">|</span>
                                         <button @click="openAddMemberModal(team)"
                                                 class="font-bold hover:underline transition-colors text-sm"
                                                 :style="{ color: themeColor.primary }">
-                                            Members
+                                            {{ t('admin.teams.members') }}
                                         </button>
                                         <span :style="{ color: themeColor.primary }">|</span>
                                         <button @click="deleteTeam(team)"
                                                 class="font-bold hover:underline transition-colors text-sm"
                                                 :style="{ color: themeColor.primary }">
-                                            Delete
+                                            {{ t('admin.actions.delete') }}
                                         </button>
                                     </div>
                                 </div>
@@ -108,7 +108,7 @@
                  class="px-6 py-3">
                 <nav class="flex items-center justify-between">
                     <div class="text-sm text-gray-700 dark:text-gray-300">
-                        Showing {{ teams.from }} to {{ teams.to }} of {{ teams.total }} results
+                        {{ t('admin.pagination.showing', { from: teams.from, to: teams.to, total: teams.total }) }}
                     </div>
                     <div class="flex items-center gap-2">
                         <template v-for="link in teams.links" :key="link.label">
@@ -198,13 +198,13 @@ const themeStyles = computed(() => ({
 }))
 
 const deleteTeam = (team) => {
-    if (confirm(`Are you sure you want to delete the team "${team.name}"?`)) {
+    if (confirm(t('admin.teams.confirm_delete', { name: team.name }))) {
         useForm({}).delete(route('system-admin.teams.destroy', team.id))
     }
 }
 
 const formatDate = (date) => {
-    if (!date) return 'N/A'
+    if (!date) return t('admin.common.not_available')
     return new Date(date).toLocaleDateString('en-US', {
         year: 'numeric',
         month: '2-digit',

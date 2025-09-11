@@ -37,10 +37,18 @@ class WorkshopService extends BaseService
                 throw new \Exception('Already registered for this workshop');
             }
 
-            // Check capacity
+            // Check capacity using the workshop's own method
             $workshop = $this->workshopRepo->find($workshopId);
-            if ($workshop->current_participants >= $workshop->max_participants) {
-                throw new \Exception('Workshop is full');
+            if (!$workshop->canRegister()) {
+                if ($workshop->isFull()) {
+                    throw new \Exception('Workshop is full');
+                } elseif ($workshop->registration_deadline && now()->isAfter($workshop->registration_deadline)) {
+                    throw new \Exception('Registration deadline has passed');
+                } elseif (!$workshop->is_active) {
+                    throw new \Exception('Workshop is not active');
+                } else {
+                    throw new \Exception('Registration is not available for this workshop');
+                }
             }
 
             return $this->workshopRepo->registerUser($userId, $workshopId);

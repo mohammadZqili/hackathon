@@ -84,7 +84,7 @@ const updateScore = () => {
 
 const submitChanges = () => {
     if (!decisionForm.status) {
-        alert('Please select a decision status');
+        alert(t('admin.ideas.select_decision'));
         return;
     }
     
@@ -96,7 +96,7 @@ const submitChanges = () => {
 }
 
 const deleteIdea = () => {
-    if (confirm('Are you sure you want to delete this idea? This action cannot be undone.')) {
+    if (confirm(t('admin.actions.confirm_delete'))) {
         router.delete(route('system-admin.ideas.destroy', props.idea.id))
     }
 }
@@ -128,7 +128,7 @@ const statusGradients = {
 </script>
 
 <template>
-    <Head :title="`System Admin - Idea: ${idea.title}`" />
+    <Head :title="`${t('admin.dashboard.title')} - ${t('admin.ideas.title')}: ${idea.title}`" />
 
     <Default>
         <div class="container mx-auto px-4 py-8" :style="themeStyles">
@@ -140,14 +140,14 @@ const statusGradients = {
                      }">
                     <div class="flex justify-between items-start">
                         <div>
-                            <div class="text-sm text-white/80 mb-1">SYSTEM ADMIN VIEW</div>
+                            <div class="text-sm text-white/80 mb-1">{{ t('admin.dashboard.title').toUpperCase() }}</div>
                             <h1 class="text-3xl font-bold text-white mb-2">
                                 {{ idea.title }}
                             </h1>
                             <div class="flex items-center gap-4 text-white/90">
                                 <span class="flex items-center">
                                     <UserGroupIcon class="w-5 h-5 mr-2" />
-                                    {{ idea.team?.name || 'Unknown Team' }}
+                                    {{ idea.team?.name || t('admin.ideas.unknown_team') }}
                                 </span>
                                 <span class="flex items-center">
                                     <CalendarIcon class="w-5 h-5 mr-2" />
@@ -159,7 +159,7 @@ const statusGradients = {
                             <button @click="deleteIdea"
                                     class="bg-red-500/20 hover:bg-red-500/30 text-white px-4 py-2 rounded-lg transition-all flex items-center">
                                 <TrashIcon class="w-5 h-5 mr-2" />
-                                Delete
+                                {{ t('admin.actions.delete') }}
                             </button>
                             <span :class="`bg-gradient-to-r ${statusGradients[idea.status] || 'from-gray-400 to-gray-600'} px-4 py-2 text-white font-semibold rounded-full shadow-md`">
                                 {{ idea.status?.replace('_', ' ').toUpperCase() }}
@@ -179,7 +179,7 @@ const statusGradients = {
                                 class="px-6 py-3 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
                             <div class="flex items-center">
                                 <DocumentIcon class="w-5 h-5 mr-2" />
-                                Overview
+                                {{ t('admin.dashboard.overview') }}
                             </div>
                         </button>
                         <button @click="activeTab = 'response'"
@@ -188,7 +188,7 @@ const statusGradients = {
                                 class="px-6 py-3 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
                             <div class="flex items-center">
                                 <ClockIcon class="w-5 h-5 mr-2" />
-                                Response History
+                                {{ t('admin.ideas.review_details') }}
                             </div>
                         </button>
                         <button @click="activeTab = 'admin'"
@@ -197,7 +197,7 @@ const statusGradients = {
                                 class="px-6 py-3 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
                             <div class="flex items-center">
                                 <PencilSquareIcon class="w-5 h-5 mr-2" />
-                                Admin Actions
+                                {{ t('admin.actions.actions') }}
                             </div>
                         </button>
                     </nav>
@@ -212,22 +212,22 @@ const statusGradients = {
                                  background: `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})`
                              }">
                             <TagIcon class="w-8 h-8 mb-2 opacity-80" />
-                            <div class="text-sm opacity-90">Track</div>
-                            <div class="text-lg font-bold">{{ idea.track?.name || 'Unassigned' }}</div>
+                            <div class="text-sm opacity-90">{{ t('admin.ideas.track') }}</div>
+                            <div class="text-lg font-bold">{{ idea.track?.name || t('admin.common.unassigned') }}</div>
                         </div>
                         <div class="bg-gradient-to-br from-purple-400 to-purple-600 p-4 rounded-lg text-white">
                             <UserGroupIcon class="w-8 h-8 mb-2 opacity-80" />
-                            <div class="text-sm opacity-90">Team Members</div>
+                            <div class="text-sm opacity-90">{{ t('admin.teams.members') }}</div>
                             <div class="text-lg font-bold">{{ idea.team?.members?.length || 0 }}</div>
                         </div>
                         <div class="bg-gradient-to-br from-orange-400 to-orange-600 p-4 rounded-lg text-white">
                             <DocumentIcon class="w-8 h-8 mb-2 opacity-80" />
-                            <div class="text-sm opacity-90">Documents</div>
+                            <div class="text-sm opacity-90">{{ t('admin.media.documents') }}</div>
                             <div class="text-lg font-bold">{{ idea.files?.length || 0 }}</div>
                         </div>
                         <div class="bg-gradient-to-br from-blue-400 to-blue-600 p-4 rounded-lg text-white">
                             <TrophyIcon class="w-8 h-8 mb-2 opacity-80" />
-                            <div class="text-sm opacity-90">Score</div>
+                            <div class="text-sm opacity-90">{{ t('admin.ideas.total_score') }}</div>
                             <div class="text-lg font-bold">{{ idea.score || 0 }}/100</div>
                         </div>
                     </div>
@@ -236,7 +236,7 @@ const statusGradients = {
                     <div class="space-y-6">
                         <div>
                             <h3 class="text-lg font-semibold mb-3" :style="{ color: themeColor.primary }">
-                                Description
+                                {{ t('admin.form.description') }}
                             </h3>
                             <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                                 <p class="text-gray-700 dark:text-gray-300 leading-relaxed">
@@ -247,7 +247,7 @@ const statusGradients = {
 
                         <div v-if="idea.problem_statement">
                             <h3 class="text-lg font-semibold mb-3" :style="{ color: themeColor.primary }">
-                                Problem Statement
+                                {{ t('admin.ideas.problem_statement') }}
                             </h3>
                             <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                                 <p class="text-gray-700 dark:text-gray-300 leading-relaxed">
@@ -258,7 +258,7 @@ const statusGradients = {
 
                         <div v-if="idea.solution_approach">
                             <h3 class="text-lg font-semibold mb-3" :style="{ color: themeColor.primary }">
-                                Solution Approach
+                                {{ t('admin.ideas.solution_approach') }}
                             </h3>
                             <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                                 <p class="text-gray-700 dark:text-gray-300 leading-relaxed">
@@ -270,7 +270,7 @@ const statusGradients = {
                         <!-- Related Documents with Enhanced Style -->
                         <div v-if="idea.files && idea.files.length > 0">
                             <h3 class="text-lg font-semibold mb-3" :style="{ color: themeColor.primary }">
-                                Related Documents
+                                {{ t('admin.media.documents') }}
                             </h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 <div v-for="file in idea.files" :key="file.id"
@@ -287,7 +287,7 @@ const statusGradients = {
                                     </div>
                                     <div class="flex-1">
                                         <div class="font-medium text-gray-900 dark:text-white">{{ file.filename }}</div>
-                                        <div class="text-xs text-gray-500 dark:text-gray-400">Click to download</div>
+                                        <div class="text-xs text-gray-500 dark:text-gray-400">{{ t('admin.media.download') }}</div>
                                     </div>
                                 </div>
                             </div>
@@ -298,7 +298,7 @@ const statusGradients = {
                 <!-- Response Tab Content -->
                 <div v-show="activeTab === 'response'" class="p-6">
                     <h3 class="text-lg font-semibold mb-4" :style="{ color: themeColor.primary }">
-                        Review History
+                        {{ t('admin.ideas.review_details') }}
                     </h3>
                     <div v-if="reviewHistory && reviewHistory.length > 0" class="space-y-4">
                         <div v-for="review in reviewHistory" :key="review.id" 
@@ -324,7 +324,7 @@ const statusGradients = {
                         </div>
                     </div>
                     <div v-else class="text-center py-8 text-gray-500 dark:text-gray-400">
-                        No review history available
+                        {{ t('admin.ideas.no_review_history') }}
                     </div>
                 </div>
 
@@ -335,7 +335,7 @@ const statusGradients = {
                         <div>
                             <h3 class="text-xl font-bold mb-4 flex items-center" :style="{ color: themeColor.primary }">
                                 <PencilSquareIcon class="w-6 h-6 mr-2" />
-                                Make Decision
+                                {{ t('admin.ideas.quick_decision') }}
                             </h3>
                             <div class="flex flex-wrap gap-3 mb-4">
                                 <button @click="submitDecision('accepted')"
@@ -346,28 +346,28 @@ const statusGradients = {
                                         } : {}"
                                         class="px-4 py-2 font-bold rounded-lg transition-all text-white bg-gradient-to-r from-green-400 to-green-600 hover:from-green-500 hover:to-green-700">
                                     <CheckIcon class="w-5 h-5 inline mr-2" />
-                                    Accept
+                                    {{ t('admin.ideas.accept') }}
                                 </button>
                                 <button @click="submitDecision('rejected')"
                                         :class="decisionForm.status === 'rejected' ? 'ring-2 ring-offset-2 ring-red-500' : ''"
                                         class="px-4 py-2 font-bold rounded-lg transition-all text-white bg-gradient-to-r from-red-400 to-red-600 hover:from-red-500 hover:to-red-700">
                                     <XMarkIcon class="w-5 h-5 inline mr-2" />
-                                    Reject
+                                    {{ t('admin.ideas.reject') }}
                                 </button>
                                 <button @click="submitDecision('needs_revision')"
                                         :class="decisionForm.status === 'needs_revision' ? 'ring-2 ring-offset-2 ring-amber-500' : ''"
                                         class="px-4 py-2 font-bold rounded-lg transition-all text-white bg-gradient-to-r from-amber-400 to-amber-600 hover:from-amber-500 hover:to-amber-700">
                                     <ExclamationTriangleIcon class="w-5 h-5 inline mr-2" />
-                                    Need Edit
+                                    {{ t('admin.ideas.need_edit') }}
                                 </button>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Feedback & Comments
+                                    {{ t('admin.ideas.feedback') }}
                                 </label>
                                 <textarea
                                     v-model="decisionForm.feedback"
-                                    placeholder="Provide feedback or required changes"
+                                    :placeholder="t('admin.ideas.feedback_placeholder')"
                                     class="w-full px-4 py-3 border rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 transition-all resize-none"
                                     :style="{
                                         borderColor: `rgba(${themeColor.rgb}, 0.3)`,
@@ -382,11 +382,11 @@ const statusGradients = {
                         <div>
                             <h3 class="text-xl font-bold mb-4 flex items-center" :style="{ color: themeColor.primary }">
                                 <StarIcon class="w-6 h-6 mr-2" />
-                                Score
+                                {{ t('admin.ideas.total_score') }}
                             </h3>
                             <div class="mb-4">
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Overall Score (0-100)
+                                    {{ t('admin.ideas.total_score') + ' (0-100)' }}
                                 </label>
                                 <div class="relative">
                                     <input
@@ -395,7 +395,7 @@ const statusGradients = {
                                         type="number"
                                         min="0"
                                         max="100"
-                                        placeholder="Enter score"
+                                        :placeholder="t('admin.actions.enter_score')"
                                         class="w-full px-4 py-3 pr-16 border rounded-lg text-2xl font-bold text-center transition-all"
                                         :style="{
                                             borderColor: `rgba(${themeColor.rgb}, 0.3)`,
@@ -432,14 +432,14 @@ const statusGradients = {
                                             : 'linear-gradient(135deg, #9ca3af, #6b7280)'
                                     }">
                                 <span v-if="!decisionForm.processing">
-                                    Submit Review
+                                    {{ t('admin.actions.submit_review') }}
                                 </span>
                                 <span v-else class="flex items-center">
                                     <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                     </svg>
-                                    Processing...
+                                    {{ t('admin.actions.loading') }}
                                 </span>
                             </button>
                         </div>

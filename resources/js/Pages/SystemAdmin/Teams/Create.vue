@@ -1,12 +1,12 @@
 <template>
-    <Head title="Create Team" />
+    <Head :title="t('admin.teams.create')" />
     <Default>
         <div class="container mx-auto px-4 py-8" :style="themeStyles">
             <!-- Page Header -->
             <div class="mb-8">
-                <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Create New Team</h1>
-                <p class="mt-2" :style="{ color: themeColor.primary }">
-                    Set up a new hackathon team with all the necessary details
+                <h1 class="text-3xl font-bold text-gray-900 dark:text-white" :class="{ 'rtl': isRTL }">{{ t('admin.teams.new_team') }}</h1>
+                <p class="mt-2" :style="{ color: themeColor.primary }" :class="{ 'rtl': isRTL }">
+                    {{ t('admin.teams.create_description') }}
                 </p>
             </div>
 
@@ -14,12 +14,12 @@
             <form @submit.prevent="submit" class="space-y-6">
                 <!-- Basic Information -->
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Basic Information</h2>
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4" :class="{ 'rtl': isRTL }">{{ t('admin.form.basic_information') }}</h2>
                     
                     <div class="grid grid-cols-1 gap-6">
                         <div>
                             <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                Team Name *
+                                {{ t('admin.teams.name') }} *
                             </label>
                             <div class="relative">
                                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -33,7 +33,7 @@
                                        class="pl-10 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-opacity-50 focus:border-transparent transition-all duration-200"
                                        :class="{ 'border-red-500 focus:ring-red-500': form.errors.name }"
                                        :style="{ '--tw-ring-color': themeColor.primary }"
-                                       placeholder="Enter team name">
+                                       :placeholder="t('admin.form.placeholder.enter_name')">
                             </div>
                             <p v-if="form.errors.name" class="mt-1 text-sm text-red-600 dark:text-red-400">
                                 {{ form.errors.name }}
@@ -42,7 +42,7 @@
 
                         <div>
                             <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                Team Description
+                                {{ t('admin.form.description') }}
                             </label>
                             <div class="relative">
                                 <textarea v-model="form.description"
@@ -50,7 +50,7 @@
                                           rows="4"
                                           class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-opacity-50 focus:border-transparent transition-all duration-200 resize-none"
                                           :style="{ '--tw-ring-color': themeColor.primary }"
-                                          placeholder="Describe your team's mission and goals..."></textarea>
+                                          :placeholder="t('admin.teams.description_placeholder')"></textarea>
                                 <div class="absolute bottom-2 right-2 text-xs text-gray-400 dark:text-gray-500">
                                     {{ form.description?.length || 0 }} / 500
                                 </div>
@@ -60,7 +60,7 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label for="edition_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Hackathon Edition *
+                                    {{ t('admin.editions.title') }} *
                                 </label>
                                 <div class="relative">
                                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -73,7 +73,7 @@
                                             class="pl-10 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-opacity-50 focus:border-transparent transition-all duration-200 appearance-none cursor-pointer"
                                             :class="{ 'border-red-500 focus:ring-red-500': form.errors.edition_id }"
                                             :style="{ '--tw-ring-color': themeColor.primary }">
-                                        <option value="" disabled>Select Edition</option>
+                                        <option value="" disabled>{{ t('admin.editions.select_edition') }}</option>
                                         <option v-for="edition in editions" :key="edition.id" :value="edition.id">
                                             {{ edition.name }} ({{ edition.year }})
                                         </option>
@@ -91,7 +91,7 @@
 
                             <div>
                                 <label for="max_members" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Maximum Team Members
+                                    {{ t('admin.teams.max_members') }}
                                 </label>
                                 <div class="relative">
                                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -108,7 +108,7 @@
                                            :style="{ '--tw-ring-color': themeColor.primary }"
                                            placeholder="5">
                                     <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
-                                        <span class="text-sm text-gray-500 dark:text-gray-400">members</span>
+                                        <span class="text-sm text-gray-500 dark:text-gray-400">{{ t('admin.teams.members') }}</span>
                                     </div>
                                 </div>
                                 <p v-if="form.errors.max_members" class="mt-1 text-sm text-red-600 dark:text-red-400">
@@ -121,17 +121,17 @@
 
                 <!-- Team Leader -->
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Team Leader</h2>
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4" :class="{ 'rtl': isRTL }">{{ t('admin.teams.leader') }}</h2>
                     
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Search and Select Team Leader
+                            {{ t('admin.teams.search_select_leader') }}
                         </label>
                         <div class="relative">
                             <input v-model="leaderSearch"
                                    @input="searchLeaders"
                                    type="text"
-                                   placeholder="Type to search users..."
+                                   :placeholder="t('admin.teams.search_users_placeholder')"
                                    class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors pl-10"
                                    :style="{ '--tw-ring-color': themeColor.primary }">
                             <svg class="absolute left-3 top-3 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -171,17 +171,17 @@
 
                 <!-- Initial Members (Optional) -->
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Initial Members (Optional)</h2>
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4" :class="{ 'rtl': isRTL }">{{ t('admin.teams.initial_members') }}</h2>
                     
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Add Team Members
+                            {{ t('admin.teams.add_member') }}
                         </label>
                         <div class="relative">
                             <input v-model="memberSearch"
                                    @input="searchMembers"
                                    type="text"
-                                   placeholder="Type to search users..."
+                                   :placeholder="t('admin.teams.search_users_placeholder')"
                                    class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors pl-10"
                                    :style="{ '--tw-ring-color': themeColor.primary }">
                             <svg class="absolute left-3 top-3 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -223,7 +223,7 @@
                 <div class="flex justify-end gap-4">
                     <Link :href="route('system-admin.teams.index')"
                           class="px-6 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                        Cancel
+                        {{ t('admin.actions.cancel') }}
                     </Link>
                     <button type="submit"
                             :disabled="form.processing"
@@ -231,7 +231,7 @@
                             :style="{
                                 background: `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})`,
                             }">
-                        {{ form.processing ? 'Creating...' : 'Create Team' }}
+                        {{ form.processing ? t('admin.actions.creating') : t('admin.teams.create') }}
                     </button>
                 </div>
             </form>

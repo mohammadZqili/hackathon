@@ -87,7 +87,7 @@ class TeamService
     /**
      * Add a new team member
      */
-    public function addTeamMember(Team $team, string $email): array
+    public function addTeamMember(Team $team, string $email, string $role = 'member'): array
     {
         DB::beginTransaction();
         try {
@@ -114,12 +114,19 @@ class TeamService
                 return ['success' => false, 'message' => 'Team is already full'];
             }
 
-            $success = $this->teamRepository->addMember($team->id, $user->id, 'pending');
+            $memberData = [
+                'user_id' => $user->id,
+                'role' => $role,
+                'status' => 'pending',
+                'joined_at' => now()
+            ];
+
+            $member = $this->teamRepository->addMember($team->id, $memberData);
             
-            if ($success) {
+            if ($member) {
                 DB::commit();
                 // TODO: Send invitation email to user
-                return ['success' => true, 'message' => 'Invitation sent successfully'];
+                return ['success' => true, 'message' => 'Team member added successfully'];
             }
 
             DB::rollBack();

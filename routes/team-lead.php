@@ -14,21 +14,23 @@ Route::middleware(['auth', 'verified', 'team.lead'])->prefix('team-lead')->name(
     // Team Management
     Route::prefix('team')->name('team.')->group(function () {
         Route::get('/', [TeamController::class, 'index'])->name('index');
+        Route::get('/show', [TeamController::class, 'show'])->name('show');
         Route::get('/create', [TeamController::class, 'create'])->name('create');
         Route::post('/', [TeamController::class, 'store'])->name('store');
         Route::get('/{id}/edit', [TeamController::class, 'edit'])->name('edit');
         Route::put('/{id}', [TeamController::class, 'update'])->name('update');
-        Route::post('/add-member', [TeamController::class, 'addMember'])->name('add-member');
+        Route::get('/add-member', [TeamController::class, 'showAddMember'])->name('add-member');
+        Route::post('/add-member', [TeamController::class, 'addMember'])->name('add-member.store');
         Route::delete('/remove-member/{id}', [TeamController::class, 'removeMember'])->name('remove-member');
     });
     
     // Idea Management
     Route::prefix('idea')->name('idea.')->group(function () {
         Route::get('/', [IdeaController::class, 'index'])->name('index');
+        Route::get('/edit', [IdeaController::class, 'edit'])->name('edit-my');
         Route::get('/submit', [IdeaController::class, 'create'])->name('create');
         Route::post('/', [IdeaController::class, 'store'])->name('store');
-        Route::get('/{id}/edit', [IdeaController::class, 'edit'])->name('edit');
-        Route::put('/{id}', [IdeaController::class, 'update'])->name('update');
+        Route::put('/update', [IdeaController::class, 'update'])->name('update');
         Route::post('/{id}/comment', [IdeaController::class, 'addComment'])->name('comment');
     });
     

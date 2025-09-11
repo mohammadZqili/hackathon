@@ -26,6 +26,25 @@ class IdeaController extends Controller
         $this->ideaRepository = $ideaRepository;
     }
 
+    public function index()
+    {
+        $user = auth()->user();
+        $team = $this->teamService->getMyTeam($user);
+        
+        if (!$team) {
+            return redirect()->route('team-lead.dashboard')
+                ->with('error', 'You need to create a team first');
+        }
+
+        $idea = $this->teamService->getTeamIdea($team);
+        
+        if (!$idea) {
+            return redirect()->route('team-lead.idea.create');
+        }
+        
+        return redirect()->route('team-lead.idea.edit-my');
+    }
+
     public function show()
     {
         $user = auth()->user();
@@ -82,17 +101,36 @@ class IdeaController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',
-            'problem_statement' => 'required|string',
-            'solution' => 'required|string',
-            'target_audience' => 'required|string',
-            'unique_value' => 'required|string',
-            'technical_feasibility' => 'required|string',
-            'business_model' => 'nullable|string',
-            'technologies' => 'nullable|array',
-            'technologies.*' => 'string'
+            'files' => 'nullable|array',
+            'files.*' => 'file|max:10240' // 10MB max per file
         ]);
 
-        $result = $this->teamService->submitIdea($team, $validated);
+        // Map the form data to match the database schema
+        $ideaData = [
+            'title' => $validated['title'],
+            'description' => $validated['description'],
+            'problem_statement' => null,
+            'solution_approach' => null,
+            'expected_impact' => null,
+            'technologies' => [],
+        ];
+
+        $result = $this->teamService->submitIdea($team, $ideaData);
+        
+        if ($result['success'] && isset($validated['files'])) {
+            // Handle file uploads
+            $idea = $result['idea'];
+            foreach ($validated['files'] as $file) {
+                $path = $file->store('ideas/' . $idea->id, 'public');
+                $idea->files()->create([
+                    'filename' => $file->getClientOriginalName(),
+                    'path' => $path,
+                    'type' => 'document',
+                    'size' => $file->getSize(),
+                    'mime_type' => $file->getMimeType()
+                ]);
+            }
+        }
         
         if ($result['success']) {
             return redirect()->route('team-leader.idea.show')
@@ -155,17 +193,35 @@ class IdeaController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',
-            'problem_statement' => 'required|string',
-            'solution' => 'required|string',
-            'target_audience' => 'required|string',
-            'unique_value' => 'required|string',
-            'technical_feasibility' => 'required|string',
-            'business_model' => 'nullable|string',
-            'technologies' => 'nullable|array',
-            'technologies.*' => 'string'
+            'files' => 'nullable|array',
+            'files.*' => 'file|max:10240' // 10MB max per file
         ]);
 
-        $updatedIdea = $this->teamService->updateIdea($idea, $validated);
+        // Map the form data to match the database schema
+        $ideaData = [
+            'title' => $validated['title'],
+            'description' => $validated['description'],
+            'problem_statement' => null,
+            'solution_approach' => null,
+            'expected_impact' => null,
+            'technologies' => [],
+        ];
+
+        $updatedIdea = $this->teamService->updateIdea($idea, $ideaData);
+        
+        // Handle file uploads if present
+        if (isset($validated['files'])) {
+            foreach ($validated['files'] as $file) {
+                $path = $file->store('ideas/' . $idea->id, 'public');
+                $idea->files()->create([
+                    'filename' => $file->getClientOriginalName(),
+                    'path' => $path,
+                    'type' => 'document',
+                    'size' => $file->getSize(),
+                    'mime_type' => $file->getMimeType()
+                ]);
+            }
+        }
         
         return redirect()->route('team-leader.idea.show')
             ->with('success', 'Idea updated successfully');

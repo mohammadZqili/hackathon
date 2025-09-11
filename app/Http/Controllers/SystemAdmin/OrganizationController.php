@@ -30,7 +30,21 @@ class OrganizationController extends Controller
 
     public function store(Request $request)
     {
-        // TODO: Implement store functionality
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'website' => 'nullable|string|max:255',
+            'email' => 'nullable|email|max:255',
+            'phone' => 'nullable|string|max:20',
+            'address' => 'nullable|string',
+            'type' => 'nullable|in:government,private,ngo,educational,other',
+            'is_active' => 'boolean',
+            'social_media' => 'nullable|array',
+            'logo_path' => 'nullable|string',
+        ]);
+
+        $organization = Organization::create($validated);
+
         return redirect()->route('system-admin.organizations.index')
             ->with('success', 'Organization created successfully.');
     }
@@ -55,7 +69,21 @@ class OrganizationController extends Controller
 
     public function update(Request $request, Organization $organization)
     {
-        // TODO: Implement update functionality
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'website' => 'nullable|string|max:255',
+            'email' => 'nullable|email|max:255',
+            'phone' => 'nullable|string|max:20',
+            'address' => 'nullable|string',
+            'type' => 'nullable|in:government,private,ngo,educational,other',
+            'is_active' => 'boolean',
+            'social_media' => 'nullable|array',
+            'logo_path' => 'nullable|string',
+        ]);
+
+        $organization->update($validated);
+
         return redirect()->route('system-admin.organizations.index')
             ->with('success', 'Organization updated successfully.');
     }
@@ -70,13 +98,13 @@ class OrganizationController extends Controller
 
     public function activate(Organization $organization)
     {
-        // TODO: Implement activate functionality
-        return response()->json(['message' => 'Activate functionality to be implemented']);
+        $organization->update(['is_active' => true]);
+        return response()->json(['message' => 'Organization activated successfully']);
     }
 
     public function deactivate(Organization $organization)
     {
-        // TODO: Implement deactivate functionality
-        return response()->json(['message' => 'Deactivate functionality to be implemented']);
+        $organization->update(['is_active' => false]);
+        return response()->json(['message' => 'Organization deactivated successfully']);
     }
 }

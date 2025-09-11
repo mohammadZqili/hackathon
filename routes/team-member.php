@@ -14,6 +14,7 @@ Route::middleware(['auth', 'verified', 'team.member'])->prefix('team-member')->n
     // Team View
     Route::prefix('team')->name('team.')->group(function () {
         Route::get('/', [TeamController::class, 'index'])->name('index');
+        Route::get('/show', [TeamController::class, 'show'])->name('show');
     });
     
     // Idea View & Comments

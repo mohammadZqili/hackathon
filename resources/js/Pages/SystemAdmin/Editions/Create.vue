@@ -1,12 +1,12 @@
 <template>
-    <Head title="Add Edition" />
+    <Head :title="t('admin.editions.add_edition')" />
     <Default>
         <div class="container mx-auto px-4 py-8" :style="themeStyles">
             <!-- Page Header -->
             <div class="mb-8">
-                <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Add Edition Details</h1>
+                <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ t('admin.editions.add_edition_details') }}</h1>
                 <p class="mt-2" :style="{ color: themeColor.primary }">
-                    Create a new hackathon edition with all the necessary details.
+                    {{ t('admin.editions.create_description') }}
                 </p>
             </div>
 
@@ -17,7 +17,7 @@
                     <div class="grid grid-cols-1 gap-6">
                         <div>
                             <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                Edition Name
+                                {{ t('admin.editions.edition_name') }}
                             </label>
                             <input v-model="form.name"
                                    type="text"
@@ -25,7 +25,7 @@
                                    class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors"
                                    :class="{ 'border-red-500': form.errors.name }"
                                    :style="{ '--tw-ring-color': themeColor.primary }"
-                                   placeholder="Enter hackathon name">
+                                   :placeholder="t('admin.editions.enter_hackathon_name')">
                             <p v-if="form.errors.name" class="mt-1 text-sm text-red-600 dark:text-red-400">
                                 {{ form.errors.name }}
                             </p>
@@ -34,7 +34,7 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label for="year" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Year
+                                    {{ t('admin.editions.year') }}
                                 </label>
                                 <input v-model="form.year"
                                        type="number"
@@ -50,13 +50,13 @@
 
                             <div>
                                 <label for="admin_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Hackathon Admin
+                                    {{ t('admin.editions.hackathon_admin') }}
                                 </label>
                                 <select v-model="form.admin_id"
                                         id="admin_id"
                                         class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors"
                                         :style="{ '--tw-ring-color': themeColor.primary }">
-                                    <option value="">Select Admin</option>
+                                    <option value="">{{ t('admin.editions.select_admin') }}</option>
                                     <option v-for="admin in admins" :key="admin.id" :value="admin.id">
                                         {{ admin.name }}
                                     </option>
@@ -69,26 +69,26 @@
 
                         <div>
                             <label for="location" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                Location
+                                {{ t('admin.editions.location') }}
                             </label>
                             <input v-model="form.location"
                                    type="text"
                                    id="location"
                                    class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors"
                                    :style="{ '--tw-ring-color': themeColor.primary }"
-                                   placeholder="Enter hackathon location">
+                                   :placeholder="t('admin.editions.enter_location')">
                         </div>
                     </div>
                 </div>
 
                 <!-- Date Settings -->
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Date Settings</h2>
-                    
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ t('admin.editions.date_settings') }}</h2>
+
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label for="registration_start_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                Registration Start Date
+                                {{ t('admin.editions.registration_start_date') }}
                             </label>
                             <input v-model="form.registration_start_date"
                                    type="date"
@@ -103,7 +103,7 @@
 
                         <div>
                             <label for="registration_end_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                Registration End Date
+                                {{ t('admin.editions.registration_end_date') }}
                             </label>
                             <input v-model="form.registration_end_date"
                                    type="date"
@@ -118,7 +118,7 @@
 
                         <div>
                             <label for="hackathon_start_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                Hackathon Start Date
+                                {{ t('admin.editions.hackathon_start_date') }}
                             </label>
                             <input v-model="form.hackathon_start_date"
                                    type="date"
@@ -133,7 +133,7 @@
 
                         <div>
                             <label for="hackathon_end_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                Hackathon End Date
+                                {{ t('admin.editions.hackathon_end_date') }}
                             </label>
                             <input v-model="form.hackathon_end_date"
                                    type="date"
@@ -150,12 +150,12 @@
 
                 <!-- Configuration -->
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Configuration</h2>
-                    
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ t('admin.editions.configuration') }}</h2>
+
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label for="max_teams" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                Maximum Teams
+                                {{ t('admin.editions.maximum_teams') }}
                             </label>
                             <input v-model="form.max_teams"
                                    type="number"
@@ -171,7 +171,7 @@
 
                         <div>
                             <label for="max_team_members" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                Maximum Team Members
+                                {{ t('admin.editions.maximum_team_members') }}
                             </label>
                             <input v-model="form.max_team_members"
                                    type="number"
@@ -188,14 +188,14 @@
 
                     <div class="mt-6">
                         <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Description
+                            {{ t('admin.editions.description') }}
                         </label>
                         <textarea v-model="form.description"
                                   id="description"
                                   rows="4"
                                   class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors"
                                   :style="{ '--tw-ring-color': themeColor.primary }"
-                                  placeholder="Enter edition description..."></textarea>
+                                  :placeholder="t('admin.editions.enter_description')"></textarea>
                     </div>
 
                     <div class="mt-6">
@@ -205,7 +205,7 @@
                                    class="rounded border-gray-300 dark:border-gray-600 text-primary focus:ring-2 focus:ring-opacity-50"
                                    :style="{ '--tw-text-opacity': 1, color: themeColor.primary }">
                             <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">
-                                Set as active edition
+                                {{ t('admin.editions.set_as_active') }}
                             </span>
                         </label>
                     </div>
@@ -215,7 +215,7 @@
                 <div class="flex justify-end gap-4">
                     <Link :href="route('system-admin.editions.index')"
                           class="px-6 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                        Cancel
+                        {{ t('admin.actions.cancel') }}
                     </Link>
                     <button type="submit"
                             :disabled="form.processing"
@@ -223,7 +223,7 @@
                             :style="{
                                 background: `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})`,
                             }">
-                        {{ form.processing ? 'Creating...' : 'Create Edition' }}
+                        {{ form.processing ? t('admin.editions.creating') : t('admin.editions.create') }}
                     </button>
                 </div>
             </form>
@@ -232,7 +232,7 @@
 </template>
 
 <script setup>
-import { useLocalization } from '@/composables/useLocalization'
+import { useLocalization } from '../../../composables/useLocalization'
 
 const { t, isRTL, direction, locale } = useLocalization()
 import { Head, Link, useForm } from '@inertiajs/vue3'

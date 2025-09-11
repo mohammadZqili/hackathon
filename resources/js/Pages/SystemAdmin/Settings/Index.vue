@@ -12,7 +12,7 @@
 
             <!-- Page Header -->
             <div class="mb-8">
-                <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Settings</h1>
+                <h1 class="text-3xl font-bold text-gray-900 dark:text-white" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">{{ t('admin.settings.title') }}</h1>
             </div>
 
             <!-- Tabs Navigation -->
@@ -51,8 +51,8 @@
                         <form @submit.prevent="saveSmtpSettings" class="space-y-6">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        Mail Host
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">
+                                        {{ t('admin.settings.mail_host') }}
                                     </label>
                                     <input
                                         v-model="smtpForm.mail_host"
@@ -65,8 +65,8 @@
                                 </div>
                                 
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        Mail Port
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">
+                                        {{ t('admin.settings.mail_port') }}
                                     </label>
                                     <input
                                         v-model.number="smtpForm.mail_port"
@@ -79,8 +79,8 @@
                                 </div>
                                 
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        Mail Username
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">
+                                        {{ t('admin.settings.mail_username') }}
                                     </label>
                                     <input
                                         v-model="smtpForm.mail_username"
@@ -93,8 +93,8 @@
                                 </div>
                                 
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        Mail Password
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">
+                                        {{ t('admin.settings.mail_password') }}
                                     </label>
                                     <input
                                         v-model="smtpForm.mail_password"
@@ -107,8 +107,8 @@
                                 </div>
                                 
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        Mail Encryption
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">
+                                        {{ t('admin.settings.mail_encryption') }}
                                     </label>
                                     <select
                                         v-model="smtpForm.mail_encryption"
@@ -117,14 +117,14 @@
                                     >
                                         <option value="tls">TLS</option>
                                         <option value="ssl">SSL</option>
-                                        <option value="">None</option>
+                                        <option value="">{{ t('admin.settings.none') }}</option>
                                     </select>
                                     <div v-if="smtpForm.errors?.mail_encryption" class="text-red-500 text-sm mt-1">{{ smtpForm.errors.mail_encryption }}</div>
                                 </div>
                                 
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        From Address
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">
+                                        {{ t('admin.settings.from_address') }}
                                     </label>
                                     <input
                                         v-model="smtpForm.mail_from_address"
@@ -146,7 +146,7 @@
                                         background: `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})` 
                                     }"
                                 >
-                                    {{ smtpForm.processing ? 'Saving...' : 'Save SMTP Settings' }}
+                                    {{ smtpForm.processing ? t('admin.actions.saving') : t('admin.settings.save_smtp') }}
                                 </button>
                             </div>
                         </form>
@@ -156,12 +156,12 @@
                 <!-- Branding Tab -->
                 <div v-show="activeTab === 'branding'" class="space-y-6">
                     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-6">Branding Settings</h2>
+                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-6" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">{{ t('admin.settings.branding') }}</h2>
                         
                         <form @submit.prevent="saveBrandingSettings" class="space-y-6">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    App Display Name
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">
+                                    {{ t('admin.settings.app_name') }}
                                 </label>
                                 <input
                                     v-model="brandingForm.app_name"
@@ -175,8 +175,8 @@
                             
                             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        Primary Color
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">
+                                        {{ t('admin.settings.primary_color') }}
                                     </label>
                                     <input
                                         v-model="brandingForm.primary_color"
@@ -188,8 +188,8 @@
                                 </div>
                                 
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        Secondary Color
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">
+                                        {{ t('admin.settings.secondary_color') }}
                                     </label>
                                     <input
                                         v-model="brandingForm.secondary_color"
@@ -201,8 +201,8 @@
                                 </div>
                                 
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        Success Color
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">
+                                        {{ t('admin.settings.success_color') }}
                                     </label>
                                     <input
                                         v-model="brandingForm.success_color"
@@ -214,8 +214,8 @@
                                 </div>
                                 
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        Danger Color
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">
+                                        {{ t('admin.settings.danger_color') }}
                                     </label>
                                     <input
                                         v-model="brandingForm.danger_color"
@@ -229,8 +229,8 @@
                             
                             <!-- Logo Upload -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Upload Logo
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">
+                                    {{ t('admin.settings.upload_logo') }}
                                 </label>
                                 <div class="border-2 border-dashed rounded-xl p-8 text-center transition-colors duration-200"
                                      :style="{ borderColor: themeColor.primary + '40' }">
@@ -239,9 +239,9 @@
                                             <img :src="brandingForm.logo_preview" alt="Logo preview" class="mx-auto h-24 object-contain">
                                         </div>
                                         <div>
-                                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Upload Logo</h3>
+                                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('admin.settings.upload_logo') }}</h3>
                                             <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                                Click or drag and drop to upload your logo
+                                                {{ t('admin.settings.logo_description') }}
                                             </p>
                                         </div>
                                         <input
@@ -260,7 +260,7 @@
                                                 color: themeColor.primary
                                             }"
                                         >
-                                            Upload
+                                            {{ t('admin.actions.upload') }}
                                         </button>
                                     </div>
                                 </div>
@@ -275,7 +275,7 @@
                                         background: `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})` 
                                     }"
                                 >
-                                    {{ brandingForm.processing ? 'Saving...' : 'Save Branding Settings' }}
+                                    {{ brandingForm.processing ? t('admin.actions.saving') : t('admin.settings.save_branding') }}
                                 </button>
                             </div>
                         </form>
@@ -285,15 +285,15 @@
                 <!-- Notifications Tab -->
                 <div v-show="activeTab === 'notifications'" class="space-y-6">
                     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-6">Notification Settings</h2>
+                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-6" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">{{ t('admin.settings.notifications') }}</h2>
                         
                         <form @submit.prevent="saveNotificationSettings" class="space-y-6">
                             <div class="space-y-4">
                                 <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
                                     <div>
-                                        <h3 class="font-medium text-gray-900 dark:text-white">Email Notifications</h3>
+                                        <h3 class="font-medium text-gray-900 dark:text-white" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">{{ t('admin.settings.email_notifications') }}</h3>
                                         <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                            Send email notifications for system events
+                                            {{ t('admin.settings.email_notifications_desc') }}
                                         </p>
                                     </div>
                                     <label class="relative inline-flex items-center cursor-pointer">
@@ -310,9 +310,9 @@
                                 
                                 <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
                                     <div>
-                                        <h3 class="font-medium text-gray-900 dark:text-white">Push Notifications</h3>
+                                        <h3 class="font-medium text-gray-900 dark:text-white" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">{{ t('admin.settings.push_notifications') }}</h3>
                                         <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                            Send push notifications to mobile devices
+                                            {{ t('admin.settings.push_notifications_desc') }}
                                         </p>
                                     </div>
                                     <label class="relative inline-flex items-center cursor-pointer">
@@ -329,9 +329,9 @@
                                 
                                 <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
                                     <div>
-                                        <h3 class="font-medium text-gray-900 dark:text-white">In-App Notifications</h3>
+                                        <h3 class="font-medium text-gray-900 dark:text-white" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">{{ t('admin.settings.in_app_notifications') }}</h3>
                                         <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                            Show notifications within the application
+                                            {{ t('admin.settings.in_app_notifications_desc') }}
                                         </p>
                                     </div>
                                     <label class="relative inline-flex items-center cursor-pointer">
@@ -356,7 +356,7 @@
                                         background: `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})` 
                                     }"
                                 >
-                                    {{ notificationForm.processing ? 'Saving...' : 'Save Notification Settings' }}
+                                    {{ notificationForm.processing ? t('admin.actions.saving') : t('admin.settings.save_notifications') }}
                                 </button>
                             </div>
                         </form>
@@ -425,10 +425,10 @@ const themeStyles = computed(() => ({
 
 // Tabs configuration
 const tabs = [
-    { id: 'smtp', name: 'SMTP' },
+    { id: 'smtp', name: t('admin.settings.smtp') },
     // { id: 'sms', name: 'SMS API' }, // Hidden for now
-    { id: 'branding', name: 'Branding' },
-    { id: 'notifications', name: 'Notifications' }
+    { id: 'branding', name: t('admin.settings.branding') },
+    { id: 'notifications', name: t('admin.settings.notifications') }
 ]
 
 const activeTab = ref('smtp')

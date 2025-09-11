@@ -11,29 +11,21 @@
                             <b class="self-stretch relative leading-10">Submit Your Hackathon Idea</b>
                         </div>
                     </div>
-                    
-                    <!-- Track Selection Field -->
+
+                    <!-- Track Info Display -->
                     <div class="flex flex-row items-end justify-start flex-wrap content-end py-3 px-4 box-border w-full text-base">
                         <div class="flex-1 flex flex-col items-start justify-start">
                             <div class="self-stretch flex flex-col items-start justify-start pt-0 px-0 pb-2">
                                 <div class="self-stretch relative leading-6 font-medium">Track</div>
                             </div>
-                            <div class="self-stretch rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 overflow-hidden flex flex-row items-center justify-between py-2 px-4 gap-0">
-                                <select v-model="form.track_id" required
-                                    class="relative leading-6 whitespace-pre-wrap bg-transparent border-none outline-none text-gray-900 dark:text-white appearance-none flex-1">
-                                    <option value="" disabled class="text-gray-400">Select Track</option>
-                                    <option v-for="track in tracks" :key="track.id" :value="track.id">
-                                        {{ track.name }}
-                                    </option>
-                                </select>
-                                <svg class="w-2 relative h-3.5 text-gray-600 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
-                                </svg>
+                            <div class="self-stretch rounded-xl bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 overflow-hidden flex flex-row items-center justify-between py-3 px-4 gap-0">
+                                <div class="relative leading-6 text-gray-700 dark:text-gray-300">
+                                    {{ team?.track?.name || 'No track assigned' }}
+                                </div>
                             </div>
-                            <div v-if="errors.track_id" class="text-red-500 text-sm mt-1">{{ errors.track_id }}</div>
                         </div>
                     </div>
-                    
+
                     <!-- Idea Title Field -->
                     <div class="flex flex-row items-end justify-start flex-wrap content-end py-3 px-4 box-border w-full text-base">
                         <div class="flex-1 flex flex-col items-start justify-start">
@@ -47,7 +39,7 @@
                             <div v-if="errors.title" class="text-red-500 text-sm mt-1">{{ errors.title }}</div>
                         </div>
                     </div>
-                    
+
                     <!-- Description Field -->
                     <div class="flex flex-row items-end justify-start flex-wrap content-end py-3 px-4 box-border w-full text-base">
                         <div class="flex-1 flex flex-col items-start justify-start">
@@ -63,129 +55,16 @@
                         </div>
                     </div>
 
-                    <!-- Problem Statement Field -->
-                    <div class="flex flex-row items-end justify-start flex-wrap content-end py-3 px-4 box-border w-full text-base">
-                        <div class="flex-1 flex flex-col items-start justify-start">
-                            <div class="self-stretch flex flex-col items-start justify-start pt-0 px-0 pb-2">
-                                <div class="self-stretch relative leading-6 font-medium">Problem Statement *</div>
-                            </div>
-                            <div class="self-stretch flex-1 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 box-border overflow-hidden min-h-[144px] p-4">
-                                <textarea v-model="form.problem_statement" placeholder="What problem does your idea solve?" required
-                                    class="w-full h-full bg-transparent border-none outline-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 resize-none"
-                                    rows="4"></textarea>
-                            </div>
-                            <div v-if="errors.problem_statement" class="text-red-500 text-sm mt-1">{{ errors.problem_statement }}</div>
-                        </div>
-                    </div>
 
-                    <!-- Solution Field -->
-                    <div class="flex flex-row items-end justify-start flex-wrap content-end py-3 px-4 box-border w-full text-base">
-                        <div class="flex-1 flex flex-col items-start justify-start">
-                            <div class="self-stretch flex flex-col items-start justify-start pt-0 px-0 pb-2">
-                                <div class="self-stretch relative leading-6 font-medium">Proposed Solution *</div>
-                            </div>
-                            <div class="self-stretch flex-1 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 box-border overflow-hidden min-h-[144px] p-4">
-                                <textarea v-model="form.solution" placeholder="How does your idea solve the problem?" required
-                                    class="w-full h-full bg-transparent border-none outline-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 resize-none"
-                                    rows="4"></textarea>
-                            </div>
-                            <div v-if="errors.solution" class="text-red-500 text-sm mt-1">{{ errors.solution }}</div>
-                        </div>
-                    </div>
-
-                    <!-- Target Audience Field -->
-                    <div class="flex flex-row items-end justify-start flex-wrap content-end py-3 px-4 box-border w-full text-base">
-                        <div class="flex-1 flex flex-col items-start justify-start">
-                            <div class="self-stretch flex flex-col items-start justify-start pt-0 px-0 pb-2">
-                                <div class="self-stretch relative leading-6 font-medium">Target Audience *</div>
-                            </div>
-                            <div class="self-stretch flex-1 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 box-border overflow-hidden min-h-[100px] p-4">
-                                <textarea v-model="form.target_audience" placeholder="Who will benefit from your solution?" required
-                                    class="w-full h-full bg-transparent border-none outline-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 resize-none"
-                                    rows="3"></textarea>
-                            </div>
-                            <div v-if="errors.target_audience" class="text-red-500 text-sm mt-1">{{ errors.target_audience }}</div>
-                        </div>
-                    </div>
-
-                    <!-- Unique Value Proposition Field -->
-                    <div class="flex flex-row items-end justify-start flex-wrap content-end py-3 px-4 box-border w-full text-base">
-                        <div class="flex-1 flex flex-col items-start justify-start">
-                            <div class="self-stretch flex flex-col items-start justify-start pt-0 px-0 pb-2">
-                                <div class="self-stretch relative leading-6 font-medium">Unique Value Proposition *</div>
-                            </div>
-                            <div class="self-stretch flex-1 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 box-border overflow-hidden min-h-[100px] p-4">
-                                <textarea v-model="form.unique_value" placeholder="What makes your solution unique?" required
-                                    class="w-full h-full bg-transparent border-none outline-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 resize-none"
-                                    rows="3"></textarea>
-                            </div>
-                            <div v-if="errors.unique_value" class="text-red-500 text-sm mt-1">{{ errors.unique_value }}</div>
-                        </div>
-                    </div>
-
-                    <!-- Technical Feasibility Field -->
-                    <div class="flex flex-row items-end justify-start flex-wrap content-end py-3 px-4 box-border w-full text-base">
-                        <div class="flex-1 flex flex-col items-start justify-start">
-                            <div class="self-stretch flex flex-col items-start justify-start pt-0 px-0 pb-2">
-                                <div class="self-stretch relative leading-6 font-medium">Technical Feasibility *</div>
-                            </div>
-                            <div class="self-stretch flex-1 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 box-border overflow-hidden min-h-[100px] p-4">
-                                <textarea v-model="form.technical_feasibility" placeholder="How will you implement this technically?" required
-                                    class="w-full h-full bg-transparent border-none outline-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 resize-none"
-                                    rows="3"></textarea>
-                            </div>
-                            <div v-if="errors.technical_feasibility" class="text-red-500 text-sm mt-1">{{ errors.technical_feasibility }}</div>
-                        </div>
-                    </div>
-
-                    <!-- Business Model Field (Optional) -->
-                    <div class="flex flex-row items-end justify-start flex-wrap content-end py-3 px-4 box-border w-full text-base">
-                        <div class="flex-1 flex flex-col items-start justify-start">
-                            <div class="self-stretch flex flex-col items-start justify-start pt-0 px-0 pb-2">
-                                <div class="self-stretch relative leading-6 font-medium">Business Model (Optional)</div>
-                            </div>
-                            <div class="self-stretch flex-1 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 box-border overflow-hidden min-h-[100px] p-4">
-                                <textarea v-model="form.business_model" placeholder="How will your solution generate revenue? (Optional)"
-                                    class="w-full h-full bg-transparent border-none outline-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 resize-none"
-                                    rows="3"></textarea>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Technologies Field (Optional) -->
-                    <div class="flex flex-row items-end justify-start flex-wrap content-end py-3 px-4 box-border w-full text-base">
-                        <div class="flex-1 flex flex-col items-start justify-start">
-                            <div class="self-stretch flex flex-col items-start justify-start pt-0 px-0 pb-2">
-                                <div class="self-stretch relative leading-6 font-medium">Technologies (Optional)</div>
-                            </div>
-                            <div class="self-stretch rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 box-border h-14 overflow-hidden shrink-0 flex flex-row items-center justify-start p-[15px]">
-                                <input v-model="technologiesInput" @keydown.enter="addTechnology" type="text" 
-                                    placeholder="Enter technologies (press Enter to add)"
-                                    class="w-full relative leading-6 whitespace-pre-wrap inline-block shrink-0 bg-transparent border-none outline-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400">
-                            </div>
-                            <div v-if="form.technologies.length > 0" class="flex flex-wrap gap-2 mt-2">
-                                <span v-for="(tech, index) in form.technologies" :key="index"
-                                    class="inline-flex items-center px-3 py-1 rounded-full text-sm bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
-                                    {{ tech }}
-                                    <button @click="removeTechnology(index)" class="ml-2 text-red-500 hover:text-red-600">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                        </svg>
-                                    </button>
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                    
                     <!-- Upload Files Field -->
                     <div class="flex flex-row items-end justify-start flex-wrap content-end py-3 px-4 box-border w-full text-base">
                         <div class="flex-1 flex flex-col items-start justify-start">
                             <div class="self-stretch flex flex-col items-start justify-start pt-0 px-0 pb-2">
-                                <div class="self-stretch relative leading-6 font-medium">Upload Files (Optional)</div>
+                                <div class="self-stretch relative leading-6 font-medium">Upload Files</div>
                             </div>
                             <div class="self-stretch flex-1 rounded-xl flex flex-row items-start justify-start">
                                 <div class="flex-1 rounded-tl-xl rounded-tr-none rounded-br-none rounded-bl-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 box-border h-14 overflow-hidden flex flex-row items-center justify-start py-[15px] pl-[15px] pr-2">
-                                    <input type="file" ref="fileInput" @change="handleFileUpload" multiple 
+                                    <input type="file" ref="fileInput" @change="handleFileUpload" multiple
                                         accept=".pdf,.ppt,.pptx,.doc,.docx"
                                         class="hidden">
                                     <div class="w-96 relative leading-6 whitespace-pre-wrap inline-block shrink-0">
@@ -201,7 +80,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Uploaded Files List -->
                     <div v-if="uploadedFiles.length > 0">
                         <div class="self-stretch h-[47px] flex flex-col items-start justify-start pt-4 px-4 pb-2 box-border text-lg text-gray-900 dark:text-white">
@@ -221,7 +100,7 @@
                     </div>
 
                     <!-- Error Messages -->
-                    <div v-if="Object.keys(errors).length > 0 && !['title', 'description', 'problem_statement', 'solution', 'target_audience', 'unique_value', 'technical_feasibility'].some(field => errors[field])" 
+                    <div v-if="Object.keys(errors).length > 0 && !['title', 'description'].some(field => errors[field])"
                         class="mx-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
                         <div class="text-red-600 dark:text-red-400 text-sm">
                             <p class="font-semibold mb-2">Please fix the following errors:</p>
@@ -230,7 +109,7 @@
                             </ul>
                         </div>
                     </div>
-                    
+
                     <!-- Submit Idea Button -->
                     <div class="self-stretch flex flex-row items-start justify-end py-3 px-4 text-center text-white">
                         <button @click="submitForm" :disabled="processing"
@@ -297,34 +176,14 @@ const themeStyles = computed(() => ({
 }))
 
 const form = useForm({
-    track_id: props.team?.track_id || '',
     title: '',
     description: '',
-    problem_statement: '',
-    solution: '',
-    target_audience: '',
-    unique_value: '',
-    technical_feasibility: '',
-    business_model: '',
-    technologies: [],
     files: []
 })
 
 const processing = ref(false)
 const selectedFiles = ref([])
 const uploadedFiles = ref([])
-const technologiesInput = ref('')
-
-const addTechnology = () => {
-    if (technologiesInput.value.trim()) {
-        form.technologies.push(technologiesInput.value.trim())
-        technologiesInput.value = ''
-    }
-}
-
-const removeTechnology = (index) => {
-    form.technologies.splice(index, 1)
-}
 
 const handleFileUpload = (event) => {
     const files = Array.from(event.target.files)

@@ -33,7 +33,21 @@ class SpeakerController extends Controller
 
     public function store(Request $request)
     {
-        // TODO: Implement store functionality
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'title' => 'nullable|string|max:255',
+            'bio' => 'nullable|string',
+            'email' => 'nullable|email|max:255',
+            'phone' => 'nullable|string|max:20',
+            'organization_id' => 'nullable|exists:organizations,id',
+            'expertise_areas' => 'nullable|array',
+            'social_media' => 'nullable|array',
+            'is_active' => 'boolean',
+            'photo_path' => 'nullable|string',
+        ]);
+
+        $speaker = Speaker::create($validated);
+
         return redirect()->route('system-admin.speakers.index')
             ->with('success', 'Speaker created successfully.');
     }
@@ -60,7 +74,21 @@ class SpeakerController extends Controller
 
     public function update(Request $request, Speaker $speaker)
     {
-        // TODO: Implement update functionality
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'title' => 'nullable|string|max:255',
+            'bio' => 'nullable|string',
+            'email' => 'nullable|email|max:255',
+            'phone' => 'nullable|string|max:20',
+            'organization_id' => 'nullable|exists:organizations,id',
+            'expertise_areas' => 'nullable|array',
+            'social_media' => 'nullable|array',
+            'is_active' => 'boolean',
+            'photo_path' => 'nullable|string',
+        ]);
+
+        $speaker->update($validated);
+
         return redirect()->route('system-admin.speakers.index')
             ->with('success', 'Speaker updated successfully.');
     }
@@ -75,13 +103,13 @@ class SpeakerController extends Controller
 
     public function activate(Speaker $speaker)
     {
-        // TODO: Implement activate functionality
-        return response()->json(['message' => 'Activate functionality to be implemented']);
+        $speaker->update(['is_active' => true]);
+        return response()->json(['message' => 'Speaker activated successfully']);
     }
 
     public function deactivate(Speaker $speaker)
     {
-        // TODO: Implement deactivate functionality
-        return response()->json(['message' => 'Deactivate functionality to be implemented']);
+        $speaker->update(['is_active' => false]);
+        return response()->json(['message' => 'Speaker deactivated successfully']);
     }
 }

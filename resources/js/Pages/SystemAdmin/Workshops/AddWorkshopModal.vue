@@ -5,7 +5,7 @@
             <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                 <div class="flex items-center justify-between">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                        Add New Workshop
+                        {{ t('admin.workshops.create') }}
                     </h3>
                     <button @click="$emit('close')"
                             class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 transition-colors">
@@ -21,11 +21,11 @@
                 <!-- Workshop Title -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Workshop Title *
+                        {{ t('admin.form.workshop_title') }} *
                     </label>
                     <input v-model="form.title"
                            type="text"
-                           placeholder="Enter workshop title"
+                           :placeholder="t('admin.form.placeholder.enter_workshop_title')"
                            class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors"
                            :style="{ '--tw-ring-color': themeColor.primary }"
                            required>
@@ -37,11 +37,11 @@
                 <!-- Description -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Description
+                        {{ t('admin.form.description') }}
                     </label>
                     <textarea v-model="form.description"
                               rows="3"
-                              placeholder="Describe the workshop content and objectives..."
+                              :placeholder="t('admin.form.placeholder.workshop_description')"
                               class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors resize-none"
                               :style="{ '--tw-ring-color': themeColor.primary }"></textarea>
                 </div>
@@ -50,7 +50,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Date *
+                            {{ t('admin.form.date') }} *
                         </label>
                         <input v-model="form.start_date"
                                type="date"
@@ -60,7 +60,7 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Time
+                            {{ t('admin.form.time') }}
                         </label>
                         <input v-model="form.start_time"
                                type="time"
@@ -73,7 +73,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Duration (hours)
+                            {{ t('admin.form.duration_hours') }}
                         </label>
                         <input v-model="form.duration"
                                type="number"
@@ -86,7 +86,7 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Max Attendees
+                            {{ t('admin.form.max_attendees') }}
                         </label>
                         <input v-model="form.max_attendees"
                                type="number"
@@ -101,12 +101,12 @@
                 <!-- Speaker Selection -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Speaker
+                        {{ t('admin.workshops.speaker') }}
                     </label>
                     <select v-model="form.speaker_id"
                             class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors"
                             :style="{ '--tw-ring-color': themeColor.primary }">
-                        <option value="">Select Speaker</option>
+                        <option value="">{{ t('admin.form.placeholder.select_speaker') }}</option>
                         <option v-for="speaker in speakers" :key="speaker.id" :value="speaker.id">
                             {{ speaker.name }}
                         </option>
@@ -116,12 +116,12 @@
                 <!-- Organization Selection -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Organization
+                        {{ t('admin.form.organization') }}
                     </label>
                     <select v-model="form.organization_id"
                             class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors"
                             :style="{ '--tw-ring-color': themeColor.primary }">
-                        <option value="">Select Organization</option>
+                        <option value="">{{ t('admin.form.placeholder.select_organization') }}</option>
                         <option v-for="org in organizations" :key="org.id" :value="org.id">
                             {{ org.name }}
                         </option>
@@ -131,11 +131,11 @@
                 <!-- Location -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Location
+                        {{ t('admin.form.location') }}
                     </label>
                     <input v-model="form.location"
                            type="text"
-                           placeholder="Room 101, Building A"
+                           :placeholder="t('admin.form.placeholder.location')"
                            class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors"
                            :style="{ '--tw-ring-color': themeColor.primary }">
                 </div>
@@ -143,7 +143,7 @@
                 <!-- Workshop Type -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Workshop Type
+                        {{ t('admin.form.workshop_type') }}
                     </label>
                     <div class="flex gap-4">
                         <label class="flex items-center">
@@ -152,7 +152,7 @@
                                    value="technical"
                                    class="mr-2"
                                    :style="{ accentColor: themeColor.primary }">
-                            <span class="text-sm text-gray-700 dark:text-gray-300">Technical</span>
+                            <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('admin.form.technical') }}</span>
                         </label>
                         <label class="flex items-center">
                             <input v-model="form.type"
@@ -160,7 +160,7 @@
                                    value="business"
                                    class="mr-2"
                                    :style="{ accentColor: themeColor.primary }">
-                            <span class="text-sm text-gray-700 dark:text-gray-300">Business</span>
+                            <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('admin.form.business') }}</span>
                         </label>
                         <label class="flex items-center">
                             <input v-model="form.type"
@@ -168,7 +168,7 @@
                                    value="soft-skills"
                                    class="mr-2"
                                    :style="{ accentColor: themeColor.primary }">
-                            <span class="text-sm text-gray-700 dark:text-gray-300">Soft Skills</span>
+                            <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('admin.form.soft_skills') }}</span>
                         </label>
                     </div>
                 </div>
@@ -177,7 +177,7 @@
                 <div class="flex justify-end gap-4 pt-4">
                     <button @click="$emit('close')" type="button"
                             class="px-6 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                        Cancel
+                        {{ t('admin.actions.cancel') }}
                     </button>
                     <button type="submit"
                             :disabled="form.processing"
@@ -185,7 +185,7 @@
                             :style="{
                                 background: `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})`,
                             }">
-                        {{ form.processing ? 'Adding...' : 'Add Workshop' }}
+                        {{ form.processing ? t('admin.actions.adding') : t('admin.workshops.create') }}
                     </button>
                 </div>
             </form>

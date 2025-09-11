@@ -16,12 +16,12 @@ interface BaseRepositoryInterface
     /**
      * Find record by ID
      */
-    public function find(int $id, array $columns = ['*']): ?Model;
+    public function find(string $id, array $columns = ['*']): ?Model;
 
     /**
      * Find record by ID or fail
      */
-    public function findOrFail(int $id, array $columns = ['*']): Model;
+    public function findOrFail(string $id, array $columns = ['*']): Model;
 
     /**
      * Create new record
@@ -31,12 +31,12 @@ interface BaseRepositoryInterface
     /**
      * Update record
      */
-    public function update(int $id, array $data): bool;
+    public function update(string $id, array $data): bool;
 
     /**
      * Delete record
      */
-    public function delete(int $id): bool;
+    public function delete(string $id): bool;
 
     /**
      * Get paginated records
@@ -61,7 +61,7 @@ interface BaseRepositoryInterface
     /**
      * Check if record exists
      */
-    public function exists(int $id): bool;
+    public function exists(string $id): bool;
 
     /**
      * Find by multiple conditions

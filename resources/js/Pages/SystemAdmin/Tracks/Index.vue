@@ -1,15 +1,15 @@
 <template>
     <Default>
-        <Head title="Tracks" />
+        <Head :title="t('admin.tracks.title')" />
         <div class="w-full relative h-full overflow-hidden text-left text-sm">
             <!-- Header Section -->
             <div class="flex flex-row items-start justify-between flex-wrap p-4">
                 <div class="flex flex-col items-start justify-start gap-3 min-w-[288px]">
                     <div class="flex flex-col items-start justify-start">
-                        <h1 class="text-[32px] font-bold leading-10">Tracks</h1>
+                        <h1 class="text-[32px] font-bold leading-10">{{ t('admin.tracks.title') }}</h1>
                     </div>
                     <div class="flex flex-col items-start justify-start text-sm" :style="{ color: themeColor.primary }">
-                        <div class="relative leading-[21px]">Manage tracks for all hackathon editions.</div>
+                        <div class="relative leading-[21px]">{{ t('admin.tracks.description') }}</div>
                     </div>
                 </div>
 
@@ -21,7 +21,7 @@
                         class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2"
                         :style="{ '--tw-ring-color': themeColor.primary }"
                     >
-                        <option value="">All Editions</option>
+                        <option value="">{{ t('admin.editions.all_editions') }}</option>
                         <option v-for="edition in editions" :key="edition.id" :value="edition.id">
                             {{ edition.name }}
                         </option>
@@ -33,16 +33,16 @@
                         class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2"
                         :style="{ '--tw-ring-color': themeColor.primary }"
                     >
-                        <option value="">All Status</option>
-                        <option value="active">Active</option>
-                        <option value="inactive">Inactive</option>
+                        <option value="">{{ t('admin.status.all_status') }}</option>
+                        <option value="active">{{ t('admin.status.active') }}</option>
+                        <option value="inactive">{{ t('admin.status.inactive') }}</option>
                     </select>
 
                     <input
                         v-model="filters.search"
                         @input="debounceSearch"
                         type="text"
-                        placeholder="Search tracks..."
+                        :placeholder="t('admin.tracks.search')"
                         class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2"
                         :style="{ '--tw-ring-color': themeColor.primary }"
                     />
@@ -54,7 +54,7 @@
                 <div class="bg-white rounded-lg shadow-sm p-4 border" :style="{ borderColor: `rgba(${themeColor.rgb}, 0.1)` }">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-xs text-gray-500">Total Tracks</p>
+                            <p class="text-xs text-gray-500">{{ t('admin.tracks.total_tracks') }}</p>
                             <p class="text-2xl font-bold">{{ statistics.total }}</p>
                         </div>
                         <div class="p-2 rounded-lg" :style="{ backgroundColor: `rgba(${themeColor.rgb}, 0.1)` }">
@@ -68,7 +68,7 @@
                 <div class="bg-white rounded-lg shadow-sm p-4 border" :style="{ borderColor: `rgba(${themeColor.rgb}, 0.1)` }">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-xs text-gray-500">Active</p>
+                            <p class="text-xs text-gray-500">{{ t('admin.status.active') }}</p>
                             <p class="text-2xl font-bold">{{ statistics.active }}</p>
                         </div>
                         <div class="p-2 rounded-lg bg-green-100">
@@ -82,7 +82,7 @@
                 <div class="bg-white rounded-lg shadow-sm p-4 border" :style="{ borderColor: `rgba(${themeColor.rgb}, 0.1)` }">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-xs text-gray-500">Inactive</p>
+                            <p class="text-xs text-gray-500">{{ t('admin.status.inactive') }}</p>
                             <p class="text-2xl font-bold">{{ statistics.inactive }}</p>
                         </div>
                         <div class="p-2 rounded-lg bg-gray-100">
@@ -96,7 +96,7 @@
                 <div class="bg-white rounded-lg shadow-sm p-4 border" :style="{ borderColor: `rgba(${themeColor.rgb}, 0.1)` }">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-xs text-gray-500">With Supervisor</p>
+                            <p class="text-xs text-gray-500">{{ t('admin.tracks.with_supervisor') }}</p>
                             <p class="text-2xl font-bold">{{ statistics.with_supervisor }}</p>
                         </div>
                         <div class="p-2 rounded-lg" :style="{ backgroundColor: `rgba(${themeColor.rgb}, 0.1)` }">
@@ -110,7 +110,7 @@
                 <div class="bg-white rounded-lg shadow-sm p-4 border" :style="{ borderColor: `rgba(${themeColor.rgb}, 0.1)` }">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-xs text-gray-500">Total Teams</p>
+                            <p class="text-xs text-gray-500">{{ t('admin.statistics.total_teams') }}</p>
                             <p class="text-2xl font-bold">{{ statistics.total_teams }}</p>
                         </div>
                         <div class="p-2 rounded-lg bg-blue-100">
@@ -124,7 +124,7 @@
                 <div class="bg-white rounded-lg shadow-sm p-4 border" :style="{ borderColor: `rgba(${themeColor.rgb}, 0.1)` }">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-xs text-gray-500">Total Ideas</p>
+                            <p class="text-xs text-gray-500">{{ t('admin.statistics.total_ideas') }}</p>
                             <p class="text-2xl font-bold">{{ statistics.total_ideas }}</p>
                         </div>
                         <div class="p-2 rounded-lg bg-purple-100">
@@ -144,13 +144,13 @@
                             <thead>
                                 <tr :style="{ backgroundColor: `rgba(${themeColor.rgb}, 0.05)` }">
                                     <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">{{ t('admin.tracks.name') }}</th>
-                                    <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Edition</th>
-                                    <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Description</th>
-                                    <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Assigned Supervisor</th>
-                                    <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Teams</th>
-                                    <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Ideas</th>
-                                    <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Status</th>
-                                    <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Actions</th>
+                                    <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">{{ t('admin.editions.title') }}</th>
+                                    <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">{{ t('admin.form.description') }}</th>
+                                    <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">{{ t('admin.tracks.assigned_supervisor') }}</th>
+                                    <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">{{ t('admin.teams.title') }}</th>
+                                    <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">{{ t('admin.ideas.title') }}</th>
+                                    <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">{{ t('admin.form.status') }}</th>
+                                    <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">{{ t('admin.actions.actions') }}</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-200">
@@ -158,20 +158,20 @@
                                     <td class="px-4 py-4 text-sm text-gray-900">{{ track.name }}</td>
                                     <td class="px-4 py-4 text-sm text-gray-600">
                                         <span v-if="track.edition">{{ track.edition.name }}</span>
-                                        <span v-else class="text-gray-400">N/A</span>
+                                        <span v-else class="text-gray-400">{{ t('admin.common.not_available') }}</span>
                                     </td>
                                     <td class="px-4 py-4 text-sm" :style="{ color: themeColor.primary }">
                                         <div class="max-w-xs truncate">{{ track.description }}</div>
                                     </td>
                                     <td class="px-4 py-4 text-sm" :style="{ color: themeColor.primary }">
                                         <span v-if="track.supervisor">{{ track.supervisor.name }}</span>
-                                        <span v-else class="text-gray-400">Not Assigned</span>
+                                        <span v-else class="text-gray-400">{{ t('admin.common.not_assigned') }}</span>
                                     </td>
                                     <td class="px-4 py-4 text-sm text-gray-900">{{ track.teams_count || 0 }}</td>
                                     <td class="px-4 py-4 text-sm text-gray-900">{{ track.ideas_count || 0 }}</td>
                                     <td class="px-4 py-4 text-sm">
-                                        <span v-if="track.status === 'active'" class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Active</span>
-                                        <span v-else class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800">Inactive</span>
+                                        <span v-if="track.status === 'active'" class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">{{ t('admin.status.active') }}</span>
+                                        <span v-else class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800">{{ t('admin.status.inactive') }}</span>
                                     </td>
                                     <td class="px-4 py-4 text-sm">
                                         <div class="flex items-center gap-2">
@@ -227,7 +227,7 @@
                     @mouseover="e => e.target.style.backgroundColor = themeColor.hover"
                     @mouseout="e => e.target.style.backgroundColor = themeColor.primary"
                 >
-                    Add Track
+                    {{ t('admin.tracks.create') }}
                 </Link>
             </div>
         </div>
@@ -298,7 +298,7 @@ const applyFilters = () => {
 };
 
 const deleteTrack = (id) => {
-    if (confirm('Are you sure you want to delete this track? This action cannot be undone.')) {
+    if (confirm(t('admin.tracks.confirm_delete'))) {
         router.delete(route('system-admin.tracks.destroy', id));
     }
 };

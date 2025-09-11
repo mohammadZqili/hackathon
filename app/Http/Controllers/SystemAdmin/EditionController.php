@@ -24,8 +24,9 @@ class EditionController extends Controller
 
     public function create()
     {
-        $admins = User::role(['hackathon_admin', 'system_admin'])
-            ->select('id', 'name', 'email')
+        $admins = User::whereIn('user_type', ['hackathon_admin', 'system_admin'])
+            ->select('id', 'name', 'email', 'user_type')
+            ->orderBy('name')
             ->get();
 
         return Inertia::render('SystemAdmin/Editions/Create', [
@@ -58,8 +59,9 @@ class EditionController extends Controller
 
     public function edit(Edition $edition)
     {
-        $admins = User::role(['hackathon_admin', 'system_admin'])
-            ->select('id', 'name', 'email')
+        $admins = User::whereIn('user_type', ['hackathon_admin', 'system_admin'])
+            ->select('id', 'name', 'email', 'user_type')
+            ->orderBy('name')
             ->get();
 
         $edition->load('admin');

@@ -94,6 +94,17 @@ class Idea extends Model
     }
 
     /**
+     * Check if idea has reviews (pseudo-relationship for compatibility)
+     * Returns a query builder that can be used with exists()
+     */
+    public function reviews()
+    {
+        // Create a pseudo-relationship that checks if idea has been reviewed
+        // This is for backward compatibility with existing code
+        return $this->hasOne(User::class, 'id', 'reviewed_by');
+    }
+
+    /**
      * Submit the idea for review.
      */
     public function submit(): bool

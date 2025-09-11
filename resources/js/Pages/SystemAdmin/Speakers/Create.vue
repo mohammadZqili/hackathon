@@ -1,10 +1,10 @@
 <template>
-    <Head title="Add New Speaker" />
+    <Head :title="t('admin.speakers.create')" />
     <Default>
         <div class="container mx-auto px-4 py-8">
             <!-- Page Header -->
             <div class="mb-6">
-                <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Add New Speaker</h1>
+                <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ t('admin.speakers.create') }}</h1>
             </div>
 
             <!-- Form Content -->
@@ -14,11 +14,11 @@
                     <!-- Speaker Name -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Speaker Name
+                            {{ t('admin.speakers.name') }}
                         </label>
                         <input v-model="form.name"
                                type="text"
-                               placeholder="Enter speaker name"
+                               :placeholder="t('admin.form.placeholder.enter_name')"
                                class="w-full rounded-lg bg-teal-50 dark:bg-gray-800 border border-teal-100 dark:border-gray-600 px-4 py-3 text-gray-900 dark:text-white placeholder-teal-600/50 dark:placeholder-gray-400 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                                required>
                         <p v-if="form.errors.name" class="mt-1 text-sm text-red-600">
@@ -29,11 +29,11 @@
                     <!-- Job Title -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Job Title
+                            {{ t('admin.speakers.title_position') }}
                         </label>
                         <input v-model="form.title"
                                type="text"
-                               placeholder="Enter job title"
+                               :placeholder="t('admin.form.placeholder.enter_title')"
                                class="w-full rounded-lg bg-teal-50 dark:bg-gray-800 border border-teal-100 dark:border-gray-600 px-4 py-3 text-gray-900 dark:text-white placeholder-teal-600/50 dark:placeholder-gray-400 focus:ring-2 focus:ring-teal-500 focus:border-transparent">
                     </div>
                 </div>
@@ -43,11 +43,11 @@
                     <!-- Email -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Email
+                            {{ t('admin.form.email') }}
                         </label>
                         <input v-model="form.email"
                                type="email"
-                               placeholder="speaker@example.com"
+                               :placeholder="t('admin.form.placeholder.enter_email')"
                                class="w-full rounded-lg bg-teal-50 dark:bg-gray-800 border border-teal-100 dark:border-gray-600 px-4 py-3 text-gray-900 dark:text-white placeholder-teal-600/50 dark:placeholder-gray-400 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                                required>
                         <p v-if="form.errors.email" class="mt-1 text-sm text-red-600">
@@ -58,11 +58,11 @@
                     <!-- Phone -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Phone
+                            {{ t('admin.form.phone') }}
                         </label>
                         <input v-model="form.phone"
                                type="tel"
-                               placeholder="+1 234 567 8900"
+                               :placeholder="t('admin.form.placeholder.enter_phone')"
                                class="w-full rounded-lg bg-teal-50 dark:bg-gray-800 border border-teal-100 dark:border-gray-600 px-4 py-3 text-gray-900 dark:text-white placeholder-teal-600/50 dark:placeholder-gray-400 focus:ring-2 focus:ring-teal-500 focus:border-transparent">
                     </div>
                 </div>
@@ -72,7 +72,7 @@
                     <!-- Workshops -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Workshops
+                            {{ t('admin.speakers.workshops') }}
                         </label>
                         <div class="relative">
                             <select v-model="form.workshop_ids"
@@ -90,19 +90,19 @@
                             </div>
                         </div>
                         <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                            Hold Ctrl/Cmd to select multiple workshops
+                            {{ t('admin.form.multiple_select_help') }}
                         </p>
                     </div>
 
                     <!-- Affiliated Organization -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Affiliated Organization
+                            {{ t('admin.form.organization') }}
                         </label>
                         <div class="relative">
                             <select v-model="form.organization_id"
                                     class="w-full rounded-lg bg-teal-50 dark:bg-gray-800 border border-teal-100 dark:border-gray-600 px-4 py-3 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent appearance-none">
-                                <option value="">Select Organization</option>
+                                <option value="">{{ t('admin.form.placeholder.select_organization') }}</option>
                                 <option v-for="org in organizations" :key="org.id" :value="org.id">
                                     {{ org.name }}
                                 </option>
@@ -121,25 +121,25 @@
                     <!-- Biography -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Biography
+                            {{ t('admin.speakers.bio') }}
                         </label>
                         <textarea v-model="form.bio"
                                   rows="9"
-                                  placeholder="Brief biography of the speaker..."
+                                  :placeholder="t('admin.form.placeholder.speaker_bio')"
                                   class="w-full rounded-lg bg-teal-50 dark:bg-gray-800 border border-teal-100 dark:border-gray-600 px-4 py-3 text-gray-900 dark:text-white placeholder-teal-600/50 dark:placeholder-gray-400 focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none"></textarea>
                     </div>
 
                     <!-- Social Media Links -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Social Media Links
+                            {{ t('admin.speakers.social_media') }}
                         </label>
                         <div class="space-y-3">
                             <!-- LinkedIn -->
                             <div class="relative">
                                 <input v-model="form.linkedin"
                                        type="url"
-                                       placeholder="LinkedIn profile URL"
+                                       :placeholder="t('admin.form.placeholder.linkedin')"
                                        class="w-full rounded-lg bg-teal-50 dark:bg-gray-800 border border-teal-100 dark:border-gray-600 px-4 py-3 text-gray-900 dark:text-white placeholder-teal-600/50 dark:placeholder-gray-400 focus:ring-2 focus:ring-teal-500 focus:border-transparent pr-10">
                                 <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                                     <svg class="w-5 h-5 text-teal-600 dark:text-gray-400" fill="currentColor" viewBox="0 0 24 24">
@@ -152,7 +152,7 @@
                             <div class="relative">
                                 <input v-model="form.twitter"
                                        type="url"
-                                       placeholder="Twitter/X profile URL"
+                                       :placeholder="t('admin.form.placeholder.twitter')"
                                        class="w-full rounded-lg bg-teal-50 dark:bg-gray-800 border border-teal-100 dark:border-gray-600 px-4 py-3 text-gray-900 dark:text-white placeholder-teal-600/50 dark:placeholder-gray-400 focus:ring-2 focus:ring-teal-500 focus:border-transparent pr-10">
                                 <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                                     <svg class="w-5 h-5 text-teal-600 dark:text-gray-400" fill="currentColor" viewBox="0 0 24 24">
@@ -165,7 +165,7 @@
                             <div class="relative">
                                 <input v-model="form.website"
                                        type="url"
-                                       placeholder="Personal website URL"
+                                       :placeholder="t('admin.form.placeholder.website')"
                                        class="w-full rounded-lg bg-teal-50 dark:bg-gray-800 border border-teal-100 dark:border-gray-600 px-4 py-3 text-gray-900 dark:text-white placeholder-teal-600/50 dark:placeholder-gray-400 focus:ring-2 focus:ring-teal-500 focus:border-transparent pr-10">
                                 <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                                     <svg class="w-5 h-5 text-teal-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -180,7 +180,7 @@
                 <!-- Profile Picture Upload -->
                 <div class="mb-6">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Upload Profile Picture
+                        {{ t('admin.speakers.photo') }}
                     </label>
                     <div class="relative">
                         <div v-if="!previewUrl" 
@@ -193,13 +193,13 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                                 </svg>
                                 <p class="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Upload Profile Picture
+                                    {{ t('admin.speakers.photo') }}
                                 </p>
                                 <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                                    Drag and drop or browse to upload a profile picture
+                                    {{ t('admin.form.placeholder.avatar_url') }}
                                 </p>
                                 <button type="button" class="px-4 py-2 bg-teal-100 dark:bg-gray-700 text-teal-700 dark:text-teal-400 rounded-lg text-sm font-medium hover:bg-teal-200 dark:hover:bg-gray-600 transition-colors">
-                                    Browse
+                                    {{ t('admin.actions.browse') }}
                                 </button>
                             </div>
                         </div>
@@ -224,14 +224,14 @@
                 <!-- Expertise -->
                 <div class="mb-8">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Areas of Expertise
+                        {{ t('admin.speakers.expertise') }}
                     </label>
                     <input v-model="form.expertise"
                            type="text"
-                           placeholder="e.g., AI, Machine Learning, Data Science (comma-separated)"
+                           :placeholder="t('admin.form.placeholder.expertise')"
                            class="w-full rounded-lg bg-teal-50 dark:bg-gray-800 border border-teal-100 dark:border-gray-600 px-4 py-3 text-gray-900 dark:text-white placeholder-teal-600/50 dark:placeholder-gray-400 focus:ring-2 focus:ring-teal-500 focus:border-transparent">
                     <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                        Separate multiple areas with commas
+                        {{ t('admin.form.keywords_help') }}
                     </p>
                 </div>
 
@@ -239,12 +239,12 @@
                 <div class="flex justify-between">
                     <Link :href="route('system-admin.speakers.index')"
                           class="px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                        Cancel
+                        {{ t('admin.actions.cancel') }}
                     </Link>
                     <button type="submit"
                             :disabled="form.processing"
                             class="px-8 py-3 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg font-semibold hover:from-teal-700 hover:to-teal-600 disabled:opacity-50 transition-all shadow-lg hover:shadow-xl">
-                        {{ form.processing ? 'Creating...' : 'Add Speaker' }}
+                        {{ form.processing ? t('admin.actions.creating') : t('admin.speakers.add_speaker') }}
                     </button>
                 </div>
             </form>

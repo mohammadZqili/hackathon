@@ -1,12 +1,12 @@
 <template>
-    <Head title="Edit Team" />
+    <Head :title="t('admin.teams.edit')" />
     <Default>
         <div class="container mx-auto px-4 py-8" :style="themeStyles">
             <!-- Page Header -->
             <div class="mb-8">
-                <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Edit Team</h1>
-                <p class="mt-2" :style="{ color: themeColor.primary }">
-                    Update team details and manage members
+                <h1 class="text-3xl font-bold text-gray-900 dark:text-white" :class="{ 'rtl': isRTL }">{{ t('admin.teams.edit') }}</h1>
+                <p class="mt-2" :style="{ color: themeColor.primary }" :class="{ 'rtl': isRTL }">
+                    {{ t('admin.teams.edit_description') }}
                 </p>
             </div>
 
@@ -14,12 +14,12 @@
             <form @submit.prevent="submit" class="space-y-6">
                 <!-- Basic Information -->
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Basic Information</h2>
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4" :class="{ 'rtl': isRTL }">{{ t('admin.form.basic_information') }}</h2>
                     
                     <div class="grid grid-cols-1 gap-6">
                         <div>
                             <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                Team Name *
+                                {{ t('admin.teams.name') }} *
                             </label>
                             <div class="relative">
                                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -33,7 +33,7 @@
                                        class="pl-10 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-opacity-50 focus:border-transparent transition-all duration-200"
                                        :class="{ 'border-red-500 focus:ring-red-500': form.errors.name }"
                                        :style="{ '--tw-ring-color': themeColor.primary }"
-                                       placeholder="Enter team name">
+                                       :placeholder="t('admin.form.placeholder.enter_name')"
                             </div>
                             <p v-if="form.errors.name" class="mt-1 text-sm text-red-600 dark:text-red-400">
                                 {{ form.errors.name }}
@@ -42,7 +42,7 @@
 
                         <div>
                             <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                Team Description
+                                {{ t('admin.form.description') }}
                             </label>
                             <div class="relative">
                                 <textarea v-model="form.description"
@@ -50,7 +50,7 @@
                                           rows="4"
                                           class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-opacity-50 focus:border-transparent transition-all duration-200 resize-none"
                                           :style="{ '--tw-ring-color': themeColor.primary }"
-                                          placeholder="Describe your team's mission and goals..."></textarea>
+                                          :placeholder="t('admin.teams.description_placeholder')"></textarea>
                                 <div class="absolute bottom-2 right-2 text-xs text-gray-400 dark:text-gray-500">
                                     {{ form.description?.length || 0 }} / 500
                                 </div>
@@ -60,7 +60,7 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label for="edition_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Hackathon Edition *
+                                    {{ t('admin.editions.title') }} *
                                 </label>
                                 <div class="relative">
                                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -73,7 +73,7 @@
                                             class="pl-10 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-opacity-50 focus:border-transparent transition-all duration-200 appearance-none cursor-pointer"
                                             :class="{ 'border-red-500 focus:ring-red-500': form.errors.edition_id }"
                                             :style="{ '--tw-ring-color': themeColor.primary }">
-                                        <option value="" disabled>Select Edition</option>
+                                        <option value="" disabled>{{ t('admin.editions.select_edition') }}</option>
                                         <option v-for="edition in editions" :key="edition.id" :value="edition.id">
                                             {{ edition.name }} ({{ edition.year }})
                                         </option>
@@ -91,7 +91,7 @@
 
                             <div>
                                 <label for="max_members" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Maximum Team Members
+                                    {{ t('admin.teams.max_members') }}
                                 </label>
                                 <div class="relative">
                                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -108,7 +108,7 @@
                                            :style="{ '--tw-ring-color': themeColor.primary }"
                                            placeholder="5">
                                     <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
-                                        <span class="text-sm text-gray-500 dark:text-gray-400">members</span>
+                                        <span class="text-sm text-gray-500 dark:text-gray-400">{{ t('admin.teams.members') }}</span>
                                     </div>
                                 </div>
                                 <p v-if="form.errors.max_members" class="mt-1 text-sm text-red-600 dark:text-red-400">
@@ -119,7 +119,7 @@
 
                         <div>
                             <label for="status" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                Team Status
+                                {{ t('admin.teams.status') }}
                             </label>
                             <div class="relative">
                                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -134,9 +134,9 @@
                                         id="status"
                                         class="pl-10 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-opacity-50 focus:border-transparent transition-all duration-200 appearance-none cursor-pointer"
                                         :style="{ '--tw-ring-color': themeColor.primary }">
-                                    <option value="active">Active</option>
-                                    <option value="inactive">Inactive</option>
-                                    <option value="disqualified">Disqualified</option>
+                                    <option value="active">{{ t('admin.status.active') }}</option>
+                                    <option value="inactive">{{ t('admin.status.inactive') }}</option>
+                                    <option value="disqualified">{{ t('admin.teams.disqualified') }}</option>
                                 </select>
                                 <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                                     <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -151,7 +151,7 @@
                 <!-- Team Members -->
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
                     <div class="flex items-center justify-between mb-4">
-                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Team Members</h2>
+                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white" :class="{ 'rtl': isRTL }">{{ t('admin.teams.members') }}</h2>
                         <button @click.prevent="openAddMemberModal" type="button"
                                 class="inline-flex items-center px-3 py-1.5 rounded-lg text-white text-sm font-medium transition-all duration-200"
                                 :style="{
@@ -161,7 +161,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
                                       d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
                             </svg>
-                            Add Member
+                            {{ t('admin.teams.add_member') }}
                         </button>
                     </div>
 
@@ -180,7 +180,7 @@
                                         <span v-if="member.id === team.leader_id" 
                                               class="ml-2 text-xs px-2 py-0.5 rounded-full text-white"
                                               :style="{ backgroundColor: themeColor.primary }">
-                                            Leader
+                                            {{ t('admin.teams.leader') }}
                                         </span>
                                     </div>
                                     <div class="text-sm" :style="{ color: themeColor.primary }">
@@ -194,7 +194,7 @@
                                         type="button"
                                         class="text-sm font-medium hover:underline transition-colors"
                                         :style="{ color: themeColor.primary }">
-                                    Make Leader
+                                    {{ t('admin.teams.make_leader') }}
                                 </button>
                                 <button @click.prevent="removeMember(member)"
                                         type="button"
@@ -208,13 +208,13 @@
                         </div>
                     </div>
                     <div v-else class="text-center py-8 text-gray-500 dark:text-gray-400">
-                        No members in this team yet. Click "Add Member" to add team members.
+                        {{ t('admin.teams.no_members_message') }}
                     </div>
                 </div>
 
                 <!-- Team Idea (if exists) -->
                 <div v-if="team.idea" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Associated Idea</h2>
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4" :class="{ 'rtl': isRTL }">{{ t('admin.teams.associated_idea') }}</h2>
                     
                     <div class="p-4 rounded-lg border-2 border-dashed" 
                          :style="{ borderColor: themeColor.primary + '40' }">
@@ -224,17 +224,17 @@
                                 <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">{{ team.idea.description }}</p>
                                 <div class="flex items-center gap-4 mt-2">
                                     <span class="text-sm" :style="{ color: themeColor.primary }">
-                                        Status: {{ team.idea.status }}
+                                        {{ t('admin.form.status') }}: {{ team.idea.status }}
                                     </span>
                                     <span class="text-sm" :style="{ color: themeColor.primary }">
-                                        Track: {{ team.idea.track?.name || 'No Track' }}
+                                        {{ t('admin.ideas.track') }}: {{ team.idea.track?.name || t('admin.common.not_available') }}
                                     </span>
                                 </div>
                             </div>
                             <Link :href="route('system-admin.ideas.edit', team.idea.id)"
                                   class="text-sm font-medium hover:underline transition-colors"
                                   :style="{ color: themeColor.primary }">
-                                View Idea
+                                {{ t('admin.ideas.view') }}
                             </Link>
                         </div>
                     </div>
@@ -244,7 +244,7 @@
                 <div class="flex justify-end gap-4">
                     <Link :href="route('system-admin.teams.index')"
                           class="px-6 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                        Cancel
+                        {{ t('admin.actions.cancel') }}
                     </Link>
                     <button type="submit"
                             :disabled="form.processing"
@@ -252,7 +252,7 @@
                             :style="{
                                 background: `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})`,
                             }">
-                        {{ form.processing ? 'Updating...' : 'Update Team' }}
+                        {{ form.processing ? t('admin.actions.updating') : t('admin.teams.edit') }}
                     </button>
                 </div>
             </form>
@@ -348,14 +348,14 @@ const handleMemberAdded = () => {
 }
 
 const makeLeader = (member) => {
-    if (confirm(`Are you sure you want to make ${member.name} the team leader?`)) {
+    if (confirm(t('admin.teams.confirm_make_leader', { name: member.name }))) {
         form.leader_id = member.id
         form.put(route('system-admin.teams.update', props.team.id))
     }
 }
 
 const removeMember = (member) => {
-    if (confirm(`Are you sure you want to remove ${member.name} from the team?`)) {
+    if (confirm(t('admin.teams.confirm_remove_member', { name: member.name }))) {
         router.delete(route('system-admin.teams.remove-member', [props.team.id, member.id]), {
             preserveScroll: true
         })

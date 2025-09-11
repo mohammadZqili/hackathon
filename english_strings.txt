@@ -1,0 +1,182 @@
+
+---
+••••••••
+#007bff
+100
++1234567890
++1 234 567 8900
+123 Main St, City, State, ZIP
+2
+2024
+#28a745
+5
+50
+587
+#6c757d
+Accepted
+Add Edition
+Add Edition Details
+Add New Organization
+Add News
+Add New Speaker
+Add Organization
+Add Workshop
+AI, Machine Learning, Blockchain, etc. (comma separated)
+Any additional information...
+Branding Settings
+Brief bio about the speaker's background and expertise...
+Brief biography of the speaker...
+Brief description about the organization...
+Brief description of the organization...
+Cancel
+CEO, CTO, Developer, etc.
+Check-ins Management
+Choose a workshop...
+Contact
+contact@organization.com
+Create and manage hackathon editions
+Created At
+Created By
+Create News Article
+Create New Team
+Create New User
+Create Team
+Create User
+#dc3545
+Describe the workshop content and objectives...
+Describe your team's mission and goals...
+Edit
+Edit Edition
+Edit Edition Details
+Edition
+Edition Details
+Edition Information
+Edition-Specific Statistics
+Edit News
+Edit News Article
+Edit Organization
+Edit Speaker
+Edit Team
+Edit User
+Edit Workshop
+e.g., AI, Machine Learning, Data Science (comma-separated)
+e.g., Senior Developer, CEO
+Enter edition description...
+Enter hackathon location
+Enter hackathon name
+Enter job title
+Enter news title
+Enter organization name
+Enter registration code...
+Enter score
+Enter SEO keywords (comma separated)
+Enter speaker name
+Enter speaker's full name
+Enter team name
+Enter video URL
+Enter workshop title
+Enter your Twitter message...
+https://domain.com
+https://example.com
+https://example.com/avatar.jpg
+https://linkedin.com/in/username
+https://organization.com
+https://twitter.com/username
+https://www.organization.com
+https://www.organization.com/logo.png
+LinkedIn Company Page URL
+LinkedIn profile URL
+LinkedIn Profile URL
+Main Image
+Media Center - News
+noreply@yourdomain.com
+Open QR Scanner
+Personal website URL
+Personal Website URL
+Processing: resources/js/Pages/SystemAdmin/Checkins/Index.vue
+Processing: resources/js/Pages/SystemAdmin/Dashboard/Index.vue
+Processing: resources/js/Pages/SystemAdmin/Dashboard.vue
+Processing: resources/js/Pages/SystemAdmin/Editions/Create.vue
+Processing: resources/js/Pages/SystemAdmin/Editions/Edit.vue
+Processing: resources/js/Pages/SystemAdmin/Editions/Index.vue
+Processing: resources/js/Pages/SystemAdmin/Editions/Show.vue
+Processing: resources/js/Pages/SystemAdmin/Ideas/Index.vue
+Processing: resources/js/Pages/SystemAdmin/Ideas/Review.vue
+Processing: resources/js/Pages/SystemAdmin/Ideas/Show.vue
+Processing: resources/js/Pages/SystemAdmin/News/Create.vue
+Processing: resources/js/Pages/SystemAdmin/News/Edit.vue
+Processing: resources/js/Pages/SystemAdmin/News/Index.vue
+Processing: resources/js/Pages/SystemAdmin/News/MediaCenter.vue
+Processing: resources/js/Pages/SystemAdmin/Organizations/Create.vue
+Processing: resources/js/Pages/SystemAdmin/Organizations/Edit.vue
+Processing: resources/js/Pages/SystemAdmin/Organizations/Index.vue
+Processing: resources/js/Pages/SystemAdmin/Organizations/OrganizationModal.vue
+Processing: resources/js/Pages/SystemAdmin/QRScanner.vue
+Processing: resources/js/Pages/SystemAdmin/Reports/Index.vue
+Processing: resources/js/Pages/SystemAdmin/Settings/Branding.vue
+Processing: resources/js/Pages/SystemAdmin/Settings/Index.vue
+Processing: resources/js/Pages/SystemAdmin/Settings/Smtp.vue
+Processing: resources/js/Pages/SystemAdmin/Settings/Twitter.vue
+Processing: resources/js/Pages/SystemAdmin/Speakers/Create.vue
+Processing: resources/js/Pages/SystemAdmin/Speakers/Edit.vue
+Processing: resources/js/Pages/SystemAdmin/Speakers/Index.vue
+Processing: resources/js/Pages/SystemAdmin/Speakers/SpeakerModal.vue
+Processing: resources/js/Pages/SystemAdmin/Teams/AddMemberModal.vue
+Processing: resources/js/Pages/SystemAdmin/Teams/Create.vue
+Processing: resources/js/Pages/SystemAdmin/Teams/Edit.vue
+Processing: resources/js/Pages/SystemAdmin/Teams/Index.vue
+Processing: resources/js/Pages/SystemAdmin/Teams/Show.vue
+Processing: resources/js/Pages/SystemAdmin/Tracks/Index.vue
+Processing: resources/js/Pages/SystemAdmin/Users/Create.vue
+Processing: resources/js/Pages/SystemAdmin/Users/Edit.vue
+Processing: resources/js/Pages/SystemAdmin/Users/Index.vue
+Processing: resources/js/Pages/SystemAdmin/Users/Show.vue
+Processing: resources/js/Pages/SystemAdmin/Workshops/AddOrganizationModal.vue
+Processing: resources/js/Pages/SystemAdmin/Workshops/AddSpeakerModal.vue
+Processing: resources/js/Pages/SystemAdmin/Workshops/AddWorkshopModal.vue
+Processing: resources/js/Pages/SystemAdmin/Workshops/Create.vue
+Processing: resources/js/Pages/SystemAdmin/Workshops/Edit.vue
+Processing: resources/js/Pages/SystemAdmin/Workshops/Index.vue
+Provide feedback or required changes
+Provide feedback or required changes for the idea's acceptance...
+Registered
+Rejected
+Room 101, Building A
+`Search ${activeTab}`
+Search organizations
+Search speakers
+Search teams
+Search tracks...
+Search users...
+Select
+Select Admin
+Select a role
+Select Edition
+Select Level
+Select Organization
+Select Speaker
+Select Type
+Settings
+smtp.gmail.com
+SMTP Settings
+speaker@example.com
+Startup
+Submit Review
+Supporter
+Tabs
+t('admin.ideas.search')
+Technology, Healthcare, Finance, etc.
+Tracks
+Twitter Integration
+Twitter/X Company Page URL
+Twitter/X profile URL
+Twitter/X Profile URL
+Type to search users...
+Uploaded {{ formatDate(selectedMedia.uploadedAt) }}
+Upload Logo
+Upload up to 10 images. JPG, PNG, or WebP
+User Details
+User Management
+Write your news content here...
+Your App Name
+your-email@gmail.com

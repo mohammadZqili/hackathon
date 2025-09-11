@@ -5,7 +5,7 @@
             <!-- Page Header -->
             <div class="flex flex-row items-start justify-between flex-wrap content-start p-4 gap-x-0 gap-y-3">
                 <div class="w-72 flex flex-col items-start justify-start min-w-[288px]">
-                    <h1 class="text-[32px] font-bold text-gray-900 dark:text-white leading-10">Organizations</h1>
+                    <h1 class="text-[32px] font-bold text-gray-900 dark:text-white leading-10" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">{{ t('admin.organizations.title') }}</h1>
                 </div>
                 <Link :href="route('system-admin.organizations.create')"
                       class="rounded-xl h-8 overflow-hidden flex flex-row items-center justify-center py-0 px-4 min-w-[84px] max-w-[480px] text-center text-sm text-white font-medium transition-all duration-200 hover:shadow-md"
@@ -13,7 +13,7 @@
                           background: `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})`,
                       }">
                     <div class="overflow-hidden flex flex-col items-center justify-start">
-                        <div class="self-stretch relative leading-[21px] font-medium overflow-hidden text-ellipsis whitespace-nowrap">Add Organization</div>
+                        <div class="self-stretch relative leading-[21px] font-medium overflow-hidden text-ellipsis whitespace-nowrap">{{ t('admin.organizations.add_organization') }}</div>
                     </div>
                 </Link>
             </div>
@@ -32,8 +32,8 @@
                             <input v-model="searchQuery"
                                    @input="handleSearch"
                                    type="text"
-                                   placeholder="Search organizations"
-                                   class="w-full bg-transparent text-gray-700 dark:text-gray-300 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none">
+                                   :placeholder="t('admin.organizations.search_organizations')"
+                                   class="w-full bg-transparent text-gray-700 dark:text-gray-300 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">
                         </div>
                     </div>
                 </div>
@@ -45,28 +45,28 @@
                     <!-- Table Header -->
                     <div class="flex flex-row items-start justify-start" :style="{ backgroundColor: themeColor.primary + '10' }">
                         <div class="w-64 py-3 px-4">
-                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Name</span>
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">{{ t('admin.form.name') }}</span>
                         </div>
                         <div class="flex-1 py-3 px-4">
-                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Description</span>
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">{{ t('admin.form.description') }}</span>
                         </div>
                         <div class="w-48 py-3 px-4">
-                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Industry</span>
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">{{ t('admin.organizations.industry') }}</span>
                         </div>
                         <div class="w-48 py-3 px-4">
-                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Website</span>
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">{{ t('admin.organizations.website') }}</span>
                         </div>
                         <div class="w-40 py-3 px-4">
-                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Contact</span>
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">{{ t('admin.organizations.contact') }}</span>
                         </div>
                         <div class="w-32 py-3 px-4 text-center">
-                            <span class="text-sm font-medium" :style="{ color: themeColor.primary }">Actions</span>
+                            <span class="text-sm font-medium" :style="{ color: themeColor.primary }">{{ t('admin.table.actions') }}</span>
                         </div>
                     </div>
 
                     <!-- Table Body -->
                     <div v-if="!organizations.data || organizations.data.length === 0" class="text-center py-12">
-                        <p class="text-gray-500 dark:text-gray-400">No organizations found. Click "Add Organization" to add your first organization.</p>
+                        <p class="text-gray-500 dark:text-gray-400">{{ t('admin.organizations.no_organizations_found') }}</p>
                     </div>
                     <div v-else class="divide-y divide-gray-200 dark:divide-gray-700">
                         <div v-for="org in organizations.data" :key="org.id"
@@ -80,14 +80,14 @@
                                          :style="{ backgroundColor: themeColor.primary }">
                                         {{ org.name ? org.name.charAt(0).toUpperCase() : 'O' }}
                                     </div>
-                                    <span class="text-sm text-gray-900 dark:text-white font-medium">{{ org.name || 'Unnamed' }}</span>
+                                    <span class="text-sm text-gray-900 dark:text-white font-medium" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">{{ org.name || t('admin.organizations.unnamed') }}</span>
                                 </div>
                             </div>
                             <div class="flex-1 py-4 px-4">
-                                <span class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{{ org.description || 'No description' }}</span>
+                                <span class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">{{ org.description || t('admin.organizations.no_description') }}</span>
                             </div>
                             <div class="w-48 py-4 px-4">
-                                <span class="text-sm" :style="{ color: themeColor.primary }">{{ org.industry || 'Not specified' }}</span>
+                                <span class="text-sm" :style="{ color: themeColor.primary }" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">{{ org.industry || t('admin.organizations.not_specified') }}</span>
                             </div>
                             <div class="w-48 py-4 px-4">
                                 <a v-if="org.website" :href="org.website" target="_blank" 
@@ -95,10 +95,10 @@
                                    :style="{ color: themeColor.primary }">
                                     {{ formatWebsite(org.website) }}
                                 </a>
-                                <span v-else class="text-sm text-gray-400">N/A</span>
+                                <span v-else class="text-sm text-gray-400" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">{{ t('admin.common.not_available') }}</span>
                             </div>
                             <div class="w-40 py-4 px-4">
-                                <div class="text-sm" :style="{ color: themeColor.primary }">{{ org.contact_email || 'N/A' }}</div>
+                                <div class="text-sm" :style="{ color: themeColor.primary }" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">{{ org.contact_email || t('admin.common.not_available') }}</div>
                                 <div v-if="org.contact_phone" class="text-xs text-gray-500 dark:text-gray-400">{{ org.contact_phone }}</div>
                             </div>
                             <div class="w-32 py-4 px-4">
@@ -106,13 +106,13 @@
                                     <button @click="editOrganization(org)"
                                             class="font-bold hover:underline transition-colors text-sm"
                                             :style="{ color: themeColor.primary }">
-                                        Edit
+                                        {{ t('admin.actions.edit') }}
                                     </button>
                                     <span :style="{ color: themeColor.primary }">|</span>
                                     <button @click="deleteOrganization(org)"
                                             class="font-bold hover:underline transition-colors text-sm"
                                             :style="{ color: themeColor.primary }">
-                                        Delete
+                                        {{ t('admin.actions.delete') }}
                                     </button>
                                 </div>
                             </div>
@@ -126,7 +126,7 @@
                  class="px-6 py-3">
                 <nav class="flex items-center justify-between">
                     <div class="text-sm text-gray-700 dark:text-gray-300">
-                        Showing {{ organizations.from }} to {{ organizations.to }} of {{ organizations.total }} results
+                        {{ t('admin.pagination.showing', { from: organizations.from, to: organizations.to, total: organizations.total }) }}
                     </div>
                     <div class="flex items-center gap-2">
                         <template v-for="link in organizations.links" :key="link.label">

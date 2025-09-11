@@ -82,5 +82,6 @@ class Kernel extends HttpKernel
         'team_member' => \App\Http\Middleware\TeamMemberMiddleware::class,
         'team.lead' => \App\Http\Middleware\TeamLeadMiddleware::class,
         'team.member' => \App\Http\Middleware\TeamMemberMiddleware::class,
+        'visitor' => \App\Http\Middleware\CheckVisitorRole::class,
     ];
 }

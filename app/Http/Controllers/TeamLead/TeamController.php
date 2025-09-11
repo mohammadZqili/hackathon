@@ -25,6 +25,12 @@ class TeamController extends Controller
         $this->trackRepository = $trackRepository;
     }
 
+    public function index()
+    {
+        // Redirect to show method for consistency
+        return $this->show();
+    }
+
     public function show()
     {
         $user = auth()->user();
@@ -82,6 +88,47 @@ class TeamController extends Controller
 
         return redirect()->route('team-leader.team.show')
             ->with('success', 'Team updated successfully');
+    }
+
+    public function showAddMember()
+    {
+        $user = auth()->user();
+        $team = $this->teamService->getMyTeam($user);
+        
+        if (!$team) {
+            return redirect()->route('team-leader.dashboard')
+                ->with('error', 'You need to create a team first');
+        }
+
+        return Inertia::render('TeamLead/Team/AddMember', [
+            'team' => $team
+        ]);
+    }
+
+    public function addMember(Request $request)
+    {
+        $user = auth()->user();
+        $team = $this->teamService->getMyTeam($user);
+        
+        if (!$team) {
+            return back()->with('error', 'You don\'t have a team');
+        }
+
+        $validated = $request->validate([
+            'email' => 'required|email|exists:users,email',
+            'name' => 'nullable|string|max:255',
+            'phone' => 'nullable|string|max:20'
+        ]);
+
+        // Always use 'member' role for team members (leader role is set separately)
+        $result = $this->teamService->addTeamMember($team, $validated['email'], 'member');
+
+        if ($result['success']) {
+            return redirect()->route('team-leader.team.index')
+                ->with('success', $result['message']);
+        } else {
+            return back()->with('error', $result['message']);
+        }
     }
 
     public function inviteMember(Request $request)

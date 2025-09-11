@@ -3,74 +3,47 @@
 namespace App\Http\Controllers\SystemAdmin;
 
 use App\Http\Controllers\Controller;
+use App\Services\IdeaService;
+use App\Services\TrackService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\Idea;
 use App\Models\User;
-use App\Models\Track;
-use App\Models\Hackathon;
-use App\Models\HackathonEdition;
 
 class IdeaController extends Controller
 {
+    protected IdeaService $ideaService;
+    protected TrackService $trackService;
+    
+    public function __construct(IdeaService $ideaService, TrackService $trackService)
+    {
+        $this->ideaService = $ideaService;
+        $this->trackService = $trackService;
+    }
     /**
      * Display a listing of all ideas across all editions.
      */
     public function index(Request $request)
     {
-        $query = Idea::with(['team', 'track', 'reviewer']);
-
-        // Apply filters
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
-            });
-        }
-
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        if ($request->filled('track_id')) {
-            $query->where('track_id', $request->track_id);
-        }
-
-        if ($request->filled('has_supervisor')) {
-            if ($request->has_supervisor === 'yes') {
-                $query->whereNotNull('reviewed_by');
-            } else {
-                $query->whereNull('reviewed_by');
-            }
-        }
-
-        $ideas = $query->latest()->paginate(15)->withQueryString();
-
-        // Get statistics
-        $statistics = [
-            'total' => Idea::count(),
-            'draft' => Idea::where('status', 'draft')->count(),
-            'submitted' => Idea::where('status', 'submitted')->count(),
-            'under_review' => Idea::where('status', 'under_review')->count(),
-            'accepted' => Idea::where('status', 'accepted')->count(),
-            'rejected' => Idea::where('status', 'rejected')->count(),
-            'needs_revision' => Idea::where('status', 'needs_revision')->count(),
-            'pending_review' => Idea::where('status', 'pending_review')->count(),
-            'in_progress' => Idea::where('status', 'in_progress')->count(),
-            'completed' => Idea::where('status', 'completed')->count(),
-        ];
-
-        $tracks = Track::all();
-        $supervisors = User::role('track_supervisor')->get();
-
-        return Inertia::render('SystemAdmin/Ideas/Index', [
-            'ideas' => $ideas,
-            'statistics' => $statistics,
-            'tracks' => $tracks,
-            'supervisors' => $supervisors,
-            'filters' => $request->only(['search', 'status', 'track_id', 'has_supervisor']),
-        ]);
+        $data = $this->ideaService->getPaginatedIdeas(
+            auth()->user(),
+            $request->only(['search', 'status', 'track_id', 'edition_id', 'review_status']),
+            $request->get('per_page', 15)
+        );
+        
+        // Get tracks for filter dropdown
+        $trackData = $this->trackService->getPaginatedTracks(
+            auth()->user(),
+            [],
+            1000 // Get all tracks
+        );
+        
+        $supervisors = User::where('user_type', 'track_supervisor')->get();
+        
+        return Inertia::render('SystemAdmin/Ideas/Index', array_merge($data, [
+            'tracks' => $trackData['tracks']->items(),
+            'supervisors' => $supervisors
+        ]));
     }
 
     /**
@@ -78,36 +51,42 @@ class IdeaController extends Controller
      */
     public function show(Idea $idea)
     {
-        $idea->load(['team.members', 'track', 'reviewer', 'files']);
-
-        // Get review history from audit logs
-        $reviewHistory = $idea->auditLogs()
-            ->where('action', 'status_changed')
-            ->with('user')
-            ->latest()
-            ->get()
-            ->map(function ($log) {
-                return [
-                    'id' => $log->id,
-                    'status' => $log->new_value,
-                    'feedback' => $log->notes,
-                    'reviewer_name' => $log->user?->name ?? 'System',
-                    'created_at' => $log->created_at,
-                ];
-            });
-
+        $data = $this->ideaService->getIdeaDetails($idea->id, auth()->user());
+        
+        if (!$data) {
+            abort(404, 'Idea not found or access denied.');
+        }
+        
+        // Get review history if exists
+        $reviewHistory = [];
+        if (method_exists($idea, 'auditLogs')) {
+            $reviewHistory = $idea->auditLogs()
+                ->where('action', 'status_changed')
+                ->with('user')
+                ->latest()
+                ->get()
+                ->map(function ($log) {
+                    return [
+                        'id' => $log->id,
+                        'status' => $log->new_value,
+                        'feedback' => $log->notes,
+                        'reviewer_name' => $log->user?->name ?? 'System',
+                        'created_at' => $log->created_at,
+                    ];
+                });
+        }
+        
         // Get scoring breakdown if available
         $scoring = null;
-        if ($idea->evaluation_scores) {
-            $scoring = $idea->evaluation_scores;
-            $scoring['total_score'] = $idea->score;
+        if ($data['idea']->evaluation_scores) {
+            $scoring = $data['idea']->evaluation_scores;
+            $scoring['total_score'] = $data['idea']->score;
         }
-
-        return Inertia::render('SystemAdmin/Ideas/Show', [
-            'idea' => $idea,
+        
+        return Inertia::render('SystemAdmin/Ideas/Show', array_merge($data, [
             'reviewHistory' => $reviewHistory,
-            'scoring' => $scoring,
-        ]);
+            'scoring' => $scoring
+        ]));
     }
 
     /**
@@ -149,46 +128,20 @@ class IdeaController extends Controller
             'scores.presentation' => 'nullable|numeric|min:0|max:25',
             'notify_team' => 'boolean',
         ]);
-
-        // Update idea fields
-        $idea->status = $validated['status'];
         
-        // Assign reviewer if provided
-        if (isset($validated['reviewed_by']) && !empty($validated['reviewed_by'])) {
-            $idea->reviewed_by = $validated['reviewed_by'];
+        try {
+            $result = $this->ideaService->processReview($idea->id, $validated, auth()->user());
+            
+            // Send notification to team if requested
+            if ($request->boolean('notify_team')) {
+                // TODO: Trigger notification service here
+            }
+            
+            return redirect()->route('system-admin.ideas.show', $idea->id)
+                ->with('success', $result['message']);
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => $e->getMessage()]);
         }
-
-        // Store scoring data in evaluation_scores column
-        if (isset($validated['scores'])) {
-            $idea->evaluation_scores = $validated['scores'];
-            // Calculate total score and store in score column
-            $idea->score = array_sum($validated['scores']);
-        }
-
-        // Add feedback
-        if (isset($validated['feedback'])) {
-            $idea->feedback = $validated['feedback'];
-        }
-
-        $idea->reviewed_at = now();
-        $idea->save();
-
-        // Log the review action
-        $idea->logAction(
-            'status_changed', 
-            'status', 
-            $validated['status'], 
-            $validated['feedback'] ?? 'Review processed by System Admin', 
-            auth()->user()
-        );
-
-        // Send notification to team if requested
-        if ($request->boolean('notify_team')) {
-            // TODO: Trigger notification service here
-        }
-
-        return redirect()->route('system-admin.ideas.show', $idea->id)
-            ->with('success', 'Idea review completed successfully.');
     }
 
     /**
@@ -313,16 +266,13 @@ class IdeaController extends Controller
      */
     public function destroy(Idea $idea)
     {
-        // Delete associated files from storage
-        foreach ($idea->files as $file) {
-            \Storage::disk('public')->delete($file->path);
+        try {
+            $result = $this->ideaService->deleteIdea($idea->id, auth()->user());
+            return redirect()->route('system-admin.ideas.index')
+                ->with('success', $result['message']);
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => $e->getMessage()]);
         }
-
-        // Delete the idea (cascade will handle related records)
-        $idea->delete();
-
-        return redirect()->route('system-admin.ideas.index')
-            ->with('success', 'Idea deleted successfully.');
     }
 
     /**
@@ -330,55 +280,29 @@ class IdeaController extends Controller
      */
     public function export(Request $request)
     {
-        $query = Idea::with(['team', 'track', 'reviewer']);
-
-        // Apply same filters as index
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
-            });
-        }
-
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        if ($request->filled('track_id')) {
-            $query->where('track_id', $request->track_id);
-        }
-
-        $ideas = $query->get();
-
-        // Generate CSV
-        $headers = [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="ideas-export-' . date('Y-m-d') . '.csv"',
-        ];
-
-        $callback = function() use ($ideas) {
-            $file = fopen('php://output', 'w');
-            fputcsv($file, ['ID', 'Title', 'Team', 'Track', 'Status', 'Score', 'Reviewer', 'Submitted At', 'Reviewed At']);
+        try {
+            $result = $this->ideaService->exportIdeas(
+                auth()->user(),
+                $request->only(['search', 'status', 'track_id', 'edition_id'])
+            );
             
-            foreach ($ideas as $idea) {
-                fputcsv($file, [
-                    $idea->id,
-                    $idea->title,
-                    $idea->team?->name ?? 'N/A',
-                    $idea->track?->name ?? 'N/A',
-                    $idea->status,
-                    $idea->score ?? 'N/A',
-                    $idea->reviewer?->name ?? 'Not Assigned',
-                    $idea->submitted_at?->format('Y-m-d H:i') ?? 'N/A',
-                    $idea->reviewed_at?->format('Y-m-d H:i') ?? 'N/A',
-                ]);
-            }
+            $headers = [
+                'Content-Type' => 'text/csv',
+                'Content-Disposition' => 'attachment; filename="' . $result['filename'] . '"',
+            ];
             
-            fclose($file);
-        };
-
-        return response()->stream($callback, 200, $headers);
+            $callback = function() use ($result) {
+                $file = fopen('php://output', 'w');
+                foreach ($result['data'] as $row) {
+                    fputcsv($file, $row);
+                }
+                fclose($file);
+            };
+            
+            return response()->stream($callback, 200, $headers);
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => $e->getMessage()]);
+        }
     }
 
     /**
