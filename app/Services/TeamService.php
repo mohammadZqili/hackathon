@@ -36,6 +36,36 @@ class TeamService
     }
 
     /**
+     * Get the team that a user is a member of (for team members)
+     */
+    public function getMemberTeam($userId): ?Team
+    {
+        // First check if user is a team leader
+        $team = $this->teamRepository->findByLeaderId($userId);
+        if ($team) {
+            return $team;
+        }
+
+        // Then check if user is a team member
+        $user = User::find($userId);
+        if ($user && $user->team_id) {
+            return Team::find($user->team_id);
+        }
+
+        // Finally check team_members table
+        $teamMember = DB::table('team_members')
+            ->where('user_id', $userId)
+            ->where('status', 'accepted')
+            ->first();
+            
+        if ($teamMember) {
+            return Team::find($teamMember->team_id);
+        }
+
+        return null;
+    }
+
+    /**
      * Get dashboard statistics for team leader
      */
     public function getDashboardStats(User $user): array
@@ -72,16 +102,43 @@ class TeamService
      */
     public function getTeamMembers(Team $team): Collection
     {
-        return $team->members()->with('user')->get()->map(function ($member) {
+        // Get team members from the members relationship
+        $members = $team->members()->get()->map(function ($member) {
             return [
-                'id' => $member->user->id,
-                'name' => $member->user->name,
-                'email' => $member->user->email,
-                'status' => $member->pivot->status,
-                'role' => $member->pivot->role,
-                'joined_at' => $member->pivot->joined_at,
+                'id' => $member->id,
+                'name' => $member->name,
+                'email' => $member->email,
+                'status' => $member->pivot->status ?? 'accepted',
+                'role' => $member->pivot->role ?? 'member',
+                'joined_at' => $member->pivot->joined_at ?? $member->pivot->created_at,
             ];
         });
+
+        // Include the team leader only if not already in members
+        if ($team->leader) {
+            $leaderInMembers = $members->firstWhere('id', $team->leader->id);
+            if (!$leaderInMembers) {
+                $leader = [
+                    'id' => $team->leader->id,
+                    'name' => $team->leader->name,
+                    'email' => $team->leader->email,
+                    'status' => 'accepted',
+                    'role' => 'leader',
+                    'joined_at' => $team->created_at,
+                ];
+                $members->prepend($leader);
+            } else {
+                // Update the role to leader if they're in the members list
+                $members = $members->map(function ($member) use ($team) {
+                    if ($member['id'] === $team->leader->id) {
+                        $member['role'] = 'leader';
+                    }
+                    return $member;
+                });
+            }
+        }
+
+        return $members;
     }
 
     /**
