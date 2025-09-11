@@ -80,7 +80,7 @@ Route::middleware(['web', 'auth', 'auth.session'])->group(function () {
 
         // Chart Routes
         Route::get('charts', [ChartController::class, 'index'])->name('chart.index');
-        
+
         // Notification Routes
         Route::prefix('notifications')->name('notifications.')->controller(NotificationController::class)->group(function () {
             Route::get('/', 'index')->name('index');
@@ -219,7 +219,7 @@ Route::middleware(['guest', 'web'])->group(function () {
 require __DIR__.'/hackathon.php';
 
 // HackathonAdmin Routes
-require __DIR__.'/hackathon-admin.php';
+//require __DIR__.'/hackathon-admin.php';
 
 // TrackSupervisor Routes
 require __DIR__.'/track-supervisor.php';

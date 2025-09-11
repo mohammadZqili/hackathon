@@ -15,8 +15,8 @@ class WorkshopRepository
 
     public function getUpcoming()
     {
-        return Workshop::where('date', '>=', now())
-            ->orderBy('date', 'asc')
+        return Workshop::where('start_time', '>=', now())
+            ->orderBy('start_time', 'asc')
             ->with('supervisor')
             ->get();
     }

@@ -4,96 +4,83 @@ namespace App\Http\Controllers\HackathonAdmin;
 
 use App\Http\Controllers\Controller;
 use App\Models\HackathonEdition;
-use App\Models\Hackathon;
 use App\Models\Team;
 use App\Models\Idea;
+use App\Models\User;
 use App\Models\Workshop;
-use App\Models\Track;
-use App\Models\News;
 use Inertia\Inertia;
 use Inertia\Response;
-use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
     public function index(): Response
     {
         $currentEdition = HackathonEdition::where('is_current', true)->first();
-        
-        if (!$currentEdition) {
-            return Inertia::render('HackathonAdmin/NoEdition');
-        }
 
-        // Get the current hackathon for workshop and track queries
-        $currentHackathon = Hackathon::where('is_current', true)->first();
-        
-        // Get statistics for current edition
         $statistics = [
-            'teams' => [
-                'total' => Team::where('hackathon_id', $currentEdition->id)->count(),
-                'pending' => Team::where('hackathon_id', $currentEdition->id)->where('status', 'pending')->count(),
-                'approved' => Team::where('hackathon_id', $currentEdition->id)->where('status', 'approved')->count(),
-                'rejected' => Team::where('hackathon_id', $currentEdition->id)->where('status', 'rejected')->count(),
-            ],
-            'ideas' => [
-                'total' => Idea::whereHas('team', function($q) use ($currentEdition) {
+            'total_editions' => HackathonEdition::count(),
+            'total_users' => User::count(),
+            'total_teams' => Team::count(),
+            'total_ideas' => Idea::count(),
+            'total_workshops' => Workshop::count(),
+            'current_edition' => $currentEdition ? [
+                'name' => $currentEdition->name,
+                'year' => $currentEdition->year,
+                'status' => $currentEdition->status,
+                'teams_count' => Team::where('hackathon_id', $currentEdition->id)->count(),
+                'ideas_count' => Idea::whereHas('team', function($q) use ($currentEdition) {
                     $q->where('hackathon_id', $currentEdition->id);
                 })->count(),
-                'pending' => Idea::whereHas('team', function($q) use ($currentEdition) {
-                    $q->where('hackathon_id', $currentEdition->id);
-                })->where('status', 'pending')->count(),
-                'approved' => Idea::whereHas('team', function($q) use ($currentEdition) {
-                    $q->where('hackathon_id', $currentEdition->id);
-                })->where('status', 'approved')->count(),
-            ],
-            'workshops' => [
-                'total' => $currentHackathon ? Workshop::where('hackathon_id', $currentHackathon->id)->count() : 0,
-                'upcoming' => $currentHackathon ? Workshop::where('hackathon_id', $currentHackathon->id)
-                    ->where('start_time', '>', Carbon::now())
-                    ->count() : 0,
-                'completed' => $currentHackathon ? Workshop::where('hackathon_id', $currentHackathon->id)
-                    ->where('end_time', '<', Carbon::now())
-                    ->count() : 0,
-            ],
-            'tracks' => $currentHackathon ? Track::where('hackathon_id', $currentHackathon->id)->count() : 0,
+            ] : null,
+            'recent_activities' => $this->getRecentActivities(),
         ];
 
-        // Get recent activities
-        $recentTeams = Team::where('hackathon_id', $currentEdition->id)
-            ->with(['leader', 'track'])
-            ->latest()
-            ->take(5)
-            ->get();
-
-        $recentIdeas = Idea::whereHas('team', function($q) use ($currentEdition) {
-                $q->where('hackathon_id', $currentEdition->id);
-            })
-            ->with(['team', 'track'])
-            ->latest()
-            ->take(5)
-            ->get();
-
-        // Get upcoming workshops
-        $upcomingWorkshops = $currentHackathon ? Workshop::where('hackathon_id', $currentHackathon->id)
-            ->where('start_time', '>', Carbon::now())
-            ->orderBy('start_time')
-            ->take(5)
-            ->get() : collect();
-
-        // Get teams by track
-        $teamsByTrack = $currentHackathon ? Track::where('hackathon_id', $currentHackathon->id)
-            ->withCount(['teams' => function($q) use ($currentEdition) {
-                $q->where('hackathon_id', $currentEdition->id);
-            }])
-            ->get() : collect();
-
-        return Inertia::render('HackathonAdmin/Dashboard/Index', [
-            'currentEdition' => $currentEdition,
+        return Inertia::render('HackathonAdmin/Dashboard', [
             'statistics' => $statistics,
-            'recentTeams' => $recentTeams,
-            'recentIdeas' => $recentIdeas,
-            'upcomingWorkshops' => $upcomingWorkshops,
-            'teamsByTrack' => $teamsByTrack,
         ]);
+    }
+
+    private function getRecentActivities(): array
+    {
+        $activities = [];
+
+        // Recent teams
+        $recentTeams = Team::with('leader')
+            ->latest()
+            ->take(5)
+            ->get()
+            ->map(function ($team) {
+                return [
+                    'type' => 'team_created',
+                    'message' => "New team \"{$team->name}\" created by {$team->leader->name}",
+                    'time' => $team->created_at->diffForHumans(),
+                    'icon' => 'users',
+                ];
+            });
+
+        // Recent ideas
+        $recentIdeas = Idea::with('team')
+            ->latest()
+            ->take(5)
+            ->get()
+            ->map(function ($idea) {
+                return [
+                    'type' => 'idea_submitted',
+                    'message' => "New idea \"{$idea->title}\" submitted by team {$idea->team->name}",
+                    'time' => $idea->created_at->diffForHumans(),
+                    'icon' => 'lightbulb',
+                ];
+            });
+
+        // Merge and sort by time
+        $activities = $recentTeams->merge($recentIdeas)
+            ->sortByDesc(function ($item) {
+                return $item['time'];
+            })
+            ->take(10)
+            ->values()
+            ->toArray();
+
+        return $activities;
     }
 }

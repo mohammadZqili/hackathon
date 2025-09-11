@@ -1,183 +1,185 @@
 <?php
 
 namespace App\Http\Controllers\HackathonAdmin;
-use App\Http\Requests\HackathonAdmin\CreateTeamRequest;
-use App\Http\Requests\HackathonAdmin\UpdateTeamRequest;
-use App\Http\Requests\HackathonAdmin\ApproveTeamRequest;
-use App\Services\TeamService;
-use App\Models\Team;
-use App\Models\Track;
-use App\Models\User;
+
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Inertia\Response;
+use App\Models\Team;
+use App\Models\User;
+use App\Models\Edition;
 
-class TeamController extends BaseController
+class TeamController extends Controller
 {
-    protected TeamService $teamService;
-
-    public function __construct(TeamService $teamService)
+    public function index(Request $request)
     {
-        parent::__construct();
-        $this->teamService = $teamService;
-    }
+        $query = Team::with(['leader', 'members', 'idea', 'edition']);
 
-    public function index(Request $request): Response
-    {
-        if (!$this->currentEdition) {
-            return Inertia::render('HackathonAdmin/NoEdition');
-        }
-
-        $query = Team::where('edition_id', $this->currentEdition->id)
-            ->with(['leader', 'track', 'members', 'idea']);
-
-        // Apply filters
-        if ($request->filled('status')) {
-            $query->where('status', $request->get('status'));
-        }
-        if ($request->filled('track_id')) {
-            $query->where('track_id', $request->get('track_id'));
-        }
         if ($request->filled('search')) {
-            $search = $request->get('search');
+            $search = $request->input('search');
             $query->where('name', 'like', "%{$search}%");
         }
 
         $teams = $query->latest()->paginate(15);
 
-        // Get tracks for current edition
-        $tracks = Track::where('hackathon_edition_id', $this->currentEdition->id)->get();
+        // Add members count to each team
+        $teams->getCollection()->transform(function ($team) {
+            $team->members_count = $team->members->count();
+            return $team;
+        });
 
         return Inertia::render('HackathonAdmin/Teams/Index', [
-            'teams' => $teams,
-            'tracks' => $tracks,
-            'filters' => $request->only(['status', 'track_id', 'search']),
-            'statistics' => $this->teamService->getTeamStatistics($this->currentEdition->id),
+            'teams' => $teams
         ]);
     }
 
-    public function create(): Response
+    public function create()
     {
-        if (!$this->currentEdition) {
-            return Inertia::render('HackathonAdmin/NoEdition');
-        }
-
-        // Get tracks for current edition
-        $tracks = Track::where('hackathon_edition_id', $this->currentEdition->id)
-            ->where('status', 'active')
+        $editions = Edition::orderBy('year', 'desc')
+            ->orderBy('name', 'asc')
             ->get();
 
-        $users = User::whereDoesntHave('teams', function ($query) {
-            $query->where('edition_id', $this->currentEdition->id);
-        })->get();
-
         return Inertia::render('HackathonAdmin/Teams/Create', [
-            'tracks' => $tracks,
-            'users' => $users,
-            'edition' => $this->currentEdition,
+            'editions' => $editions
         ]);
     }
 
-    public function store(CreateTeamRequest $request)
+    public function store(Request $request)
     {
-        $data = $request->validated();
-        $data['edition_id'] = $this->currentEdition->id;
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'edition_id' => 'required|exists:editions,id',
+            'leader_id' => 'nullable|exists:users,id',
+            'max_members' => 'nullable|integer|min:1|max:10',
+            'member_ids' => 'nullable|array',
+            'member_ids.*' => 'exists:users,id'
+        ]);
 
-        try {
-            $team = $this->teamService->createTeam($data);
-            return redirect()->route('hackathon-admin.teams.index')
-                ->with('success', 'Team created successfully');
-        } catch (\Exception $e) {
-            return back()->withErrors(['error' => $e->getMessage()]);
+        $team = Team::create([
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? null,
+            'edition_id' => $validated['edition_id'],
+            'leader_id' => $validated['leader_id'] ?? null,
+            'max_members' => $validated['max_members'] ?? 5,
+            'status' => 'active'
+        ]);
+
+        // Add leader as a member if specified
+        if (!empty($validated['leader_id'])) {
+            $team->members()->attach($validated['leader_id'], ['role' => 'leader']);
         }
+
+        // Add other members
+        if (!empty($validated['member_ids'])) {
+            foreach ($validated['member_ids'] as $memberId) {
+                if ($memberId != $validated['leader_id']) {
+                    $team->members()->attach($memberId, ['role' => 'member']);
+                }
+            }
+        }
+
+        return redirect()->route('system-admin.teams.index')
+            ->with('success', 'Team created successfully.');
     }
 
-    public function show(Team $team): Response
+    public function show(Team $team)
     {
-        $team->load(['leader', 'track', 'members', 'idea', 'edition']);
+        $team->load(['leader', 'members', 'idea', 'edition']);
 
         return Inertia::render('HackathonAdmin/Teams/Show', [
-            'team' => $team,
+            'team' => $team
         ]);
     }
 
-    public function edit(Team $team): Response
+    public function edit(Team $team)
     {
-        // Ensure team belongs to current edition
-        if (!$this->checkEditionOwnership($team)) {
-            abort(403);
-        }
+        $team->load(['leader', 'members', 'idea', 'edition']);
 
-        // Get tracks for current edition
-        $tracks = Track::where('hackathon_edition_id', $this->currentEdition->id)
-            ->where('status', 'active')
+        $editions = Edition::orderBy('year', 'desc')
+            ->orderBy('name', 'asc')
             ->get();
 
         return Inertia::render('HackathonAdmin/Teams/Edit', [
             'team' => $team,
-            'tracks' => $tracks,
+            'editions' => $editions
         ]);
     }
 
-    public function update(UpdateTeamRequest $request, Team $team)
+    public function update(Request $request, Team $team)
     {
-        if (!$this->checkEditionOwnership($team)) {
-            abort(403);
-        }
-
-        try {
-            $team = $this->teamService->updateTeam($team->id, $request->validated());
-            return redirect()->route('hackathon-admin.teams.show', $team)
-                ->with('success', 'Team updated successfully');
-        } catch (\Exception $e) {
-            return back()->withErrors(['error' => $e->getMessage()]);
-        }
-    }
-
-    public function approve(ApproveTeamRequest $request, Team $team)
-    {
-        if (!$this->checkEditionOwnership($team)) {
-            abort(403);
-        }
-
-        try {
-            $team = $this->teamService->approveTeam($team->id);
-            return back()->with('success', 'Team approved successfully');
-        } catch (\Exception $e) {
-            return back()->withErrors(['error' => $e->getMessage()]);
-        }
-    }
-
-    public function reject(Request $request, Team $team)
-    {
-        if (!$this->checkEditionOwnership($team)) {
-            abort(403);
-        }
-
-        $request->validate([
-            'reason' => 'required|string|max:500'
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'edition_id' => 'required|exists:editions,id',
+            'leader_id' => 'nullable|exists:users,id',
+            'max_members' => 'nullable|integer|min:1|max:10',
+            'status' => 'required|in:active,inactive,disqualified'
         ]);
 
-        try {
-            $team = $this->teamService->rejectTeam($team->id, $request->reason);
-            return back()->with('success', 'Team rejected');
-        } catch (\Exception $e) {
-            return back()->withErrors(['error' => $e->getMessage()]);
-        }
+        $team->update($validated);
+
+        return redirect()->route('system-admin.teams.index')
+            ->with('success', 'Team updated successfully.');
     }
 
     public function destroy(Team $team)
     {
-        if (!$this->checkEditionOwnership($team)) {
-            abort(403);
+        $team->delete();
+
+        return redirect()->route('system-admin.teams.index')
+            ->with('success', 'Team deleted successfully.');
+    }
+
+    public function addMember(Request $request, Team $team)
+    {
+        $validated = $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'role' => 'required|in:member,leader,co-leader'
+        ]);
+
+        // Check if user is already in the team
+        if ($team->members()->where('user_id', $validated['user_id'])->exists()) {
+            return back()->withErrors(['user_id' => 'User is already a member of this team.']);
         }
 
-        try {
-            $this->teamService->deleteTeam($team->id);
-            return redirect()->route('hackathon-admin.teams.index')
-                ->with('success', 'Team deleted successfully');
-        } catch (\Exception $e) {
-            return back()->withErrors(['error' => $e->getMessage()]);
+        // Check if team is full
+        if ($team->members()->count() >= $team->max_members) {
+            return back()->withErrors(['user_id' => 'Team is already at maximum capacity.']);
         }
+
+        // If making this user a leader, update the team's leader_id
+        if ($validated['role'] === 'leader') {
+            $team->update(['leader_id' => $validated['user_id']]);
+        }
+
+        // Add member to team
+        $team->members()->attach($validated['user_id'], ['role' => $validated['role']]);
+
+        return back()->with('success', 'Member added successfully.');
+    }
+
+    public function removeMember(Team $team, User $user)
+    {
+        // Check if user is in the team
+        if (!$team->members()->where('user_id', $user->id)->exists()) {
+            return back()->withErrors(['error' => 'User is not a member of this team.']);
+        }
+
+        // Remove member from team
+        $team->members()->detach($user->id);
+
+        // If this was the leader, clear the leader_id
+        if ($team->leader_id == $user->id) {
+            $team->update(['leader_id' => null]);
+        }
+
+        return back()->with('success', 'Member removed successfully.');
+    }
+
+    public function export()
+    {
+        // TODO: Implement export functionality
+        return response()->json(['message' => 'Export functionality to be implemented']);
     }
 }

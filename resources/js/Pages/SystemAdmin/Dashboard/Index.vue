@@ -1,4 +1,7 @@
 <script setup>
+import { useLocalization } from '@/composables/useLocalization'
+
+const { t, isRTL, direction, locale } = useLocalization()
 import { Head } from '@inertiajs/vue3'
 import Default from '../../../Layouts/Default.vue'
 
@@ -8,11 +11,11 @@ const props = defineProps({
 
 // Extract data from statistics object
 const stats = [
-    { label: 'Total Editions', value: props.statistics?.total_editions || 0 },
-    { label: 'Total Users', value: props.statistics?.total_users || 0 },
-    { label: 'Total Teams', value: props.statistics?.total_teams || 0 },
-    { label: 'Total Ideas', value: props.statistics?.total_ideas || 0 },
-    { label: 'Total Workshops', value: props.statistics?.total_workshops || 0 },
+    { label: t('admin.dashboard.total_editions'), value: props.statistics?.total_editions || 0 },
+    { label: t('admin.dashboard.total_users'), value: props.statistics?.total_users || 0 },
+    { label: t('admin.dashboard.total_teams'), value: props.statistics?.total_teams || 0 },
+    { label: t('admin.dashboard.total_ideas'), value: props.statistics?.total_ideas || 0 },
+    { label: t('admin.dashboard.total_workshops'), value: props.statistics?.total_workshops || 0 },
 ]
 
 const recentActivity = props.statistics?.recent_activities || []
@@ -20,14 +23,15 @@ const currentEdition = props.statistics?.current_edition
 </script>
 
 <template>
-    <Head title="System Admin Dashboard" />
+    <Head :title="t('admin.dashboard.title')" />
     
     <Default>
         <div class="container mx-auto px-4 py-8">
             
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <div v-for="stat in stats" :key="stat.label" 
-                     class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                     class="bg-white dark:bg-gray-800 rounded-lg shadow p-6"
+                     :class="{ 'text-right': isRTL, 'text-left': !isRTL }">
                     <div class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ stat.label }}</div>
                     <div class="mt-2 text-3xl font-bold text-gray-900 dark:text-white">{{ stat.value }}</div>
                     <div v-if="stat.change" class="mt-2 text-sm"
@@ -39,7 +43,10 @@ const currentEdition = props.statistics?.current_edition
 
             <!-- Current Edition Info -->
             <div v-if="currentEdition" class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-6 mb-8">
-                <h2 class="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-2">Current Edition</h2>
+                <h2 class="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-2"
+                    :class="{ 'text-right': isRTL, 'text-left': !isRTL }">
+                    {{ t('admin.dashboard.current_edition') }}
+                </h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <div class="text-sm text-blue-600 dark:text-blue-300">Name</div>

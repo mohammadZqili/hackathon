@@ -29,10 +29,10 @@ use App\Http\Controllers\TeamMember\IdeaController as TeamMemberIdeaController;
 use App\Http\Controllers\TeamMember\WorkshopController as TeamMemberWorkshopController;
 
 // Track Supervisor Controllers
-use App\Http\Controllers\TrackSupervisor\DashboardController as TrackSupervisorDashboardController;
-use App\Http\Controllers\TrackSupervisor\IdeaReviewController;
-use App\Http\Controllers\TrackSupervisor\TeamController as TrackSupervisorTeamController;
-use App\Http\Controllers\TrackSupervisor\TrackSettingsController;
+use App\Http\Controllers\TrackSupervisor1\DashboardController as TrackSupervisorDashboardController;
+use App\Http\Controllers\TrackSupervisor1\IdeaReviewController;
+use App\Http\Controllers\TrackSupervisor1\TeamController as TrackSupervisorTeamController;
+use App\Http\Controllers\TrackSupervisor1\TrackSettingsController;
 
 // Workshop Supervisor Controllers
 use App\Http\Controllers\WorkshopSupervisor\DashboardController as WorkshopSupervisorDashboardController;
@@ -41,12 +41,12 @@ use App\Http\Controllers\WorkshopSupervisor\CheckInController;
 use App\Http\Controllers\WorkshopSupervisor\AttendanceController;
 
 // Hackathon Admin Controllers
-use App\Http\Controllers\HackathonAdmin\DashboardController as HackathonAdminDashboardController;
-use App\Http\Controllers\HackathonAdmin\TeamManagementController;
-use App\Http\Controllers\HackathonAdmin\IdeaManagementController;
-use App\Http\Controllers\HackathonAdmin\TrackController;
-use App\Http\Controllers\HackathonAdmin\WorkshopManagementController;
-use App\Http\Controllers\HackathonAdmin\NewsController;
+use App\Http\Controllers\HackathonAdmin1\DashboardController as HackathonAdminDashboardController;
+use App\Http\Controllers\HackathonAdmin1\TeamManagementController;
+use App\Http\Controllers\HackathonAdmin1\IdeaManagementController;
+use App\Http\Controllers\HackathonAdmin1\TrackController;
+use App\Http\Controllers\HackathonAdmin1\WorkshopManagementController;
+use App\Http\Controllers\HackathonAdmin1\NewsController;
 
 // System Admin Controllers
 use App\Http\Controllers\SystemAdmin\DashboardController as SystemAdminDashboardController;

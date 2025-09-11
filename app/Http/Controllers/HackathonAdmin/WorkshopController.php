@@ -3,300 +3,107 @@
 namespace App\Http\Controllers\HackathonAdmin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Workshop;
-use App\Models\HackathonEdition;
-use App\Models\Hackathon;
-use App\Models\Speaker;
-use App\Models\WorkshopRegistration;
-use App\Http\Requests\HackathonAdmin\CreateWorkshopRequest;
-use App\Http\Requests\HackathonAdmin\UpdateWorkshopRequest;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Inertia\Response;
-use SimpleSoftwareIO\QrCode\Facades\QrCode;
-use Carbon\Carbon;
+use App\Models\Workshop;
+use App\Models\Speaker;
+use App\Models\Organization;
 
 class WorkshopController extends Controller
 {
-    /**
-     * Display a listing of workshops.
-     */
-    public function index(Request $request): Response
+    public function index()
     {
-        $currentEdition = HackathonEdition::where('is_current', true)->first();
-        
-        if (!$currentEdition) {
-            return Inertia::render('HackathonAdmin/NoEdition');
-        }
+        $workshops = Workshop::with(['speakers', 'organizations'])
+            ->latest()
+            ->paginate(15);
 
-        // Get current hackathon for workshop queries
-        $currentHackathon = Hackathon::where('is_current', true)->first();
-        
-        if (!$currentHackathon) {
-            return Inertia::render('HackathonAdmin/NoEdition');
-        }
-
-        $query = Workshop::where('hackathon_id', $currentHackathon->id)
-            ->with(['speakers', 'registrations']);
-
-        // Apply filters
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
-            });
-        }
-
-        if ($request->filled('status')) {
-            $now = Carbon::now();
-            switch ($request->status) {
-                case 'upcoming':
-                    $query->where('start_time', '>', $now);
-                    break;
-                case 'ongoing':
-                    $query->where('start_time', '<=', $now)
-                          ->where('end_time', '>=', $now);
-                    break;
-                case 'completed':
-                    $query->where('end_time', '<', $now);
-                    break;
-            }
-        }
-
-        if ($request->filled('date')) {
-            $date = Carbon::parse($request->date);
-            $query->whereDate('start_time', $date);
-        }
-
-        $workshops = $query->orderBy('start_time')->paginate(15)->withQueryString();
-
-        // Get statistics
-        $statistics = [
-            'total' => Workshop::where('hackathon_id', $currentHackathon->id)->count(),
-            'upcoming' => Workshop::where('hackathon_id', $currentHackathon->id)
-                ->where('start_time', '>', Carbon::now())
-                ->count(),
-            'ongoing' => Workshop::where('hackathon_id', $currentHackathon->id)
-                ->where('start_time', '<=', Carbon::now())
-                ->where('end_time', '>=', Carbon::now())
-                ->count(),
-            'completed' => Workshop::where('hackathon_id', $currentHackathon->id)
-                ->where('end_time', '<', Carbon::now())
-                ->count(),
-            'total_registrations' => WorkshopRegistration::whereHas('workshop', function($q) use ($currentHackathon) {
-                $q->where('hackathon_id', $currentHackathon->id);
-            })->count(),
-        ];
-
-        $speakers = Speaker::all();
+        $speakers = Speaker::orderBy('name')->get();
+        $organizations = Organization::orderBy('name')->get();
 
         return Inertia::render('HackathonAdmin/Workshops/Index', [
             'workshops' => $workshops,
-            'statistics' => $statistics,
             'speakers' => $speakers,
-            'filters' => $request->only(['search', 'status', 'date']),
+            'organizations' => $organizations
         ]);
     }
 
-    /**
-     * Show the form for creating a new workshop.
-     */
-    public function create(): Response
+    public function create()
     {
-        $currentEdition = HackathonEdition::where('is_current', true)->first();
-        
-        if (!$currentEdition) {
-            return Inertia::render('HackathonAdmin/NoEdition');
-        }
+        $speakers = Speaker::orderBy('name')->get();
+        $organizations = Organization::orderBy('name')->get();
 
-        $speakers = Speaker::all();
+        \Log::info('Workshop Create Data', [
+            'speakers_count' => $speakers->count(),
+            'organizations_count' => $organizations->count()
+        ]);
 
         return Inertia::render('HackathonAdmin/Workshops/Create', [
             'speakers' => $speakers,
-            'currentEdition' => $currentEdition,
+            'organizations' => $organizations
         ]);
     }
 
-    /**
-     * Store a newly created workshop.
-     */
-    public function store(CreateWorkshopRequest $request)
+    public function store(Request $request)
     {
-        $currentEdition = HackathonEdition::where('is_current', true)->first();
-        
-        if (!$currentEdition) {
-            return back()->with('error', 'No current hackathon edition found.');
-        }
-
-        $currentHackathon = Hackathon::where('is_current', true)->first();
-        
-        if (!$currentHackathon) {
-            return back()->with('error', 'No current hackathon found.');
-        }
-
-        $validated = $request->validated();
-        $validated['hackathon_id'] = $currentHackathon->id;
-        
-        // Generate unique QR code identifier
-        $validated['qr_code'] = 'WORKSHOP-' . strtoupper(uniqid());
-        
-        $workshop = Workshop::create($validated);
-
-        return redirect()->route('hackathon-admin.workshops.index')
+        return redirect()->route('system-admin.workshops.index')
             ->with('success', 'Workshop created successfully.');
     }
 
-    /**
-     * Display the specified workshop.
-     */
-    public function show(Workshop $workshop): Response
+    public function show(Workshop $workshop)
     {
-        $workshop->load(['speakers', 'registrations.user', 'attendances']);
-
-        // Get attendance statistics
-        $attendanceStats = [
-            'registered' => $workshop->registrations()->count(),
-            'attended' => $workshop->attendances()->where('attended', true)->count(),
-            'attendance_rate' => $workshop->registrations()->count() > 0 
-                ? round(($workshop->attendances()->where('attended', true)->count() / $workshop->registrations()->count()) * 100, 2)
-                : 0,
-        ];
+        $workshop->load(['hackathon', 'speakers', 'organizations', 'registrations']);
 
         return Inertia::render('HackathonAdmin/Workshops/Show', [
-            'workshop' => $workshop,
-            'attendanceStats' => $attendanceStats,
+            'workshop' => $workshop
         ]);
     }
 
-    /**
-     * Show the form for editing the workshop.
-     */
-    public function edit(Workshop $workshop): Response
+    public function edit(Workshop $workshop)
     {
-        $speakers = Speaker::all();
+        $speakers = Speaker::orderBy('name')->get();
+        $organizations = Organization::orderBy('name')->get();
+        $workshop->load(['speakers', 'organizations']);
 
         return Inertia::render('HackathonAdmin/Workshops/Edit', [
             'workshop' => $workshop,
             'speakers' => $speakers,
+            'organizations' => $organizations
         ]);
     }
 
-    /**
-     * Update the specified workshop.
-     */
-    public function update(UpdateWorkshopRequest $request, Workshop $workshop)
+    public function update(Request $request, Workshop $workshop)
     {
-        $workshop->update($request->validated());
-
-        return redirect()->route('hackathon-admin.workshops.index')
+        // TODO: Implement update functionality
+        return redirect()->route('system-admin.workshops.index')
             ->with('success', 'Workshop updated successfully.');
     }
 
-    /**
-     * Remove the specified workshop.
-     */
     public function destroy(Workshop $workshop)
     {
-        // Check if workshop has registrations
-        if ($workshop->registrations()->count() > 0) {
-            return back()->with('error', 'Cannot delete workshop with existing registrations.');
-        }
-
         $workshop->delete();
 
-        return redirect()->route('hackathon-admin.workshops.index')
+        return redirect()->route('system-admin.workshops.index')
             ->with('success', 'Workshop deleted successfully.');
     }
 
-    /**
-     * Display workshop attendance.
-     */
-    public function attendance(Workshop $workshop): Response
+    public function attendance(Workshop $workshop)
     {
-        $workshop->load(['registrations.user', 'attendances.user']);
-
-        $registrations = $workshop->registrations()
-            ->with('user')
-            ->get()
-            ->map(function($registration) use ($workshop) {
-                $attendance = $workshop->attendances()
-                    ->where('user_id', $registration->user_id)
-                    ->first();
-                
-                return [
-                    'user' => $registration->user,
-                    'registered_at' => $registration->created_at,
-                    'attended' => $attendance ? true : false,
-                    'attended_at' => $attendance ? $attendance->checked_in_at : null,
-                ];
-            });
+        $workshop->load('attendances.user');
 
         return Inertia::render('HackathonAdmin/Workshops/Attendance', [
-            'workshop' => $workshop,
-            'registrations' => $registrations,
+            'workshop' => $workshop
         ]);
     }
 
-    /**
-     * Export workshop attendance.
-     */
-    public function exportAttendance(Workshop $workshop)
-    {
-        $workshop->load(['registrations.user', 'attendances.user']);
-
-        $headers = [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="workshop-' . $workshop->id . '-attendance-' . date('Y-m-d') . '.csv"',
-        ];
-
-        $callback = function() use ($workshop) {
-            $file = fopen('php://output', 'w');
-            fputcsv($file, ['Name', 'Email', 'Team', 'Registered At', 'Attended', 'Checked In At']);
-            
-            foreach ($workshop->registrations as $registration) {
-                $attendance = $workshop->attendances()
-                    ->where('user_id', $registration->user_id)
-                    ->first();
-                
-                fputcsv($file, [
-                    $registration->user->name,
-                    $registration->user->email,
-                    $registration->user->team->name ?? 'N/A',
-                    $registration->created_at->format('Y-m-d H:i'),
-                    $attendance ? 'Yes' : 'No',
-                    $attendance ? $attendance->checked_in_at->format('Y-m-d H:i') : 'N/A',
-                ]);
-            }
-            
-            fclose($file);
-        };
-
-        return response()->stream($callback, 200, $headers);
-    }
-
-    /**
-     * Generate QR code for workshop.
-     */
     public function generateQR(Workshop $workshop)
     {
-        // Generate QR code data
-        $qrData = [
-            'type' => 'workshop',
-            'id' => $workshop->id,
-            'code' => $workshop->qr_code,
-            'title' => $workshop->title,
-        ];
+        // TODO: Implement QR generation
+        return response()->json(['message' => 'QR generation to be implemented']);
+    }
 
-        // Generate QR code image
-        $qrCode = QrCode::format('png')
-            ->size(300)
-            ->margin(2)
-            ->generate(json_encode($qrData));
-
-        return response($qrCode, 200, [
-            'Content-Type' => 'image/png',
-            'Content-Disposition' => 'attachment; filename="workshop-' . $workshop->id . '-qr.png"',
-        ]);
+    public function export()
+    {
+        // TODO: Implement export functionality
+        return response()->json(['message' => 'Export functionality to be implemented']);
     }
 }

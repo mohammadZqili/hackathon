@@ -10,9 +10,12 @@ import ColorThemeSwitcher from '../Components/ColorThemeSwitcher.vue'
 import Logo from '../Components/Logo.vue'
 import Search from '../Components/Typesense/Search.vue'
 import SystemNotice from '../Components/SystemNotice.vue'
+import LanguageSwitcher from '../Components/LanguageSwitcher.vue'
+import { useLocalization } from '@/composables/useLocalization'
 
 const page = usePage()
 const user = computed(() => page.props.auth?.user)
+const { t, isRTL, direction, locale } = useLocalization()
 const isSidebarOpen = ref(false)
 const isMobileSearchOpen = ref(false)
 const noticeHeight = ref(0)
@@ -107,7 +110,7 @@ onUnmounted(() => {
 
 <template>
 
-    <div class="min-h-screen theme-bg-base" role="document">
+    <div class="min-h-screen theme-bg-base" role="document" :dir="direction">
         <!-- Sidebar Overlay -->
         <div v-if="isSidebarOpen && isMobile()" class="fixed inset-0 bg-black/30 z-30" @click.stop="closeSidebar"
             role="dialog" aria-modal="true" aria-label="Mobile navigation menu" aria-hidden="true">
@@ -116,17 +119,22 @@ onUnmounted(() => {
         <!-- Main Sidebar Navigation -->
         <div data-sidebar role="navigation" aria-label="Main sidebar" :aria-expanded="isSidebarOpen"
             :aria-hidden="!isSidebarOpen"
-            class="fixed left-4 top-6 w-80 h-[calc(100vh-48px)] transition-transform duration-200 z-40 shadow-[0px_0px_8px_rgba(0,_0,_0,_0.05)] rounded-2xl overflow-hidden"
-            :class="[isSidebarOpen ? 'translate-x-0' : '-translate-x-full']">
+            class="fixed top-6 w-80 h-[calc(100vh-48px)] transition-transform duration-200 z-40 shadow-[0px_0px_8px_rgba(0,_0,_0,_0.05)] rounded-2xl overflow-hidden"
+            :class="[
+                isRTL ? 'right-4' : 'left-4',
+                isSidebarOpen ? 'translate-x-0' : (isRTL ? 'translate-x-full' : '-translate-x-full')
+            ]">
             <NavSidebarDesktop class="h-full theme-bg-card rounded-2xl border border-gray-200/50 dark:border-gray-700/50 backdrop-blur-sm" @close="closeSidebar" />
         </div>
 
         <div class="flex flex-col min-h-screen">
 
             <!-- Header with System Notices -->
-            <header role="banner" class="fixed top-6 right-4 z-40" 
-                :class="[isSidebarOpen ? 'left-[344px]' : 'left-4']" 
-                :style="{ transition: 'left 0.2s' }">
+            <header role="banner" class="fixed top-6 z-40" 
+                :class="[
+                    isRTL ? (isSidebarOpen ? 'right-[344px] left-4' : 'right-4 left-4') : (isSidebarOpen ? 'left-[344px] right-4' : 'left-4 right-4')
+                ]" 
+                :style="{ transition: 'all 0.2s' }">
 
                 <!-- System Notices -->
                 <SystemNotice :notices="page.props.systemNotices" @height-change="handleNoticeHeightChange" 
@@ -176,6 +184,9 @@ onUnmounted(() => {
 
                     <!-- User Controls -->
                     <section class="flex items-center gap-3" aria-label="User controls">
+                        <!-- Language Switcher -->
+                        <LanguageSwitcher />
+                        
                         <!-- Icon Controls -->
                         <div class="flex items-center gap-2">
                             <!-- Theme Switcher -->
@@ -189,7 +200,7 @@ onUnmounted(() => {
                             </div>
                             
                             <!-- Settings -->
-                            <Link :href="route('admin.setting.index')"
+                            <Link v-if="user?.roles?.[0]?.name === 'System Admin'" :href="route('admin.setting.index')"
                                 class="w-7 h-7 rounded-[10px] theme-bg-accent flex items-center justify-center group relative theme-bg-accent-hover cursor-pointer">
                                 <span
                                     class="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
@@ -227,8 +238,11 @@ onUnmounted(() => {
 
             <!-- Main Content Area -->
             <main class="flex-1" role="main" 
-                :class="['px-4', isSidebarOpen ? 'md:ml-[336px]' : 'md:ml-4']"
-                :style="{ paddingTop: '104px', transition: 'margin-left 0.2s' }">
+                :class="[
+                    'px-4',
+                    isRTL ? (isSidebarOpen ? 'md:mr-[336px]' : 'md:mr-4') : (isSidebarOpen ? 'md:ml-[336px]' : 'md:ml-4')
+                ]"
+                :style="{ paddingTop: '104px', transition: 'all 0.2s' }">
                 <FlashMessage />
                 <article class="py-8">
                     <slot />

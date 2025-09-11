@@ -2,198 +2,226 @@
 
 namespace App\Http\Controllers\HackathonAdmin;
 
+use App\Http\Controllers\Controller;
 use App\Models\Track;
 use App\Models\User;
+use App\Models\HackathonEdition;
+use App\Services\TrackService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Inertia\Response;
 
-class TrackController extends BaseController
+class TrackController extends Controller
 {
-    public function index()
+    protected TrackService $trackService;
+
+    public function __construct(TrackService $trackService)
     {
-        $tracks = Track::where('hackathon_edition_id', $this->currentEdition->id)
-            ->with(['supervisor', 'teams', 'ideas'])
-            ->withCount(['teams', 'ideas'])
-            ->latest()
-            ->paginate(10);
-        
+        $this->trackService = $trackService;
+    }
+
+    public function index(Request $request): Response
+    {
+        $query = Track::with(['teams', 'ideas', 'edition', 'hackathon'])
+            ->withCount(['teams', 'ideas']);
+
+        // Apply filters
+        if ($request->filled('edition_id')) {
+            $query->where('edition_id', $request->get('edition_id'));
+        }
+
+        if ($request->filled('status')) {
+            $query->where('is_active', $request->get('status'));
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->get('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
+            });
+        }
+
+        $tracks = $query->latest()->paginate(15)->withQueryString();
+
+        // Get all editions for filter dropdown
+        $editions = HackathonEdition::orderBy('created_at', 'desc')->get();
+
+        // Get statistics
+        $statistics = [
+            'total' => Track::count(),
+            'active' => Track::where('is_active', true)->count(),
+            'inactive' => Track::where('is_active', false)->count(),
+            'with_teams' => Track::has('teams')->count(),
+            'total_teams' => Track::withCount('teams')->get()->sum('teams_count'),
+            'total_ideas' => Track::withCount('ideas')->get()->sum('ideas_count'),
+        ];
+
         return Inertia::render('HackathonAdmin/Tracks/Index', [
             'tracks' => $tracks,
-            'edition' => $this->currentEdition,
+            'editions' => $editions,
+            'statistics' => $statistics,
+            'filters' => $request->only(['edition_id', 'status', 'search']),
         ]);
     }
-    
-    public function create()
+
+    public function create(): Response
     {
+        // Get all editions
+        $editions = HackathonEdition::orderBy('created_at', 'desc')->get();
+
         // Get potential track supervisors
         $supervisors = User::whereIn('role', ['track_supervisor'])
             ->orWhereHas('roles', function($q) {
                 $q->where('name', 'track_supervisor');
             })
             ->get();
-        
+
         return Inertia::render('HackathonAdmin/Tracks/Create', [
+            'editions' => $editions,
             'supervisors' => $supervisors,
-            'edition' => $this->currentEdition,
         ]);
     }
-    
+
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'hackathon_edition_id' => 'required|exists:hackathon_editions,id',
             'name' => 'required|string|max:255',
             'description' => 'required|string',
             'max_teams' => 'nullable|integer|min:1',
-            'supervisor_id' => 'nullable|exists:users,id',
             'evaluation_criteria' => 'nullable|array',
-            'status' => 'required|in:active,inactive',
+            'is_active' => 'required|boolean',
         ]);
-        
-        $validated['hackathon_edition_id'] = $this->currentEdition->id;
-        
-        $track = Track::create($validated);
-        
-        // Assign supervisor role if selected
-        if ($request->supervisor_id) {
-            $supervisor = User::find($request->supervisor_id);
-            if (!$supervisor->hasRole('track_supervisor')) {
-                $supervisor->assignRole('track_supervisor');
-            }
-            
-            // Create track-supervisor relationship
-            \DB::table('track_supervisors')->insert([
-                'track_id' => $track->id,
-                'user_id' => $supervisor->id,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+
+        try {
+            $track = $this->trackService->createTrack($validated);
+
+            // Track created successfully
+
+            return redirect()->route('system-admin.tracks.index')
+                ->with('success', 'Track created successfully.');
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => $e->getMessage()])->withInput();
         }
-        
-        return redirect()->route('hackathon-admin.tracks.index')
-            ->with('success', 'Track created successfully.');
     }
-    
-    public function show(Track $track)
+
+    public function show(Track $track): Response
     {
-        if (!$this->checkEditionOwnership($track)) {
-            abort(403);
-        }
-        
-        $track->load(['supervisor', 'teams.members', 'ideas.team']);
-        
+        $track->load(['teams.members', 'ideas.team', 'edition', 'hackathon']);
+
         return Inertia::render('HackathonAdmin/Tracks/Show', [
             'track' => $track,
-            'edition' => $this->currentEdition,
         ]);
     }
-    
-    public function edit(Track $track)
+
+    public function edit(Track $track): Response
     {
-        if (!$this->checkEditionOwnership($track)) {
-            abort(403);
-        }
-        
-        $supervisors = User::whereIn('role', ['track_supervisor'])
-            ->orWhereHas('roles', function($q) {
-                $q->where('name', 'track_supervisor');
-            })
-            ->get();
-        
+        // Get all editions
+        $editions = HackathonEdition::orderBy('created_at', 'desc')->get();
+
         return Inertia::render('HackathonAdmin/Tracks/Edit', [
             'track' => $track,
-            'supervisors' => $supervisors,
-            'edition' => $this->currentEdition,
+            'editions' => $editions,
         ]);
     }
-    
+
     public function update(Request $request, Track $track)
     {
-        if (!$this->checkEditionOwnership($track)) {
-            abort(403);
-        }
-        
         $validated = $request->validate([
+            'hackathon_edition_id' => 'required|exists:hackathon_editions,id',
             'name' => 'required|string|max:255',
             'description' => 'required|string',
             'max_teams' => 'nullable|integer|min:1',
-            'supervisor_id' => 'nullable|exists:users,id',
             'evaluation_criteria' => 'nullable|array',
-            'status' => 'required|in:active,inactive',
+            'is_active' => 'required|boolean',
         ]);
-        
-        $track->update($validated);
-        
-        // Update supervisor assignment
-        if ($request->supervisor_id) {
-            $supervisor = User::find($request->supervisor_id);
-            if (!$supervisor->hasRole('track_supervisor')) {
-                $supervisor->assignRole('track_supervisor');
-            }
-            
-            // Update track-supervisor relationship
-            \DB::table('track_supervisors')
-                ->where('track_id', $track->id)
-                ->delete();
-                
-            \DB::table('track_supervisors')->insert([
-                'track_id' => $track->id,
-                'user_id' => $supervisor->id,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+
+        try {
+            $track = $this->trackService->updateTrack($track->id, $validated);
+
+            // Track updated successfully
+
+            return redirect()->route('system-admin.tracks.show', $track)
+                ->with('success', 'Track updated successfully.');
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => $e->getMessage()])->withInput();
         }
-        
-        return redirect()->route('hackathon-admin.tracks.show', $track)
-            ->with('success', 'Track updated successfully.');
     }
-    
+
     public function destroy(Track $track)
     {
-        if (!$this->checkEditionOwnership($track)) {
-            abort(403);
-        }
-        
         // Check if track has teams or ideas
         if ($track->teams()->exists() || $track->ideas()->exists()) {
             return back()->with('error', 'Cannot delete track with associated teams or ideas.');
         }
-        
-        $track->delete();
-        
-        return redirect()->route('hackathon-admin.tracks.index')
-            ->with('success', 'Track deleted successfully.');
+
+        try {
+            $this->trackService->deleteTrack($track->id);
+            return redirect()->route('system-admin.tracks.index')
+                ->with('success', 'Track deleted successfully.');
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => $e->getMessage()]);
+        }
     }
-    
+
     /**
      * Assign supervisor to track
      */
     public function assignSupervisor(Request $request, Track $track)
     {
-        if (!$this->checkEditionOwnership($track)) {
-            abort(403);
-        }
-        
         $request->validate([
             'supervisor_id' => 'required|exists:users,id',
         ]);
-        
-        $supervisor = User::find($request->supervisor_id);
-        
-        // Assign track supervisor role if not already assigned
-        if (!$supervisor->hasRole('track_supervisor')) {
-            $supervisor->assignRole('track_supervisor');
+
+        try {
+            $this->trackService->assignSupervisor($track->id, $request->supervisor_id);
+            return back()->with('success', 'Supervisor assigned successfully.');
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => $e->getMessage()]);
         }
-        
-        // Create or update track-supervisor relationship
-        \DB::table('track_supervisors')->updateOrInsert(
-            ['track_id' => $track->id],
-            [
-                'user_id' => $supervisor->id,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]
-        );
-        
-        return back()->with('success', 'Supervisor assigned successfully.');
+    }
+
+    /**
+     * Export tracks to CSV
+     */
+    public function export(Request $request)
+    {
+        $query = Track::with(['supervisor', 'edition'])
+            ->withCount(['teams', 'ideas']);
+
+        if ($request->filled('edition_id')) {
+            $query->where('hackathon_edition_id', $request->get('edition_id'));
+        }
+
+        $tracks = $query->get();
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="tracks-export-' . date('Y-m-d') . '.csv"',
+        ];
+
+        $callback = function() use ($tracks) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, ['ID', 'Name', 'Edition', 'Description', 'Supervisor', 'Teams Count', 'Ideas Count', 'Status', 'Created At']);
+
+            foreach ($tracks as $track) {
+                fputcsv($file, [
+                    $track->id,
+                    $track->name,
+                    $track->edition->name ?? 'N/A',
+                    $track->description,
+                    $track->supervisor->name ?? 'Not Assigned',
+                    $track->teams_count,
+                    $track->ideas_count,
+                    $track->is_active ? 'Active' : 'Inactive',
+                    $track->created_at->format('Y-m-d H:i'),
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 }

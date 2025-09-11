@@ -3,7 +3,7 @@
         <!-- Language Switcher Button -->
         <button
             @click="isOpen = !isOpen"
-            class="flex items-center gap-2 px-3 py-2 rounded-lg transition-colors"
+            class="flex items-center gap-1 px-2 py-1 rounded-lg transition-colors text-sm"
             :class="[
                 isRTL ? 'flex-row-reverse' : '',
                 'hover:bg-gray-100 dark:hover:bg-gray-700'
@@ -12,11 +12,12 @@
                 backgroundColor: isOpen ? themeColor.primary + '10' : '',
                 color: isOpen ? themeColor.primary : ''
             }"
+            :title="`Switch language (${currentLanguage.native})`"
         >
-            <span class="text-xl">{{ currentLanguage.flag }}</span>
-            <span class="font-medium">{{ currentLanguage.native }}</span>
+            <span class="text-base">{{ currentLanguage.flag }}</span>
+            <span class="font-medium hidden sm:inline">{{ currentLanguage.code.toUpperCase() }}</span>
             <svg 
-                class="w-4 h-4 transition-transform"
+                class="w-3 h-3 transition-transform"
                 :class="[isOpen ? 'rotate-180' : '', flipIcon]"
                 fill="none" 
                 stroke="currentColor" 

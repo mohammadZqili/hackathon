@@ -4,83 +4,146 @@ namespace App\Http\Controllers\TeamLead;
 
 use App\Http\Controllers\Controller;
 use App\Services\TeamService;
+use App\Repositories\TeamRepository;
+use App\Repositories\TrackRepository;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class TeamController extends Controller
 {
     protected $teamService;
+    protected $teamRepository;
+    protected $trackRepository;
 
-    public function __construct(TeamService $teamService)
-    {
+    public function __construct(
+        TeamService $teamService,
+        TeamRepository $teamRepository,
+        TrackRepository $trackRepository
+    ) {
         $this->teamService = $teamService;
+        $this->teamRepository = $teamRepository;
+        $this->trackRepository = $trackRepository;
     }
 
-    public function index()
+    public function show()
     {
-        $team = $this->teamService->getTeamByLeader(auth()->id());
+        $user = auth()->user();
+        $team = $this->teamService->getMyTeam($user);
         
-        return Inertia::render('TeamLead/Team/Index', [
+        if (!$team) {
+            // If no team exists, redirect to create team
+            return redirect()->route('team-leader.dashboard')
+                ->with('info', 'You need to create a team first');
+        }
+
+        $team->load(['members', 'track', 'idea']);
+        
+        return Inertia::render('TeamLead/Team/Show', [
             'team' => $team,
-            'canCreateTeam' => !$team
+            'members' => $this->teamService->getTeamMembers($team)
         ]);
     }
 
-    public function create()
+    public function edit()
     {
-        if ($this->teamService->getTeamByLeader(auth()->id())) {
-            return redirect()->route('team-lead.team.index')
-                ->with('error', 'You already have a team');
+        $user = auth()->user();
+        $team = $this->teamService->getMyTeam($user);
+        
+        if (!$team) {
+            return redirect()->route('team-leader.dashboard')
+                ->with('error', 'You don\'t have a team to edit');
         }
 
-        $tracks = $this->teamService->getAvailableTracks();
+        $tracks = $this->trackRepository->getActive();
         
-        return Inertia::render('TeamLead/Team/Create', [
+        return Inertia::render('TeamLead/Team/Edit', [
+            'team' => $team,
             'tracks' => $tracks
         ]);
     }
 
-    public function store(Request $request)
+    public function update(Request $request)
     {
+        $user = auth()->user();
+        $team = $this->teamService->getMyTeam($user);
+        
+        if (!$team) {
+            return redirect()->route('team-leader.dashboard')
+                ->with('error', 'You don\'t have a team to update');
+        }
+
         $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:teams',
+            'name' => 'required|string|max:255|unique:teams,name,' . $team->id,
             'track_id' => 'required|exists:tracks,id',
             'description' => 'nullable|string'
         ]);
 
-        $team = $this->teamService->createTeam(auth()->id(), $validated);
+        $team = $this->teamService->updateTeamDetails($team, $validated);
 
-        return redirect()->route('team-lead.team.index')
-            ->with('success', 'Team created successfully');
+        return redirect()->route('team-leader.team.show')
+            ->with('success', 'Team updated successfully');
     }
 
-    public function addMember(Request $request)
+    public function inviteMember(Request $request)
     {
+        $user = auth()->user();
+        $team = $this->teamService->getMyTeam($user);
+        
+        if (!$team) {
+            return back()->with('error', 'You don\'t have a team');
+        }
+
         $validated = $request->validate([
-            'email' => 'required|email|exists:users,email',
-            'role' => 'nullable|string|in:developer,designer,marketer,other'
+            'email' => 'required|email|exists:users,email'
         ]);
 
-        try {
-            $member = $this->teamService->addTeamMember(
-                auth()->id(),
-                $validated['email'],
-                $validated['role'] ?? 'member'
-            );
+        $result = $this->teamService->addTeamMember($team, $validated['email']);
 
-            return back()->with('success', 'Team member added successfully');
-        } catch (\Exception $e) {
-            return back()->with('error', $e->getMessage());
+        if ($result['success']) {
+            return back()->with('success', $result['message']);
+        } else {
+            return back()->with('error', $result['message']);
         }
     }
 
     public function removeMember($memberId)
     {
-        try {
-            $this->teamService->removeTeamMember(auth()->id(), $memberId);
+        $user = auth()->user();
+        $team = $this->teamService->getMyTeam($user);
+        
+        if (!$team) {
+            return back()->with('error', 'You don\'t have a team');
+        }
+
+        $success = $this->teamService->removeTeamMember($team, $memberId);
+        
+        if ($success) {
             return back()->with('success', 'Team member removed successfully');
+        } else {
+            return back()->with('error', 'Failed to remove team member');
+        }
+    }
+
+    public function disbandTeam()
+    {
+        $user = auth()->user();
+        $team = $this->teamService->getMyTeam($user);
+        
+        if (!$team) {
+            return back()->with('error', 'You don\'t have a team to disband');
+        }
+
+        // Check if team has submitted idea
+        if ($team->idea && $team->idea->status !== 'draft') {
+            return back()->with('error', 'Cannot disband team with submitted idea');
+        }
+
+        try {
+            $this->teamRepository->delete($team->id);
+            return redirect()->route('team-leader.dashboard')
+                ->with('success', 'Team disbanded successfully');
         } catch (\Exception $e) {
-            return back()->with('error', $e->getMessage());
+            return back()->with('error', 'Failed to disband team: ' . $e->getMessage());
         }
     }
 }

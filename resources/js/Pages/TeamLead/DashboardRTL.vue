@@ -40,7 +40,7 @@
                             </p>
                         </div>
                         <div :class="isRTL ? 'text-right' : 'text-left'">
-                            <Link :href="route('team-lead.team.index')" 
+                            <Link :href="route('team-leader.team.show')" 
                                 class="inline-flex items-center justify-center px-4 py-2 rounded-xl font-medium text-sm transition-colors"
                                 :style="{ 
                                     backgroundColor: themeColor.primary + '20',
@@ -122,7 +122,7 @@
                             </p>
                         </div>
                         <div :class="isRTL ? 'text-right' : 'text-left'">
-                            <Link :href="route('team-lead.workshops.index')" 
+                            <Link :href="route('workshops.public.index')" 
                                 class="inline-flex items-center justify-center px-4 py-2 rounded-xl font-medium text-sm transition-colors"
                                 :style="{ 
                                     backgroundColor: themeColor.primary + '20',

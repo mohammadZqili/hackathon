@@ -3,41 +3,82 @@
 namespace App\Http\Controllers\TeamLead;
 
 use App\Http\Controllers\Controller;
+use App\Services\TeamService;
 use App\Services\IdeaService;
+use App\Repositories\IdeaRepository;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class IdeaController extends Controller
 {
+    protected $teamService;
     protected $ideaService;
+    protected $ideaRepository;
 
-    public function __construct(IdeaService $ideaService)
-    {
+    public function __construct(
+        TeamService $teamService,
+        IdeaService $ideaService,
+        IdeaRepository $ideaRepository
+    ) {
+        $this->teamService = $teamService;
         $this->ideaService = $ideaService;
+        $this->ideaRepository = $ideaRepository;
     }
 
-    public function index()
+    public function show()
     {
-        $idea = $this->ideaService->getTeamIdea(auth()->id());
+        $user = auth()->user();
+        $team = $this->teamService->getMyTeam($user);
         
-        return Inertia::render('TeamLead/Idea/Index', [
+        if (!$team) {
+            return redirect()->route('team-leader.dashboard')
+                ->with('error', 'You need to create a team first');
+        }
+
+        $idea = $this->teamService->getTeamIdea($team);
+        
+        if (!$idea) {
+            return redirect()->route('team-leader.idea.create');
+        }
+        
+        return Inertia::render('TeamLead/Idea/Show', [
             'idea' => $idea,
-            'canSubmit' => !$idea
+            'team' => $team
         ]);
     }
 
     public function create()
     {
-        $idea = $this->ideaService->getTeamIdea(auth()->id());
-        if ($idea) {
-            return redirect()->route('team-lead.idea.index');
+        $user = auth()->user();
+        $team = $this->teamService->getMyTeam($user);
+        
+        if (!$team) {
+            return redirect()->route('team-leader.dashboard')
+                ->with('error', 'You need to create a team first');
         }
 
-        return Inertia::render('TeamLead/Idea/Submit');
+        $idea = $this->teamService->getTeamIdea($team);
+        if ($idea) {
+            return redirect()->route('team-leader.idea.show');
+        }
+
+        return Inertia::render('TeamLead/Idea/Create', [
+            'team' => $team,
+            'tracks' => [$team->track] // Team's assigned track
+        ]);
     }
 
     public function store(Request $request)
     {
+        $user = auth()->user();
+        $team = $this->teamService->getMyTeam($user);
+        
+        if (!$team) {
+            return redirect()->route('team-leader.dashboard')
+                ->with('error', 'You need to create a team first');
+        }
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',
@@ -47,35 +88,70 @@ class IdeaController extends Controller
             'unique_value' => 'required|string',
             'technical_feasibility' => 'required|string',
             'business_model' => 'nullable|string',
-            'attachments' => 'nullable|array',
-            'attachments.*' => 'file|max:10240'
+            'technologies' => 'nullable|array',
+            'technologies.*' => 'string'
         ]);
 
-        try {
-            $idea = $this->ideaService->submitIdea(auth()->id(), $validated);
-            
-            return redirect()->route('team-lead.idea.index')
-                ->with('success', 'Idea submitted successfully');
-        } catch (\Exception $e) {
-            return back()->with('error', $e->getMessage());
+        $result = $this->teamService->submitIdea($team, $validated);
+        
+        if ($result['success']) {
+            return redirect()->route('team-leader.idea.show')
+                ->with('success', 'Idea created successfully');
+        } else {
+            return back()->with('error', $result['message']);
         }
     }
 
-    public function edit($id)
+    public function edit()
     {
-        $idea = $this->ideaService->getTeamIdea(auth()->id());
+        $user = auth()->user();
+        $team = $this->teamService->getMyTeam($user);
         
-        if (!$idea || $idea->id != $id) {
-            return redirect()->route('team-lead.idea.index');
+        if (!$team) {
+            return redirect()->route('team-leader.dashboard')
+                ->with('error', 'You need to create a team first');
+        }
+
+        $idea = $this->teamService->getTeamIdea($team);
+        
+        if (!$idea) {
+            return redirect()->route('team-leader.idea.create');
+        }
+
+        // Check if idea can be edited (not in review or accepted status)
+        if (in_array($idea->status, ['reviewing', 'accepted', 'rejected'])) {
+            return redirect()->route('team-leader.idea.show')
+                ->with('error', 'Idea cannot be edited in current status');
         }
 
         return Inertia::render('TeamLead/Idea/Edit', [
-            'idea' => $idea
+            'idea' => $idea,
+            'team' => $team
         ]);
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request)
     {
+        $user = auth()->user();
+        $team = $this->teamService->getMyTeam($user);
+        
+        if (!$team) {
+            return redirect()->route('team-leader.dashboard')
+                ->with('error', 'You need to create a team first');
+        }
+
+        $idea = $this->teamService->getTeamIdea($team);
+        
+        if (!$idea) {
+            return redirect()->route('team-leader.idea.create');
+        }
+
+        // Check if idea can be edited
+        if (in_array($idea->status, ['reviewing', 'accepted', 'rejected'])) {
+            return redirect()->route('team-leader.idea.show')
+                ->with('error', 'Idea cannot be edited in current status');
+        }
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',
@@ -84,30 +160,145 @@ class IdeaController extends Controller
             'target_audience' => 'required|string',
             'unique_value' => 'required|string',
             'technical_feasibility' => 'required|string',
-            'business_model' => 'nullable|string'
+            'business_model' => 'nullable|string',
+            'technologies' => 'nullable|array',
+            'technologies.*' => 'string'
         ]);
 
-        try {
-            $idea = $this->ideaService->updateIdea($id, auth()->id(), $validated);
-            
-            return redirect()->route('team-lead.idea.index')
-                ->with('success', 'Idea updated successfully');
-        } catch (\Exception $e) {
-            return back()->with('error', $e->getMessage());
-        }
+        $updatedIdea = $this->teamService->updateIdea($idea, $validated);
+        
+        return redirect()->route('team-leader.idea.show')
+            ->with('success', 'Idea updated successfully');
     }
 
-    public function addComment(Request $request, $id)
+    public function submit()
     {
-        $validated = $request->validate([
-            'comment' => 'required|string'
+        $user = auth()->user();
+        $team = $this->teamService->getMyTeam($user);
+        
+        if (!$team) {
+            return back()->with('error', 'You need to create a team first');
+        }
+
+        $idea = $this->teamService->getTeamIdea($team);
+        
+        if (!$idea) {
+            return back()->with('error', 'You need to create an idea first');
+        }
+
+        // Check if idea can be submitted
+        if ($idea->status !== 'draft') {
+            return back()->with('error', 'Idea has already been submitted');
+        }
+
+        // Update idea status to submitted
+        $this->ideaRepository->update($idea->id, [
+            'status' => 'submitted',
+            'submitted_at' => now()
         ]);
 
-        try {
-            $this->ideaService->addComment($id, auth()->id(), $validated['comment']);
-            return back()->with('success', 'Comment added successfully');
-        } catch (\Exception $e) {
-            return back()->with('error', $e->getMessage());
+        return redirect()->route('team-leader.idea.show')
+            ->with('success', 'Idea submitted successfully for review');
+    }
+
+    public function withdraw()
+    {
+        $user = auth()->user();
+        $team = $this->teamService->getMyTeam($user);
+        
+        if (!$team) {
+            return back()->with('error', 'You need to create a team first');
         }
+
+        $idea = $this->teamService->getTeamIdea($team);
+        
+        if (!$idea) {
+            return back()->with('error', 'No idea found to withdraw');
+        }
+
+        // Check if idea can be withdrawn
+        if (!in_array($idea->status, ['submitted', 'needs_revision'])) {
+            return back()->with('error', 'Idea cannot be withdrawn in current status');
+        }
+
+        // Update idea status back to draft
+        $this->ideaRepository->update($idea->id, [
+            'status' => 'draft',
+            'submitted_at' => null
+        ]);
+
+        return redirect()->route('team-leader.idea.edit')
+            ->with('success', 'Idea withdrawn successfully. You can now edit it.');
+    }
+
+    public function uploadFile(Request $request)
+    {
+        $user = auth()->user();
+        $team = $this->teamService->getMyTeam($user);
+        
+        if (!$team) {
+            return response()->json(['error' => 'No team found'], 403);
+        }
+
+        $idea = $this->teamService->getTeamIdea($team);
+        
+        if (!$idea) {
+            return response()->json(['error' => 'No idea found'], 403);
+        }
+
+        $request->validate([
+            'file' => 'required|file|max:10240', // 10MB max
+            'type' => 'nullable|string|in:presentation,document,image,other'
+        ]);
+
+        $file = $request->file('file');
+        $type = $request->input('type', 'document');
+        
+        // Store file
+        $path = $file->store('ideas/' . $idea->id, 'public');
+        
+        // Save file record in database
+        $fileRecord = $idea->files()->create([
+            'filename' => $file->getClientOriginalName(),
+            'path' => $path,
+            'type' => $type,
+            'size' => $file->getSize(),
+            'mime_type' => $file->getMimeType()
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'file' => $fileRecord
+        ]);
+    }
+
+    public function deleteFile($fileId)
+    {
+        $user = auth()->user();
+        $team = $this->teamService->getMyTeam($user);
+        
+        if (!$team) {
+            return back()->with('error', 'No team found');
+        }
+
+        $idea = $this->teamService->getTeamIdea($team);
+        
+        if (!$idea) {
+            return back()->with('error', 'No idea found');
+        }
+
+        $file = $idea->files()->where('id', $fileId)->first();
+        
+        if (!$file) {
+            return back()->with('error', 'File not found');
+        }
+
+        // Delete file from storage
+        Storage::disk('public')->delete($file->path);
+        
+        // Delete database record
+        $file->delete();
+
+        return back()->with('success', 'File deleted successfully');
     }
 }

@@ -138,14 +138,39 @@ class HandleInertiaRequests extends Middleware
         
         // Load dashboard translations
         if (file_exists(resource_path("lang/{$locale}/dashboard.php"))) {
-            $translations = array_merge($translations, include resource_path("lang/{$locale}/dashboard.php"));
+            $dashboardTranslations = include resource_path("lang/{$locale}/dashboard.php");
+            foreach ($dashboardTranslations as $key => $value) {
+                $translations["dashboard.{$key}"] = $value;
+            }
         }
         
-        // You can add more translation files here as needed
-        // if (file_exists(resource_path("lang/{$locale}/validation.php"))) {
-        //     $translations['validation'] = include resource_path("lang/{$locale}/validation.php");
-        // }
+        // Load admin translations
+        if (file_exists(resource_path("lang/{$locale}/admin.php"))) {
+            $adminTranslations = include resource_path("lang/{$locale}/admin.php");
+            $this->flattenTranslations($adminTranslations, 'admin', $translations);
+        }
+        
+        // Load general messages
+        if (file_exists(resource_path("lang/{$locale}/messages.php"))) {
+            $messagesTranslations = include resource_path("lang/{$locale}/messages.php");
+            $this->flattenTranslations($messagesTranslations, '', $translations);
+        }
         
         return $translations;
+    }
+    
+    /**
+     * Flatten nested translation arrays
+     */
+    protected function flattenTranslations($array, $prefix, &$result)
+    {
+        foreach ($array as $key => $value) {
+            $newKey = $prefix ? "{$prefix}.{$key}" : $key;
+            if (is_array($value)) {
+                $this->flattenTranslations($value, $newKey, $result);
+            } else {
+                $result[$newKey] = $value;
+            }
+        }
     }
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\TeamLead;
+namespace App\Services;
 
 use App\Repositories\TeamRepository;
 use App\Repositories\IdeaRepository;
@@ -11,7 +11,7 @@ use App\Models\Idea;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
-class TeamLeadService
+class TeamService
 {
     protected TeamRepository $teamRepository;
     protected IdeaRepository $ideaRepository;
@@ -32,7 +32,7 @@ class TeamLeadService
      */
     public function getMyTeam(User $user): ?Team
     {
-        return $this->teamRepository->getTeamsByLeader($user->id)->first();
+        return $this->teamRepository->findByLeaderId($user->id);
     }
 
     /**
@@ -174,13 +174,34 @@ class TeamLeadService
             } else {
                 // Create new idea
                 $data['team_id'] = $team->id;
+                $data['track_id'] = $team->track_id;
+                $data['edition_id'] = $team->hackathon_id;
                 $data['status'] = 'draft';
                 $data['submitted_at'] = now();
+                
+                // Map fields to match database columns
+                if (isset($data['solution'])) {
+                    $data['solution_approach'] = $data['solution'];
+                    unset($data['solution']);
+                }
+                if (isset($data['target_audience']) || isset($data['unique_value'])) {
+                    $data['expected_impact'] = ($data['target_audience'] ?? '') . ' ' . ($data['unique_value'] ?? '');
+                    unset($data['target_audience']);
+                    unset($data['unique_value']);
+                }
+                if (isset($data['technologies']) && is_array($data['technologies'])) {
+                    $data['technologies'] = json_encode($data['technologies']);
+                }
+                
+                // Remove fields that don't exist in the database
+                unset($data['technical_feasibility']);
+                unset($data['business_model']);
+                
                 $idea = $this->ideaRepository->create($data);
             }
 
             // Update team status
-            $this->teamRepository->updateStatus($team->id, 'submitted');
+            $this->teamRepository->update($team->id, ['status' => 'submitted']);
 
             DB::commit();
             return ['success' => true, 'idea' => $idea];
@@ -196,6 +217,24 @@ class TeamLeadService
      */
     public function updateIdea(Idea $idea, array $data): Idea
     {
+        // Map fields to match database columns
+        if (isset($data['solution'])) {
+            $data['solution_approach'] = $data['solution'];
+            unset($data['solution']);
+        }
+        if (isset($data['target_audience']) || isset($data['unique_value'])) {
+            $data['expected_impact'] = ($data['target_audience'] ?? '') . ' ' . ($data['unique_value'] ?? '');
+            unset($data['target_audience']);
+            unset($data['unique_value']);
+        }
+        if (isset($data['technologies']) && is_array($data['technologies'])) {
+            $data['technologies'] = json_encode($data['technologies']);
+        }
+        
+        // Remove fields that don't exist in the database
+        unset($data['technical_feasibility']);
+        unset($data['business_model']);
+        
         return $this->ideaRepository->update($idea->id, $data);
     }
 

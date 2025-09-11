@@ -1,4 +1,7 @@
 <script setup>
+import { useLocalization } from '@/composables/useLocalization'
+
+const { t, isRTL, direction, locale } = useLocalization()
 import { Head, useForm, router } from '@inertiajs/vue3'
 import { ref, computed, watch } from 'vue'
 import Default from '@/Layouts/Default.vue'
@@ -37,16 +40,16 @@ const statusColors = {
 
 // Display names for statuses
 const statusDisplayNames = {
-    pending_review: 'Pending Review',
-    approved: 'Approved',
-    rejected: 'Rejected',
-    in_progress: 'In Progress',
-    completed: 'Completed',
-    draft: 'Draft',
-    submitted: 'Submitted',
-    under_review: 'Under Review',
-    accepted: 'Accepted',
-    needs_revision: 'Needs Revision',
+    pending_review: t('admin.ideas.pending'),
+    approved: t('admin.ideas.approved'),
+    rejected: t('admin.ideas.rejected'),
+    in_progress: t('admin.ideas.in_progress', 'In Progress'),
+    completed: t('admin.ideas.completed', 'Completed'),
+    draft: t('admin.ideas.draft', 'Draft'),
+    submitted: t('admin.ideas.submitted', 'Submitted'),
+    under_review: t('admin.ideas.under_review', 'Under Review'),
+    accepted: t('admin.ideas.accepted', 'Accepted'),
+    needs_revision: t('admin.ideas.needs_revision', 'Needs Revision'),
 }
 
 const filterIdeas = () => {
@@ -79,21 +82,21 @@ const editIdea = (idea) => {
 }
 
 const deleteIdea = (idea) => {
-    if (confirm('Are you sure you want to delete this idea? This action cannot be undone.')) {
+    if (confirm(t('admin.actions.confirm_delete'))) {
         router.delete(route('system-admin.ideas.destroy', idea.id))
     }
 }
 </script>
 
 <template>
-    <Head title="Ideas Management - System Admin" />
+    <Head :title="t('admin.ideas.title')" />
 
     <Default>
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <!-- Header -->
-            <div class="mb-8">
+            <div class="mb-8" :class="{ 'text-right': isRTL, 'text-left': !isRTL }">
                 <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                    System Ideas Management
+                    {{ t('admin.ideas.title') }}
                 </h1>
                 <p class="text-sm text-gray-600 dark:text-gray-400">
                     Manage all ideas across all hackathon editions.

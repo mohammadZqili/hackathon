@@ -80,7 +80,7 @@ class Kernel extends HttpKernel
         'check_track_supervisor' => \App\Http\Middleware\CheckTrackSupervisorRole::class,
         'track_supervisor' => \App\Http\Middleware\TrackSupervisorMiddleware::class,
         'team_member' => \App\Http\Middleware\TeamMemberMiddleware::class,
-        'team.lead' => \App\Http\Middleware\TeamLeaderMiddleware::class,
+        'team.lead' => \App\Http\Middleware\TeamLeadMiddleware::class,
         'team.member' => \App\Http\Middleware\TeamMemberMiddleware::class,
     ];
 }

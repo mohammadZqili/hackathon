@@ -240,6 +240,9 @@
 </template>
 
 <script setup>
+import { useLocalization } from '@/composables/useLocalization'
+
+const { t, isRTL, direction, locale } = useLocalization()
 import { Head, Link, useForm } from '@inertiajs/vue3'
 import { ref, computed, onMounted } from 'vue'
 import Default from '../../../Layouts/Default.vue'

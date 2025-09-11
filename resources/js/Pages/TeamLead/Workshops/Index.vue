@@ -167,7 +167,7 @@ const isRegistered = (workshopId) => {
 const registerForWorkshop = (workshopId) => {
     if (!isRegistered(workshopId)) {
         processing.value = workshopId
-        router.post(route('team-lead.workshops.register', workshopId), {}, {
+        router.post(route('workshops.public.register', workshopId), {}, {
             onSuccess: () => {
                 processing.value = null
             },
@@ -180,7 +180,7 @@ const registerForWorkshop = (workshopId) => {
 
 const cancelRegistration = (registrationId) => {
     if (confirm('Are you sure you want to cancel this registration?')) {
-        router.delete(route('team-lead.workshops.cancel', registrationId))
+        router.delete(route('workshops.public.unregister', registrationId))
     }
 }
 </script>

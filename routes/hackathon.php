@@ -18,19 +18,34 @@ use App\Http\Controllers\SystemAdmin\ReportController as SystemAdminReportContro
 use App\Http\Controllers\SystemAdmin\CheckinController as SystemAdminCheckinController;
 
 use App\Http\Controllers\HackathonAdmin\DashboardController as HackathonAdminDashboardController;
+use App\Http\Controllers\HackathonAdmin\HackathonAdminEditionController as HackathonAdminEditionController;
+use App\Http\Controllers\HackathonAdmin\UserController as HackathonAdminUserController;
 use App\Http\Controllers\HackathonAdmin\TeamController as HackathonAdminTeamController;
-use App\Http\Controllers\HackathonAdmin\IdeaController as HackathonAdminIdeaController;
 use App\Http\Controllers\HackathonAdmin\TrackController as HackathonAdminTrackController;
+use App\Http\Controllers\HackathonAdmin\IdeaController as HackathonAdminIdeaController;
 use App\Http\Controllers\HackathonAdmin\WorkshopController as HackathonAdminWorkshopController;
+use App\Http\Controllers\HackathonAdmin\SpeakerController as HackathonAdminSpeakerController;
+use App\Http\Controllers\HackathonAdmin\OrganizationController as HackathonAdminOrganizationController;
 use App\Http\Controllers\HackathonAdmin\NewsController as HackathonAdminNewsController;
+use App\Http\Controllers\HackathonAdmin\SettingsController as HackathonAdminSettingsController;
+use App\Http\Controllers\HackathonAdmin\ReportController as HackathonAdminReportController;
+use App\Http\Controllers\HackathonAdmin\CheckinController as HackathonAdminCheckinController;
 
-use App\Http\Controllers\TrackSupervisor\DashboardController as TrackSupervisorDashboardController;
-use App\Http\Controllers\TrackSupervisor\IdeaController as TrackSupervisorIdeaController;
-use App\Http\Controllers\TrackSupervisor\WorkshopController as TrackSupervisorWorkshopController;
 
-use App\Http\Controllers\TeamLeader\DashboardController as TeamLeaderDashboardController;
-use App\Http\Controllers\TeamLeader\TeamController as TeamLeaderTeamController;
-use App\Http\Controllers\TeamLeader\IdeaController as TeamLeaderIdeaController;
+//use App\Http\Controllers\HackathonAdmin1\DashboardController as HackathonAdminDashboardController;
+//use App\Http\Controllers\HackathonAdmin1\TeamController as HackathonAdminTeamController;
+//use App\Http\Controllers\HackathonAdmin1\IdeaController as HackathonAdminIdeaController;
+//use App\Http\Controllers\HackathonAdmin1\TrackController as HackathonAdminTrackController;
+//use App\Http\Controllers\HackathonAdmin1\WorkshopController as HackathonAdminWorkshopController;
+//use App\Http\Controllers\HackathonAdmin1\NewsController as HackathonAdminNewsController;
+
+use App\Http\Controllers\TrackSupervisor1\DashboardController as TrackSupervisorDashboardController;
+use App\Http\Controllers\TrackSupervisor1\IdeaController as TrackSupervisorIdeaController;
+use App\Http\Controllers\TrackSupervisor1\WorkshopController as TrackSupervisorWorkshopController;
+
+use App\Http\Controllers\TeamLead\DashboardController as TeamLeaderDashboardController;
+use App\Http\Controllers\TeamLead\TeamController as TeamLeaderTeamController;
+use App\Http\Controllers\TeamLead\IdeaController as TeamLeaderIdeaController;
 
 use App\Http\Controllers\TeamMember\DashboardController as TeamMemberDashboardController;
 use App\Http\Controllers\TeamMember\TeamController as TeamMemberTeamController;
@@ -153,7 +168,7 @@ Route::middleware(['auth', 'role:system_admin|permission:manage-hackathon-editio
 
 /*
 |--------------------------------------------------------------------------
-| HACKATHON ADMIN ROUTES  
+| HACKATHON ADMIN ROUTES
 |--------------------------------------------------------------------------
 | Routes for hackathon administrators managing current edition
 */
@@ -162,39 +177,108 @@ Route::middleware(['auth', 'role:hackathon_admin|permission:manage-current-editi
     // Dashboard
     Route::get('/dashboard', [HackathonAdminDashboardController::class, 'index'])->name('dashboard');
 
-    // Team Management (Current Edition Only)
-    Route::resource('teams', HackathonAdminTeamController::class);
-    Route::post('teams/{team}/approve', [HackathonAdminTeamController::class, 'approve'])->name('teams.approve');
-    Route::post('teams/{team}/reject', [HackathonAdminTeamController::class, 'reject'])->name('teams.reject');
-    Route::post('teams/bulk-approve', [HackathonAdminTeamController::class, 'bulkApprove'])->name('teams.bulk-approve');
-    Route::post('teams/bulk-reject', [HackathonAdminTeamController::class, 'bulkReject'])->name('teams.bulk-reject');
-    Route::get('teams/export', [HackathonAdminTeamController::class, 'export'])->name('teams.export');
+    // Hackathon Edition Management
+    Route::resource('editions', HackathonAdminEditionController::class);
+    Route::post('editions/{edition}/set-current', [HackathonAdminEditionController::class, 'setCurrent'])->name('editions.set-current');
+    Route::post('editions/{edition}/archive', [HackathonAdminEditionController::class, 'archive'])->name('editions.archive');
+    Route::get('editions/{edition}/export', [HackathonAdminEditionController::class, 'export'])->name('editions.export');
 
-    // Track Management (Current Edition Only)
+    // User Management (All Users Across All Editions)
+    Route::resource('users', HackathonAdminUserController::class);
+    Route::post('users/{user}/activate', [HackathonAdminUserController::class, 'activate'])->name('users.activate');
+    Route::post('users/{user}/deactivate', [HackathonAdminUserController::class, 'deactivate'])->name('users.deactivate');
+    Route::post('users/bulk-action', [HackathonAdminUserController::class, 'bulkAction'])->name('users.bulk-action');
+    Route::get('users/export', [HackathonAdminUserController::class, 'export'])->name('users.export');
+
+    // Global Team Management
+    Route::resource('teams', HackathonAdminTeamController::class);
+    Route::post('teams/{team}/add-member', [HackathonAdminTeamController::class, 'addMember'])->name('teams.add-member');
+    Route::delete('teams/{team}/remove-member/{user}', [HackathonAdminTeamController::class, 'removeMember'])->name('teams.remove-member');
+    Route::get('teams/export', [HackathonAdminTeamController::class, 'export'])->name('teams.export');
+    Route::get('users/search', [HackathonAdminUserController::class, 'search'])->name('users.search');
+
+    // Global Track Management
     Route::resource('tracks', HackathonAdminTrackController::class);
     Route::post('tracks/{track}/assign-supervisor', [HackathonAdminTrackController::class, 'assignSupervisor'])->name('tracks.assign-supervisor');
+    Route::get('tracks/export', [HackathonAdminTrackController::class, 'export'])->name('tracks.export');
 
-    // Idea Management (Current Edition Only)
-    Route::resource('ideas', HackathonAdminIdeaController::class);
+    // Global Idea Management
+    Route::resource('ideas', HackathonAdminIdeaController::class)->only(['index', 'show', 'destroy']);
     Route::get('ideas/{idea}/review', [HackathonAdminIdeaController::class, 'review'])->name('ideas.review');
     Route::post('ideas/{idea}/process-review', [HackathonAdminIdeaController::class, 'processReview'])->name('ideas.process-review');
-    Route::post('ideas/{idea}/review.submit', [HackathonAdminIdeaController::class, 'processReview'])->name('ideas.review.submit');
-    Route::post('ideas/{idea}/score', [HackathonAdminIdeaController::class, 'updateScore'])->name('ideas.score');
+    Route::post('ideas/{idea}/review/accept', [HackathonAdminIdeaController::class, 'accept'])->name('ideas.review.accept');
+    Route::post('ideas/{idea}/review/reject', [HackathonAdminIdeaController::class, 'reject'])->name('ideas.review.reject');
+    Route::post('ideas/{idea}/review/need-edit', [HackathonAdminIdeaController::class, 'needEdit'])->name('ideas.review.need-edit');
     Route::post('ideas/{idea}/assign-supervisor', [HackathonAdminIdeaController::class, 'assignSupervisor'])->name('ideas.assign-supervisor');
+    Route::post('ideas/{idea}/update-score', [HackathonAdminIdeaController::class, 'updateScore'])->name('ideas.update-score');
+    Route::post('ideas/{idea}/score', [HackathonAdminIdeaController::class, 'updateScore'])->name('ideas.score');
+    Route::get('ideas/{idea}/files/{file}/download', [HackathonAdminIdeaController::class, 'downloadFile'])->name('ideas.download-file');
+    Route::get('ideas/statistics', [HackathonAdminIdeaController::class, 'statistics'])->name('ideas.statistics');
     Route::get('ideas/export', [HackathonAdminIdeaController::class, 'export'])->name('ideas.export');
 
-    // Workshop Management (Current Edition Only)
+    // Workshop Management (All Editions)
     Route::resource('workshops', HackathonAdminWorkshopController::class);
     Route::get('workshops/{workshop}/attendance', [HackathonAdminWorkshopController::class, 'attendance'])->name('workshops.attendance');
-    Route::post('workshops/{workshop}/mark-attendance', [HackathonAdminWorkshopController::class, 'markAttendance'])->name('workshops.mark-attendance');
     Route::post('workshops/{workshop}/generate-qr', [HackathonAdminWorkshopController::class, 'generateQR'])->name('workshops.generate-qr');
-    Route::get('workshops/{workshop}/export-attendance', [HackathonAdminWorkshopController::class, 'exportAttendance'])->name('workshops.export-attendance');
+    Route::get('workshops/export', [HackathonAdminWorkshopController::class, 'export'])->name('workshops.export');
 
-    // News Management (Current Edition Only)
+    // Speaker Management
+    Route::resource('speakers', HackathonAdminSpeakerController::class);
+    Route::post('speakers/{speaker}/activate', [HackathonAdminSpeakerController::class, 'activate'])->name('speakers.activate');
+    Route::post('speakers/{speaker}/deactivate', [HackathonAdminSpeakerController::class, 'deactivate'])->name('speakers.deactivate');
+
+    // Organization Management
+    Route::resource('organizations', HackathonAdminOrganizationController::class);
+    Route::post('organizations/{organization}/activate', [HackathonAdminOrganizationController::class, 'activate'])->name('organizations.activate');
+    Route::post('organizations/{organization}/deactivate', [HackathonAdminOrganizationController::class, 'deactivate'])->name('organizations.deactivate');
+
+    // News Management (All Editions)
+    Route::get('news/media-center', [HackathonAdminNewsController::class, 'mediaCenter'])->name('news.media-center');
+    Route::post('news/upload-temp', [HackathonAdminNewsController::class, 'uploadTemp'])->name('news.upload-temp');
+    Route::delete('news/delete-temp', [HackathonAdminNewsController::class, 'deleteTemp'])->name('news.delete-temp');
+    Route::get('news/media/{mediaId}', [HackathonAdminNewsController::class, 'getMedia'])->name('news.get-media');
+    Route::delete('news/media/{mediaId}', [HackathonAdminNewsController::class, 'deleteMedia'])->name('news.media.delete');
     Route::resource('news', HackathonAdminNewsController::class);
     Route::post('news/{news}/publish', [HackathonAdminNewsController::class, 'publish'])->name('news.publish');
     Route::post('news/{news}/unpublish', [HackathonAdminNewsController::class, 'unpublish'])->name('news.unpublish');
-    Route::post('news/{news}/tweet', [HackathonAdminNewsController::class, 'tweet'])->name('news.tweet');
+
+    // System Settings
+    Route::prefix('settings')->name('settings.')->group(function () {
+        Route::get('/', [HackathonAdminSettingsController::class, 'index'])->name('index');
+        Route::get('/smtp', [HackathonAdminSettingsController::class, 'smtp'])->name('smtp');
+        Route::post('/smtp', [HackathonAdminSettingsController::class, 'updateSmtp'])->name('smtp.update');
+        Route::get('/branding', [HackathonAdminSettingsController::class, 'branding'])->name('branding');
+        Route::post('/branding', [HackathonAdminSettingsController::class, 'updateBranding'])->name('branding.update');
+        Route::get('/twitter', [HackathonAdminSettingsController::class, 'twitter'])->name('twitter');
+        Route::post('/twitter', [HackathonAdminSettingsController::class, 'updateTwitter'])->name('twitter.update');
+        Route::get('/sms', [HackathonAdminSettingsController::class, 'sms'])->name('sms');
+        Route::post('/sms', [HackathonAdminSettingsController::class, 'updateSms'])->name('sms.update');
+        Route::post('/notifications', [HackathonAdminSettingsController::class, 'updateNotifications'])->name('notifications.update');
+    });
+
+    // Reports & Analytics
+    Route::prefix('reports')->name('reports.')->group(function () {
+        Route::get('/', [HackathonAdminReportController::class, 'index'])->name('index');
+        Route::get('/users', [HackathonAdminReportController::class, 'users'])->name('users');
+        Route::get('/teams', [HackathonAdminReportController::class, 'teams'])->name('teams');
+        Route::get('/ideas', [HackathonAdminReportController::class, 'ideas'])->name('ideas');
+        Route::get('/workshops', [HackathonAdminReportController::class, 'workshops'])->name('workshops');
+        Route::get('/system-health', [HackathonAdminReportController::class, 'systemHealth'])->name('system-health');
+        Route::post('/generate', [HackathonAdminReportController::class, 'generateReport'])->name('generate');
+        Route::post('/export-pdf', [HackathonAdminReportController::class, 'exportPdf'])->name('export-pdf');
+        Route::post('/schedule', [HackathonAdminReportController::class, 'scheduleReports'])->name('schedule');
+    });
+
+    // Check-ins Management
+    Route::prefix('checkins')->name('checkins.')->group(function () {
+        Route::get('/', [HackathonAdminCheckinController::class, 'index'])->name('index');
+        Route::post('/process-qr', [HackathonAdminCheckinController::class, 'processQR'])->name('process-qr');
+        Route::post('/mark-attendance', [HackathonAdminCheckinController::class, 'markAttendance'])->name('mark-attendance');
+        Route::get('/search', [HackathonAdminCheckinController::class, 'search'])->name('search');
+        Route::get('/export', [HackathonAdminCheckinController::class, 'export'])->name('export');
+        Route::get('/workshop/{workshop}', [HackathonAdminCheckinController::class, 'workshopAttendance'])->name('workshop-attendance');
+        Route::get('/generate-qr/{registration}', [HackathonAdminCheckinController::class, 'generateQR'])->name('generate-qr');
+    });
 });
 
 /*
@@ -260,22 +344,24 @@ Route::middleware(['auth', 'role:team_leader|permission:create-manage-team'])->p
 | Routes for team members with read-only access
 */
 
-Route::middleware(['auth', 'role:team_member|permission:view-team-info'])->prefix('team-member')->name('team-member.')->group(function () {
-    // Dashboard
-    Route::get('/dashboard', [TeamMemberDashboardController::class, 'index'])->name('dashboard');
-
-    // Team Information (Read-Only)
-    Route::get('/team', [TeamMemberTeamController::class, 'show'])->name('team.show');
-    Route::post('/team/leave', [TeamMemberTeamController::class, 'leaveTeam'])->name('team.leave');
-    Route::post('/team/contact-leader', [TeamMemberTeamController::class, 'contactLeader'])->name('team.contact-leader');
-
-    // Workshop Registration
-    Route::get('/workshops', [TeamMemberWorkshopController::class, 'index'])->name('workshops.index');
-    Route::get('/workshops/{workshop}', [TeamMemberWorkshopController::class, 'show'])->name('workshops.show');
-    Route::post('/workshops/{workshop}/register', [TeamMemberWorkshopController::class, 'register'])->name('workshops.register');
-    Route::delete('/workshops/{workshop}/unregister', [TeamMemberWorkshopController::class, 'unregister'])->name('workshops.unregister');
-    Route::get('/workshops/{workshop}/certificate', [TeamMemberWorkshopController::class, 'downloadCertificate'])->name('workshops.certificate');
-});
+// Team member routes are now defined in routes/team-member.php to avoid conflicts
+// Commented out to prevent duplicate route names
+// Route::middleware(['auth', 'role:team_member|permission:view-team-info'])->prefix('team-member')->name('team-member.')->group(function () {
+//     // Dashboard
+//     Route::get('/dashboard', [TeamMemberDashboardController::class, 'index'])->name('dashboard');
+//
+//     // Team Information (Read-Only)
+//     Route::get('/team', [TeamMemberTeamController::class, 'show'])->name('team.show');
+//     Route::post('/team/leave', [TeamMemberTeamController::class, 'leaveTeam'])->name('team.leave');
+//     Route::post('/team/contact-leader', [TeamMemberTeamController::class, 'contactLeader'])->name('team.contact-leader');
+//
+//     // Workshop Registration
+//     Route::get('/workshops', [TeamMemberWorkshopController::class, 'index'])->name('workshops.index');
+//     Route::get('/workshops/{workshop}', [TeamMemberWorkshopController::class, 'show'])->name('workshops.show');
+//     Route::post('/workshops/{workshop}/register', [TeamMemberWorkshopController::class, 'register'])->name('workshops.register');
+//     Route::delete('/workshops/{workshop}/unregister', [TeamMemberWorkshopController::class, 'unregister'])->name('workshops.unregister');
+//     Route::get('/workshops/{workshop}/certificate', [TeamMemberWorkshopController::class, 'downloadCertificate'])->name('workshops.certificate');
+// });
 
 /*
 |--------------------------------------------------------------------------

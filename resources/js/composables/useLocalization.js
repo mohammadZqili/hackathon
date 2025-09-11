@@ -15,13 +15,15 @@ export function useLocalization() {
             name: 'English',
             native: 'English',
             flag: '🇬🇧',
-            direction: 'ltr'
+            direction: 'ltr',
+            code: 'en'
         },
         ar: {
             name: 'Arabic',
             native: 'العربية',
             flag: '🇸🇦',
-            direction: 'rtl'
+            direction: 'rtl',
+            code: 'ar'
         }
     })
     
@@ -32,10 +34,16 @@ export function useLocalization() {
     const isRTL = computed(() => direction.value === 'rtl')
     
     // Translation function
-    const t = (key, replacements = {}) => {
+    const t = (key, defaultValue = null, replacements = {}) => {
+        // Handle replacements as second argument if no default value
+        if (typeof defaultValue === 'object' && defaultValue !== null) {
+            replacements = defaultValue
+            defaultValue = null
+        }
+        
         // Get translation from page props
         const translations = page.props.translations || {}
-        let translation = translations[key] || key
+        let translation = translations[key] || defaultValue || key
         
         // Replace placeholders
         Object.keys(replacements).forEach(placeholder => {

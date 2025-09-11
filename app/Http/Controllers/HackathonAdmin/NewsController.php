@@ -3,288 +3,469 @@
 namespace App\Http\Controllers\HackathonAdmin;
 
 use App\Http\Controllers\Controller;
-use App\Models\News;
-use App\Models\HackathonEdition;
-use App\Http\Requests\HackathonAdmin\CreateNewsRequest;
-use App\Http\Requests\HackathonAdmin\UpdateNewsRequest;
-use App\Http\Requests\HackathonAdmin\PublishNewsRequest;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
-use Inertia\Response;
-use Carbon\Carbon;
+use App\Models\News;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Validator;
 
 class NewsController extends Controller
 {
-    /**
-     * Display a listing of news articles.
-     */
-    public function index(Request $request): Response
+    public function index()
     {
-        $currentEdition = HackathonEdition::where('is_current', true)->first();
-        
-        if (!$currentEdition) {
-            return Inertia::render('HackathonAdmin/NoEdition');
-        }
-
-        $query = News::with('author');
-
-        // Apply filters
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('content', 'like', "%{$search}%");
-            });
-        }
-
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        if ($request->filled('is_featured')) {
-            $query->where('is_featured', $request->boolean('is_featured'));
-        }
-
-        if ($request->filled('category')) {
-            $query->where('category', $request->category);
-        }
-
-        $news = $query->latest()->paginate(15)->withQueryString();
-
-        // Get statistics (news is global, not edition-specific)
-        $statistics = [
-            'total' => News::count(),
-            'draft' => News::where('status', 'draft')->count(),
-            'published' => News::where('status', 'published')->count(),
-            'archived' => News::where('status', 'archived')->count(),
-            'featured' => News::where('is_featured', true)->count(),
-        ];
-
-        $categories = [
-            'announcement' => 'Announcement',
-            'update' => 'Update',
-            'workshop' => 'Workshop',
-            'deadline' => 'Deadline',
-            'winner' => 'Winner',
-            'general' => 'General',
-        ];
+        $news = News::with(['author'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(15);
 
         return Inertia::render('HackathonAdmin/News/Index', [
-            'news' => $news,
-            'statistics' => $statistics,
-            'categories' => $categories,
-            'filters' => $request->only(['search', 'status', 'is_featured', 'category']),
+            'news' => $news
         ]);
     }
 
-    /**
-     * Show the form for creating a new news article.
-     */
-    public function create(): Response
+    public function create()
     {
-        $currentEdition = HackathonEdition::where('is_current', true)->first();
-        
-        if (!$currentEdition) {
-            return Inertia::render('HackathonAdmin/NoEdition');
-        }
-
-        $categories = [
-            'announcement' => 'Announcement',
-            'update' => 'Update',
-            'workshop' => 'Workshop',
-            'deadline' => 'Deadline',
-            'winner' => 'Winner',
-            'general' => 'General',
-        ];
+        // Define static categories for now
+        $categories = collect([
+            ['id' => 1, 'name' => 'Announcements'],
+            ['id' => 2, 'name' => 'Updates'],
+            ['id' => 3, 'name' => 'Events'],
+            ['id' => 4, 'name' => 'Workshops'],
+            ['id' => 5, 'name' => 'Winners'],
+            ['id' => 6, 'name' => 'General']
+        ]);
 
         return Inertia::render('HackathonAdmin/News/Create', [
-            'categories' => $categories,
-            'currentEdition' => $currentEdition,
+            'categories' => $categories
         ]);
     }
 
-    /**
-     * Store a newly created news article.
-     */
-    public function store(CreateNewsRequest $request)
+    public function store(Request $request)
     {
-        $currentEdition = HackathonEdition::where('is_current', true)->first();
-        
-        if (!$currentEdition) {
-            return back()->with('error', 'No current hackathon edition found.');
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'content' => 'required|string',
+            'category_id' => 'nullable|integer|in:1,2,3,4,5,6',
+            'video_url' => 'nullable|url',
+            'twitter_message' => 'nullable|string|max:280',
+            'publish_to_twitter' => 'boolean',
+            'keywords' => 'nullable|string',
+            'main_image' => 'nullable|string', // Now expects path from FilePond
+            'gallery_images' => 'nullable|array',
+            'gallery_images.*' => 'nullable|string' // Now expects paths from FilePond
+        ]);
+
+        // Handle main image - move from temp to permanent storage
+        $featuredImagePath = null;
+        if (!empty($validated['main_image'])) {
+            $tempPath = $validated['main_image'];
+            if (Storage::disk('public')->exists($tempPath)) {
+                $filename = basename($tempPath);
+                $newPath = 'news/featured/' . $filename;
+                Storage::disk('public')->move($tempPath, $newPath);
+                $featuredImagePath = $newPath;
+            }
         }
 
-        $validated = $request->validated();
-        $validated['author_id'] = auth()->id();
-        $validated['slug'] = Str::slug($validated['title']);
-        
-        // Handle featured image upload if provided
-        if ($request->hasFile('featured_image')) {
-            $path = $request->file('featured_image')->store('news', 'public');
-            $validated['featured_image'] = $path;
+        // Handle gallery images - move from temp to permanent storage
+        $galleryImages = [];
+        if (!empty($validated['gallery_images'])) {
+            foreach ($validated['gallery_images'] as $tempPath) {
+                if (Storage::disk('public')->exists($tempPath)) {
+                    $filename = basename($tempPath);
+                    $newPath = 'news/gallery/' . $filename;
+                    Storage::disk('public')->move($tempPath, $newPath);
+                    $galleryImages[] = $newPath;
+                }
+            }
         }
 
-        $news = News::create($validated);
+        // Process keywords into tags array
+        $tags = [];
+        if (!empty($validated['keywords'])) {
+            $tags = array_map('trim', explode(',', $validated['keywords']));
+        }
 
-        return redirect()->route('hackathon-admin.news.index')
+        // Create the news article
+        $news = News::create([
+            'title' => $validated['title'],
+            'slug' => Str::slug($validated['title']),
+            'content' => $validated['content'],
+            'excerpt' => Str::limit(strip_tags($validated['content']), 200),
+            'featured_image_path' => $featuredImagePath,
+            'status' => 'draft',
+            'author_id' => auth()->id(),
+            'tags' => $tags,
+            'auto_post_twitter' => $validated['publish_to_twitter'] ?? false,
+            'seo_data' => [
+                'keywords' => $validated['keywords'] ?? '',
+                'video_url' => $validated['video_url'] ?? '',
+                'twitter_message' => $validated['twitter_message'] ?? '',
+                'gallery_images' => $galleryImages
+            ]
+        ]);
+
+        return redirect()->route('system-admin.news.index')
             ->with('success', 'News article created successfully.');
     }
 
-    /**
-     * Display the specified news article.
-     */
-    public function show(News $news): Response
+    public function show(News $news)
     {
+        return Inertia::render('HackathonAdmin/News/Show', [
+            'news' => $news
+        ]);
+    }
+
+    public function edit(News $news)
+    {
+        // Define static categories for now
+        $categories = collect([
+            ['id' => 1, 'name' => 'Announcements'],
+            ['id' => 2, 'name' => 'Updates'],
+            ['id' => 3, 'name' => 'Events'],
+            ['id' => 4, 'name' => 'Workshops'],
+            ['id' => 5, 'name' => 'Winners'],
+            ['id' => 6, 'name' => 'General']
+        ]);
+
+        // Load additional data for the news article
         $news->load('author');
 
-        return Inertia::render('HackathonAdmin/News/Show', [
-            'news' => $news,
-        ]);
-    }
-
-    /**
-     * Show the form for editing the news article.
-     */
-    public function edit(News $news): Response
-    {
-        $categories = [
-            'announcement' => 'Announcement',
-            'update' => 'Update',
-            'workshop' => 'Workshop',
-            'deadline' => 'Deadline',
-            'winner' => 'Winner',
-            'general' => 'General',
-        ];
+        // Add computed attributes
+        $news->main_image_url = $news->featured_image_url;
+        $news->gallery_images = $news->seo_data['gallery_images'] ?? [];
+        $news->video_url = $news->seo_data['video_url'] ?? '';
+        $news->twitter_message = $news->seo_data['twitter_message'] ?? '';
+        $news->keywords = is_array($news->tags) ? implode(', ', $news->tags) : '';
+        $news->publish_to_twitter = $news->auto_post_twitter;
 
         return Inertia::render('HackathonAdmin/News/Edit', [
-            'news' => $news,
-            'categories' => $categories,
+            'article' => $news,
+            'categories' => $categories
         ]);
     }
 
-    /**
-     * Update the specified news article.
-     */
-    public function update(UpdateNewsRequest $request, News $news)
+    public function update(Request $request, News $news)
     {
-        $validated = $request->validated();
-        
-        // Update slug if title changed
-        if (isset($validated['title']) && $validated['title'] !== $news->title) {
-            $validated['slug'] = Str::slug($validated['title']);
+        // Check if this is a partial update (e.g., just toggling Twitter publish)
+        if ($request->has('publish_to_twitter') && count($request->all()) === 1) {
+            $news->update([
+                'auto_post_twitter' => $request->boolean('publish_to_twitter')
+            ]);
+
+            return redirect()->route('system-admin.news.index')
+                ->with('success', 'Twitter publishing setting updated.');
         }
-        
-        // Handle featured image upload if provided
-        if ($request->hasFile('featured_image')) {
-            // Delete old image if exists
-            if ($news->featured_image) {
-                \Storage::disk('public')->delete($news->featured_image);
+
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'content' => 'required|string',
+            'category_id' => 'nullable|integer|in:1,2,3,4,5,6',
+            'video_url' => 'nullable|url',
+            'twitter_message' => 'nullable|string|max:280',
+            'publish_to_twitter' => 'boolean',
+            'keywords' => 'nullable|string',
+            'main_image' => 'nullable|string',
+            'gallery_images' => 'nullable|array',
+            'gallery_images.*' => 'nullable|string'
+        ]);
+
+        // Handle main image - move from temp to permanent storage
+        $featuredImagePath = $news->featured_image_path;
+        if (!empty($validated['main_image'])) {
+            $tempPath = $validated['main_image'];
+            if (Storage::disk('public')->exists($tempPath)) {
+                // Delete old image if exists
+                if ($featuredImagePath) {
+                    Storage::disk('public')->delete($featuredImagePath);
+                }
+                $filename = basename($tempPath);
+                $newPath = 'news/featured/' . $filename;
+                Storage::disk('public')->move($tempPath, $newPath);
+                $featuredImagePath = $newPath;
             }
-            
-            $path = $request->file('featured_image')->store('news', 'public');
-            $validated['featured_image'] = $path;
         }
 
-        $news->update($validated);
+        // Handle gallery images - merge with existing
+        $existingGallery = $news->seo_data['gallery_images'] ?? [];
+        $galleryImages = $existingGallery;
 
-        return redirect()->route('hackathon-admin.news.index')
+        if (!empty($validated['gallery_images'])) {
+            foreach ($validated['gallery_images'] as $tempPath) {
+                if (Storage::disk('public')->exists($tempPath)) {
+                    $filename = basename($tempPath);
+                    $newPath = 'news/gallery/' . $filename;
+                    Storage::disk('public')->move($tempPath, $newPath);
+                    $galleryImages[] = $newPath;
+                }
+            }
+        }
+
+        // Process keywords into tags array
+        $tags = [];
+        if (!empty($validated['keywords'])) {
+            $tags = array_map('trim', explode(',', $validated['keywords']));
+        }
+
+        // Update the news article
+        $news->update([
+            'title' => $validated['title'],
+            'slug' => Str::slug($validated['title']),
+            'content' => $validated['content'],
+            'excerpt' => Str::limit(strip_tags($validated['content']), 200),
+            'featured_image_path' => $featuredImagePath,
+            'tags' => $tags,
+            'auto_post_twitter' => $validated['publish_to_twitter'] ?? false,
+            'seo_data' => [
+                'keywords' => $validated['keywords'] ?? '',
+                'video_url' => $validated['video_url'] ?? '',
+                'twitter_message' => $validated['twitter_message'] ?? '',
+                'gallery_images' => $galleryImages
+            ]
+        ]);
+
+        return redirect()->route('system-admin.news.index')
             ->with('success', 'News article updated successfully.');
     }
 
-    /**
-     * Remove the specified news article.
-     */
     public function destroy(News $news)
     {
-        // Delete featured image if exists
-        if ($news->featured_image) {
-            \Storage::disk('public')->delete($news->featured_image);
-        }
-
         $news->delete();
 
-        return redirect()->route('hackathon-admin.news.index')
+        return redirect()->route('system-admin.news.index')
             ->with('success', 'News article deleted successfully.');
     }
 
-    /**
-     * Publish a news article.
-     */
-    public function publish(PublishNewsRequest $request, News $news)
+    public function publish(News $news)
     {
-        $validated = $request->validated();
+        $news->publish();
 
-        if (isset($validated['publish_at'])) {
-            $news->publish_at = $validated['publish_at'];
-            $news->status = 'scheduled';
-        } else {
-            $news->publish_at = now();
-            $news->status = 'published';
-        }
+        return redirect()->route('system-admin.news.index')
+            ->with('success', 'News article published successfully.');
+    }
 
-        $news->save();
+    public function unpublish(News $news)
+    {
+        $news->update(['status' => 'draft']);
 
-        // Post to Twitter if requested
-        if ($request->boolean('post_to_twitter')) {
-            $this->postToTwitter($news);
-        }
-
-        return back()->with('success', 'News article published successfully.');
+        return redirect()->route('system-admin.news.index')
+            ->with('success', 'News article unpublished successfully.');
     }
 
     /**
-     * Post news to Twitter.
+     * Handle temporary file uploads for FilePond
      */
-    public function tweet(News $news)
+    public function uploadTemp(Request $request)
     {
-        if ($news->tweeted_at) {
-            return back()->with('error', 'This article has already been tweeted.');
+        // Get the first uploaded file regardless of field name
+        $file = null;
+        $fieldName = null;
+
+        foreach ($request->files->keys() as $key) {
+            if ($request->hasFile($key)) {
+                $file = $request->file($key);
+                $fieldName = $key;
+                break;
+            }
         }
 
-        $success = $this->postToTwitter($news);
-
-        if ($success) {
-            return back()->with('success', 'News article posted to Twitter successfully.');
+        if (!$file) {
+            return response()->json(['error' => 'No file uploaded'], 422);
         }
 
-        return back()->with('error', 'Failed to post to Twitter. Please check your Twitter configuration.');
-    }
+        // Validate the file
+        $validator = Validator::make(
+            [$fieldName => $file],
+            [$fieldName => 'required|file|image|max:5120'] // 5MB max
+        );
 
-    /**
-     * Schedule news for publishing.
-     */
-    public function schedule(Request $request, News $news)
-    {
-        $request->validate([
-            'publish_at' => 'required|date|after:now',
-            'post_to_twitter' => 'boolean',
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $filename = uniqid() . '_' . $file->getClientOriginalName();
+        $path = $file->storeAs('temp/news', $filename, 'public');
+
+        // Store in session for later retrieval
+        $tempFiles = session('temp_news_files', []);
+        $tempFiles[] = $path;
+        session(['temp_news_files' => $tempFiles]);
+
+        return response()->json([
+            'path' => $path,
+            'filename' => $filename
         ]);
-
-        $news->publish_at = $request->publish_at;
-        $news->status = 'scheduled';
-        $news->twitter_scheduled = $request->boolean('post_to_twitter');
-        $news->save();
-
-        return back()->with('success', 'News article scheduled successfully.');
     }
 
     /**
-     * Post to Twitter helper method.
+     * Delete temporary uploaded files
      */
-    private function postToTwitter(News $news): bool
+    public function deleteTemp(Request $request)
     {
-        try {
-            // Here you would implement Twitter API integration
-            // For now, we'll simulate success and update the timestamp
-            
-            $news->tweeted_at = now();
-            $news->save();
-            
-            return true;
-        } catch (\Exception $e) {
-            \Log::error('Twitter posting failed: ' . $e->getMessage());
-            return false;
+        $path = $request->input('path');
+
+        if ($path && Storage::disk('public')->exists($path)) {
+            Storage::disk('public')->delete($path);
+
+            // Remove from session
+            $tempFiles = session('temp_news_files', []);
+            $tempFiles = array_diff($tempFiles, [$path]);
+            session(['temp_news_files' => $tempFiles]);
         }
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Clean up old temporary files
+     */
+    public function cleanupTemp()
+    {
+        $tempPath = 'temp/news';
+        $files = Storage::disk('public')->files($tempPath);
+
+        foreach ($files as $file) {
+            $lastModified = Storage::disk('public')->lastModified($file);
+            // Delete files older than 24 hours
+            if (now()->timestamp - $lastModified > 86400) {
+                Storage::disk('public')->delete($file);
+            }
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Display the media center
+     */
+    public function mediaCenter()
+    {
+        // Get all news articles with their media
+        $articles = News::select('id', 'title')->orderBy('created_at', 'desc')->get();
+
+        // Collect all media files from news articles
+        $media = [];
+        $newsItems = News::whereNotNull('featured_image_path')
+            ->orWhereNotNull('seo_data->gallery_images')
+            ->get();
+
+        foreach ($newsItems as $news) {
+            // Add featured image
+            if ($news->featured_image_path) {
+                $media[] = [
+                    'id' => 'featured_' . $news->id,
+                    'url' => asset('storage/' . $news->featured_image_path),
+                    'type' => 'image',
+                    'title' => $news->title . ' - Featured Image',
+                    'alt' => $news->title,
+                    'article' => $news->title,
+                    'articleId' => $news->id,
+                    'uploadedAt' => $news->created_at,
+                    'path' => $news->featured_image_path
+                ];
+            }
+
+            // Add gallery images
+            $galleryImages = $news->seo_data['gallery_images'] ?? [];
+            foreach ($galleryImages as $index => $imagePath) {
+                $media[] = [
+                    'id' => 'gallery_' . $news->id . '_' . $index,
+                    'url' => asset('storage/' . $imagePath),
+                    'type' => 'image',
+                    'title' => $news->title . ' - Gallery Image ' . ($index + 1),
+                    'alt' => $news->title,
+                    'article' => $news->title,
+                    'articleId' => $news->id,
+                    'uploadedAt' => $news->created_at,
+                    'path' => $imagePath
+                ];
+            }
+
+            // Add videos if any
+            $videoUrl = $news->seo_data['video_url'] ?? null;
+            if ($videoUrl) {
+                $media[] = [
+                    'id' => 'video_' . $news->id,
+                    'url' => $videoUrl,
+                    'type' => 'video',
+                    'title' => $news->title . ' - Video',
+                    'alt' => $news->title,
+                    'article' => $news->title,
+                    'articleId' => $news->id,
+                    'uploadedAt' => $news->created_at,
+                    'path' => null
+                ];
+            }
+        }
+
+        return Inertia::render('HackathonAdmin/News/MediaCenter', [
+            'media' => $media,
+            'articles' => $articles
+        ]);
+    }
+
+    /**
+     * Get single media item
+     */
+    public function getMedia($mediaId)
+    {
+        // Parse media ID to find the source
+        $parts = explode('_', $mediaId);
+        $type = $parts[0]; // 'featured', 'gallery', or 'video'
+        $newsId = $parts[1];
+
+        $news = News::findOrFail($newsId);
+
+        if ($type === 'featured') {
+            return response()->json([
+                'url' => asset('storage/' . $news->featured_image_path),
+                'type' => 'image',
+                'title' => $news->title
+            ]);
+        }
+
+        // Handle other types...
+        return response()->json(['error' => 'Media not found'], 404);
+    }
+
+    /**
+     * Delete media item
+     */
+    public function deleteMedia($mediaId)
+    {
+        // Parse media ID to find the source
+        $parts = explode('_', $mediaId);
+        $type = $parts[0]; // 'featured', 'gallery', or 'video'
+        $newsId = $parts[1];
+
+        $news = News::findOrFail($newsId);
+
+        if ($type === 'featured') {
+            // Delete the featured image
+            if ($news->featured_image_path && Storage::disk('public')->exists($news->featured_image_path)) {
+                Storage::disk('public')->delete($news->featured_image_path);
+                $news->update(['featured_image_path' => null]);
+            }
+        } elseif ($type === 'gallery' && isset($parts[2])) {
+            // Delete gallery image
+            $index = (int)$parts[2];
+            $galleryImages = $news->seo_data['gallery_images'] ?? [];
+
+            if (isset($galleryImages[$index])) {
+                $imagePath = $galleryImages[$index];
+                if (Storage::disk('public')->exists($imagePath)) {
+                    Storage::disk('public')->delete($imagePath);
+                }
+
+                // Remove from array and reindex
+                array_splice($galleryImages, $index, 1);
+
+                $seoData = $news->seo_data;
+                $seoData['gallery_images'] = $galleryImages;
+                $news->update(['seo_data' => $seoData]);
+            }
+        }
+
+        return response()->json(['success' => true]);
     }
 }
