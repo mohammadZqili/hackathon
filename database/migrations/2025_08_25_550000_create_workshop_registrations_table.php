@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('workshop_registrations', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('workshop_id')->constrained()->onDelete('cascade');
+            $table->foreignId('workshop_id');
             $table->char('user_id', 26);
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->string('barcode', 50)->unique(); // For attendance tracking
@@ -27,7 +27,7 @@ return new class extends Migration
             $table->text('notes')->nullable();
             $table->json('additional_data')->nullable(); // Extra registration data
             $table->timestamps();
-            
+
             $table->unique(['workshop_id', 'user_id']);
             $table->index('barcode');
             $table->index(['workshop_id', 'status']);

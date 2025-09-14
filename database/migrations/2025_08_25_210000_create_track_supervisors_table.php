@@ -13,12 +13,11 @@ return new class extends Migration
     {
         Schema::create('track_supervisors', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('track_id')->constrained()->onDelete('cascade');
+            $table->foreignId('track_id');
             $table->char('user_id', 26);
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->boolean('is_primary')->default(false);
             $table->timestamps();
-            
+
             $table->unique(['track_id', 'user_id']);
             $table->index('is_primary');
         });

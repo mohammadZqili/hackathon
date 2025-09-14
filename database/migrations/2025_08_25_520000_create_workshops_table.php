@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('workshops', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('hackathon_id')->constrained()->onDelete('cascade');
+            $table->foreignId('hackathon_id');
             $table->string('title');
             $table->string('slug')->unique();
             $table->text('description');
@@ -32,7 +32,7 @@ return new class extends Migration
             $table->datetime('registration_deadline')->nullable();
             $table->json('settings')->nullable(); // Additional settings
             $table->timestamps();
-            
+
             $table->index(['hackathon_id', 'is_active']);
             $table->index(['start_time', 'end_time']);
             $table->index('type');

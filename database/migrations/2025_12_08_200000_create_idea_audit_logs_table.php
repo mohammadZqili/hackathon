@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('idea_audit_logs', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('idea_id')->constrained()->onDelete('cascade');
+            $table->foreignId('idea_id');
             $table->char('user_id', 26)->nullable();
             $table->foreign('user_id')->references('id')->on('users')->onDelete('set null');
             $table->string('action'); // created, updated, submitted, status_changed, etc.
@@ -25,7 +25,7 @@ return new class extends Migration
             $table->ipAddress('ip_address')->nullable();
             $table->string('user_agent', 1023)->nullable();
             $table->timestamps();
-            
+
             $table->index(['idea_id', 'action']);
             $table->index(['idea_id', 'created_at']);
             $table->index('action');

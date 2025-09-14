@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('team_members', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('team_id')->constrained()->onDelete('cascade');
+            $table->foreignId('team_id');
             $table->char('user_id', 26);
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->enum('status', ['pending', 'accepted', 'rejected', 'removed'])->default('pending');
@@ -24,7 +24,7 @@ return new class extends Migration
             $table->foreign('invited_by')->references('id')->on('users')->onDelete('set null');
             $table->text('invitation_message')->nullable();
             $table->timestamps();
-            
+
             $table->unique(['team_id', 'user_id']);
             $table->index(['team_id', 'status']);
             $table->index('status');

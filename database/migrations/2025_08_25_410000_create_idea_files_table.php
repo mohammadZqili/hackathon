@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('idea_files', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('idea_id')->constrained()->onDelete('cascade');
+            $table->foreignId('idea_id');
             $table->string('original_name');
             $table->string('file_name');
             $table->string('file_path');
@@ -27,7 +27,7 @@ return new class extends Migration
             $table->boolean('is_virus_scanned')->default(false);
             $table->boolean('is_safe')->default(true);
             $table->timestamps();
-            
+
             $table->index(['idea_id', 'file_category']);
             $table->index('uploaded_by');
             $table->index('is_virus_scanned');

@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('ideas', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('team_id')->constrained()->onDelete('cascade');
-            $table->foreignId('track_id')->constrained();
+            $table->foreignId('team_id');
+            $table->foreignId('track_id');
             $table->string('title');
             $table->text('description');
             $table->text('problem_statement')->nullable();
@@ -30,7 +30,7 @@ return new class extends Migration
             $table->timestamp('reviewed_at')->nullable();
             $table->json('evaluation_scores')->nullable(); // Detailed scoring breakdown
             $table->timestamps();
-            
+
             $table->index(['team_id', 'status']);
             $table->index(['track_id', 'status']);
             $table->index('status');

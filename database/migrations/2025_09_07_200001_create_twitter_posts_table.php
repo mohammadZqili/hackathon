@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('twitter_posts', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('news_id')->constrained('news')->onDelete('cascade');
+            $table->foreignId('news_id');
             $table->string('tweet_id', 100)->nullable();
             $table->text('tweet_content');
             $table->json('tweet_metadata')->nullable(); // likes, retweets, etc
@@ -21,7 +21,7 @@ return new class extends Migration
             $table->text('error_message')->nullable();
             $table->timestamp('posted_at')->nullable();
             $table->timestamps();
-            
+
             $table->index(['news_id', 'status']);
         });
     }

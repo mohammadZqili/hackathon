@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('tracks', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('hackathon_id')->constrained()->onDelete('cascade');
+            $table->foreignId('hackathon_id');
             $table->string('name');
             $table->text('description')->nullable();
             $table->string('icon')->nullable();
@@ -23,7 +23,7 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->integer('sort_order')->default(0);
             $table->timestamps();
-            
+
             $table->index(['hackathon_id', 'is_active']);
             $table->index('sort_order');
         });

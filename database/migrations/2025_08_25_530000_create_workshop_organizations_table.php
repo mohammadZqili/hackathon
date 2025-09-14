@@ -13,11 +13,11 @@ return new class extends Migration
     {
         Schema::create('workshop_organizations', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('workshop_id')->constrained()->onDelete('cascade');
-            $table->foreignId('organization_id')->constrained()->onDelete('cascade');
+            $table->foreignId('workshop_id');
+            $table->foreignId('organization_id');
             $table->enum('role', ['organizer', 'sponsor', 'partner'])->default('organizer');
             $table->timestamps();
-            
+
             $table->unique(['workshop_id', 'organization_id']);
             $table->index('role');
         });

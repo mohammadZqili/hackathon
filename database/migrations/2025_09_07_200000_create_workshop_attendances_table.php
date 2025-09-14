@@ -20,14 +20,14 @@ return new class extends Migration
             $table->string('national_id', 20);
             $table->string('job_title')->nullable();
             $table->enum('job_type', ['student', 'employee'])->default('student');
-            $table->foreignId('workshop_id')->constrained('workshops')->onDelete('cascade');
+            $table->foreignId('workshop_id');
             $table->boolean('attended')->default(false);
             $table->timestamp('registered_at');
             $table->timestamp('attended_at')->nullable();
             $table->char('attended_by', 26)->nullable(); // Who scanned the QR
             $table->text('notes')->nullable();
             $table->timestamps();
-            
+
             $table->foreign('attended_by')->references('id')->on('users')->onDelete('set null');
             $table->index(['workshop_id', 'attended']);
             $table->index('barcode');

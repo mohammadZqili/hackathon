@@ -53,16 +53,23 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn([
+            // Check if columns exist before dropping them
+            $columnsToCheck = [
                 'date_of_birth',
-                'phone',
+                'phone', 
                 'national_id',
                 'user_type',
                 'occupation',
                 'job_title',
                 'is_active',
                 'last_login_at'
-            ]);
+            ];
+            
+            foreach ($columnsToCheck as $column) {
+                if (Schema::hasColumn('users', $column)) {
+                    $table->dropColumn($column);
+                }
+            }
         });
     }
 };
