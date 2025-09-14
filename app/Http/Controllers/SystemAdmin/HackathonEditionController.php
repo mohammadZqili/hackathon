@@ -113,6 +113,7 @@ class HackathonEditionController extends Controller
             'location' => 'nullable|string|max:255',
             'status' => 'required|in:draft,active,completed,archived',
             'is_current' => 'boolean',
+            'created_by' => 'nullable|exists:users,id',
         ]);
 
         try {

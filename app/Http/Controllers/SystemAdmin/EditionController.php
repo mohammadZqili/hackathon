@@ -5,6 +5,7 @@ namespace App\Http\Controllers\SystemAdmin;
 use App\Http\Controllers\Controller;
 use App\Models\Edition;
 use App\Models\User;
+use App\Enums\UserType;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -24,8 +25,16 @@ class EditionController extends Controller
 
     public function create()
     {
-        $admins = User::whereIn('user_type', ['hackathon_admin', 'system_admin'])
-            ->select('id', 'name', 'email', 'user_type')
+        // Get users with Hackathon Admin role OR user_type
+        $admins = User::select('id', 'name', 'email', 'user_type')
+            ->where(function($query) {
+                // Check by role using Spatie permissions
+                $query->whereHas('roles', function($q) {
+                    $q->where('name', UserType::HACKATHON_ADMIN->value);
+                })
+                // OR check by user_type field
+                ->orWhere('user_type', UserType::HACKATHON_ADMIN->value);
+            })
             ->orderBy('name')
             ->get();
 
@@ -59,8 +68,16 @@ class EditionController extends Controller
 
     public function edit(Edition $edition)
     {
-        $admins = User::whereIn('user_type', ['hackathon_admin', 'system_admin'])
-            ->select('id', 'name', 'email', 'user_type')
+        // Get users with Hackathon Admin role OR user_type
+        $admins = User::select('id', 'name', 'email', 'user_type')
+            ->where(function($query) {
+                // Check by role using Spatie permissions
+                $query->whereHas('roles', function($q) {
+                    $q->where('name', UserType::HACKATHON_ADMIN->value);
+                })
+                // OR check by user_type field
+                ->orWhere('user_type', UserType::HACKATHON_ADMIN->value);
+            })
             ->orderBy('name')
             ->get();
 

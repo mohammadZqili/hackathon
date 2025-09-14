@@ -58,7 +58,7 @@
                                         :style="{ '--tw-ring-color': themeColor.primary }">
                                     <option value="">{{ t('admin.editions.select_admin') }}</option>
                                     <option v-for="admin in admins" :key="admin.id" :value="admin.id">
-                                        {{ admin.name }}
+                                        {{ admin.name }} ({{ admin.email }})
                                     </option>
                                 </select>
                                 <p v-if="form.errors.admin_id" class="mt-1 text-sm text-red-600 dark:text-red-400">
@@ -67,17 +67,6 @@
                             </div>
                         </div>
 
-                        <div>
-                            <label for="location" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                {{ t('admin.editions.location') }}
-                            </label>
-                            <input v-model="form.location"
-                                   type="text"
-                                   id="location"
-                                   class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors"
-                                   :style="{ '--tw-ring-color': themeColor.primary }"
-                                   :placeholder="t('admin.editions.enter_location')">
-                        </div>
                     </div>
                 </div>
 
@@ -117,87 +106,39 @@
                         </div>
 
                         <div>
-                            <label for="hackathon_start_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                {{ t('admin.editions.hackathon_start_date') }}
+                            <label for="idea_submission_start_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                {{ t('admin.editions.idea_submission_start_date') }}
                             </label>
-                            <input v-model="form.hackathon_start_date"
+                            <input v-model="form.idea_submission_start_date"
                                    type="date"
-                                   id="hackathon_start_date"
+                                   id="idea_submission_start_date"
                                    class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors"
-                                   :class="{ 'border-red-500': form.errors.hackathon_start_date }"
+                                   :class="{ 'border-red-500': form.errors.idea_submission_start_date }"
                                    :style="{ '--tw-ring-color': themeColor.primary }">
-                            <p v-if="form.errors.hackathon_start_date" class="mt-1 text-sm text-red-600 dark:text-red-400">
-                                {{ form.errors.hackathon_start_date }}
+                            <p v-if="form.errors.idea_submission_start_date" class="mt-1 text-sm text-red-600 dark:text-red-400">
+                                {{ form.errors.idea_submission_start_date }}
                             </p>
                         </div>
 
                         <div>
-                            <label for="hackathon_end_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                {{ t('admin.editions.hackathon_end_date') }}
+                            <label for="idea_submission_end_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                {{ t('admin.editions.idea_submission_end_date') }}
                             </label>
-                            <input v-model="form.hackathon_end_date"
+                            <input v-model="form.idea_submission_end_date"
                                    type="date"
-                                   id="hackathon_end_date"
+                                   id="idea_submission_end_date"
                                    class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors"
-                                   :class="{ 'border-red-500': form.errors.hackathon_end_date }"
+                                   :class="{ 'border-red-500': form.errors.idea_submission_end_date }"
                                    :style="{ '--tw-ring-color': themeColor.primary }">
-                            <p v-if="form.errors.hackathon_end_date" class="mt-1 text-sm text-red-600 dark:text-red-400">
-                                {{ form.errors.hackathon_end_date }}
+                            <p v-if="form.errors.idea_submission_end_date" class="mt-1 text-sm text-red-600 dark:text-red-400">
+                                {{ form.errors.idea_submission_end_date }}
                             </p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Configuration -->
+                <!-- Active Status -->
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ t('admin.editions.configuration') }}</h2>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label for="max_teams" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                {{ t('admin.editions.maximum_teams') }}
-                            </label>
-                            <input v-model="form.max_teams"
-                                   type="number"
-                                   id="max_teams"
-                                   class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors"
-                                   :class="{ 'border-red-500': form.errors.max_teams }"
-                                   :style="{ '--tw-ring-color': themeColor.primary }"
-                                   placeholder="100">
-                            <p v-if="form.errors.max_teams" class="mt-1 text-sm text-red-600 dark:text-red-400">
-                                {{ form.errors.max_teams }}
-                            </p>
-                        </div>
-
-                        <div>
-                            <label for="max_team_members" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                {{ t('admin.editions.maximum_team_members') }}
-                            </label>
-                            <input v-model="form.max_team_members"
-                                   type="number"
-                                   id="max_team_members"
-                                   class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors"
-                                   :class="{ 'border-red-500': form.errors.max_team_members }"
-                                   :style="{ '--tw-ring-color': themeColor.primary }"
-                                   placeholder="5">
-                            <p v-if="form.errors.max_team_members" class="mt-1 text-sm text-red-600 dark:text-red-400">
-                                {{ form.errors.max_team_members }}
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="mt-6">
-                        <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            {{ t('admin.editions.description') }}
-                        </label>
-                        <textarea v-model="form.description"
-                                  id="description"
-                                  rows="4"
-                                  class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors"
-                                  :style="{ '--tw-ring-color': themeColor.primary }"
-                                  :placeholder="t('admin.editions.enter_description')"></textarea>
-                    </div>
-
                     <div class="mt-6">
                         <label class="flex items-center">
                             <input v-model="form.is_active"
@@ -208,6 +149,9 @@
                                 {{ t('admin.editions.set_as_active') }}
                             </span>
                         </label>
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                            Making this edition active will deactivate all other editions
+                        </p>
                     </div>
                 </div>
 
@@ -251,13 +195,9 @@ const form = useForm({
     year: new Date().getFullYear(),
     registration_start_date: '',
     registration_end_date: '',
-    hackathon_start_date: '',
-    hackathon_end_date: '',
+    idea_submission_start_date: '',
+    idea_submission_end_date: '',
     admin_id: '',
-    description: '',
-    location: '',
-    max_teams: 100,
-    max_team_members: 5,
     is_active: false
 })
 
@@ -298,7 +238,25 @@ const themeStyles = computed(() => ({
 }))
 
 const submit = () => {
-    form.post(route('system-admin.editions.store'))
+    // Include default values for required fields not shown in design
+    const dataToSubmit = {
+        ...form.data(),
+        // Map the dates to match controller expectations
+        hackathon_start_date: form.idea_submission_start_date || form.registration_end_date,
+        hackathon_end_date: form.idea_submission_end_date || form.idea_submission_start_date,
+        // Include other required fields with defaults
+        description: '',
+        location: '',
+        max_teams: 100,
+        max_team_members: 5
+    }
+
+    form.transform(() => dataToSubmit).post(route('system-admin.editions.store'), {
+        preserveScroll: true,
+        onError: (errors) => {
+            console.error('Form errors:', errors)
+        }
+    })
 }
 </script>
 

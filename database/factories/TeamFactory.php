@@ -49,7 +49,7 @@ class TeamFactory extends Factory
             'name' => $name,
             'slug' => Str::slug($name),
             'description' => $this->faker->paragraph(3),
-            'user_id' => User::factory(), // Keep this for Jetstream compatibility
+            'user_id' => 1, // Fixed integer for compatibility
             'personal_team' => false, // Most teams won't be personal teams
             'hackathon_id' => Hackathon::factory(),
             'leader_id' => User::factory(),
@@ -129,7 +129,7 @@ class TeamFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'leader_id' => $leader->id,
-            'user_id' => $leader->id, // Keep Jetstream compatibility
+            'user_id' => 1, // Fixed integer for compatibility
         ]);
     }
 }

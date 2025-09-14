@@ -29,16 +29,16 @@ class EditionService extends BaseService
     {
         // Build filters based on user role
         $roleFilters = $this->buildRoleFilters($user, $filters);
-        
+
         // Get paginated edition_PLURAL
         $edition_PLURAL = $this->editionRepository->getPaginatedWithFilters($roleFilters, $perPage);
-        
+
         // Get statistics
         $statistics = $this->editionRepository->getStatistics($roleFilters);
-        
+
         // Get editions for filter dropdown
         $editions = $this->getEditionsForUser($user);
-        
+
         return [
             'edition_PLURAL' => $edition_PLURAL,
             'statistics' => $statistics,
@@ -53,16 +53,16 @@ class EditionService extends BaseService
     public function getEditionDetails(int $editionId, User $user): ?array
     {
         $edition = $this->editionRepository->findWithFullDetails($editionId);
-        
+
         if (!$edition) {
             return null;
         }
-        
+
         // Check if user has access to this edition
         if (!$this->userCanAccessEdition($user, $edition)) {
             return null;
         }
-        
+
         return [
             'edition' => $edition,
             'permissions' => $this->getEditionPermissions($user, $edition)
@@ -78,28 +78,28 @@ class EditionService extends BaseService
         if (!$this->userCanCreateEdition($user)) {
             throw new \Exception('You do not have permission to create edition_PLURAL.');
         }
-        
+
         // Validate edition access for non-system admin
-        if ($user->user_type !== 'system_admin' && !empty($data['edition_id'])) {
+        if (!$user->hasRole('system_admin') && !empty($data['edition_id'])) {
             if (!$this->userCanAccessEdition($user, $data['edition_id'])) {
                 throw new \Exception('You do not have access to this edition.');
             }
         }
-        
+
         DB::beginTransaction();
         try {
             // Create edition
             $edition = $this->editionRepository->create($data);
-            
+
             // Log activity
             Log::info('Edition created', [
                 'edition_id' => $edition->id,
                 'user_id' => $user->id,
                 'data' => $data
             ]);
-            
+
             DB::commit();
-            
+
             return [
                 'success' => true,
                 'edition' => $edition,
@@ -122,33 +122,33 @@ class EditionService extends BaseService
     public function updateEdition(int $editionId, array $data, User $user): array
     {
         $edition = $this->editionRepository->find($editionId);
-        
+
         if (!$edition) {
             throw new \Exception('Edition not found.');
         }
-        
+
         // Check permissions
         if (!$this->userCanEditEdition($user, $edition)) {
             throw new \Exception('You do not have permission to edit this edition.');
         }
-        
+
         DB::beginTransaction();
         try {
             // Update edition
             $this->editionRepository->update($editionId, $data);
-            
+
             // Refresh edition data
             $edition = $this->editionRepository->findWithFullDetails($editionId);
-            
+
             // Log activity
             Log::info('Edition updated', [
                 'edition_id' => $editionId,
                 'user_id' => $user->id,
                 'data' => $data
             ]);
-            
+
             DB::commit();
-            
+
             return [
                 'success' => true,
                 'edition' => $edition,
@@ -172,34 +172,34 @@ class EditionService extends BaseService
     public function deleteEdition(int $editionId, User $user): array
     {
         $edition = $this->editionRepository->find($editionId);
-        
+
         if (!$edition) {
             throw new \Exception('Edition not found.');
         }
-        
+
         // Check permissions
         if (!$this->userCanDeleteEdition($user, $edition)) {
             throw new \Exception('You do not have permission to delete this edition.');
         }
-        
+
         // Check dependencies
         if ($this->editionRepository->hasDependencies($editionId)) {
             throw new \Exception('Cannot delete edition with dependencies.');
         }
-        
+
         DB::beginTransaction();
         try {
             // Delete edition
             $this->editionRepository->delete($editionId);
-            
+
             // Log activity
             Log::info('Edition deleted', [
                 'edition_id' => $editionId,
                 'user_id' => $user->id
             ]);
-            
+
             DB::commit();
-            
+
             return [
                 'success' => true,
                 'message' => 'Edition deleted successfully.'
@@ -221,7 +221,7 @@ class EditionService extends BaseService
     protected function buildRoleFilters(User $user, array $filters): array
     {
         $roleFilters = $filters;
-        
+
         switch ($user->user_type) {
             case 'hackathon_admin':
                 // Limit to user's edition
@@ -229,17 +229,17 @@ class EditionService extends BaseService
                     $roleFilters['edition_id'] = $user->edition_id;
                 }
                 break;
-                
+
             case 'system_admin':
                 // No additional filters - can see everything
                 break;
-                
+
             default:
                 // Other roles - force empty result
                 $roleFilters['force_empty'] = true;
                 break;
         }
-        
+
         return $roleFilters;
     }
 
@@ -251,13 +251,13 @@ class EditionService extends BaseService
         switch ($user->user_type) {
             case 'system_admin':
                 return $this->editionRepository->all();
-                
+
             case 'hackathon_admin':
                 if ($user->edition_id) {
                     return collect([$this->editionRepository->find($user->edition_id)]);
                 }
                 return collect();
-                
+
             default:
                 return collect();
         }
@@ -271,10 +271,10 @@ class EditionService extends BaseService
         switch ($user->user_type) {
             case 'system_admin':
                 return true;
-                
+
             case 'hackathon_admin':
                 return !isset($edition->edition_id) || $user->edition_id == $edition->edition_id;
-                
+
             default:
                 return false;
         }
@@ -288,10 +288,10 @@ class EditionService extends BaseService
         switch ($user->user_type) {
             case 'system_admin':
                 return true;
-                
+
             case 'hackathon_admin':
                 return $user->edition_id == $editionId;
-                
+
             default:
                 return false;
         }
@@ -313,7 +313,7 @@ class EditionService extends BaseService
         if (!$this->userCanAccessEdition($user, $edition)) {
             return false;
         }
-        
+
         return in_array($user->user_type, ['system_admin', 'hackathon_admin']);
     }
 
@@ -325,9 +325,9 @@ class EditionService extends BaseService
         if (!$this->userCanAccessEdition($user, $edition)) {
             return false;
         }
-        
+
         // Only system admin can delete
-        return $user->user_type === 'system_admin';
+        return $user->hasRole('system_admin');
     }
 
     /**

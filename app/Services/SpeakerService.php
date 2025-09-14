@@ -29,16 +29,16 @@ class SpeakerService extends BaseService
     {
         // Build filters based on user role
         $roleFilters = $this->buildRoleFilters($user, $filters);
-        
+
         // Get paginated speaker_PLURAL
         $speaker_PLURAL = $this->speakerRepository->getPaginatedWithFilters($roleFilters, $perPage);
-        
+
         // Get statistics
         $statistics = $this->speakerRepository->getStatistics($roleFilters);
-        
+
         // Get editions for filter dropdown
         $editions = $this->getEditionsForUser($user);
-        
+
         return [
             'speaker_PLURAL' => $speaker_PLURAL,
             'statistics' => $statistics,
@@ -53,16 +53,16 @@ class SpeakerService extends BaseService
     public function getSpeakerDetails(int $speakerId, User $user): ?array
     {
         $speaker = $this->speakerRepository->findWithFullDetails($speakerId);
-        
+
         if (!$speaker) {
             return null;
         }
-        
+
         // Check if user has access to this speaker
         if (!$this->userCanAccessSpeaker($user, $speaker)) {
             return null;
         }
-        
+
         return [
             'speaker' => $speaker,
             'permissions' => $this->getSpeakerPermissions($user, $speaker)
@@ -78,28 +78,28 @@ class SpeakerService extends BaseService
         if (!$this->userCanCreateSpeaker($user)) {
             throw new \Exception('You do not have permission to create speaker_PLURAL.');
         }
-        
+
         // Validate edition access for non-system admin
-        if ($user->user_type !== 'system_admin' && !empty($data['edition_id'])) {
+        if (!$user->hasRole('system_admin') && !empty($data['edition_id'])) {
             if (!$this->userCanAccessEdition($user, $data['edition_id'])) {
                 throw new \Exception('You do not have access to this edition.');
             }
         }
-        
+
         DB::beginTransaction();
         try {
             // Create speaker
             $speaker = $this->speakerRepository->create($data);
-            
+
             // Log activity
             Log::info('Speaker created', [
                 'speaker_id' => $speaker->id,
                 'user_id' => $user->id,
                 'data' => $data
             ]);
-            
+
             DB::commit();
-            
+
             return [
                 'success' => true,
                 'speaker' => $speaker,
@@ -122,33 +122,33 @@ class SpeakerService extends BaseService
     public function updateSpeaker(int $speakerId, array $data, User $user): array
     {
         $speaker = $this->speakerRepository->find($speakerId);
-        
+
         if (!$speaker) {
             throw new \Exception('Speaker not found.');
         }
-        
+
         // Check permissions
         if (!$this->userCanEditSpeaker($user, $speaker)) {
             throw new \Exception('You do not have permission to edit this speaker.');
         }
-        
+
         DB::beginTransaction();
         try {
             // Update speaker
             $this->speakerRepository->update($speakerId, $data);
-            
+
             // Refresh speaker data
             $speaker = $this->speakerRepository->findWithFullDetails($speakerId);
-            
+
             // Log activity
             Log::info('Speaker updated', [
                 'speaker_id' => $speakerId,
                 'user_id' => $user->id,
                 'data' => $data
             ]);
-            
+
             DB::commit();
-            
+
             return [
                 'success' => true,
                 'speaker' => $speaker,
@@ -172,34 +172,34 @@ class SpeakerService extends BaseService
     public function deleteSpeaker(int $speakerId, User $user): array
     {
         $speaker = $this->speakerRepository->find($speakerId);
-        
+
         if (!$speaker) {
             throw new \Exception('Speaker not found.');
         }
-        
+
         // Check permissions
         if (!$this->userCanDeleteSpeaker($user, $speaker)) {
             throw new \Exception('You do not have permission to delete this speaker.');
         }
-        
+
         // Check dependencies
         if ($this->speakerRepository->hasDependencies($speakerId)) {
             throw new \Exception('Cannot delete speaker with dependencies.');
         }
-        
+
         DB::beginTransaction();
         try {
             // Delete speaker
             $this->speakerRepository->delete($speakerId);
-            
+
             // Log activity
             Log::info('Speaker deleted', [
                 'speaker_id' => $speakerId,
                 'user_id' => $user->id
             ]);
-            
+
             DB::commit();
-            
+
             return [
                 'success' => true,
                 'message' => 'Speaker deleted successfully.'
@@ -221,7 +221,7 @@ class SpeakerService extends BaseService
     protected function buildRoleFilters(User $user, array $filters): array
     {
         $roleFilters = $filters;
-        
+
         switch ($user->user_type) {
             case 'hackathon_admin':
                 // Limit to user's edition
@@ -229,17 +229,17 @@ class SpeakerService extends BaseService
                     $roleFilters['edition_id'] = $user->edition_id;
                 }
                 break;
-                
+
             case 'system_admin':
                 // No additional filters - can see everything
                 break;
-                
+
             default:
                 // Other roles - force empty result
                 $roleFilters['force_empty'] = true;
                 break;
         }
-        
+
         return $roleFilters;
     }
 
@@ -251,13 +251,13 @@ class SpeakerService extends BaseService
         switch ($user->user_type) {
             case 'system_admin':
                 return $this->editionRepository->all();
-                
+
             case 'hackathon_admin':
                 if ($user->edition_id) {
                     return collect([$this->editionRepository->find($user->edition_id)]);
                 }
                 return collect();
-                
+
             default:
                 return collect();
         }
@@ -271,10 +271,10 @@ class SpeakerService extends BaseService
         switch ($user->user_type) {
             case 'system_admin':
                 return true;
-                
+
             case 'hackathon_admin':
                 return !isset($speaker->edition_id) || $user->edition_id == $speaker->edition_id;
-                
+
             default:
                 return false;
         }
@@ -288,10 +288,10 @@ class SpeakerService extends BaseService
         switch ($user->user_type) {
             case 'system_admin':
                 return true;
-                
+
             case 'hackathon_admin':
                 return $user->edition_id == $editionId;
-                
+
             default:
                 return false;
         }
@@ -313,7 +313,7 @@ class SpeakerService extends BaseService
         if (!$this->userCanAccessSpeaker($user, $speaker)) {
             return false;
         }
-        
+
         return in_array($user->user_type, ['system_admin', 'hackathon_admin']);
     }
 
@@ -325,9 +325,9 @@ class SpeakerService extends BaseService
         if (!$this->userCanAccessSpeaker($user, $speaker)) {
             return false;
         }
-        
+
         // Only system admin can delete
-        return $user->user_type === 'system_admin';
+        return $user->hasRole('system_admin');
     }
 
     /**

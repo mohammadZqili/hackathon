@@ -302,11 +302,11 @@ class IdeaService extends BaseService
     public function getIdeaDetails(int $ideaId, User $user): ?array
     {
         $idea = $this->ideaRepository->findWithFullDetails($ideaId);
-        
+
         if (!$idea || !$this->userCanAccessIdea($user, $idea)) {
             return null;
         }
-        
+
         return [
             'idea' => $idea,
             'permissions' => $this->getIdeaPermissions($user, $idea)
@@ -316,32 +316,32 @@ class IdeaService extends BaseService
     public function reviewIdea(int $ideaId, array $reviewData, User $user): array
     {
         $idea = $this->ideaRepository->find($ideaId);
-        
+
         if (!$idea) {
             throw new \Exception('Idea not found.');
         }
-        
+
         if (!$this->userCanReviewIdea($user, $idea)) {
             throw new \Exception('You do not have permission to review this idea.');
         }
-        
+
         DB::beginTransaction();
         try {
             $reviewData['reviewer_id'] = $user->id;
             $review = $this->ideaRepository->addReview($ideaId, $reviewData);
-            
+
             if ($reviewData['status'] === 'approved' || $reviewData['status'] === 'rejected') {
                 $this->ideaRepository->updateStatus($ideaId, $reviewData['status']);
             }
-            
+
             Log::info('Idea reviewed', [
                 'idea_id' => $ideaId,
                 'reviewer_id' => $user->id,
                 'status' => $reviewData['status']
             ]);
-            
+
             DB::commit();
-            
+
             return [
                 'success' => true,
                 'review' => $review,
@@ -356,26 +356,26 @@ class IdeaService extends BaseService
     public function deleteIdea(int $ideaId, User $user): array
     {
         $idea = $this->ideaRepository->find($ideaId);
-        
+
         if (!$idea) {
             throw new \Exception('Idea not found.');
         }
-        
+
         if (!$this->userCanDeleteIdea($user, $idea)) {
             throw new \Exception('You do not have permission to delete this idea.');
         }
-        
+
         DB::beginTransaction();
         try {
             $this->ideaRepository->delete($ideaId);
-            
+
             Log::info('Idea deleted', [
                 'idea_id' => $ideaId,
                 'user_id' => $user->id
             ]);
-            
+
             DB::commit();
-            
+
             return [
                 'success' => true,
                 'message' => 'Idea deleted successfully.'
@@ -390,10 +390,10 @@ class IdeaService extends BaseService
     {
         $roleFilters = $this->buildRoleFilters($user, $filters);
         $ideas = $this->ideaRepository->getForExport($roleFilters);
-        
+
         $csvData = [];
         $csvData[] = ['ID', 'Title', 'Team', 'Track', 'Status', 'Score', 'Submitted At'];
-        
+
         foreach ($ideas as $idea) {
             $csvData[] = [
                 $idea->id,
@@ -405,7 +405,7 @@ class IdeaService extends BaseService
                 $idea->submitted_at ? $idea->submitted_at->format('Y-m-d H:i') : 'N/A',
             ];
         }
-        
+
         return [
             'data' => $csvData,
             'filename' => 'ideas-export-' . date('Y-m-d') . '.csv'
@@ -415,25 +415,25 @@ class IdeaService extends BaseService
     protected function buildRoleFilters(User $user, array $filters): array
     {
         $roleFilters = $filters;
-        
+
         switch ($user->user_type) {
             case 'hackathon_admin':
                 if ($user->edition_id) {
                     $roleFilters['edition_id'] = $user->edition_id;
                 }
                 break;
-                
+
             case 'track_supervisor':
                 $trackIds = DB::table('track_supervisors')
                     ->where('user_id', $user->id)
                     ->pluck('track_id')
                     ->toArray();
-                    
+
                 if (!empty($trackIds)) {
                     $roleFilters['track_id'] = $trackIds;
                 }
                 break;
-                
+
             case 'team_leader':
             case 'team_member':
                 $team = $user->team ?? $user->ledTeam;
@@ -442,7 +442,7 @@ class IdeaService extends BaseService
                 }
                 break;
         }
-        
+
         return $roleFilters;
     }
 
@@ -487,13 +487,13 @@ class IdeaService extends BaseService
         if (!$this->userCanAccessIdea($user, $idea)) {
             return false;
         }
-        
+
         return in_array($user->user_type, ['system_admin', 'hackathon_admin', 'track_supervisor']);
     }
 
     protected function userCanDeleteIdea(User $user, $idea): bool
     {
-        return $user->user_type === 'system_admin';
+        return $user->hasRole('system_admin');
     }
 
     protected function getIdeaPermissions(User $user, $idea): array
@@ -550,11 +550,11 @@ class UserService extends BaseService
     public function getUserDetails(int $userId, User $user): ?array
     {
         $targetUser = $this->userRepository->findWithFullDetails($userId);
-        
+
         if (!$targetUser || !$this->userCanAccessUser($user, $targetUser)) {
             return null;
         }
-        
+
         return [
             'user' => $targetUser,
             'permissions' => $this->getUserPermissions($user, $targetUser)
@@ -566,22 +566,22 @@ class UserService extends BaseService
         if (!$this->userCanCreateUser($user)) {
             throw new \Exception('You do not have permission to create users.');
         }
-        
+
         DB::beginTransaction();
         try {
             if (isset($data['password'])) {
                 $data['password'] = Hash::make($data['password']);
             }
-            
+
             $newUser = $this->userRepository->create($data);
-            
+
             Log::info('User created', [
                 'user_id' => $newUser->id,
                 'created_by' => $user->id
             ]);
-            
+
             DB::commit();
-            
+
             return [
                 'success' => true,
                 'user' => $newUser,
@@ -596,15 +596,15 @@ class UserService extends BaseService
     public function updateUser(int $userId, array $data, User $user): array
     {
         $targetUser = $this->userRepository->find($userId);
-        
+
         if (!$targetUser) {
             throw new \Exception('User not found.');
         }
-        
+
         if (!$this->userCanEditUser($user, $targetUser)) {
             throw new \Exception('You do not have permission to edit this user.');
         }
-        
+
         DB::beginTransaction();
         try {
             if (isset($data['password']) && !empty($data['password'])) {
@@ -612,17 +612,17 @@ class UserService extends BaseService
             } else {
                 unset($data['password']);
             }
-            
+
             $this->userRepository->update($userId, $data);
             $targetUser = $this->userRepository->findWithFullDetails($userId);
-            
+
             Log::info('User updated', [
                 'user_id' => $userId,
                 'updated_by' => $user->id
             ]);
-            
+
             DB::commit();
-            
+
             return [
                 'success' => true,
                 'user' => $targetUser,
@@ -637,30 +637,30 @@ class UserService extends BaseService
     public function deleteUser(int $userId, User $user): array
     {
         $targetUser = $this->userRepository->find($userId);
-        
+
         if (!$targetUser) {
             throw new \Exception('User not found.');
         }
-        
+
         if (!$this->userCanDeleteUser($user, $targetUser)) {
             throw new \Exception('You do not have permission to delete this user.');
         }
-        
+
         if ($targetUser->id === $user->id) {
             throw new \Exception('You cannot delete your own account.');
         }
-        
+
         DB::beginTransaction();
         try {
             $this->userRepository->delete($userId);
-            
+
             Log::info('User deleted', [
                 'user_id' => $userId,
                 'deleted_by' => $user->id
             ]);
-            
+
             DB::commit();
-            
+
             return [
                 'success' => true,
                 'message' => 'User deleted successfully.'
@@ -674,13 +674,13 @@ class UserService extends BaseService
     public function searchUsers(string $search, User $user): array
     {
         $filters = [];
-        
+
         if ($user->user_type === 'hackathon_admin' && $user->edition_id) {
             $filters['edition_id'] = $user->edition_id;
         }
-        
+
         $users = $this->userRepository->searchUsers($search, $filters);
-        
+
         return [
             'users' => $users
         ];
@@ -689,7 +689,7 @@ class UserService extends BaseService
     protected function buildRoleFilters(User $user, array $filters): array
     {
         $roleFilters = $filters;
-        
+
         switch ($user->user_type) {
             case 'hackathon_admin':
                 if ($user->edition_id) {
@@ -697,7 +697,7 @@ class UserService extends BaseService
                 }
                 break;
         }
-        
+
         return $roleFilters;
     }
 
@@ -738,14 +738,14 @@ class UserService extends BaseService
         if (!$this->userCanAccessUser($user, $targetUser)) {
             return false;
         }
-        
-        return in_array($user->user_type, ['system_admin', 'hackathon_admin']) || 
+
+        return in_array($user->user_type, ['system_admin', 'hackathon_admin']) ||
                $user->id === $targetUser->id;
     }
 
     protected function userCanDeleteUser(User $user, User $targetUser): bool
     {
-        return $user->user_type === 'system_admin' && $user->id !== $targetUser->id;
+        return $user->hasRole('system_admin') && $user->id !== $targetUser->id;
     }
 
     protected function getUserPermissions(User $user, User $targetUser): array
@@ -753,7 +753,7 @@ class UserService extends BaseService
         return [
             'canEdit' => $this->userCanEditUser($user, $targetUser),
             'canDelete' => $this->userCanDeleteUser($user, $targetUser),
-            'canChangeRole' => $user->user_type === 'system_admin',
+            'canChangeRole' => $user->hasRole('system_admin'),
         ];
     }
 }
@@ -801,11 +801,11 @@ class OrganizationService extends BaseService
         }
 
         $organization = $this->organizationRepository->findWithFullDetails($organizationId);
-        
+
         if (!$organization) {
             return null;
         }
-        
+
         return [
             'organization' => $organization,
             'permissions' => $this->getOrganizationPermissions($user)
@@ -817,18 +817,18 @@ class OrganizationService extends BaseService
         if (!$this->userCanManageOrganizations($user)) {
             throw new \Exception('You do not have permission to create organizations.');
         }
-        
+
         DB::beginTransaction();
         try {
             $organization = $this->organizationRepository->create($data);
-            
+
             Log::info('Organization created', [
                 'organization_id' => $organization->id,
                 'user_id' => $user->id
             ]);
-            
+
             DB::commit();
-            
+
             return [
                 'success' => true,
                 'organization' => $organization,
@@ -847,23 +847,23 @@ class OrganizationService extends BaseService
         }
 
         $organization = $this->organizationRepository->find($organizationId);
-        
+
         if (!$organization) {
             throw new \Exception('Organization not found.');
         }
-        
+
         DB::beginTransaction();
         try {
             $this->organizationRepository->update($organizationId, $data);
             $organization = $this->organizationRepository->findWithFullDetails($organizationId);
-            
+
             Log::info('Organization updated', [
                 'organization_id' => $organizationId,
                 'user_id' => $user->id
             ]);
-            
+
             DB::commit();
-            
+
             return [
                 'success' => true,
                 'organization' => $organization,
@@ -882,22 +882,22 @@ class OrganizationService extends BaseService
         }
 
         $organization = $this->organizationRepository->find($organizationId);
-        
+
         if (!$organization) {
             throw new \Exception('Organization not found.');
         }
-        
+
         DB::beginTransaction();
         try {
             $this->organizationRepository->delete($organizationId);
-            
+
             Log::info('Organization deleted', [
                 'organization_id' => $organizationId,
                 'user_id' => $user->id
             ]);
-            
+
             DB::commit();
-            
+
             return [
                 'success' => true,
                 'message' => 'Organization deleted successfully.'
@@ -915,7 +915,7 @@ class OrganizationService extends BaseService
 
     protected function userCanManageOrganizations(User $user): bool
     {
-        return $user->user_type === 'system_admin';
+        return $user->hasRole('system_admin');
     }
 
     protected function getOrganizationPermissions(User $user): array
@@ -971,11 +971,11 @@ class SpeakerService extends BaseService
         }
 
         $speaker = $this->speakerRepository->findWithFullDetails($speakerId);
-        
+
         if (!$speaker) {
             return null;
         }
-        
+
         return [
             'speaker' => $speaker,
             'permissions' => $this->getSpeakerPermissions($user)
@@ -987,18 +987,18 @@ class SpeakerService extends BaseService
         if (!$this->userCanManageSpeakers($user)) {
             throw new \Exception('You do not have permission to create speakers.');
         }
-        
+
         DB::beginTransaction();
         try {
             $speaker = $this->speakerRepository->create($data);
-            
+
             Log::info('Speaker created', [
                 'speaker_id' => $speaker->id,
                 'user_id' => $user->id
             ]);
-            
+
             DB::commit();
-            
+
             return [
                 'success' => true,
                 'speaker' => $speaker,
@@ -1017,23 +1017,23 @@ class SpeakerService extends BaseService
         }
 
         $speaker = $this->speakerRepository->find($speakerId);
-        
+
         if (!$speaker) {
             throw new \Exception('Speaker not found.');
         }
-        
+
         DB::beginTransaction();
         try {
             $this->speakerRepository->update($speakerId, $data);
             $speaker = $this->speakerRepository->findWithFullDetails($speakerId);
-            
+
             Log::info('Speaker updated', [
                 'speaker_id' => $speakerId,
                 'user_id' => $user->id
             ]);
-            
+
             DB::commit();
-            
+
             return [
                 'success' => true,
                 'speaker' => $speaker,
@@ -1052,22 +1052,22 @@ class SpeakerService extends BaseService
         }
 
         $speaker = $this->speakerRepository->find($speakerId);
-        
+
         if (!$speaker) {
             throw new \Exception('Speaker not found.');
         }
-        
+
         DB::beginTransaction();
         try {
             $this->speakerRepository->delete($speakerId);
-            
+
             Log::info('Speaker deleted', [
                 'speaker_id' => $speakerId,
                 'user_id' => $user->id
             ]);
-            
+
             DB::commit();
-            
+
             return [
                 'success' => true,
                 'message' => 'Speaker deleted successfully.'
@@ -1085,7 +1085,7 @@ class SpeakerService extends BaseService
 
     protected function userCanManageSpeakers(User $user): bool
     {
-        return $user->user_type === 'system_admin';
+        return $user->hasRole('system_admin');
     }
 
     protected function getSpeakerPermissions(User $user): array
@@ -1147,21 +1147,21 @@ class SettingsService
         if (!$this->userCanManageSettings($user)) {
             throw new \Exception('You do not have permission to update settings.');
         }
-        
+
         DB::beginTransaction();
         try {
             $this->settingsRepository->updateBatch($settings);
-            
+
             // Clear cache
             Cache::flush();
-            
+
             Log::info('Settings updated', [
                 'user_id' => $user->id,
                 'settings' => array_keys($settings)
             ]);
-            
+
             DB::commit();
-            
+
             return [
                 'success' => true,
                 'message' => 'Settings updated successfully.'
@@ -1177,23 +1177,23 @@ class SettingsService
         if (!$this->userCanManageSettings($user)) {
             throw new \Exception('You do not have permission to update settings.');
         }
-        
+
         DB::beginTransaction();
         try {
             foreach ($settings as $key => $value) {
                 $this->settingsRepository->set($key, $value, $group);
             }
-            
+
             // Clear cache
             Cache::flush();
-            
+
             Log::info('Settings group updated', [
                 'user_id' => $user->id,
                 'group' => $group
             ]);
-            
+
             DB::commit();
-            
+
             return [
                 'success' => true,
                 'message' => ucfirst($group) . ' settings updated successfully.'
@@ -1206,7 +1206,7 @@ class SettingsService
 
     protected function userCanManageSettings(User $user): bool
     {
-        return $user->user_type === 'system_admin';
+        return $user->hasRole('system_admin');
     }
 }
 EOF

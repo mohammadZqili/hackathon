@@ -29,16 +29,16 @@ class OrganizationService extends BaseService
     {
         // Build filters based on user role
         $roleFilters = $this->buildRoleFilters($user, $filters);
-        
+
         // Get paginated organization_PLURAL
         $organization_PLURAL = $this->organizationRepository->getPaginatedWithFilters($roleFilters, $perPage);
-        
+
         // Get statistics
         $statistics = $this->organizationRepository->getStatistics($roleFilters);
-        
+
         // Get editions for filter dropdown
         $editions = $this->getEditionsForUser($user);
-        
+
         return [
             'organization_PLURAL' => $organization_PLURAL,
             'statistics' => $statistics,
@@ -53,16 +53,16 @@ class OrganizationService extends BaseService
     public function getOrganizationDetails(int $organizationId, User $user): ?array
     {
         $organization = $this->organizationRepository->findWithFullDetails($organizationId);
-        
+
         if (!$organization) {
             return null;
         }
-        
+
         // Check if user has access to this organization
         if (!$this->userCanAccessOrganization($user, $organization)) {
             return null;
         }
-        
+
         return [
             'organization' => $organization,
             'permissions' => $this->getOrganizationPermissions($user, $organization)
@@ -78,28 +78,28 @@ class OrganizationService extends BaseService
         if (!$this->userCanCreateOrganization($user)) {
             throw new \Exception('You do not have permission to create organization_PLURAL.');
         }
-        
+
         // Validate edition access for non-system admin
-        if ($user->user_type !== 'system_admin' && !empty($data['edition_id'])) {
+        if (!$user->hasRole('system_admin') && !empty($data['edition_id'])) {
             if (!$this->userCanAccessEdition($user, $data['edition_id'])) {
                 throw new \Exception('You do not have access to this edition.');
             }
         }
-        
+
         DB::beginTransaction();
         try {
             // Create organization
             $organization = $this->organizationRepository->create($data);
-            
+
             // Log activity
             Log::info('Organization created', [
                 'organization_id' => $organization->id,
                 'user_id' => $user->id,
                 'data' => $data
             ]);
-            
+
             DB::commit();
-            
+
             return [
                 'success' => true,
                 'organization' => $organization,
@@ -122,33 +122,33 @@ class OrganizationService extends BaseService
     public function updateOrganization(int $organizationId, array $data, User $user): array
     {
         $organization = $this->organizationRepository->find($organizationId);
-        
+
         if (!$organization) {
             throw new \Exception('Organization not found.');
         }
-        
+
         // Check permissions
         if (!$this->userCanEditOrganization($user, $organization)) {
             throw new \Exception('You do not have permission to edit this organization.');
         }
-        
+
         DB::beginTransaction();
         try {
             // Update organization
             $this->organizationRepository->update($organizationId, $data);
-            
+
             // Refresh organization data
             $organization = $this->organizationRepository->findWithFullDetails($organizationId);
-            
+
             // Log activity
             Log::info('Organization updated', [
                 'organization_id' => $organizationId,
                 'user_id' => $user->id,
                 'data' => $data
             ]);
-            
+
             DB::commit();
-            
+
             return [
                 'success' => true,
                 'organization' => $organization,
@@ -172,34 +172,34 @@ class OrganizationService extends BaseService
     public function deleteOrganization(int $organizationId, User $user): array
     {
         $organization = $this->organizationRepository->find($organizationId);
-        
+
         if (!$organization) {
             throw new \Exception('Organization not found.');
         }
-        
+
         // Check permissions
         if (!$this->userCanDeleteOrganization($user, $organization)) {
             throw new \Exception('You do not have permission to delete this organization.');
         }
-        
+
         // Check dependencies
         if ($this->organizationRepository->hasDependencies($organizationId)) {
             throw new \Exception('Cannot delete organization with dependencies.');
         }
-        
+
         DB::beginTransaction();
         try {
             // Delete organization
             $this->organizationRepository->delete($organizationId);
-            
+
             // Log activity
             Log::info('Organization deleted', [
                 'organization_id' => $organizationId,
                 'user_id' => $user->id
             ]);
-            
+
             DB::commit();
-            
+
             return [
                 'success' => true,
                 'message' => 'Organization deleted successfully.'
@@ -221,7 +221,7 @@ class OrganizationService extends BaseService
     protected function buildRoleFilters(User $user, array $filters): array
     {
         $roleFilters = $filters;
-        
+
         switch ($user->user_type) {
             case 'hackathon_admin':
                 // Limit to user's edition
@@ -229,17 +229,17 @@ class OrganizationService extends BaseService
                     $roleFilters['edition_id'] = $user->edition_id;
                 }
                 break;
-                
+
             case 'system_admin':
                 // No additional filters - can see everything
                 break;
-                
+
             default:
                 // Other roles - force empty result
                 $roleFilters['force_empty'] = true;
                 break;
         }
-        
+
         return $roleFilters;
     }
 
@@ -251,13 +251,13 @@ class OrganizationService extends BaseService
         switch ($user->user_type) {
             case 'system_admin':
                 return $this->editionRepository->all();
-                
+
             case 'hackathon_admin':
                 if ($user->edition_id) {
                     return collect([$this->editionRepository->find($user->edition_id)]);
                 }
                 return collect();
-                
+
             default:
                 return collect();
         }
@@ -271,10 +271,10 @@ class OrganizationService extends BaseService
         switch ($user->user_type) {
             case 'system_admin':
                 return true;
-                
+
             case 'hackathon_admin':
                 return !isset($organization->edition_id) || $user->edition_id == $organization->edition_id;
-                
+
             default:
                 return false;
         }
@@ -288,10 +288,10 @@ class OrganizationService extends BaseService
         switch ($user->user_type) {
             case 'system_admin':
                 return true;
-                
+
             case 'hackathon_admin':
                 return $user->edition_id == $editionId;
-                
+
             default:
                 return false;
         }
@@ -313,7 +313,7 @@ class OrganizationService extends BaseService
         if (!$this->userCanAccessOrganization($user, $organization)) {
             return false;
         }
-        
+
         return in_array($user->user_type, ['system_admin', 'hackathon_admin']);
     }
 
@@ -325,9 +325,9 @@ class OrganizationService extends BaseService
         if (!$this->userCanAccessOrganization($user, $organization)) {
             return false;
         }
-        
+
         // Only system admin can delete
-        return $user->user_type === 'system_admin';
+        return $user->hasRole('system_admin');
     }
 
     /**

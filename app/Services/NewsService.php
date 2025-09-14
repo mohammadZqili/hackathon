@@ -17,7 +17,7 @@ use Illuminate\Support\Str;
 class NewsService extends BaseService implements NewsServiceInterface
 {
     protected HackathonEditionRepository $editionRepository;
-    
+
     public function __construct(
         private NewsRepository $newsRepo,
         HackathonEditionRepository $editionRepository = null
@@ -33,7 +33,7 @@ class NewsService extends BaseService implements NewsServiceInterface
     public function getPublishedNews(array $filters = [], int $perPage = 12): array
     {
         $cacheKey = 'published_news_' . md5(serialize($filters) . $perPage);
-        
+
         return Cache::remember($cacheKey, 300, function () use ($filters, $perPage) {
             return $this->newsRepo->getPublished($filters, $perPage);
         });
@@ -45,14 +45,14 @@ class NewsService extends BaseService implements NewsServiceInterface
     public function getNewsBySlug(string $slug): array
     {
         $news = $this->newsRepo->findBySlug($slug);
-        
+
         if (!$news) {
             throw new \Exception('المقال غير موجود');
         }
 
         // Check if article is published and not in future
-        if ($news->status !== 'published' || 
-            !$news->published_at || 
+        if ($news->status !== 'published' ||
+            !$news->published_at ||
             $news->published_at > now()) {
             throw new \Exception('المقال غير متاح');
         }
@@ -95,7 +95,7 @@ class NewsService extends BaseService implements NewsServiceInterface
     public function getRecentNews(int $limit = 5, ?int $excludeId = null): Collection
     {
         $cacheKey = "recent_news_{$limit}_" . ($excludeId ?: 'none');
-        
+
         return Cache::remember($cacheKey, 300, function () use ($limit, $excludeId) {
             return $this->newsRepo->getRecent($limit, $excludeId);
         });
@@ -121,7 +121,7 @@ class NewsService extends BaseService implements NewsServiceInterface
         }
 
         $cacheKey = "related_news_{$news->id}_{$limit}";
-        
+
         return Cache::remember($cacheKey, 300, function () use ($news, $limit) {
             return $this->newsRepo->getRelatedByTags($news, $limit);
         });
@@ -133,7 +133,7 @@ class NewsService extends BaseService implements NewsServiceInterface
     public function getNavigationArticles(News $news): array
     {
         $cacheKey = "navigation_articles_{$news->id}";
-        
+
         return Cache::remember($cacheKey, 300, function () use ($news) {
             return [
                 'previous' => $this->newsRepo->getPreviousArticle($news),
@@ -149,7 +149,7 @@ class NewsService extends BaseService implements NewsServiceInterface
     {
         // Use repository to increment views
         $this->newsRepo->incrementViews($news->id);
-        
+
         // Clear related caches
         Cache::forget('news_statistics');
     }
@@ -182,16 +182,16 @@ class NewsService extends BaseService implements NewsServiceInterface
     {
         // Build filters based on user role
         $roleFilters = $this->buildRoleFilters($user, $filters);
-        
+
         // Get paginated news
         $news = $this->newsRepo->getPaginatedWithFilters($roleFilters, $perPage);
-        
+
         // Get statistics
         $statistics = $this->newsRepo->getStatistics($roleFilters);
-        
+
         // Get editions for filter dropdown if available
         $editions = $this->editionRepository ? $this->getEditionsForUser($user) : collect();
-        
+
         return [
             'news' => $news,
             'statistics' => $statistics,
@@ -206,16 +206,16 @@ class NewsService extends BaseService implements NewsServiceInterface
     public function getNewsDetailsAdmin(int $newsId, User $user): ?array
     {
         $news = $this->newsRepo->findWithFullDetails($newsId);
-        
+
         if (!$news) {
             return null;
         }
-        
+
         // Check if user has access to this news
         if (!$this->userCanAccessNews($user, $news)) {
             return null;
         }
-        
+
         return [
             'news' => $news,
             'permissions' => $this->getNewsPermissions($user, $news)
@@ -231,7 +231,7 @@ class NewsService extends BaseService implements NewsServiceInterface
         if (!$this->userCanCreateNews($user)) {
             throw new \Exception('You do not have permission to create news articles.');
         }
-        
+
         DB::beginTransaction();
         try {
             // Handle main image - move from temp to permanent storage
@@ -239,7 +239,7 @@ class NewsService extends BaseService implements NewsServiceInterface
             if (!empty($data['main_image'])) {
                 $featuredImagePath = $this->moveImageFromTemp($data['main_image'], 'news/featured/');
             }
-            
+
             // Handle gallery images
             $galleryImages = [];
             if (!empty($data['gallery_images'])) {
@@ -247,13 +247,13 @@ class NewsService extends BaseService implements NewsServiceInterface
                     $galleryImages[] = $this->moveImageFromTemp($tempPath, 'news/gallery/');
                 }
             }
-            
+
             // Process keywords into tags array
             $tags = [];
             if (!empty($data['keywords'])) {
                 $tags = array_map('trim', explode(',', $data['keywords']));
             }
-            
+
             // Prepare news data
             $newsData = [
                 'title' => $data['title'],
@@ -272,24 +272,24 @@ class NewsService extends BaseService implements NewsServiceInterface
                     'gallery_images' => $galleryImages
                 ]
             ];
-            
+
             // Add edition_id for hackathon admin
             if ($user->user_type === 'hackathon_admin' && $user->edition_id) {
                 $newsData['edition_id'] = $user->edition_id;
             }
-            
+
             // Create news
             $news = $this->newsRepo->create($newsData);
-            
+
             // Log activity
             Log::info('News created', [
                 'news_id' => $news->id,
                 'user_id' => $user->id,
                 'title' => $data['title']
             ]);
-            
+
             DB::commit();
-            
+
             return [
                 'success' => true,
                 'news' => $news,
@@ -312,16 +312,16 @@ class NewsService extends BaseService implements NewsServiceInterface
     public function updateNewsAdmin(int $newsId, array $data, User $user): array
     {
         $news = $this->newsRepo->find($newsId);
-        
+
         if (!$news) {
             throw new \Exception('News article not found.');
         }
-        
+
         // Check permissions
         if (!$this->userCanEditNews($user, $news)) {
             throw new \Exception('You do not have permission to edit this news article.');
         }
-        
+
         DB::beginTransaction();
         try {
             // Handle main image
@@ -333,23 +333,23 @@ class NewsService extends BaseService implements NewsServiceInterface
                 }
                 $featuredImagePath = $this->moveImageFromTemp($data['main_image'], 'news/featured/');
             }
-            
+
             // Handle gallery images - merge with existing
             $existingGallery = $news->seo_data['gallery_images'] ?? [];
             $galleryImages = $existingGallery;
-            
+
             if (!empty($data['gallery_images'])) {
                 foreach ($data['gallery_images'] as $tempPath) {
                     $galleryImages[] = $this->moveImageFromTemp($tempPath, 'news/gallery/');
                 }
             }
-            
+
             // Process keywords into tags array
             $tags = [];
             if (!empty($data['keywords'])) {
                 $tags = array_map('trim', explode(',', $data['keywords']));
             }
-            
+
             // Update news data
             $updateData = [
                 'title' => $data['title'],
@@ -366,21 +366,21 @@ class NewsService extends BaseService implements NewsServiceInterface
                     'gallery_images' => $galleryImages
                 ]
             ];
-            
+
             // Update news
             $this->newsRepo->update($newsId, $updateData);
-            
+
             // Refresh news data
             $news = $this->newsRepo->findWithFullDetails($newsId);
-            
+
             // Log activity
             Log::info('News updated', [
                 'news_id' => $newsId,
                 'user_id' => $user->id
             ]);
-            
+
             DB::commit();
-            
+
             return [
                 'success' => true,
                 'news' => $news,
@@ -403,39 +403,39 @@ class NewsService extends BaseService implements NewsServiceInterface
     public function deleteNewsAdmin(int $newsId, User $user): array
     {
         $news = $this->newsRepo->find($newsId);
-        
+
         if (!$news) {
             throw new \Exception('News article not found.');
         }
-        
+
         // Check permissions
         if (!$this->userCanDeleteNews($user, $news)) {
             throw new \Exception('You do not have permission to delete this news article.');
         }
-        
+
         DB::beginTransaction();
         try {
             // Delete associated images
             if ($news->featured_image_path) {
                 Storage::disk('public')->delete($news->featured_image_path);
             }
-            
+
             $galleryImages = $news->seo_data['gallery_images'] ?? [];
             foreach ($galleryImages as $imagePath) {
                 Storage::disk('public')->delete($imagePath);
             }
-            
+
             // Delete news
             $this->newsRepo->delete($newsId);
-            
+
             // Log activity
             Log::info('News deleted', [
                 'news_id' => $newsId,
                 'user_id' => $user->id
             ]);
-            
+
             DB::commit();
-            
+
             return [
                 'success' => true,
                 'message' => 'News article deleted successfully.'
@@ -457,27 +457,27 @@ class NewsService extends BaseService implements NewsServiceInterface
     public function publishNewsAdmin(int $newsId, User $user): array
     {
         $news = $this->newsRepo->find($newsId);
-        
+
         if (!$news) {
             throw new \Exception('News article not found.');
         }
-        
+
         // Check permissions
         if (!$this->userCanEditNews($user, $news)) {
             throw new \Exception('You do not have permission to publish this news article.');
         }
-        
+
         try {
             $this->newsRepo->update($newsId, [
                 'status' => 'published',
                 'published_at' => now()
             ]);
-            
+
             // Clear cache
             Cache::forget('published_news_*');
             Cache::forget('featured_news');
             Cache::forget('recent_news_*');
-            
+
             return [
                 'success' => true,
                 'message' => 'News article published successfully.'
@@ -493,24 +493,24 @@ class NewsService extends BaseService implements NewsServiceInterface
     public function unpublishNewsAdmin(int $newsId, User $user): array
     {
         $news = $this->newsRepo->find($newsId);
-        
+
         if (!$news) {
             throw new \Exception('News article not found.');
         }
-        
+
         // Check permissions
         if (!$this->userCanEditNews($user, $news)) {
             throw new \Exception('You do not have permission to unpublish this news article.');
         }
-        
+
         try {
             $this->newsRepo->update($newsId, ['status' => 'draft']);
-            
+
             // Clear cache
             Cache::forget('published_news_*');
             Cache::forget('featured_news');
             Cache::forget('recent_news_*');
-            
+
             return [
                 'success' => true,
                 'message' => 'News article unpublished successfully.'
@@ -540,7 +540,7 @@ class NewsService extends BaseService implements NewsServiceInterface
     protected function buildRoleFilters(User $user, array $filters): array
     {
         $roleFilters = $filters;
-        
+
         switch ($user->user_type) {
             case 'hackathon_admin':
                 // Limit to user's edition
@@ -548,17 +548,17 @@ class NewsService extends BaseService implements NewsServiceInterface
                     $roleFilters['edition_id'] = $user->edition_id;
                 }
                 break;
-                
+
             case 'system_admin':
                 // No additional filters - can see everything
                 break;
-                
+
             default:
                 // Other roles - force empty result
                 $roleFilters['force_empty'] = true;
                 break;
         }
-        
+
         return $roleFilters;
     }
 
@@ -570,17 +570,17 @@ class NewsService extends BaseService implements NewsServiceInterface
         if (!$this->editionRepository) {
             return collect();
         }
-        
+
         switch ($user->user_type) {
             case 'system_admin':
                 return $this->editionRepository->all();
-                
+
             case 'hackathon_admin':
                 if ($user->edition_id) {
                     return collect([$this->editionRepository->find($user->edition_id)]);
                 }
                 return collect();
-                
+
             default:
                 return collect();
         }
@@ -594,10 +594,10 @@ class NewsService extends BaseService implements NewsServiceInterface
         switch ($user->user_type) {
             case 'system_admin':
                 return true;
-                
+
             case 'hackathon_admin':
                 return !isset($news->edition_id) || $user->edition_id == $news->edition_id;
-                
+
             default:
                 return false;
         }
@@ -619,7 +619,7 @@ class NewsService extends BaseService implements NewsServiceInterface
         if (!$this->userCanAccessNews($user, $news)) {
             return false;
         }
-        
+
         return in_array($user->user_type, ['system_admin', 'hackathon_admin']);
     }
 
@@ -631,9 +631,9 @@ class NewsService extends BaseService implements NewsServiceInterface
         if (!$this->userCanAccessNews($user, $news)) {
             return false;
         }
-        
+
         // Only system admin can delete
-        return $user->user_type === 'system_admin';
+        return $user->hasRole('system_admin');
     }
 
     /**

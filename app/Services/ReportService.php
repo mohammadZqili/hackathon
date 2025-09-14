@@ -29,16 +29,16 @@ class ReportService extends BaseService
     {
         // Build filters based on user role
         $roleFilters = $this->buildRoleFilters($user, $filters);
-        
+
         // Get paginated report_PLURAL
         $report_PLURAL = $this->reportRepository->getPaginatedWithFilters($roleFilters, $perPage);
-        
+
         // Get statistics
         $statistics = $this->reportRepository->getStatistics($roleFilters);
-        
+
         // Get editions for filter dropdown
         $editions = $this->getEditionsForUser($user);
-        
+
         return [
             'report_PLURAL' => $report_PLURAL,
             'statistics' => $statistics,
@@ -53,16 +53,16 @@ class ReportService extends BaseService
     public function getReportDetails(int $reportId, User $user): ?array
     {
         $report = $this->reportRepository->findWithFullDetails($reportId);
-        
+
         if (!$report) {
             return null;
         }
-        
+
         // Check if user has access to this report
         if (!$this->userCanAccessReport($user, $report)) {
             return null;
         }
-        
+
         return [
             'report' => $report,
             'permissions' => $this->getReportPermissions($user, $report)
@@ -78,28 +78,28 @@ class ReportService extends BaseService
         if (!$this->userCanCreateReport($user)) {
             throw new \Exception('You do not have permission to create report_PLURAL.');
         }
-        
+
         // Validate edition access for non-system admin
-        if ($user->user_type !== 'system_admin' && !empty($data['edition_id'])) {
+        if (!$user->hasRole('system_admin') && !empty($data['edition_id'])) {
             if (!$this->userCanAccessEdition($user, $data['edition_id'])) {
                 throw new \Exception('You do not have access to this edition.');
             }
         }
-        
+
         DB::beginTransaction();
         try {
             // Create report
             $report = $this->reportRepository->create($data);
-            
+
             // Log activity
             Log::info('Report created', [
                 'report_id' => $report->id,
                 'user_id' => $user->id,
                 'data' => $data
             ]);
-            
+
             DB::commit();
-            
+
             return [
                 'success' => true,
                 'report' => $report,
@@ -122,33 +122,33 @@ class ReportService extends BaseService
     public function updateReport(int $reportId, array $data, User $user): array
     {
         $report = $this->reportRepository->find($reportId);
-        
+
         if (!$report) {
             throw new \Exception('Report not found.');
         }
-        
+
         // Check permissions
         if (!$this->userCanEditReport($user, $report)) {
             throw new \Exception('You do not have permission to edit this report.');
         }
-        
+
         DB::beginTransaction();
         try {
             // Update report
             $this->reportRepository->update($reportId, $data);
-            
+
             // Refresh report data
             $report = $this->reportRepository->findWithFullDetails($reportId);
-            
+
             // Log activity
             Log::info('Report updated', [
                 'report_id' => $reportId,
                 'user_id' => $user->id,
                 'data' => $data
             ]);
-            
+
             DB::commit();
-            
+
             return [
                 'success' => true,
                 'report' => $report,
@@ -172,34 +172,34 @@ class ReportService extends BaseService
     public function deleteReport(int $reportId, User $user): array
     {
         $report = $this->reportRepository->find($reportId);
-        
+
         if (!$report) {
             throw new \Exception('Report not found.');
         }
-        
+
         // Check permissions
         if (!$this->userCanDeleteReport($user, $report)) {
             throw new \Exception('You do not have permission to delete this report.');
         }
-        
+
         // Check dependencies
         if ($this->reportRepository->hasDependencies($reportId)) {
             throw new \Exception('Cannot delete report with dependencies.');
         }
-        
+
         DB::beginTransaction();
         try {
             // Delete report
             $this->reportRepository->delete($reportId);
-            
+
             // Log activity
             Log::info('Report deleted', [
                 'report_id' => $reportId,
                 'user_id' => $user->id
             ]);
-            
+
             DB::commit();
-            
+
             return [
                 'success' => true,
                 'message' => 'Report deleted successfully.'
@@ -221,7 +221,7 @@ class ReportService extends BaseService
     protected function buildRoleFilters(User $user, array $filters): array
     {
         $roleFilters = $filters;
-        
+
         switch ($user->user_type) {
             case 'hackathon_admin':
                 // Limit to user's edition
@@ -229,17 +229,17 @@ class ReportService extends BaseService
                     $roleFilters['edition_id'] = $user->edition_id;
                 }
                 break;
-                
+
             case 'system_admin':
                 // No additional filters - can see everything
                 break;
-                
+
             default:
                 // Other roles - force empty result
                 $roleFilters['force_empty'] = true;
                 break;
         }
-        
+
         return $roleFilters;
     }
 
@@ -251,13 +251,13 @@ class ReportService extends BaseService
         switch ($user->user_type) {
             case 'system_admin':
                 return $this->editionRepository->all();
-                
+
             case 'hackathon_admin':
                 if ($user->edition_id) {
                     return collect([$this->editionRepository->find($user->edition_id)]);
                 }
                 return collect();
-                
+
             default:
                 return collect();
         }
@@ -271,10 +271,10 @@ class ReportService extends BaseService
         switch ($user->user_type) {
             case 'system_admin':
                 return true;
-                
+
             case 'hackathon_admin':
                 return !isset($report->edition_id) || $user->edition_id == $report->edition_id;
-                
+
             default:
                 return false;
         }
@@ -288,10 +288,10 @@ class ReportService extends BaseService
         switch ($user->user_type) {
             case 'system_admin':
                 return true;
-                
+
             case 'hackathon_admin':
                 return $user->edition_id == $editionId;
-                
+
             default:
                 return false;
         }
@@ -313,7 +313,7 @@ class ReportService extends BaseService
         if (!$this->userCanAccessReport($user, $report)) {
             return false;
         }
-        
+
         return in_array($user->user_type, ['system_admin', 'hackathon_admin']);
     }
 
@@ -325,9 +325,9 @@ class ReportService extends BaseService
         if (!$this->userCanAccessReport($user, $report)) {
             return false;
         }
-        
+
         // Only system admin can delete
-        return $user->user_type === 'system_admin';
+        return $user->hasRole('system_admin');
     }
 
     /**

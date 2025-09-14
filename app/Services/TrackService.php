@@ -30,16 +30,16 @@ class TrackService extends BaseService
     {
         // Build filters based on user role
         $roleFilters = $this->buildRoleFilters($user, $filters);
-        
+
         // Get paginated tracks
         $tracks = $this->trackRepository->getPaginatedWithFilters($roleFilters, $perPage);
-        
+
         // Get statistics
         $statistics = $this->trackRepository->getStatistics($roleFilters);
-        
+
         // Get editions for filter dropdown
         $editions = $this->getEditionsForUser($user);
-        
+
         return [
             'tracks' => $tracks,
             'statistics' => $statistics,
@@ -54,16 +54,16 @@ class TrackService extends BaseService
     public function getTrackDetails(int $trackId, User $user): ?array
     {
         $track = $this->trackRepository->findWithFullDetails($trackId);
-        
+
         if (!$track) {
             return null;
         }
-        
+
         // Check if user has access to this track
         if (!$this->userCanAccessTrack($user, $track)) {
             return null;
         }
-        
+
         return [
             'track' => $track,
             'permissions' => $this->getTrackPermissions($user, $track)
@@ -79,28 +79,28 @@ class TrackService extends BaseService
         if (!$this->userCanCreateTrack($user)) {
             throw new \Exception('You do not have permission to create tracks.');
         }
-        
+
         // Validate edition access for non-system admin
-        if ($user->user_type !== 'system_admin' && !empty($data['edition_id'])) {
+        if (!$user->hasRole('system_admin') && !empty($data['edition_id'])) {
             if (!$this->userCanAccessEdition($user, $data['edition_id'])) {
                 throw new \Exception('You do not have access to this edition.');
             }
         }
-        
+
         DB::beginTransaction();
         try {
             // Create track
             $track = $this->trackRepository->create($data);
-            
+
             // Log activity
             Log::info('Track created', [
                 'track_id' => $track->id,
                 'user_id' => $user->id,
                 'data' => $data
             ]);
-            
+
             DB::commit();
-            
+
             return [
                 'success' => true,
                 'track' => $track,
@@ -123,40 +123,40 @@ class TrackService extends BaseService
     public function updateTrack(int $trackId, array $data, User $user): array
     {
         $track = $this->trackRepository->find($trackId);
-        
+
         if (!$track) {
             throw new \Exception('Track not found.');
         }
-        
+
         // Check permissions
         if (!$this->userCanEditTrack($user, $track)) {
             throw new \Exception('You do not have permission to edit this track.');
         }
-        
+
         // Validate edition access for non-system admin
-        if ($user->user_type !== 'system_admin' && !empty($data['edition_id'])) {
+        if (!$user->hasRole('system_admin') && !empty($data['edition_id'])) {
             if (!$this->userCanAccessEdition($user, $data['edition_id'])) {
                 throw new \Exception('You do not have access to this edition.');
             }
         }
-        
+
         DB::beginTransaction();
         try {
             // Update track
             $this->trackRepository->update($trackId, $data);
-            
+
             // Refresh track data
             $track = $this->trackRepository->findWithFullDetails($trackId);
-            
+
             // Log activity
             Log::info('Track updated', [
                 'track_id' => $trackId,
                 'user_id' => $user->id,
                 'data' => $data
             ]);
-            
+
             DB::commit();
-            
+
             return [
                 'success' => true,
                 'track' => $track,
@@ -180,34 +180,34 @@ class TrackService extends BaseService
     public function deleteTrack(int $trackId, User $user): array
     {
         $track = $this->trackRepository->find($trackId);
-        
+
         if (!$track) {
             throw new \Exception('Track not found.');
         }
-        
+
         // Check permissions
         if (!$this->userCanDeleteTrack($user, $track)) {
             throw new \Exception('You do not have permission to delete this track.');
         }
-        
+
         // Check dependencies
         if ($this->trackRepository->hasDependencies($trackId)) {
             throw new \Exception('Cannot delete track with associated teams or ideas.');
         }
-        
+
         DB::beginTransaction();
         try {
             // Delete track
             $this->trackRepository->delete($trackId);
-            
+
             // Log activity
             Log::info('Track deleted', [
                 'track_id' => $trackId,
                 'user_id' => $user->id
             ]);
-            
+
             DB::commit();
-            
+
             return [
                 'success' => true,
                 'message' => 'Track deleted successfully.'
@@ -230,13 +230,13 @@ class TrackService extends BaseService
     {
         // Build filters based on user role
         $roleFilters = $this->buildRoleFilters($user, $filters);
-        
+
         // Get tracks for export
         $tracks = $this->trackRepository->getForExport($roleFilters);
-        
+
         $csvData = [];
         $csvData[] = ['ID', 'Name', 'Edition', 'Description', 'Teams Count', 'Ideas Count', 'Status', 'Created At'];
-        
+
         foreach ($tracks as $track) {
             $csvData[] = [
                 $track->id,
@@ -249,7 +249,7 @@ class TrackService extends BaseService
                 $track->created_at->format('Y-m-d H:i'),
             ];
         }
-        
+
         return [
             'data' => $csvData,
             'filename' => 'tracks-export-' . date('Y-m-d') . '.csv'
@@ -264,14 +264,14 @@ class TrackService extends BaseService
         $data = [
             'editions' => $this->getEditionsForUser($user)
         ];
-        
+
         if ($trackId) {
             $track = $this->trackRepository->find($trackId);
             if ($track && $this->userCanAccessTrack($user, $track)) {
                 $data['track'] = $track;
             }
         }
-        
+
         return $data;
     }
 
@@ -281,24 +281,24 @@ class TrackService extends BaseService
     public function assignSupervisor(int $trackId, int $userId, User $currentUser, bool $isPrimary = false): array
     {
         $track = $this->trackRepository->find($trackId);
-        
+
         if (!$track) {
             throw new \Exception('Track not found.');
         }
-        
+
         // Check permissions
         if (!$this->userCanManageSupervisors($currentUser, $track)) {
             throw new \Exception('You do not have permission to manage supervisors for this track.');
         }
-        
+
         DB::beginTransaction();
         try {
             $result = $this->trackRepository->assignSupervisor($trackId, $userId, $isPrimary);
-            
+
             if (!$result) {
                 throw new \Exception('Failed to assign supervisor.');
             }
-            
+
             // Log activity
             Log::info('Supervisor assigned to track', [
                 'track_id' => $trackId,
@@ -306,9 +306,9 @@ class TrackService extends BaseService
                 'assigned_by' => $currentUser->id,
                 'is_primary' => $isPrimary
             ]);
-            
+
             DB::commit();
-            
+
             return [
                 'success' => true,
                 'message' => 'Supervisor assigned successfully.'
@@ -330,7 +330,7 @@ class TrackService extends BaseService
     protected function buildRoleFilters(User $user, array $filters): array
     {
         $roleFilters = $filters;
-        
+
         switch ($user->user_type) {
             case 'hackathon_admin':
                 // Limit to user's edition
@@ -338,14 +338,14 @@ class TrackService extends BaseService
                     $roleFilters['edition_id'] = $user->edition_id;
                 }
                 break;
-                
+
             case 'track_supervisor':
                 // Get supervised tracks
                 $trackIds = DB::table('track_supervisors')
                     ->where('user_id', $user->id)
                     ->pluck('track_id')
                     ->toArray();
-                    
+
                 if (!empty($trackIds)) {
                     $roleFilters['track_ids'] = $trackIds;
                 } else {
@@ -353,17 +353,17 @@ class TrackService extends BaseService
                     $roleFilters['track_ids'] = [0]; // Force empty result
                 }
                 break;
-                
+
             case 'system_admin':
                 // No additional filters - can see everything
                 break;
-                
+
             default:
                 // Other roles shouldn't access tracks
                 $roleFilters['track_ids'] = [0]; // Force empty result
                 break;
         }
-        
+
         return $roleFilters;
     }
 
@@ -375,24 +375,24 @@ class TrackService extends BaseService
         switch ($user->user_type) {
             case 'system_admin':
                 return $this->editionRepository->all();
-                
+
             case 'hackathon_admin':
                 if ($user->edition_id) {
                     return collect([$this->editionRepository->find($user->edition_id)]);
                 }
                 return collect();
-                
+
             case 'track_supervisor':
                 // Get editions from supervised tracks
                 $tracks = $this->trackRepository->getTracksBySupervisor($user->id);
                 $editionIds = $tracks->pluck('edition_id')->unique()->filter();
-                
+
                 if ($editionIds->isEmpty()) {
                     return collect();
                 }
-                
+
                 return $this->editionRepository->findManyBy('id', $editionIds->toArray());
-                
+
             default:
                 return collect();
         }
@@ -406,17 +406,17 @@ class TrackService extends BaseService
         switch ($user->user_type) {
             case 'system_admin':
                 return true;
-                
+
             case 'hackathon_admin':
                 return $user->edition_id == $track->edition_id;
-                
+
             case 'track_supervisor':
                 $trackIds = DB::table('track_supervisors')
                     ->where('user_id', $user->id)
                     ->pluck('track_id')
                     ->toArray();
                 return in_array($track->id, $trackIds);
-                
+
             default:
                 return false;
         }
@@ -430,10 +430,10 @@ class TrackService extends BaseService
         switch ($user->user_type) {
             case 'system_admin':
                 return true;
-                
+
             case 'hackathon_admin':
                 return $user->edition_id == $editionId;
-                
+
             default:
                 return false;
         }
@@ -455,7 +455,7 @@ class TrackService extends BaseService
         if (!$this->userCanAccessTrack($user, $track)) {
             return false;
         }
-        
+
         return in_array($user->user_type, ['system_admin', 'hackathon_admin']);
     }
 
@@ -467,9 +467,9 @@ class TrackService extends BaseService
         if (!$this->userCanAccessTrack($user, $track)) {
             return false;
         }
-        
+
         // Only system admin can delete
-        return $user->user_type === 'system_admin';
+        return $user->hasRole('system_admin');
     }
 
     /**
@@ -480,7 +480,7 @@ class TrackService extends BaseService
         if (!$this->userCanAccessTrack($user, $track)) {
             return false;
         }
-        
+
         return in_array($user->user_type, ['system_admin', 'hackathon_admin']);
     }
 

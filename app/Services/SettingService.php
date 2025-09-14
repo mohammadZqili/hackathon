@@ -30,10 +30,10 @@ class SettingService extends BaseService
     public function getAllSettings(User $user): array
     {
         // Check if user is system admin
-        if ($user->user_type !== 'system_admin') {
+        if (!$user->hasRole('system_admin')) {
             throw new \Exception('You do not have permission to access system settings.');
         }
-        
+
         return [
             'smtp' => SystemSetting::getGroup('smtp'),
             'branding' => SystemSetting::getGroup('branding'),
@@ -53,10 +53,10 @@ class SettingService extends BaseService
     public function getBrandingSettings(User $user): array
     {
         // Check if user is system admin
-        if ($user->user_type !== 'system_admin') {
+        if (!$user->hasRole('system_admin')) {
             throw new \Exception('You do not have permission to access branding settings.');
         }
-        
+
         return [
             'app_name' => SystemSetting::get('app_name', config('app.name')),
             'app_logo' => SystemSetting::get('app_logo'),
@@ -72,10 +72,10 @@ class SettingService extends BaseService
     public function updateBrandingSettings(array $data, User $user): array
     {
         // Check if user is system admin
-        if ($user->user_type !== 'system_admin') {
+        if (!$user->hasRole('system_admin')) {
             throw new \Exception('You do not have permission to update branding settings.');
         }
-        
+
         DB::beginTransaction();
         try {
             // Update each branding setting
@@ -84,12 +84,12 @@ class SettingService extends BaseService
             SystemSetting::set('primary_color', $data['primary_color'], 'branding');
             SystemSetting::set('secondary_color', $data['secondary_color'], 'branding');
             SystemSetting::set('footer_text', $data['footer_text'] ?? null, 'branding');
-            
+
             // Clear settings cache
             SettingsServiceProvider::clearCache();
-            
+
             DB::commit();
-            
+
             return [
                 'success' => true,
                 'message' => 'Branding settings updated successfully.'
@@ -111,10 +111,10 @@ class SettingService extends BaseService
     public function getSmtpSettings(User $user): array
     {
         // Check if user is system admin
-        if ($user->user_type !== 'system_admin') {
+        if (!$user->hasRole('system_admin')) {
             throw new \Exception('You do not have permission to access SMTP settings.');
         }
-        
+
         return [
             'smtp_host' => SystemSetting::get('mail_host', config('mail.mailers.smtp.host')),
             'smtp_port' => SystemSetting::get('mail_port', config('mail.mailers.smtp.port')),
@@ -132,31 +132,31 @@ class SettingService extends BaseService
     public function updateSmtpSettings(array $data, User $user): array
     {
         // Check if user is system admin
-        if ($user->user_type !== 'system_admin') {
+        if (!$user->hasRole('system_admin')) {
             throw new \Exception('You do not have permission to update SMTP settings.');
         }
-        
+
         DB::beginTransaction();
         try {
             // Update each SMTP setting
             SystemSetting::set('mail_host', $data['smtp_host'], 'smtp');
             SystemSetting::set('mail_port', $data['smtp_port'], 'smtp');
             SystemSetting::set('mail_username', $data['smtp_username'], 'smtp');
-            
+
             // Only update password if provided
             if (!empty($data['smtp_password'])) {
                 SystemSetting::set('mail_password', $data['smtp_password'], 'smtp');
             }
-            
+
             SystemSetting::set('mail_encryption', $data['smtp_encryption'] ?? null, 'smtp');
             SystemSetting::set('mail_from_address', $data['smtp_from_address'], 'smtp');
             SystemSetting::set('mail_from_name', $data['smtp_from_name'], 'smtp');
-            
+
             // Clear settings cache
             SettingsServiceProvider::clearCache();
-            
+
             DB::commit();
-            
+
             return [
                 'success' => true,
                 'message' => 'SMTP settings updated successfully.'
@@ -178,10 +178,10 @@ class SettingService extends BaseService
     public function getNotificationSettings(User $user): array
     {
         // Check if user is system admin
-        if ($user->user_type !== 'system_admin') {
+        if (!$user->hasRole('system_admin')) {
             throw new \Exception('You do not have permission to access notification settings.');
         }
-        
+
         return [
             'email_enabled' => SystemSetting::get('notification_email_enabled', '1') === '1',
             'sms_enabled' => SystemSetting::get('notification_sms_enabled', '0') === '1',
@@ -200,10 +200,10 @@ class SettingService extends BaseService
     public function updateNotificationSettings(array $data, User $user): array
     {
         // Check if user is system admin
-        if ($user->user_type !== 'system_admin') {
+        if (!$user->hasRole('system_admin')) {
             throw new \Exception('You do not have permission to update notification settings.');
         }
-        
+
         DB::beginTransaction();
         try {
             // Update notification settings - store booleans as '1' or '0'
@@ -211,26 +211,26 @@ class SettingService extends BaseService
             SystemSetting::set('notification_sms_enabled', $data['sms_enabled'] ? '1' : '0', 'notifications');
             SystemSetting::set('notification_push_enabled', $data['push_enabled'] ? '1' : '0', 'notifications');
             SystemSetting::set('notification_in_app_enabled', $data['in_app_enabled'] ? '1' : '0', 'notifications');
-            
+
             if (isset($data['email_digest'])) {
                 SystemSetting::set('notification_email_digest', $data['email_digest'], 'notifications');
             }
-            
+
             SystemSetting::set('notification_quiet_hours_enabled', $data['quiet_hours_enabled'] ? '1' : '0', 'notifications');
-            
+
             if (isset($data['quiet_hours_start'])) {
                 SystemSetting::set('notification_quiet_hours_start', $data['quiet_hours_start'], 'notifications');
             }
-            
+
             if (isset($data['quiet_hours_end'])) {
                 SystemSetting::set('notification_quiet_hours_end', $data['quiet_hours_end'], 'notifications');
             }
-            
+
             // Clear settings cache
             SettingsServiceProvider::clearCache();
-            
+
             DB::commit();
-            
+
             return [
                 'success' => true,
                 'message' => 'Notification settings updated successfully.'
@@ -252,10 +252,10 @@ class SettingService extends BaseService
     public function getSmsSettings(User $user): array
     {
         // Check if user is system admin
-        if ($user->user_type !== 'system_admin') {
+        if (!$user->hasRole('system_admin')) {
             throw new \Exception('You do not have permission to access SMS settings.');
         }
-        
+
         return [
             'sms_provider' => SystemSetting::get('sms_provider', 'twilio'),
             'sms_api_key' => SystemSetting::get('sms_api_key'),
@@ -270,10 +270,10 @@ class SettingService extends BaseService
     public function updateSmsSettings(array $data, User $user): array
     {
         // Check if user is system admin
-        if ($user->user_type !== 'system_admin') {
+        if (!$user->hasRole('system_admin')) {
             throw new \Exception('You do not have permission to update SMS settings.');
         }
-        
+
         DB::beginTransaction();
         try {
             // Update SMS settings
@@ -281,12 +281,12 @@ class SettingService extends BaseService
             SystemSetting::set('sms_api_key', $data['sms_api_key'], 'sms');
             SystemSetting::set('sms_api_secret', $data['sms_api_secret'] ?? null, 'sms');
             SystemSetting::set('sms_from_number', $data['sms_from_number'], 'sms');
-            
+
             // Clear settings cache
             SettingsServiceProvider::clearCache();
-            
+
             DB::commit();
-            
+
             return [
                 'success' => true,
                 'message' => 'SMS settings updated successfully.'
@@ -308,10 +308,10 @@ class SettingService extends BaseService
     public function getTwitterSettings(User $user): array
     {
         // Check if user is system admin
-        if ($user->user_type !== 'system_admin') {
+        if (!$user->hasRole('system_admin')) {
             throw new \Exception('You do not have permission to access Twitter settings.');
         }
-        
+
         return [
             'twitter_api_key' => SystemSetting::get('twitter_api_key'),
             'twitter_api_secret' => SystemSetting::get('twitter_api_secret'),
@@ -327,10 +327,10 @@ class SettingService extends BaseService
     public function updateTwitterSettings(array $data, User $user): array
     {
         // Check if user is system admin
-        if ($user->user_type !== 'system_admin') {
+        if (!$user->hasRole('system_admin')) {
             throw new \Exception('You do not have permission to update Twitter settings.');
         }
-        
+
         DB::beginTransaction();
         try {
             // Update Twitter settings
@@ -346,14 +346,14 @@ class SettingService extends BaseService
             if (isset($data['twitter_access_token_secret'])) {
                 SystemSetting::set('twitter_access_token_secret', $data['twitter_access_token_secret'], 'twitter');
             }
-            
+
             SystemSetting::set('twitter_auto_post', isset($data['twitter_auto_post']) && $data['twitter_auto_post'] ? '1' : '0', 'twitter');
-            
+
             // Clear settings cache
             SettingsServiceProvider::clearCache();
-            
+
             DB::commit();
-            
+
             return [
                 'success' => true,
                 'message' => 'Twitter settings updated successfully.'
@@ -376,16 +376,16 @@ class SettingService extends BaseService
     {
         // Build filters based on user role
         $roleFilters = $this->buildRoleFilters($user, $filters);
-        
+
         // Get paginated setting_PLURAL
         $setting_PLURAL = $this->settingRepository->getPaginatedWithFilters($roleFilters, $perPage);
-        
+
         // Get statistics
         $statistics = $this->settingRepository->getStatistics($roleFilters);
-        
+
         // Get editions for filter dropdown
         $editions = $this->getEditionsForUser($user);
-        
+
         return [
             'setting_PLURAL' => $setting_PLURAL,
             'statistics' => $statistics,
@@ -400,16 +400,16 @@ class SettingService extends BaseService
     public function getSettingDetails(int $settingId, User $user): ?array
     {
         $setting = $this->settingRepository->findWithFullDetails($settingId);
-        
+
         if (!$setting) {
             return null;
         }
-        
+
         // Check if user has access to this setting
         if (!$this->userCanAccessSetting($user, $setting)) {
             return null;
         }
-        
+
         return [
             'setting' => $setting,
             'permissions' => $this->getSettingPermissions($user, $setting)
@@ -425,28 +425,28 @@ class SettingService extends BaseService
         if (!$this->userCanCreateSetting($user)) {
             throw new \Exception('You do not have permission to create setting_PLURAL.');
         }
-        
+
         // Validate edition access for non-system admin
-        if ($user->user_type !== 'system_admin' && !empty($data['edition_id'])) {
+        if (!$user->hasRole('system_admin') && !empty($data['edition_id'])) {
             if (!$this->userCanAccessEdition($user, $data['edition_id'])) {
                 throw new \Exception('You do not have access to this edition.');
             }
         }
-        
+
         DB::beginTransaction();
         try {
             // Create setting
             $setting = $this->settingRepository->create($data);
-            
+
             // Log activity
             Log::info('Setting created', [
                 'setting_id' => $setting->id,
                 'user_id' => $user->id,
                 'data' => $data
             ]);
-            
+
             DB::commit();
-            
+
             return [
                 'success' => true,
                 'setting' => $setting,
@@ -469,33 +469,33 @@ class SettingService extends BaseService
     public function updateSetting(int $settingId, array $data, User $user): array
     {
         $setting = $this->settingRepository->find($settingId);
-        
+
         if (!$setting) {
             throw new \Exception('Setting not found.');
         }
-        
+
         // Check permissions
         if (!$this->userCanEditSetting($user, $setting)) {
             throw new \Exception('You do not have permission to edit this setting.');
         }
-        
+
         DB::beginTransaction();
         try {
             // Update setting
             $this->settingRepository->update($settingId, $data);
-            
+
             // Refresh setting data
             $setting = $this->settingRepository->findWithFullDetails($settingId);
-            
+
             // Log activity
             Log::info('Setting updated', [
                 'setting_id' => $settingId,
                 'user_id' => $user->id,
                 'data' => $data
             ]);
-            
+
             DB::commit();
-            
+
             return [
                 'success' => true,
                 'setting' => $setting,
@@ -519,34 +519,34 @@ class SettingService extends BaseService
     public function deleteSetting(int $settingId, User $user): array
     {
         $setting = $this->settingRepository->find($settingId);
-        
+
         if (!$setting) {
             throw new \Exception('Setting not found.');
         }
-        
+
         // Check permissions
         if (!$this->userCanDeleteSetting($user, $setting)) {
             throw new \Exception('You do not have permission to delete this setting.');
         }
-        
+
         // Check dependencies
         if ($this->settingRepository->hasDependencies($settingId)) {
             throw new \Exception('Cannot delete setting with dependencies.');
         }
-        
+
         DB::beginTransaction();
         try {
             // Delete setting
             $this->settingRepository->delete($settingId);
-            
+
             // Log activity
             Log::info('Setting deleted', [
                 'setting_id' => $settingId,
                 'user_id' => $user->id
             ]);
-            
+
             DB::commit();
-            
+
             return [
                 'success' => true,
                 'message' => 'Setting deleted successfully.'
@@ -568,7 +568,7 @@ class SettingService extends BaseService
     protected function buildRoleFilters(User $user, array $filters): array
     {
         $roleFilters = $filters;
-        
+
         switch ($user->user_type) {
             case 'hackathon_admin':
                 // Limit to user's edition
@@ -576,17 +576,17 @@ class SettingService extends BaseService
                     $roleFilters['edition_id'] = $user->edition_id;
                 }
                 break;
-                
+
             case 'system_admin':
                 // No additional filters - can see everything
                 break;
-                
+
             default:
                 // Other roles - force empty result
                 $roleFilters['force_empty'] = true;
                 break;
         }
-        
+
         return $roleFilters;
     }
 
@@ -598,13 +598,13 @@ class SettingService extends BaseService
         switch ($user->user_type) {
             case 'system_admin':
                 return $this->editionRepository->all();
-                
+
             case 'hackathon_admin':
                 if ($user->edition_id) {
                     return collect([$this->editionRepository->find($user->edition_id)]);
                 }
                 return collect();
-                
+
             default:
                 return collect();
         }
@@ -618,10 +618,10 @@ class SettingService extends BaseService
         switch ($user->user_type) {
             case 'system_admin':
                 return true;
-                
+
             case 'hackathon_admin':
                 return !isset($setting->edition_id) || $user->edition_id == $setting->edition_id;
-                
+
             default:
                 return false;
         }
@@ -635,10 +635,10 @@ class SettingService extends BaseService
         switch ($user->user_type) {
             case 'system_admin':
                 return true;
-                
+
             case 'hackathon_admin':
                 return $user->edition_id == $editionId;
-                
+
             default:
                 return false;
         }
@@ -660,7 +660,7 @@ class SettingService extends BaseService
         if (!$this->userCanAccessSetting($user, $setting)) {
             return false;
         }
-        
+
         return in_array($user->user_type, ['system_admin', 'hackathon_admin']);
     }
 
@@ -672,9 +672,9 @@ class SettingService extends BaseService
         if (!$this->userCanAccessSetting($user, $setting)) {
             return false;
         }
-        
+
         // Only system admin can delete
-        return $user->user_type === 'system_admin';
+        return $user->hasRole('system_admin');
     }
 
     /**

@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\UserType;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
@@ -18,10 +19,12 @@ class UserSeeder extends Seeder
                 'name' => 'Super Admin',
                 'password' => bcrypt('password'),
                 'email_verified_at' => now(),
+                'user_type' => UserType::ADMIN->value,
             ]
         );
-        if (!$superuser->hasRole('superuser')) {
-            $superuser->assignRole('superuser');
+
+        if (!$superuser->hasRole(UserType::ADMIN->value)) {
+            $superuser->assignRole(UserType::ADMIN->value);
         }
 
         // Create system admin
@@ -31,10 +34,12 @@ class UserSeeder extends Seeder
                 'name' => 'System Admin',
                 'password' => bcrypt('password'),
                 'email_verified_at' => now(),
+                'user_type' => UserType::ADMIN->value,
             ]
         );
-        if (!$systemAdmin->hasRole('system_admin')) {
-            $systemAdmin->assignRole('system_admin');
+
+        if (!$systemAdmin->hasRole(UserType::ADMIN->value)) {
+            $systemAdmin->assignRole(UserType::ADMIN->value);
         }
 
         // Create hackathon admin
@@ -44,10 +49,12 @@ class UserSeeder extends Seeder
                 'name' => 'Hackathon Admin',
                 'password' => bcrypt('password'),
                 'email_verified_at' => now(),
+                'user_type' => UserType::HACKATHON_ADMIN->value,
             ]
         );
-        if (!$hackathonAdmin->hasRole('hackathon_admin')) {
-            $hackathonAdmin->assignRole('hackathon_admin');
+
+        if (!$hackathonAdmin->hasRole(UserType::HACKATHON_ADMIN->value)) {
+            $hackathonAdmin->assignRole(UserType::HACKATHON_ADMIN->value);
         }
 
         // Create track supervisors
@@ -60,10 +67,12 @@ class UserSeeder extends Seeder
                 'phone' => '+1234567890',
                 'university' => 'MIT',
                 'major' => 'Computer Science',
+                'user_type' => UserType::TRACK_SUPERVISOR->value,
             ]
         );
-        if (!$trackSupervisor1->hasRole('track_supervisor')) {
-            $trackSupervisor1->assignRole('track_supervisor');
+
+        if (!$trackSupervisor1->hasRole(UserType::TRACK_SUPERVISOR->value)) {
+            $trackSupervisor1->assignRole(UserType::TRACK_SUPERVISOR->value);
         }
 
         $trackSupervisor2 = User::firstOrCreate(
@@ -75,10 +84,12 @@ class UserSeeder extends Seeder
                 'phone' => '+1234567891',
                 'university' => 'Stanford University',
                 'major' => 'Artificial Intelligence',
+                'user_type' => UserType::TRACK_SUPERVISOR->value,
             ]
         );
-        if (!$trackSupervisor2->hasRole('track_supervisor')) {
-            $trackSupervisor2->assignRole('track_supervisor');
+;
+        if (!$trackSupervisor2->hasRole(UserType::TRACK_SUPERVISOR->value)) {
+            $trackSupervisor2->assignRole(UserType::TRACK_SUPERVISOR->value);
         }
 
         // Create team leaders
@@ -92,10 +103,12 @@ class UserSeeder extends Seeder
                 'university' => 'UC Berkeley',
                 'major' => 'Software Engineering',
                 'graduation_year' => 2025,
+                'user_type' => UserType::TEAM_LEADER->value,
             ]
         );
-        if (!$teamLeader1->hasRole('team_leader')) {
-            $teamLeader1->assignRole('team_leader');
+
+        if (!$teamLeader1->hasRole(UserType::TEAM_LEADER->value)) {
+            $teamLeader1->assignRole(UserType::TEAM_LEADER->value);
         }
 
         $teamLeader2 = User::firstOrCreate(
@@ -108,10 +121,11 @@ class UserSeeder extends Seeder
                 'university' => 'Carnegie Mellon',
                 'major' => 'Data Science',
                 'graduation_year' => 2024,
+                'user_type' => UserType::TEAM_LEADER->value,
             ]
         );
-        if (!$teamLeader2->hasRole('team_leader')) {
-            $teamLeader2->assignRole('team_leader');
+        if (!$teamLeader2->hasRole(UserType::TEAM_LEADER->value)) {
+            $teamLeader2->assignRole(UserType::TEAM_LEADER->value);
         }
 
         // Create team members
@@ -126,14 +140,15 @@ class UserSeeder extends Seeder
                     'university' => ['Harvard', 'Yale', 'Princeton', 'Columbia', 'Brown'][rand(0, 4)],
                     'major' => ['Computer Science', 'Engineering', 'Mathematics', 'Physics', 'Data Science'][rand(0, 4)],
                     'graduation_year' => rand(2024, 2027),
+                    'user_type' => UserType::TEAM_MEMBER->value,
                 ]
             );
-            if (!$member->hasRole('team_member')) {
-                $member->assignRole('team_member');
+            if (!$member->hasRole(UserType::TEAM_MEMBER->value)) {
+                $member->assignRole(UserType::TEAM_MEMBER->value);
             }
         }
 
-        // Create regular users
+        // Create regular users (visitors)
         for ($i = 1; $i <= 5; $i++) {
             $user = User::firstOrCreate(
                 ['email' => "user$i@example.com"],
@@ -141,10 +156,11 @@ class UserSeeder extends Seeder
                     'name' => "User $i",
                     'password' => bcrypt('password'),
                     'email_verified_at' => now(),
+                    'user_type' => UserType::VISITOR->value,
                 ]
             );
-            if (!$user->hasRole('user')) {
-                $user->assignRole('user');
+            if (!$user->hasRole(UserType::VISITOR->value)) {
+                $user->assignRole(UserType::VISITOR->value);
             }
         }
     }

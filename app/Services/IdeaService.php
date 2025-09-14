@@ -17,7 +17,7 @@ class IdeaService extends BaseService
     protected HackathonEditionRepository $editionRepository;
 
     public function __construct(
-        IdeaRepository $ideaRepo, 
+        IdeaRepository $ideaRepo,
         TeamRepository $teamRepo,
         HackathonEditionRepository $editionRepository
     ) {
@@ -33,7 +33,7 @@ class IdeaService extends BaseService
             $member = $this->teamRepo->findMemberTeam($userId);
             $team = $member ? $member->team : null;
         }
-        
+
         return $team ? $this->ideaRepo->findByTeamId($team->id) : null;
     }
 
@@ -48,7 +48,7 @@ class IdeaService extends BaseService
             $data['team_id'] = $team->id;
             $data['submitted_by'] = $userId;
             $data['status'] = 'submitted';
-            
+
             return $this->ideaRepo->create($data);
         });
     }
@@ -60,16 +60,16 @@ class IdeaService extends BaseService
     {
         // Build filters based on user role
         $roleFilters = $this->buildRoleFilters($user, $filters);
-        
+
         // Get paginated ideas
         $ideas = $this->ideaRepo->getPaginatedWithFilters($roleFilters, $perPage);
-        
+
         // Get statistics
         $statistics = $this->ideaRepo->getStatistics($roleFilters);
-        
+
         // Get editions for filter dropdown
         $editions = $this->getEditionsForUser($user);
-        
+
         return [
             'ideas' => $ideas,
             'statistics' => $statistics,
@@ -84,16 +84,16 @@ class IdeaService extends BaseService
     public function getIdeaDetails(int $ideaId, User $user): ?array
     {
         $idea = $this->ideaRepo->findWithFullDetails($ideaId);
-        
+
         if (!$idea) {
             return null;
         }
-        
+
         // Check if user has access to this idea
         if (!$this->userCanAccessIdea($user, $idea)) {
             return null;
         }
-        
+
         return [
             'idea' => $idea,
             'permissions' => $this->getIdeaPermissions($user, $idea)
@@ -106,16 +106,16 @@ class IdeaService extends BaseService
     public function processReview(int $ideaId, array $data, User $user): array
     {
         $idea = $this->ideaRepo->find($ideaId);
-        
+
         if (!$idea) {
             throw new \Exception('Idea not found.');
         }
-        
+
         // Check permissions
         if (!$this->userCanReviewIdea($user, $idea)) {
             throw new \Exception('You do not have permission to review this idea.');
         }
-        
+
         DB::beginTransaction();
         try {
             // Update idea status
@@ -124,18 +124,18 @@ class IdeaService extends BaseService
                 'reviewed_by' => $data['reviewed_by'] ?? $user->id,
                 'reviewed_at' => now()
             ];
-            
+
             if (isset($data['feedback'])) {
                 $updateData['feedback'] = $data['feedback'];
             }
-            
+
             if (isset($data['scores'])) {
                 $updateData['evaluation_scores'] = $data['scores'];
                 $updateData['score'] = array_sum($data['scores']);
             }
-            
+
             $this->ideaRepo->update($ideaId, $updateData);
-            
+
             // Add review record
             if (isset($data['scores']) || isset($data['feedback'])) {
                 $this->ideaRepo->addReview($ideaId, [
@@ -146,16 +146,16 @@ class IdeaService extends BaseService
                     'criteria_scores' => $data['scores'] ?? null
                 ]);
             }
-            
+
             // Log activity
             Log::info('Idea reviewed', [
                 'idea_id' => $ideaId,
                 'user_id' => $user->id,
                 'status' => $data['status']
             ]);
-            
+
             DB::commit();
-            
+
             return [
                 'success' => true,
                 'message' => 'Idea review completed successfully.'
@@ -177,16 +177,16 @@ class IdeaService extends BaseService
     public function deleteIdea(int $ideaId, User $user): array
     {
         $idea = $this->ideaRepo->find($ideaId);
-        
+
         if (!$idea) {
             throw new \Exception('Idea not found.');
         }
-        
+
         // Check permissions
         if (!$this->userCanDeleteIdea($user, $idea)) {
             throw new \Exception('You do not have permission to delete this idea.');
         }
-        
+
         DB::beginTransaction();
         try {
             // Delete associated files from storage
@@ -195,18 +195,18 @@ class IdeaService extends BaseService
                     \Storage::disk('public')->delete($file->path);
                 }
             }
-            
+
             // Delete idea
             $this->ideaRepo->delete($ideaId);
-            
+
             // Log activity
             Log::info('Idea deleted', [
                 'idea_id' => $ideaId,
                 'user_id' => $user->id
             ]);
-            
+
             DB::commit();
-            
+
             return [
                 'success' => true,
                 'message' => 'Idea deleted successfully.'
@@ -229,13 +229,13 @@ class IdeaService extends BaseService
     {
         // Build filters based on user role
         $roleFilters = $this->buildRoleFilters($user, $filters);
-        
+
         // Get ideas for export
         $ideas = $this->ideaRepo->getForExport($roleFilters);
-        
+
         // Build CSV data
         $csvData = $this->buildExportData($ideas);
-        
+
         return [
             'data' => $csvData,
             'filename' => 'ideas-export-' . date('Y-m-d') . '.csv'
@@ -248,7 +248,7 @@ class IdeaService extends BaseService
     protected function buildRoleFilters(User $user, array $filters): array
     {
         $roleFilters = $filters;
-        
+
         switch ($user->user_type) {
             case 'hackathon_admin':
                 // Limit to user's edition
@@ -256,19 +256,19 @@ class IdeaService extends BaseService
                     $roleFilters['edition_id'] = $user->edition_id;
                 }
                 break;
-                
+
             case 'track_supervisor':
                 // Get supervised tracks
                 $trackIds = DB::table('track_supervisors')
                     ->where('user_id', $user->id)
                     ->pluck('track_id')
                     ->toArray();
-                    
+
                 if (!empty($trackIds)) {
                     $roleFilters['track_id'] = $trackIds;
                 }
                 break;
-                
+
             case 'team_leader':
                 // Limit to their team's ideas
                 $team = $this->teamRepo->findByLeaderId($user->id);
@@ -276,17 +276,17 @@ class IdeaService extends BaseService
                     $roleFilters['team_id'] = $team->id;
                 }
                 break;
-                
+
             case 'system_admin':
                 // No additional filters - can see everything
                 break;
-                
+
             default:
                 // Other roles - force empty result
                 $roleFilters['force_empty'] = true;
                 break;
         }
-        
+
         return $roleFilters;
     }
 
@@ -298,13 +298,13 @@ class IdeaService extends BaseService
         switch ($user->user_type) {
             case 'system_admin':
                 return $this->editionRepository->all();
-                
+
             case 'hackathon_admin':
                 if ($user->edition_id) {
                     return collect([$this->editionRepository->find($user->edition_id)]);
                 }
                 return collect();
-                
+
             default:
                 return collect();
         }
@@ -318,20 +318,20 @@ class IdeaService extends BaseService
         switch ($user->user_type) {
             case 'system_admin':
                 return true;
-                
+
             case 'hackathon_admin':
                 return $idea->team && $idea->team->edition_id == $user->edition_id;
-                
+
             case 'track_supervisor':
                 $trackIds = DB::table('track_supervisors')
                     ->where('user_id', $user->id)
                     ->pluck('track_id')
                     ->toArray();
                 return in_array($idea->track_id, $trackIds);
-                
+
             case 'team_leader':
                 return $idea->team_id == $this->teamRepo->findByLeaderId($user->id)?->id;
-                
+
             default:
                 return false;
         }
@@ -345,7 +345,7 @@ class IdeaService extends BaseService
         if (!$this->userCanAccessIdea($user, $idea)) {
             return false;
         }
-        
+
         return in_array($user->user_type, ['system_admin', 'hackathon_admin', 'track_supervisor']);
     }
 
@@ -357,9 +357,9 @@ class IdeaService extends BaseService
         if (!$this->userCanAccessIdea($user, $idea)) {
             return false;
         }
-        
+
         // Only system admin can delete
-        return $user->user_type === 'system_admin';
+        return $user->hasRole('system_admin');
     }
 
     /**
@@ -381,7 +381,7 @@ class IdeaService extends BaseService
     {
         $csvData = [];
         $csvData[] = ['ID', 'Title', 'Team', 'Track', 'Status', 'Score', 'Reviewer', 'Submitted At', 'Reviewed At'];
-        
+
         foreach ($ideas as $idea) {
             $csvData[] = [
                 $idea->id,
@@ -395,7 +395,7 @@ class IdeaService extends BaseService
                 $idea->reviewed_at?->format('Y-m-d H:i') ?? 'N/A',
             ];
         }
-        
+
         return $csvData;
     }
 
@@ -405,7 +405,7 @@ class IdeaService extends BaseService
         return DB::transaction(function () use ($ideaId, $userId, $data) {
             $idea = $this->ideaRepo->find($ideaId);
             $team = $this->teamRepo->findByLeaderId($userId);
-            
+
             if (!$team || $idea->team_id !== $team->id) {
                 throw new \Exception('Unauthorized to update this idea');
             }
@@ -417,14 +417,14 @@ class IdeaService extends BaseService
     public function addComment($ideaId, $userId, $comment)
     {
         $idea = $this->ideaRepo->find($ideaId);
-        
+
         // Check if user is part of the team
         $team = $this->teamRepo->findByLeaderId($userId);
         if (!$team) {
             $member = $this->teamRepo->findMemberTeam($userId);
             $team = $member ? $member->team : null;
         }
-        
+
         if (!$team || $idea->team_id !== $team->id) {
             throw new \Exception('Unauthorized to comment on this idea');
         }

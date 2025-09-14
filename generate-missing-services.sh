@@ -21,13 +21,13 @@ entities=(
 create_service() {
     local entity=$1
     local filename="app/Services/${entity}Service.php"
-    
+
     # Check if file already exists
     if [ -f "$filename" ]; then
         echo "Service already exists: $filename"
         return
     fi
-    
+
     cat > "$filename" << 'EOF'
 <?php
 
@@ -60,16 +60,16 @@ class ENTITY_NAMEService extends BaseService
     {
         // Build filters based on user role
         $roleFilters = $this->buildRoleFilters($user, $filters);
-        
+
         // Get paginated ENTITY_LOWER_PLURAL
         $ENTITY_LOWER_PLURAL = $this->ENTITY_LOWERRepository->getPaginatedWithFilters($roleFilters, $perPage);
-        
+
         // Get statistics
         $statistics = $this->ENTITY_LOWERRepository->getStatistics($roleFilters);
-        
+
         // Get editions for filter dropdown
         $editions = $this->getEditionsForUser($user);
-        
+
         return [
             'ENTITY_LOWER_PLURAL' => $ENTITY_LOWER_PLURAL,
             'statistics' => $statistics,
@@ -84,16 +84,16 @@ class ENTITY_NAMEService extends BaseService
     public function getENTITY_NAMEDetails(int $ENTITY_LOWERId, User $user): ?array
     {
         $ENTITY_LOWER = $this->ENTITY_LOWERRepository->findWithFullDetails($ENTITY_LOWERId);
-        
+
         if (!$ENTITY_LOWER) {
             return null;
         }
-        
+
         // Check if user has access to this ENTITY_LOWER
         if (!$this->userCanAccessENTITY_NAME($user, $ENTITY_LOWER)) {
             return null;
         }
-        
+
         return [
             'ENTITY_LOWER' => $ENTITY_LOWER,
             'permissions' => $this->getENTITY_NAMEPermissions($user, $ENTITY_LOWER)
@@ -109,28 +109,28 @@ class ENTITY_NAMEService extends BaseService
         if (!$this->userCanCreateENTITY_NAME($user)) {
             throw new \Exception('You do not have permission to create ENTITY_LOWER_PLURAL.');
         }
-        
+
         // Validate edition access for non-system admin
-        if ($user->user_type !== 'system_admin' && !empty($data['edition_id'])) {
+        if (!$user->hasRole('system_admin') && !empty($data['edition_id'])) {
             if (!$this->userCanAccessEdition($user, $data['edition_id'])) {
                 throw new \Exception('You do not have access to this edition.');
             }
         }
-        
+
         DB::beginTransaction();
         try {
             // Create ENTITY_LOWER
             $ENTITY_LOWER = $this->ENTITY_LOWERRepository->create($data);
-            
+
             // Log activity
             Log::info('ENTITY_NAME created', [
                 'ENTITY_LOWER_id' => $ENTITY_LOWER->id,
                 'user_id' => $user->id,
                 'data' => $data
             ]);
-            
+
             DB::commit();
-            
+
             return [
                 'success' => true,
                 'ENTITY_LOWER' => $ENTITY_LOWER,
@@ -153,33 +153,33 @@ class ENTITY_NAMEService extends BaseService
     public function updateENTITY_NAME(int $ENTITY_LOWERId, array $data, User $user): array
     {
         $ENTITY_LOWER = $this->ENTITY_LOWERRepository->find($ENTITY_LOWERId);
-        
+
         if (!$ENTITY_LOWER) {
             throw new \Exception('ENTITY_NAME not found.');
         }
-        
+
         // Check permissions
         if (!$this->userCanEditENTITY_NAME($user, $ENTITY_LOWER)) {
             throw new \Exception('You do not have permission to edit this ENTITY_LOWER.');
         }
-        
+
         DB::beginTransaction();
         try {
             // Update ENTITY_LOWER
             $this->ENTITY_LOWERRepository->update($ENTITY_LOWERId, $data);
-            
+
             // Refresh ENTITY_LOWER data
             $ENTITY_LOWER = $this->ENTITY_LOWERRepository->findWithFullDetails($ENTITY_LOWERId);
-            
+
             // Log activity
             Log::info('ENTITY_NAME updated', [
                 'ENTITY_LOWER_id' => $ENTITY_LOWERId,
                 'user_id' => $user->id,
                 'data' => $data
             ]);
-            
+
             DB::commit();
-            
+
             return [
                 'success' => true,
                 'ENTITY_LOWER' => $ENTITY_LOWER,
@@ -203,34 +203,34 @@ class ENTITY_NAMEService extends BaseService
     public function deleteENTITY_NAME(int $ENTITY_LOWERId, User $user): array
     {
         $ENTITY_LOWER = $this->ENTITY_LOWERRepository->find($ENTITY_LOWERId);
-        
+
         if (!$ENTITY_LOWER) {
             throw new \Exception('ENTITY_NAME not found.');
         }
-        
+
         // Check permissions
         if (!$this->userCanDeleteENTITY_NAME($user, $ENTITY_LOWER)) {
             throw new \Exception('You do not have permission to delete this ENTITY_LOWER.');
         }
-        
+
         // Check dependencies
         if ($this->ENTITY_LOWERRepository->hasDependencies($ENTITY_LOWERId)) {
             throw new \Exception('Cannot delete ENTITY_LOWER with dependencies.');
         }
-        
+
         DB::beginTransaction();
         try {
             // Delete ENTITY_LOWER
             $this->ENTITY_LOWERRepository->delete($ENTITY_LOWERId);
-            
+
             // Log activity
             Log::info('ENTITY_NAME deleted', [
                 'ENTITY_LOWER_id' => $ENTITY_LOWERId,
                 'user_id' => $user->id
             ]);
-            
+
             DB::commit();
-            
+
             return [
                 'success' => true,
                 'message' => 'ENTITY_NAME deleted successfully.'
@@ -252,7 +252,7 @@ class ENTITY_NAMEService extends BaseService
     protected function buildRoleFilters(User $user, array $filters): array
     {
         $roleFilters = $filters;
-        
+
         switch ($user->user_type) {
             case 'hackathon_admin':
                 // Limit to user's edition
@@ -260,17 +260,17 @@ class ENTITY_NAMEService extends BaseService
                     $roleFilters['edition_id'] = $user->edition_id;
                 }
                 break;
-                
+
             case 'system_admin':
                 // No additional filters - can see everything
                 break;
-                
+
             default:
                 // Other roles - force empty result
                 $roleFilters['force_empty'] = true;
                 break;
         }
-        
+
         return $roleFilters;
     }
 
@@ -282,13 +282,13 @@ class ENTITY_NAMEService extends BaseService
         switch ($user->user_type) {
             case 'system_admin':
                 return $this->editionRepository->all();
-                
+
             case 'hackathon_admin':
                 if ($user->edition_id) {
                     return collect([$this->editionRepository->find($user->edition_id)]);
                 }
                 return collect();
-                
+
             default:
                 return collect();
         }
@@ -302,10 +302,10 @@ class ENTITY_NAMEService extends BaseService
         switch ($user->user_type) {
             case 'system_admin':
                 return true;
-                
+
             case 'hackathon_admin':
                 return !isset($ENTITY_LOWER->edition_id) || $user->edition_id == $ENTITY_LOWER->edition_id;
-                
+
             default:
                 return false;
         }
@@ -319,10 +319,10 @@ class ENTITY_NAMEService extends BaseService
         switch ($user->user_type) {
             case 'system_admin':
                 return true;
-                
+
             case 'hackathon_admin':
                 return $user->edition_id == $editionId;
-                
+
             default:
                 return false;
         }
@@ -344,7 +344,7 @@ class ENTITY_NAMEService extends BaseService
         if (!$this->userCanAccessENTITY_NAME($user, $ENTITY_LOWER)) {
             return false;
         }
-        
+
         return in_array($user->user_type, ['system_admin', 'hackathon_admin']);
     }
 
@@ -356,9 +356,9 @@ class ENTITY_NAMEService extends BaseService
         if (!$this->userCanAccessENTITY_NAME($user, $ENTITY_LOWER)) {
             return false;
         }
-        
+
         // Only system admin can delete
-        return $user->user_type === 'system_admin';
+        return $user->hasRole('system_admin');
     }
 
     /**
@@ -379,12 +379,12 @@ EOF
     local entity_lower=$(echo "$entity" | tr '[:upper:]' '[:lower:]')
     local entity_plural=$(echo "${entity}s" | sed 's/ys$/ies/')
     local entity_lower_plural=$(echo "$entity_plural" | tr '[:upper:]' '[:lower:]')
-    
+
     sed -i "s/ENTITY_NAME/$entity/g" "$filename"
     sed -i "s/ENTITY_LOWER/$entity_lower/g" "$filename"
     sed -i "s/ENTITY_PLURAL/$entity_plural/g" "$filename"
     sed -i "s/ENTITY_LOWER_PLURAL/$entity_lower_plural/g" "$filename"
-    
+
     echo "Created service: $filename"
 }
 

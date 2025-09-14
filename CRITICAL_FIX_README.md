@@ -56,7 +56,7 @@ if ($user->role === 'system_admin') {
 ### After (Correct):
 ```php
 // ✅ CORRECT - uses actual field
-if ($user->user_type === 'system_admin') {
+if ($user->hasRole('system_admin')) {
 ```
 
 ---

@@ -47,8 +47,10 @@ class HackathonEditionService implements HackathonEditionServiceInterface
             ];
         }
         
-        // Get users with admin roles for the dropdown
-        $users = User::role(['system_admin', 'hackathon_admin'])
+        // Get only system_admin users for the dropdown
+        // (hackathon_admin users are tied to specific hackathons)
+        $users = User::role('system_admin')
+            ->orderBy('name')
             ->get(['id', 'name', 'email']);
         
         return [
