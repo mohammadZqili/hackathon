@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use App\Enums\UserType;
 
 return new class extends Migration
 {
@@ -23,14 +24,9 @@ return new class extends Migration
                 $table->string('national_id', 20)->nullable()->after('phone');
             }
             if (!Schema::hasColumn('users', 'user_type')) {
-                $table->enum('user_type', [
-                    'system_admin', 
-                    'hackathon_admin', 
-                    'track_supervisor', 
-                    'team_leader', 
-                    'team_member', 
-                    'visitor'
-                ])->default('visitor')->after('national_id');
+                // Get enum values from the UserType enum class
+                $enumValues = array_column(UserType::cases(), 'value');
+                $table->enum('user_type', $enumValues)->default(UserType::VISITOR->value)->after('national_id');
             }
             if (!Schema::hasColumn('users', 'occupation')) {
                 $table->string('occupation')->nullable()->after('user_type');

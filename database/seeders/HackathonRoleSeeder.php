@@ -116,6 +116,9 @@ class HackathonRoleSeeder extends Seeder
                 'view_workshops',
                 'update_profile',
             ],
+            'visitor' => [
+                'view_workshops',
+            ],
         ];
 
         foreach ($roles as $roleName => $rolePermissions) {
