@@ -49,10 +49,12 @@ class TeamFactory extends Factory
             'name' => $name,
             'slug' => Str::slug($name),
             'description' => $this->faker->paragraph(3),
-            'user_id' => 1, // Fixed integer for compatibility
+            'user_id' => User::factory(), // Will create a user and use their ULID
             'personal_team' => false, // Most teams won't be personal teams
             'hackathon_id' => Hackathon::factory(),
-            'leader_id' => User::factory(),
+            'leader_id' => function (array $attributes) {
+                return $attributes['user_id']; // Use the same user as leader
+            },
             'track_id' => Track::factory(),
             'invite_code' => strtoupper(Str::random(8)),
             'max_members' => $this->faker->numberBetween(3, 8),
@@ -129,7 +131,7 @@ class TeamFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'leader_id' => $leader->id,
-            'user_id' => 1, // Fixed integer for compatibility
+            'user_id' => $leader->id, // Use the same leader as user_id
         ]);
     }
 }

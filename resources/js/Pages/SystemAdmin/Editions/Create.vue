@@ -238,18 +238,22 @@ const themeStyles = computed(() => ({
 }))
 
 const submit = () => {
-    // Include default values for required fields not shown in design
+    // Include default values for required fields
     const dataToSubmit = {
         ...form.data(),
-        // Map the dates to match controller expectations
-        hackathon_start_date: form.idea_submission_start_date || form.registration_end_date,
-        hackathon_end_date: form.idea_submission_end_date || form.idea_submission_start_date,
+        // Use event dates instead of hackathon dates
+        event_start_date: form.idea_submission_start_date || form.registration_end_date,
+        event_end_date: form.idea_submission_end_date || form.idea_submission_start_date,
         // Include other required fields with defaults
         description: '',
         location: '',
-        max_teams: 100,
-        max_team_members: 5
+        status: 'draft',
+        is_current: form.is_active || false // Map is_active to is_current
     }
+
+    // Remove fields that don't exist in database
+    delete dataToSubmit.is_active
+    // Admin_id now exists in database, so we keep it
 
     form.transform(() => dataToSubmit).post(route('system-admin.editions.store'), {
         preserveScroll: true,

@@ -33,7 +33,9 @@ class HackathonEditionController extends Controller
      */
     public function create(): Response
     {
-        return Inertia::render('SystemAdmin/Editions/Create');
+        $data = $this->editionService->getDataForCreate();
+
+        return Inertia::render('SystemAdmin/Editions/Create', $data);
     }
 
     /**
@@ -46,7 +48,6 @@ class HackathonEditionController extends Controller
             'year' => 'required|integer|min:2020|max:2030',
             'slug' => 'nullable|string|unique:hackathon_editions,slug',
             'description' => 'nullable|string',
-            'theme' => 'nullable|string|max:255',
             'registration_start_date' => 'required|date',
             'registration_end_date' => 'required|date|after:registration_start_date',
             'idea_submission_start_date' => 'required|date',
@@ -54,12 +55,19 @@ class HackathonEditionController extends Controller
             'event_start_date' => 'required|date',
             'event_end_date' => 'required|date|after:event_start_date',
             'location' => 'nullable|string|max:255',
+            'status' => 'nullable|in:draft,active,completed,archived',
+            'admin_id' => 'nullable|exists:users,id',
             'is_current' => 'boolean',
         ]);
 
+        // Set default status if not provided
+        if (empty($validated['status'])) {
+            $validated['status'] = 'draft';
+        }
+
         try {
             $this->editionService->createEdition($validated);
-            
+
             return redirect()->route('system-admin.editions.index')
                 ->with('success', 'Hackathon edition created successfully.');
         } catch (\Exception $e) {
@@ -89,7 +97,7 @@ class HackathonEditionController extends Controller
     public function edit(HackathonEdition $edition): Response
     {
         $data = $this->editionService->getEditionForEdit($edition->id);
-        
+
         return Inertia::render('SystemAdmin/Editions/Edit', $data);
     }
 
@@ -111,14 +119,20 @@ class HackathonEditionController extends Controller
             'event_start_date' => 'required|date',
             'event_end_date' => 'required|date|after:event_start_date',
             'location' => 'nullable|string|max:255',
-            'status' => 'required|in:draft,active,completed,archived',
+            'status' => 'nullable|in:draft,active,completed,archived',
+            'admin_id' => 'nullable|exists:users,id',
             'is_current' => 'boolean',
             'created_by' => 'nullable|exists:users,id',
         ]);
 
+        // Set default status if not provided
+        if (empty($validated['status'])) {
+            $validated['status'] = $edition->status ?: 'draft';
+        }
+
         try {
             $this->editionService->updateEdition($edition->id, $validated);
-            
+
             return redirect()->route('system-admin.editions.index')
                 ->with('success', 'Hackathon edition updated successfully.');
         } catch (\Exception $e) {
@@ -135,7 +149,7 @@ class HackathonEditionController extends Controller
     {
         try {
             $this->editionService->deleteEdition($edition->id);
-            
+
             return redirect()->route('system-admin.editions.index')
                 ->with('success', 'Hackathon edition deleted successfully.');
         } catch (\Exception $e) {
@@ -151,7 +165,7 @@ class HackathonEditionController extends Controller
     {
         try {
             $this->editionService->setCurrentEdition($edition->id);
-            
+
             return redirect()->route('system-admin.editions.index')
                 ->with('success', 'Edition set as current successfully.');
         } catch (\Exception $e) {
@@ -167,7 +181,7 @@ class HackathonEditionController extends Controller
     {
         try {
             $this->editionService->archiveEdition($edition->id);
-            
+
             return redirect()->route('system-admin.editions.index')
                 ->with('success', 'Edition archived successfully.');
         } catch (\Exception $e) {
@@ -183,7 +197,7 @@ class HackathonEditionController extends Controller
     {
         try {
             $data = $this->editionService->exportEdition($edition->id);
-            
+
             return response()->json($data);
         } catch (\Exception $e) {
             return response()->json([

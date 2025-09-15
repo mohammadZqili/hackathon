@@ -55,7 +55,7 @@ class DashboardTestDataSeeder extends Seeder
                 [
                     'description' => $trackData['description'],
                     'max_teams' => 25,
-                    'status' => 'active',
+                    'is_active' => true,
                 ]
             );
         }
@@ -98,6 +98,8 @@ class DashboardTestDataSeeder extends Seeder
                 [
                     'slug' => "team-environment-{$i}",
                     'description' => "فريق متخصص في حلول البيئة رقم {$i}",
+                    'user_id' => $teamLeaderUsers[$i-1]->id,  // Required field
+                    'personal_team' => false,  // Required field
                     'hackathon_id' => $currentEdition->id,
                     'leader_id' => $teamLeaderUsers[$i-1]->id,
                     'track_id' => $trackIds[array_rand($trackIds)],
@@ -113,12 +115,12 @@ class DashboardTestDataSeeder extends Seeder
                 [
                     'description' => "وصف مفصل لفكرة المشروع الخاص بالفريق رقم {$i} في مجال البيئة والاستدامة",
                     'problem_statement' => "مشكلة بيئية تحتاج لحل مبتكر",
-                    'proposed_solution' => "حل مقترح باستخدام التكنولوجيا الحديثة",
-                    'target_audience' => "المجتمع والمؤسسات البيئية",
+                    'solution_approach' => "حل مقترح باستخدام التكنولوجيا الحديثة",  // Fixed column name
+                    'expected_impact' => "تأثير إيجابي على المجتمع والمؤسسات البيئية",  // Fixed column name
                     'technologies' => json_encode(['React', 'Laravel', 'IoT', 'AI']),
                     'team_id' => $team->id,
                     'track_id' => $team->track_id,
-                    'status' => ['draft', 'submitted', 'under_review', 'approved'][array_rand(['draft', 'submitted', 'under_review', 'approved'])],
+                    'status' => ['draft', 'submitted', 'under_review', 'accepted'][array_rand(['draft', 'submitted', 'under_review', 'accepted'])],
                     'submitted_at' => now()->subDays(rand(1, 15)),
                 ]
             );

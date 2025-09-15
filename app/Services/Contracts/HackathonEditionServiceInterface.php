@@ -8,11 +8,13 @@ use Illuminate\Pagination\LengthAwarePaginator;
 interface HackathonEditionServiceInterface
 {
     public function getPaginatedEditions(int $perPage = 15): LengthAwarePaginator;
-    
+
     public function getEditionForView(int $id): ?object;
-    
+
     public function getEditionForEdit(int $id): array;
-    
+
+    public function getDataForCreate(): array;
+
     public function createEdition(array $data): ?object;
     
     public function updateEdition(int $id, array $data): bool;

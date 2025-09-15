@@ -30,6 +30,7 @@ class HackathonEdition extends Model
         'settings',
         'statistics',
         'created_by',
+        'admin_id',
     ];
 
     protected $casts = [
@@ -47,6 +48,11 @@ class HackathonEdition extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function admin(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'admin_id');
     }
 
     public function teams(): HasMany

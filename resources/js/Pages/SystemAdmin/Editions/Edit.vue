@@ -267,7 +267,7 @@ const form = useForm({
     idea_submission_start_date: formatDateForInput(props.edition.idea_submission_start_date),
     idea_submission_end_date: formatDateForInput(props.edition.idea_submission_end_date),
     admin_id: props.edition.admin_id || null,
-    is_active: props.edition.is_active || false
+    is_active: props.edition.is_current || false
 })
 
 // Get theme color from localStorage or default
@@ -316,18 +316,22 @@ const formatDate = (date) => {
 }
 
 const submit = () => {
-    // Include default values for required fields not shown in design
+    // Include default values for required fields
     const dataToSubmit = {
         ...form.data(),
-        // Map the dates to match controller expectations
-        hackathon_start_date: form.idea_submission_start_date,
-        hackathon_end_date: form.idea_submission_end_date,
+        // Use event dates instead of hackathon dates
+        event_start_date: form.idea_submission_start_date,
+        event_end_date: form.idea_submission_end_date,
         // Include other required fields with defaults
         description: props.edition.description || '',
         location: props.edition.location || '',
-        max_teams: props.edition.max_teams || 100,
-        max_team_members: props.edition.max_team_members || 5
+        status: props.edition.status || 'draft',
+        is_current: form.is_active || false // Map is_active to is_current
     }
+
+    // Remove fields that don't exist in database
+    delete dataToSubmit.is_active
+    // Admin_id now exists in database, so we keep it
 
     form.transform(() => dataToSubmit).put(route('system-admin.editions.update', props.edition.id), {
         preserveScroll: true,

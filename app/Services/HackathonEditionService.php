@@ -39,23 +39,37 @@ class HackathonEditionService implements HackathonEditionServiceInterface
     public function getEditionForEdit(int $id): array
     {
         $edition = $this->repository->getForEdit($id);
-        
+
         if (!$edition) {
             return [
                 'edition' => null,
-                'users' => []
+                'admins' => []
             ];
         }
-        
-        // Get only system_admin users for the dropdown
-        // (hackathon_admin users are tied to specific hackathons)
-        $users = User::role('system_admin')
+
+        // Get all hackathon_admin users for the dropdown
+        $admins = User::role('hackathon_admin')
             ->orderBy('name')
             ->get(['id', 'name', 'email']);
-        
+
         return [
             'edition' => $edition,
-            'users' => $users
+            'admins' => $admins
+        ];
+    }
+
+    /**
+     * Get data for creating a new edition
+     */
+    public function getDataForCreate(): array
+    {
+        // Get all hackathon_admin users for the dropdown
+        $admins = User::role('hackathon_admin')
+            ->orderBy('name')
+            ->get(['id', 'name', 'email']);
+
+        return [
+            'admins' => $admins
         ];
     }
 
