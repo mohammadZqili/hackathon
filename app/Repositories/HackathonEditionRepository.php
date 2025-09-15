@@ -131,6 +131,42 @@ class HackathonEditionRepository extends BaseRepository implements HackathonEdit
     }
 
     /**
+     * Check if edition has associated data
+     */
+    public function hasAssociatedData(int $id): bool
+    {
+        $edition = $this->model->find($id);
+
+        if (!$edition) {
+            return false;
+        }
+
+        return $edition->teams()->exists() ||
+               $edition->ideas()->exists() ||
+               $edition->workshops()->exists();
+    }
+
+    /**
+     * Deactivate all editions
+     */
+    public function deactivateAll(): bool
+    {
+        return $this->model->query()->update(['is_active' => false]);
+    }
+
+    /**
+     * Get all editions with relations and counts for export
+     */
+    public function getAllWithRelations(): Collection
+    {
+        return $this->model
+            ->with(['admin'])
+            ->withCount(['teams', 'ideas', 'workshops', 'tracks'])
+            ->orderBy('year', 'desc')
+            ->get();
+    }
+
+    /**
      * Get active editions
      */
     public function getActiveEditions(): Collection

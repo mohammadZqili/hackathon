@@ -23,9 +23,60 @@ class SpeakerService extends BaseService
     }
 
     /**
-     * Get paginated speaker_PLURAL based on user role and filters
+     * Get all speakers
      */
-    public function getPaginatedSpeakers(User $user, array $filters = [], int $perPage = 15): array
+    public function getAllSpeakers()
+    {
+        return $this->speakerRepository->getAllOrderedByName();
+    }
+
+    /**
+     * Get paginated speakers (simple version for backward compatibility)
+     */
+    public function getPaginatedSpeakers($userOrPerPage = 15, array $filters = [], int $perPage = 15)
+    {
+        // If first parameter is a User object, use the full method
+        if ($userOrPerPage instanceof User) {
+            return $this->getPaginatedSpeakersWithUser($userOrPerPage, $filters, $perPage);
+        }
+
+        // Otherwise, treat it as perPage parameter for simple pagination
+        return $this->speakerRepository->paginate($userOrPerPage);
+    }
+
+
+
+
+
+
+    /**
+     * Get speaker with organization
+     */
+    public function getSpeakerWithOrganization(int $id)
+    {
+        return $this->speakerRepository->findWithOrganization($id);
+    }
+
+    /**
+     * Activate speaker
+     */
+    public function activateSpeaker(int $id): bool
+    {
+        return $this->speakerRepository->update($id, ['is_active' => true]);
+    }
+
+    /**
+     * Deactivate speaker
+     */
+    public function deactivateSpeaker(int $id): bool
+    {
+        return $this->speakerRepository->update($id, ['is_active' => false]);
+    }
+
+    /**
+     * Get paginated speakers based on user role and filters
+     */
+    public function getPaginatedSpeakersWithUser(User $user, array $filters = [], int $perPage = 15): array
     {
         // Build filters based on user role
         $roleFilters = $this->buildRoleFilters($user, $filters);
@@ -70,9 +121,23 @@ class SpeakerService extends BaseService
     }
 
     /**
-     * Create a new speaker
+     * Create speaker (backward compatibility wrapper)
      */
-    public function createSpeaker(array $data, User $user): array
+    public function createSpeaker($dataOrUser, $userOrNull = null)
+    {
+        // If second parameter is provided, use new signature
+        if ($userOrNull instanceof User) {
+            return $this->createSpeakerWithUser($dataOrUser, $userOrNull);
+        }
+
+        // Otherwise, simple create without user context
+        return $this->speakerRepository->create($dataOrUser);
+    }
+
+    /**
+     * Create a new speaker with user permissions
+     */
+    public function createSpeakerWithUser(array $data, User $user): array
     {
         // Check permissions
         if (!$this->userCanCreateSpeaker($user)) {
@@ -117,9 +182,23 @@ class SpeakerService extends BaseService
     }
 
     /**
-     * Update a speaker
+     * Update speaker (backward compatibility wrapper)
      */
-    public function updateSpeaker(int $speakerId, array $data, User $user): array
+    public function updateSpeaker($speakerIdOrId, $dataOrUser = null, $userOrNull = null)
+    {
+        // If third parameter is provided, use new signature
+        if ($userOrNull instanceof User) {
+            return $this->updateSpeakerWithUser($speakerIdOrId, $dataOrUser, $userOrNull);
+        }
+
+        // Otherwise, simple update without user context
+        return $this->speakerRepository->update($speakerIdOrId, $dataOrUser ?? []);
+    }
+
+    /**
+     * Update a speaker with user permissions
+     */
+    public function updateSpeakerWithUser(int $speakerId, array $data, User $user): array
     {
         $speaker = $this->speakerRepository->find($speakerId);
 
@@ -167,9 +246,23 @@ class SpeakerService extends BaseService
     }
 
     /**
-     * Delete a speaker
+     * Delete speaker (backward compatibility wrapper)
      */
-    public function deleteSpeaker(int $speakerId, User $user): array
+    public function deleteSpeaker($speakerIdOrId, $userOrNull = null)
+    {
+        // If second parameter is provided, use new signature
+        if ($userOrNull instanceof User) {
+            return $this->deleteSpeakerWithUser($speakerIdOrId, $userOrNull);
+        }
+
+        // Otherwise, simple delete without user context
+        return $this->speakerRepository->delete($speakerIdOrId);
+    }
+
+    /**
+     * Delete a speaker with user permissions
+     */
+    public function deleteSpeakerWithUser(int $speakerId, User $user): array
     {
         $speaker = $this->speakerRepository->find($speakerId);
 

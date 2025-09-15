@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Models\News;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class NewsRepository extends BaseRepository
@@ -11,6 +12,34 @@ class NewsRepository extends BaseRepository
     public function __construct(News $model)
     {
         parent::__construct($model);
+    }
+
+    /**
+     * Get articles for media center
+     */
+    public function getArticlesForMediaCenter()
+    {
+        return $this->model->select('id', 'title')
+            ->orderBy('created_at', 'desc')
+            ->get();
+    }
+
+    /**
+     * Get news with media
+     */
+    public function getNewsWithMedia()
+    {
+        return $this->model->whereNotNull('featured_image_path')
+            ->orWhereNotNull('seo_data->gallery_images')
+            ->get();
+    }
+
+    /**
+     * Find news or fail
+     */
+    public function findOrFail(string $id, array $columns = ['*']): Model
+    {
+        return $this->model->select($columns)->findOrFail($id);
     }
 
     /**
@@ -161,6 +190,14 @@ class NewsRepository extends BaseRepository
      * Find news article by ID
      */
     public function findById(string $newsId): ?News
+    {
+        return $this->model->with(['author'])->find($newsId);
+    }
+
+    /**
+     * Find news with full details
+     */
+    public function findWithFullDetails(string $newsId): ?News
     {
         return $this->model->with(['author'])->find($newsId);
     }

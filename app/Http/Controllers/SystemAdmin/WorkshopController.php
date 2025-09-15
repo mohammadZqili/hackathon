@@ -4,31 +4,35 @@ namespace App\Http\Controllers\SystemAdmin;
 
 use App\Http\Controllers\Controller;
 use App\Services\WorkshopService;
+use App\Services\SpeakerService;
+use App\Services\OrganizationService;
 use App\Rules\WorkshopTimeValidation;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\Workshop;
-use App\Models\Speaker;
-use App\Models\Organization;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class WorkshopController extends Controller
 {
     protected WorkshopService $workshopService;
+    protected SpeakerService $speakerService;
+    protected OrganizationService $organizationService;
 
-    public function __construct(WorkshopService $workshopService)
-    {
+    public function __construct(
+        WorkshopService $workshopService,
+        SpeakerService $speakerService,
+        OrganizationService $organizationService
+    ) {
         $this->workshopService = $workshopService;
+        $this->speakerService = $speakerService;
+        $this->organizationService = $organizationService;
     }
     public function index()
     {
-        $workshops = Workshop::with(['speakers', 'organizations'])
-            ->latest()
-            ->paginate(15);
-
-        $speakers = Speaker::orderBy('name')->get();
-        $organizations = Organization::orderBy('name')->get();
+        $workshops = $this->workshopService->getPaginatedWorkshops(15);
+        $speakers = $this->speakerService->getAllSpeakers();
+        $organizations = $this->organizationService->getAllOrganizations();
 
         return Inertia::render('SystemAdmin/Workshops/Index', [
             'workshops' => $workshops,
@@ -39,13 +43,8 @@ class WorkshopController extends Controller
 
     public function create()
     {
-        $speakers = Speaker::orderBy('name')->get();
-        $organizations = Organization::orderBy('name')->get();
-
-        \Log::info('Workshop Create Data', [
-            'speakers_count' => $speakers->count(),
-            'organizations_count' => $organizations->count()
-        ]);
+        $speakers = $this->speakerService->getAllSpeakers();
+        $organizations = $this->organizationService->getAllOrganizations();
 
         return Inertia::render('SystemAdmin/Workshops/Create', [
             'speakers' => $speakers,
@@ -125,21 +124,21 @@ class WorkshopController extends Controller
 
     public function show(Workshop $workshop)
     {
-        $workshop->load(['hackathon', 'speakers', 'organizations', 'registrations']);
+        $workshopData = $this->workshopService->getWorkshopDetails($workshop->id);
 
         return Inertia::render('SystemAdmin/Workshops/Show', [
-            'workshop' => $workshop
+            'workshop' => $workshopData
         ]);
     }
 
     public function edit(Workshop $workshop)
     {
-        $speakers = Speaker::orderBy('name')->get();
-        $organizations = Organization::orderBy('name')->get();
-        $workshop->load(['speakers', 'organizations']);
+        $speakers = $this->speakerService->getAllSpeakers();
+        $organizations = $this->organizationService->getAllOrganizations();
+        $workshopData = $this->workshopService->getWorkshopWithRelations($workshop->id);
 
         return Inertia::render('SystemAdmin/Workshops/Edit', [
-            'workshop' => $workshop,
+            'workshop' => $workshopData,
             'speakers' => $speakers,
             'organizations' => $organizations
         ]);
@@ -167,29 +166,8 @@ class WorkshopController extends Controller
             'organization_ids.*' => 'exists:organizations,id',
         ]);
 
-        // Remove relation fields from validated data
-        $workshopData = collect($validated)->except(['speaker_ids', 'organization_ids'])->toArray();
-        
-        // Update the workshop
-        $workshop->update($workshopData);
-
-        // Sync speakers if provided
-        if (isset($validated['speaker_ids'])) {
-            $speakerData = [];
-            foreach ($validated['speaker_ids'] as $index => $speakerId) {
-                $speakerData[$speakerId] = ['role' => 'main_speaker', 'order' => $index + 1];
-            }
-            $workshop->speakers()->sync($speakerData);
-        }
-
-        // Sync organizations if provided
-        if (isset($validated['organization_ids'])) {
-            $orgData = [];
-            foreach ($validated['organization_ids'] as $orgId) {
-                $orgData[$orgId] = ['role' => 'organizer'];
-            }
-            $workshop->organizations()->sync($orgData);
-        }
+        // Update workshop through service
+        $this->workshopService->updateWorkshop($workshop->id, $validated, auth()->user());
 
         return redirect()->route('system-admin.workshops.index')
             ->with('success', 'Workshop updated successfully.');
@@ -197,7 +175,7 @@ class WorkshopController extends Controller
 
     public function destroy(Workshop $workshop)
     {
-        $workshop->delete();
+        $this->workshopService->deleteWorkshop($workshop->id);
 
         return redirect()->route('system-admin.workshops.index')
             ->with('success', 'Workshop deleted successfully.');
@@ -205,10 +183,10 @@ class WorkshopController extends Controller
 
     public function attendance(Workshop $workshop)
     {
-        $workshop->load('attendances.user');
+        $workshopData = $this->workshopService->getWorkshopWithAttendance($workshop->id);
 
         return Inertia::render('SystemAdmin/Workshops/Attendance', [
-            'workshop' => $workshop
+            'workshop' => $workshopData
         ]);
     }
 

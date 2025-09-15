@@ -28,6 +28,30 @@ class NewsService extends BaseService implements NewsServiceInterface
     }
 
     /**
+     * Get articles for media center
+     */
+    public function getArticlesForMediaCenter()
+    {
+        return $this->newsRepo->getArticlesForMediaCenter();
+    }
+
+    /**
+     * Get news with media
+     */
+    public function getNewsWithMedia()
+    {
+        return $this->newsRepo->getNewsWithMedia();
+    }
+
+    /**
+     * Find news or fail
+     */
+    public function findOrFail(int $id)
+    {
+        return $this->newsRepo->findOrFail($id);
+    }
+
+    /**
      * Get published news with filters and pagination.
      */
     public function getPublishedNews(array $filters = [], int $perPage = 12): array
@@ -327,20 +351,33 @@ class NewsService extends BaseService implements NewsServiceInterface
             // Handle main image
             $featuredImagePath = $news->featured_image_path;
             if (!empty($data['main_image'])) {
-                // Delete old image if exists
-                if ($featuredImagePath) {
-                    Storage::disk('public')->delete($featuredImagePath);
+                // Check if it's a new temp image (starts with 'temp/')
+                if (Str::startsWith($data['main_image'], 'temp/')) {
+                    // Delete old image if exists
+                    if ($featuredImagePath && Storage::disk('public')->exists($featuredImagePath)) {
+                        Storage::disk('public')->delete($featuredImagePath);
+                    }
+                    $featuredImagePath = $this->moveImageFromTemp($data['main_image'], 'news/featured/');
                 }
-                $featuredImagePath = $this->moveImageFromTemp($data['main_image'], 'news/featured/');
+                // Otherwise keep the existing path
             }
 
-            // Handle gallery images - merge with existing
-            $existingGallery = $news->seo_data['gallery_images'] ?? [];
-            $galleryImages = $existingGallery;
+            // Handle gallery images
+            $galleryImages = [];
 
             if (!empty($data['gallery_images'])) {
-                foreach ($data['gallery_images'] as $tempPath) {
-                    $galleryImages[] = $this->moveImageFromTemp($tempPath, 'news/gallery/');
+                foreach ($data['gallery_images'] as $imagePath) {
+                    // Check if it's a new temp image or existing one
+                    if (Str::startsWith($imagePath, 'temp/')) {
+                        // Move from temp to permanent storage
+                        $newPath = $this->moveImageFromTemp($imagePath, 'news/gallery/');
+                        if ($newPath) {
+                            $galleryImages[] = $newPath;
+                        }
+                    } else {
+                        // Keep existing image path
+                        $galleryImages[] = $imagePath;
+                    }
                 }
             }
 
@@ -525,6 +562,12 @@ class NewsService extends BaseService implements NewsServiceInterface
      */
     protected function moveImageFromTemp(string $tempPath, string $targetDir): ?string
     {
+        // Check if this is actually a temp path
+        if (!Str::startsWith($tempPath, 'temp/')) {
+            // Not a temp path, return as is
+            return $tempPath;
+        }
+
         if (Storage::disk('public')->exists($tempPath)) {
             $filename = basename($tempPath);
             $newPath = $targetDir . $filename;

@@ -66,8 +66,10 @@ const form = useForm({
     twitter_message: props.article.twitter_message || '',
     publish_to_twitter: props.article.publish_to_twitter || false,
     keywords: props.article.keywords || '',
-    main_image: null,
-    gallery_images: props.article.seo_data?.gallery_images || []
+    main_image: props.article.featured_image_path || null,
+    gallery_images: props.article.seo_data?.gallery_images || [],
+    existing_main_image: props.article.featured_image_path || null,
+    existing_gallery_images: props.article.seo_data?.gallery_images || []
 })
 
 const showAddCategory = ref(false)
@@ -124,11 +126,11 @@ const getGalleryFiles = () => {
 
 const handleMainImageProcess = (error, file) => {
     if (error || !file) return
-    
+
     const response = file.serverId ?
         (typeof file.serverId === 'string' ? JSON.parse(file.serverId) : file.serverId) :
         (typeof file === 'string' ? JSON.parse(file) : file)
-    
+
     if (response?.path) {
         form.main_image = response.path
     }
@@ -136,28 +138,42 @@ const handleMainImageProcess = (error, file) => {
 
 const handleMainImageRemove = () => {
     form.main_image = null
+    form.existing_main_image = null
 }
 
 const handleGalleryProcess = (error, file) => {
     if (error || !file) return
-    
+
     const response = file.serverId ?
         (typeof file.serverId === 'string' ? JSON.parse(file.serverId) : file.serverId) :
         (typeof file === 'string' ? JSON.parse(file) : file)
-    
+
     if (response?.path) {
         if (!form.gallery_images) {
             form.gallery_images = []
         }
-        form.gallery_images.push(response.path)
+        // Only add if it's a new image (starts with temp/)
+        if (!form.gallery_images.includes(response.path)) {
+            form.gallery_images.push(response.path)
+        }
     }
 }
 
 const handleGalleryRemove = (error, file) => {
-    if (!error && file.serverId) {
-        const response = typeof file.serverId === 'string' ? JSON.parse(file.serverId) : file.serverId
-        if (response?.path && form.gallery_images) {
-            const index = form.gallery_images.indexOf(response.path)
+    if (!error) {
+        // Handle removal of both new and existing images
+        if (file.serverId) {
+            const response = typeof file.serverId === 'string' ? JSON.parse(file.serverId) : file.serverId
+            if (response?.path && form.gallery_images) {
+                const index = form.gallery_images.indexOf(response.path)
+                if (index > -1) {
+                    form.gallery_images.splice(index, 1)
+                }
+            }
+        } else if (file.source && form.gallery_images) {
+            // Handle removal of existing images
+            const pathFromSource = file.source.replace('/storage/', '')
+            const index = form.gallery_images.indexOf(pathFromSource)
             if (index > -1) {
                 form.gallery_images.splice(index, 1)
             }
@@ -167,10 +183,21 @@ const handleGalleryRemove = (error, file) => {
 
 const submit = () => {
     // Transform the form data for submission
-    form.transform((data) => ({
-        ...data,
-        _method: 'PUT'
-    })).post(route('system-admin.news.update', props.article.id), {
+    form.transform((data) => {
+        // If main_image hasn't changed, send the existing path
+        if (!data.main_image && data.existing_main_image) {
+            data.main_image = data.existing_main_image
+        }
+
+        // Clean up temporary fields
+        delete data.existing_main_image
+        delete data.existing_gallery_images
+
+        return {
+            ...data,
+            _method: 'PUT'
+        }
+    }).post(route('system-admin.news.update', props.article.id), {
         preserveScroll: true,
         onSuccess: () => {
             // Handle success

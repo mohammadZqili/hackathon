@@ -15,6 +15,14 @@ class TrackRepository extends BaseRepository
     }
 
     /**
+     * Get track supervisors
+     */
+    public function getTrackSupervisors()
+    {
+        return \App\Models\User::role('track_supervisor')->get();
+    }
+
+    /**
      * Get paginated tracks with filters
      */
     public function getPaginatedWithFilters(array $filters, int $perPage = 15): LengthAwarePaginator

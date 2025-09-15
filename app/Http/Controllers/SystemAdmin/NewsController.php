@@ -267,13 +267,11 @@ class NewsController extends Controller
     public function mediaCenter()
     {
         // Get all news articles with their media
-        $articles = News::select('id', 'title')->orderBy('created_at', 'desc')->get();
-        
+        $articles = $this->newsService->getArticlesForMediaCenter();
+
         // Collect all media files from news articles
         $media = [];
-        $newsItems = News::whereNotNull('featured_image_path')
-            ->orWhereNotNull('seo_data->gallery_images')
-            ->get();
+        $newsItems = $this->newsService->getNewsWithMedia();
         
         foreach ($newsItems as $news) {
             // Add featured image
@@ -340,7 +338,7 @@ class NewsController extends Controller
         $type = $parts[0]; // 'featured', 'gallery', or 'video'
         $newsId = $parts[1];
         
-        $news = News::findOrFail($newsId);
+        $news = $this->newsService->findOrFail($newsId);
         
         if ($type === 'featured') {
             return response()->json([
@@ -364,7 +362,7 @@ class NewsController extends Controller
         $type = $parts[0]; // 'featured', 'gallery', or 'video'
         $newsId = $parts[1];
         
-        $news = News::findOrFail($newsId);
+        $news = $this->newsService->findOrFail($newsId);
         
         if ($type === 'featured') {
             // Delete the featured image

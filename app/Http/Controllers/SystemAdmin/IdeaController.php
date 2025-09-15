@@ -14,7 +14,7 @@ class IdeaController extends Controller
 {
     protected IdeaService $ideaService;
     protected TrackService $trackService;
-    
+
     public function __construct(IdeaService $ideaService, TrackService $trackService)
     {
         $this->ideaService = $ideaService;
@@ -30,20 +30,37 @@ class IdeaController extends Controller
             $request->only(['search', 'status', 'track_id', 'edition_id', 'review_status']),
             $request->get('per_page', 15)
         );
-        
+
         // Get tracks for filter dropdown
         $trackData = $this->trackService->getPaginatedTracks(
             auth()->user(),
             [],
             1000 // Get all tracks
         );
-        
-        $supervisors = User::where('user_type', 'track_supervisor')->get();
-        
+
+        // Get track supervisors through service
+        $supervisors = $this->trackService->getTrackSupervisors();
+
         return Inertia::render('SystemAdmin/Ideas/Index', array_merge($data, [
             'tracks' => $trackData['tracks']->items(),
             'supervisors' => $supervisors
         ]));
+    }
+
+    /**
+     * Show the form for creating a new idea.
+     */
+    public function create()
+    {
+        $trackData = $this->trackService->getPaginatedTracks(
+            auth()->user(),
+            [],
+            1000 // Get all tracks
+        );
+
+        return Inertia::render('SystemAdmin/Ideas/Create', [
+            'tracks' => $trackData['tracks']->items()
+        ]);
     }
 
     /**
@@ -52,15 +69,15 @@ class IdeaController extends Controller
     public function show(Idea $idea)
     {
         $data = $this->ideaService->getIdeaDetails($idea->id, auth()->user());
-        
+
         if (!$data) {
             abort(404, 'Idea not found or access denied.');
         }
-        
+
         // Get review history if exists
         $reviewHistory = [];
         if (method_exists($idea, 'auditLogs')) {
-            $reviewHistory = $idea->auditLogs()
+    $reviewHistory = $idea->auditLogs()
                 ->where('action', 'status_changed')
                 ->with('user')
                 ->latest()
@@ -75,14 +92,14 @@ class IdeaController extends Controller
                     ];
                 });
         }
-        
+
         // Get scoring breakdown if available
         $scoring = null;
         if ($data['idea']->evaluation_scores) {
             $scoring = $data['idea']->evaluation_scores;
             $scoring['total_score'] = $data['idea']->score;
         }
-        
+
         return Inertia::render('SystemAdmin/Ideas/Show', array_merge($data, [
             'reviewHistory' => $reviewHistory,
             'scoring' => $scoring
@@ -187,19 +204,19 @@ class IdeaController extends Controller
             'scores' => 'nullable|array',
             'scores.innovation' => 'nullable|numeric|min:0|max:25',
             'scores.feasibility' => 'nullable|numeric|min:0|max:25',
-            'scores.impact' => 'nullable|numeric|min:0|max:25', 
+            'scores.impact' => 'nullable|numeric|min:0|max:25',
             'scores.presentation' => 'nullable|numeric|min:0|max:25',
             'notify_team' => 'boolean',
         ]);
-        
+
         try {
             $result = $this->ideaService->processReview($idea->id, $validated, auth()->user());
-            
+
             // Send notification to team if requested
             if ($request->boolean('notify_team')) {
                 // TODO: Trigger notification service here
             }
-            
+
             return redirect()->route('system-admin.ideas.show', $idea->id)
                 ->with('success', $result['message']);
         } catch (\Exception $e) {
@@ -281,7 +298,7 @@ class IdeaController extends Controller
             'Supervisor assigned by System Admin',
             auth()->user()
         );
-        
+
         return redirect()->back()->with('success', 'Supervisor assigned successfully.');
     }
 
@@ -314,9 +331,9 @@ class IdeaController extends Controller
     public function downloadFile(Idea $idea, $fileId)
     {
         $file = $idea->files()->findOrFail($fileId);
-        
+
         $filePath = storage_path('app/public/' . $file->path);
-        
+
         if (!file_exists($filePath)) {
             return redirect()->back()->with('error', 'File not found.');
         }
@@ -348,12 +365,12 @@ class IdeaController extends Controller
                 auth()->user(),
                 $request->only(['search', 'status', 'track_id', 'edition_id'])
             );
-            
+
             $headers = [
                 'Content-Type' => 'text/csv',
                 'Content-Disposition' => 'attachment; filename="' . $result['filename'] . '"',
             ];
-            
+
             $callback = function() use ($result) {
                 $file = fopen('php://output', 'w');
                 foreach ($result['data'] as $row) {
@@ -361,7 +378,7 @@ class IdeaController extends Controller
                 }
                 fclose($file);
             };
-            
+
             return response()->stream($callback, 200, $headers);
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()]);
@@ -373,21 +390,7 @@ class IdeaController extends Controller
      */
     public function statistics()
     {
-        $stats = [
-            'by_status' => Idea::selectRaw('status, count(*) as count')
-                ->groupBy('status')
-                ->pluck('count', 'status'),
-            'by_track' => Idea::selectRaw('track_id, count(*) as count')
-                ->groupBy('track_id')
-                ->with('track:id,name')
-                ->get()
-                ->mapWithKeys(function ($item) {
-                    return [$item->track?->name ?? 'Unassigned' => $item->count];
-                }),
-            'average_score' => Idea::whereNotNull('score')->avg('score'),
-            'total_reviewed' => Idea::whereNotNull('reviewed_at')->count(),
-            'pending_review' => Idea::whereIn('status', ['submitted', 'under_review'])->count(),
-        ];
+        $stats = $this->ideaService->getStatistics();
 
         return response()->json($stats);
     }

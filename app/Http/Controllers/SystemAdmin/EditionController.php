@@ -4,19 +4,26 @@ namespace App\Http\Controllers\SystemAdmin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Edition;
-use App\Models\User;
-use App\Enums\UserType;
+use App\Services\HackathonEditionService;
+use App\Services\UserService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class EditionController extends Controller
 {
+    protected HackathonEditionService $editionService;
+    protected UserService $userService;
+
+    public function __construct(
+        HackathonEditionService $editionService,
+        UserService $userService
+    ) {
+        $this->editionService = $editionService;
+        $this->userService = $userService;
+    }
     public function index()
     {
-        $editions = Edition::with('admin')
-            ->withCount('teams')
-            ->orderBy('year', 'desc')
-            ->paginate(10);
+        $editions = $this->editionService->getPaginatedEditions(10);
 
         return Inertia::render('SystemAdmin/Editions/Index', [
             'editions' => $editions
@@ -25,11 +32,7 @@ class EditionController extends Controller
 
     public function create()
     {
-        // Get users with Hackathon Admin role OR user_type
-        $admins = User::select('id', 'name', 'email', 'user_type')
-            ->where('user_type', UserType::HACKATHON_ADMIN->value)
-            ->orderBy('name')
-            ->get();
+        $admins = $this->userService->getUsersByType('hackathon_admin');
 
         return Inertia::render('SystemAdmin/Editions/Create', [
             'admins' => $admins
@@ -53,24 +56,26 @@ class EditionController extends Controller
             'is_active' => 'boolean'
         ]);
 
-        Edition::create($validated);
+        $this->editionService->createEdition($validated);
 
         return redirect()->route('system-admin.editions.index')
             ->with('success', 'Edition created successfully.');
     }
 
+    public function show(Edition $edition)
+    {
+        $data = $this->editionService->getEditionWithStatistics($edition->id);
+
+        return Inertia::render('SystemAdmin/Editions/Show', $data);
+    }
+
     public function edit(Edition $edition)
     {
-        // Get users with Hackathon Admin role OR user_type
-        $admins = User::select('id', 'name', 'email', 'user_type')
-            ->where('user_type', UserType::HACKATHON_ADMIN->value)
-            ->orderBy('name')
-            ->get();
-
-        $edition->load('admin');
+        $admins = $this->userService->getUsersByType('hackathon_admin');
+        $editionData = $this->editionService->getEditionDetails($edition->id);
 
         return Inertia::render('SystemAdmin/Editions/Edit', [
-            'edition' => $edition,
+            'edition' => $editionData,
             'admins' => $admins
         ]);
     }
@@ -92,7 +97,7 @@ class EditionController extends Controller
             'is_active' => 'boolean'
         ]);
 
-        $edition->update($validated);
+        $this->editionService->updateEdition($edition->id, $validated);
 
         return redirect()->route('system-admin.editions.index')
             ->with('success', 'Edition updated successfully.');
@@ -100,26 +105,29 @@ class EditionController extends Controller
 
     public function destroy(Edition $edition)
     {
-        // Check if edition has any associated data
-        if ($edition->teams()->exists() || $edition->ideas()->exists() || $edition->workshops()->exists()) {
-            return back()->with('error', 'Cannot delete edition with existing data.');
+        try {
+            $this->editionService->deleteEdition($edition->id);
+            return redirect()->route('system-admin.editions.index')
+                ->with('success', 'Edition deleted successfully.');
+        } catch (\Exception $e) {
+            return back()->with('error', $e->getMessage());
         }
-
-        $edition->delete();
-
-        return redirect()->route('system-admin.editions.index')
-            ->with('success', 'Edition deleted successfully.');
     }
 
     public function activate(Edition $edition)
     {
-        // Deactivate all other editions
-        Edition::where('id', '!=', $edition->id)->update(['is_active' => false]);
-
-        // Activate this edition
-        $edition->update(['is_active' => true]);
+        $this->editionService->activateEdition($edition->id);
 
         return redirect()->route('system-admin.editions.index')
             ->with('success', 'Edition activated successfully.');
+    }
+
+    public function export()
+    {
+        $csv = $this->editionService->exportToCsv();
+
+        return response($csv)
+            ->header('Content-Type', 'text/csv')
+            ->header('Content-Disposition', 'attachment; filename="editions-' . now()->format('Y-m-d') . '.csv"');
     }
 }

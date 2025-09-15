@@ -325,3 +325,133 @@ tail -f storage/logs/laravel.log           # Watch logs
 - Design system in `/design_files/`
 - Role definitions in `files/ROLES_AND_RESPONSIBILITIES.md`
 - Implementation guides in `files/WRITE_IMPLEMENTATION/`
+
+## SENIOR ENGINEER STANDARDS - MUST FOLLOW
+
+### Act as a Senior Laravel/Software Engineer from Google, Meta, Amazon
+When working on this codebase:
+- **Think before acting** - Analyze the full impact of changes
+- **Complete full implementations** - Never leave partial work
+- **Follow best practices** - Use industry-standard patterns
+- **Write clean, maintainable code** - Think long-term
+- **Consider performance** - Optimize database queries and caching
+- **Handle errors gracefully** - Anticipate edge cases
+
+### CRITICAL: Complete Implementation Chains
+**NEVER do partial implementations**
+When refactoring or fixing:
+1. If you modify a Controller → MUST update Service
+2. If you modify a Service → MUST update Repository
+3. If you modify a Repository → MUST ensure Model compatibility
+4. **ALWAYS complete the full chain** - No exceptions
+
+Example of BAD practice:
+- Changing controller without updating service/repository
+- Adding service methods without repository implementation
+- Partial fixes that break other parts
+
+Example of GOOD practice:
+- Complete Controller → Service → Repository → Model chain
+- Test the full flow after changes
+- Ensure all layers are compatible
+
+### Database Table Names - IMPORTANT
+**Current database uses these tables:**
+- `hackathon_editions` (NOT `editions`)
+- `teams`
+- `users`
+- `ideas`
+- `tracks`
+- `organizations`
+- `speakers`
+- `workshops`
+- `news`
+- `check_ins`
+
+**ALWAYS verify table names in migrations before using in validation rules**
+
+### Error Handling and Debugging Process
+When encountering errors:
+1. **Read the full error message** - Don't assume
+2. **Check the actual implementation** - Look at the code
+3. **Verify method signatures** - Ensure interface compatibility
+4. **Test the full flow** - From controller to database
+5. **Fix ALL related issues** - Not just the immediate error
+
+### File Upload and Image Handling
+When working with file uploads (especially FilePond):
+1. **Temp storage first** - Upload to `temp/` directory
+2. **Move on save** - Move from temp to permanent storage
+3. **Handle existing files** - Preserve unchanged files during updates
+4. **Clean up temp files** - Remove old temporary files
+5. **Use Storage facade** - Never use direct file operations
+
+Example for images in updates:
+```php
+// Check if it's a new temp image
+if (Str::startsWith($imagePath, 'temp/')) {
+    // Move from temp to permanent
+    $newPath = $this->moveImageFromTemp($imagePath, 'target/dir/');
+} else {
+    // Keep existing image
+    $newPath = $imagePath;
+}
+```
+
+### Vue Component Standards
+1. **Use useLocalization composable** - NOT vue-i18n directly
+   ```javascript
+   import { useLocalization } from '@/composables/useLocalization'
+   const { t, isRTL, direction, locale } = useLocalization()
+   ```
+
+2. **Check import paths in same directory** - Copy patterns from siblings
+3. **Use FilePondUploader component** - Don't create custom uploaders
+4. **Use RichTextEditor component** - For all rich text fields
+5. **Follow theme system** - Use CSS variables for colors
+
+### Testing and Validation
+Before considering any task complete:
+1. **Test create functionality** - Can you create new records?
+2. **Test read functionality** - Do lists and details work?
+3. **Test update functionality** - Can you edit existing records?
+4. **Test delete functionality** - Can you remove records?
+5. **Check permissions** - Does role-based access work?
+6. **Verify UI/UX** - Are all forms and buttons working?
+
+### Code Review Checklist
+Before finishing any feature:
+- [ ] Architecture pattern followed (Controller → Service → Repository → Model)
+- [ ] No business logic in controllers
+- [ ] No direct database queries in controllers/services
+- [ ] All methods have proper return types
+- [ ] Interfaces match implementations
+- [ ] Error handling in place
+- [ ] Database transactions used where needed
+- [ ] Proper validation rules
+- [ ] Permissions checked
+- [ ] Cache cleared if needed
+
+### Common Fixes Applied
+1. **Missing repository methods** - Add them with proper signatures
+2. **Interface mismatches** - Update to match base interfaces
+3. **Import errors in Vue** - Use useLocalization instead of vue-i18n
+4. **File upload issues** - Handle temp and existing files properly
+5. **Database column errors** - Use correct column names (is_current not is_active)
+
+### Development Workflow
+1. **Understand the request** - What exactly needs to be done?
+2. **Check existing code** - Look for similar implementations
+3. **Plan the implementation** - Think through all layers
+4. **Implement completely** - Do the full chain
+5. **Test thoroughly** - Verify all functionality
+6. **Clean up** - Remove debug code, clear caches
+
+### IMPORTANT REMINDERS
+- **NEVER skip steps** - Complete implementations only
+- **ALWAYS test** - Don't assume it works
+- **CHECK table/column names** - Verify against actual database
+- **FOLLOW patterns** - Copy from existing similar code
+- **COMPLETE the chain** - Controller → Service → Repository → Model
+- **HANDLE errors** - Anticipate and handle edge cases
+- **PRESERVE existing data** - Don't lose data during updates

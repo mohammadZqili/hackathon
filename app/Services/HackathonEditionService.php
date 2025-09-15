@@ -17,6 +17,16 @@ class HackathonEditionService implements HackathonEditionServiceInterface
     ) {}
 
     /**
+     * Get all editions (for dropdowns)
+     */
+    public function getAllEditions($user = null)
+    {
+        return $this->repository->all(['id', 'name', 'year', 'is_current'])
+            ->sortByDesc('year')
+            ->sortBy('name');
+    }
+
+    /**
      * Get paginated editions for index page
      */
     public function getPaginatedEditions(int $perPage = 15): LengthAwarePaginator
@@ -80,15 +90,15 @@ class HackathonEditionService implements HackathonEditionServiceInterface
     {
         try {
             DB::beginTransaction();
-            
+
             // Add creator
             $data['created_by'] = auth()->id();
-            
+
             // Set default status if not provided
             if (!isset($data['status'])) {
                 $data['status'] = 'draft';
             }
-            
+
             // Generate slug if not provided
             if (empty($data['slug'])) {
                 $data['slug'] = $this->repository->generateUniqueSlug(
@@ -96,24 +106,100 @@ class HackathonEditionService implements HackathonEditionServiceInterface
                     $data['year']
                 );
             }
-            
+
             // Create the edition
             $edition = $this->repository->create($data);
-            
+
             // If marked as current, update other editions
             if ($data['is_current'] ?? false) {
                 $this->repository->setCurrent($edition->id);
             }
-            
+
             DB::commit();
-            
+
             return $edition;
-            
+
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Failed to create hackathon edition: ' . $e->getMessage());
             throw $e;
         }
+    }
+
+    /**
+     * Get edition with statistics
+     */
+    public function getEditionWithStatistics(int $id): array
+    {
+        $edition = $this->repository->getWithAllRelations($id);
+
+        return [
+            'edition' => $edition,
+            'statistics' => [
+                'total_teams' => $edition->teams_count ?? 0,
+                'total_ideas' => $edition->ideas_count ?? 0,
+                'total_workshops' => $edition->workshops_count ?? 0,
+                'total_tracks' => $edition->tracks_count ?? 0,
+            ]
+        ];
+    }
+
+    /**
+     * Delete edition
+     */
+    public function deleteEdition(int $id): bool
+    {
+        $edition = $this->repository->find($id);
+
+        // Check if edition has any associated data
+        if ($this->repository->hasAssociatedData($id)) {
+            throw new \Exception('Cannot delete edition with existing data.');
+        }
+
+        return $this->repository->delete($id);
+    }
+
+    /**
+     * Activate edition
+     */
+    public function activateEdition(int $id): bool
+    {
+        // Deactivate all other editions
+        $this->repository->deactivateAll();
+
+        // Activate this edition
+        return $this->repository->update($id, ['is_active' => true]);
+    }
+
+    /**
+     * Export editions to CSV
+     */
+    public function exportToCsv(): string
+    {
+        // Get all editions with relationships through repository
+        $editions = $this->repository->getAllWithRelations();
+
+        $csv = "Name,Year,Status,Teams,Ideas,Workshops,Tracks,Registration Start,Registration End,Hackathon Start,Hackathon End,Admin\n";
+
+        foreach ($editions as $edition) {
+            $csv .= sprintf(
+                "%s,%s,%s,%d,%d,%d,%d,%s,%s,%s,%s,%s\n",
+                $edition->name,
+                $edition->year,
+                $edition->is_active ? 'Active' : 'Inactive',
+                $edition->teams_count ?? 0,
+                $edition->ideas_count ?? 0,
+                $edition->workshops_count ?? 0,
+                $edition->tracks_count ?? 0,
+                $edition->registration_start_date,
+                $edition->registration_end_date,
+                $edition->hackathon_start_date,
+                $edition->hackathon_end_date,
+                $edition->admin ? $edition->admin->name : 'N/A'
+            );
+        }
+
+        return $csv;
     }
 
     /**
@@ -123,7 +209,7 @@ class HackathonEditionService implements HackathonEditionServiceInterface
     {
         try {
             DB::beginTransaction();
-            
+
             // Generate slug if not provided
             if (empty($data['slug'])) {
                 $data['slug'] = $this->repository->generateUniqueSlug(
@@ -132,35 +218,22 @@ class HackathonEditionService implements HackathonEditionServiceInterface
                     $id
                 );
             }
-            
+
             // Update the edition
             $updated = $this->repository->update($id, $data);
-            
+
             // If marked as current, update other editions
             if ($data['is_current'] ?? false) {
                 $this->repository->setCurrent($id);
             }
-            
+
             DB::commit();
-            
+
             return $updated;
-            
+
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Failed to update hackathon edition: ' . $e->getMessage());
-            throw $e;
-        }
-    }
-
-    /**
-     * Delete an edition
-     */
-    public function deleteEdition(int $id): bool
-    {
-        try {
-            return $this->repository->delete($id);
-        } catch (\Exception $e) {
-            Log::error('Failed to delete hackathon edition: ' . $e->getMessage());
             throw $e;
         }
     }
@@ -172,13 +245,13 @@ class HackathonEditionService implements HackathonEditionServiceInterface
     {
         try {
             DB::beginTransaction();
-            
+
             $result = $this->repository->setCurrent($id);
-            
+
             DB::commit();
-            
+
             return $result;
-            
+
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Failed to set current edition: ' . $e->getMessage());
@@ -261,11 +334,11 @@ class HackathonEditionService implements HackathonEditionServiceInterface
     public function exportEdition(int $id): array
     {
         $edition = $this->repository->getWithRelations($id);
-        
+
         if (!$edition) {
             throw new \Exception('Edition not found');
         }
-        
+
         // TODO: Implement actual export logic
         return [
             'message' => 'Export functionality to be implemented',
@@ -279,11 +352,11 @@ class HackathonEditionService implements HackathonEditionServiceInterface
     public function getEditionStatistics(int $id): array
     {
         $edition = $this->repository->getWithRelations($id);
-        
+
         if (!$edition) {
             return [];
         }
-        
+
         // Calculate statistics
         return [
             'total_teams' => $edition->teams()->count(),
@@ -301,28 +374,28 @@ class HackathonEditionService implements HackathonEditionServiceInterface
     public function validateDates(array $data): array
     {
         $errors = [];
-        
+
         // Check registration dates
         if (isset($data['registration_start_date']) && isset($data['registration_end_date'])) {
             if ($data['registration_end_date'] <= $data['registration_start_date']) {
                 $errors['registration_end_date'] = 'Registration end date must be after start date';
             }
         }
-        
+
         // Check idea submission dates
         if (isset($data['idea_submission_start_date']) && isset($data['idea_submission_end_date'])) {
             if ($data['idea_submission_end_date'] <= $data['idea_submission_start_date']) {
                 $errors['idea_submission_end_date'] = 'Idea submission end date must be after start date';
             }
         }
-        
+
         // Check event dates
         if (isset($data['event_start_date']) && isset($data['event_end_date'])) {
             if ($data['event_end_date'] <= $data['event_start_date']) {
                 $errors['event_end_date'] = 'Event end date must be after start date';
             }
         }
-        
+
         return $errors;
     }
 }

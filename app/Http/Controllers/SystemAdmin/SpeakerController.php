@@ -3,17 +3,31 @@
 namespace App\Http\Controllers\SystemAdmin;
 
 use App\Http\Controllers\Controller;
+use App\Services\SpeakerService;
+use App\Services\OrganizationService;
+use App\Services\WorkshopService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\Speaker;
-use App\Models\Organization;
-use App\Models\Workshop;
 
 class SpeakerController extends Controller
 {
+    protected SpeakerService $speakerService;
+    protected OrganizationService $organizationService;
+    protected WorkshopService $workshopService;
+
+    public function __construct(
+        SpeakerService $speakerService,
+        OrganizationService $organizationService,
+        WorkshopService $workshopService
+    ) {
+        $this->speakerService = $speakerService;
+        $this->organizationService = $organizationService;
+        $this->workshopService = $workshopService;
+    }
     public function index()
     {
-        $speakers = Speaker::paginate(15);
+        $speakers = $this->speakerService->getPaginatedSpeakers(15);
 
         return Inertia::render('SystemAdmin/Speakers/Index', [
             'speakers' => $speakers
@@ -22,9 +36,9 @@ class SpeakerController extends Controller
 
     public function create()
     {
-        $organizations = Organization::orderBy('name')->get();
-        $workshops = Workshop::orderBy('title')->get();
-        
+        $organizations = $this->organizationService->getAllOrganizations();
+        $workshops = $this->workshopService->getAllWorkshops();
+
         return Inertia::render('SystemAdmin/Speakers/Create', [
             'organizations' => $organizations,
             'workshops' => $workshops
@@ -46,7 +60,7 @@ class SpeakerController extends Controller
             'photo_path' => 'nullable|string',
         ]);
 
-        $speaker = Speaker::create($validated);
+        $speaker = $this->speakerService->createSpeaker($validated);
 
         return redirect()->route('system-admin.speakers.index')
             ->with('success', 'Speaker created successfully.');
@@ -54,19 +68,21 @@ class SpeakerController extends Controller
 
     public function show(Speaker $speaker)
     {
+        $speakerData = $this->speakerService->getSpeakerDetails($speaker->id);
+
         return Inertia::render('SystemAdmin/Speakers/Show', [
-            'speaker' => $speaker
+            'speaker' => $speakerData
         ]);
     }
 
     public function edit(Speaker $speaker)
     {
-        $organizations = Organization::orderBy('name')->get();
-        $workshops = Workshop::orderBy('title')->get();
-        $speaker->load('organization');
-        
+        $organizations = $this->organizationService->getAllOrganizations();
+        $workshops = $this->workshopService->getAllWorkshops();
+        $speakerData = $this->speakerService->getSpeakerWithOrganization($speaker->id);
+
         return Inertia::render('SystemAdmin/Speakers/Edit', [
-            'speaker' => $speaker,
+            'speaker' => $speakerData,
             'organizations' => $organizations,
             'workshops' => $workshops
         ]);
@@ -87,7 +103,7 @@ class SpeakerController extends Controller
             'photo_path' => 'nullable|string',
         ]);
 
-        $speaker->update($validated);
+        $this->speakerService->updateSpeaker($speaker->id, $validated);
 
         return redirect()->route('system-admin.speakers.index')
             ->with('success', 'Speaker updated successfully.');
@@ -95,7 +111,7 @@ class SpeakerController extends Controller
 
     public function destroy(Speaker $speaker)
     {
-        $speaker->delete();
+        $this->speakerService->deleteSpeaker($speaker->id);
 
         return redirect()->route('system-admin.speakers.index')
             ->with('success', 'Speaker deleted successfully.');
@@ -103,13 +119,13 @@ class SpeakerController extends Controller
 
     public function activate(Speaker $speaker)
     {
-        $speaker->update(['is_active' => true]);
+        $this->speakerService->activateSpeaker($speaker->id);
         return response()->json(['message' => 'Speaker activated successfully']);
     }
 
     public function deactivate(Speaker $speaker)
     {
-        $speaker->update(['is_active' => false]);
+        $this->speakerService->deactivateSpeaker($speaker->id);
         return response()->json(['message' => 'Speaker deactivated successfully']);
     }
 }

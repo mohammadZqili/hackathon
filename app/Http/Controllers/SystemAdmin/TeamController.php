@@ -4,50 +4,38 @@ namespace App\Http\Controllers\SystemAdmin;
 
 use App\Http\Controllers\Controller;
 use App\Services\TeamService;
-use App\Repositories\TeamRepository;
+use App\Services\HackathonEditionService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\Team;
 use App\Models\User;
-use App\Models\Edition;
 
 class TeamController extends Controller
 {
     protected TeamService $teamService;
-    protected TeamRepository $teamRepository;
+    protected HackathonEditionService $editionService;
 
-    public function __construct(TeamService $teamService, TeamRepository $teamRepository)
-    {
+    public function __construct(
+        TeamService $teamService,
+        HackathonEditionService $editionService
+    ) {
         $this->teamService = $teamService;
-        $this->teamRepository = $teamRepository;
+        $this->editionService = $editionService;
     }
     public function index(Request $request)
     {
-        $filters = [
-            'search' => $request->input('search'),
-            'edition_id' => $request->input('edition_id'),
-            'status' => $request->input('status')
-        ];
+        $data = $this->teamService->getPaginatedTeams(
+            auth()->user(),
+            $request->only(['search', 'edition_id', 'status']),
+            15
+        );
 
-        $teams = $this->teamRepository->getPaginatedWithFilters($filters, 15);
-
-        // Add members count to each team
-        $teams->getCollection()->transform(function ($team) {
-            $team->members_count = $team->members->count();
-            return $team;
-        });
-
-        return Inertia::render('SystemAdmin/Teams/Index', [
-            'teams' => $teams,
-            'filters' => $filters
-        ]);
+        return Inertia::render('SystemAdmin/Teams/Index', $data);
     }
 
     public function create()
     {
-        $editions = Edition::orderBy('year', 'desc')
-            ->orderBy('name', 'asc')
-            ->get();
+        $editions = $this->editionService->getAllEditions(auth()->user());
 
         return Inertia::render('SystemAdmin/Teams/Create', [
             'editions' => $editions
@@ -59,35 +47,14 @@ class TeamController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'edition_id' => 'required|exists:editions,id',
+            'edition_id' => 'required|exists:hackathon_editions,id',
             'leader_id' => 'nullable|exists:users,id',
             'max_members' => 'nullable|integer|min:1|max:10',
             'member_ids' => 'nullable|array',
             'member_ids.*' => 'exists:users,id'
         ]);
 
-        $team = Team::create([
-            'name' => $validated['name'],
-            'description' => $validated['description'] ?? null,
-            'edition_id' => $validated['edition_id'],
-            'leader_id' => $validated['leader_id'] ?? null,
-            'max_members' => $validated['max_members'] ?? 5,
-            'status' => 'active'
-        ]);
-
-        // Add leader as a member if specified
-        if (!empty($validated['leader_id'])) {
-            $team->members()->attach($validated['leader_id'], ['role' => 'leader']);
-        }
-
-        // Add other members
-        if (!empty($validated['member_ids'])) {
-            foreach ($validated['member_ids'] as $memberId) {
-                if ($memberId != $validated['leader_id']) {
-                    $team->members()->attach($memberId, ['role' => 'member']);
-                }
-            }
-        }
+        $result = $this->teamService->createTeam($validated, auth()->user());
 
         return redirect()->route('system-admin.teams.index')
             ->with('success', 'Team created successfully.');
@@ -95,31 +62,24 @@ class TeamController extends Controller
 
     public function show(Team $team)
     {
-        $team->load(['leader', 'members', 'idea', 'edition']);
+        $data = $this->teamService->getTeamDetails($team->id, auth()->user());
 
-        return Inertia::render('SystemAdmin/Teams/Show', [
-            'team' => $team
-        ]);
+        return Inertia::render('SystemAdmin/Teams/Show', $data);
     }
 
     public function edit(Team $team)
     {
-        $team->load(['leader', 'members', 'idea', 'edition']);
+        $data = $this->teamService->getTeamDetails($team->id, auth()->user());
+        $editions = $this->editionService->getAllEditions(auth()->user());
 
-        $editions = Edition::orderBy('year', 'desc')
-            ->where('is_current',1)
-            ->orderBy('name', 'asc')
-            ->get();
-
-        return Inertia::render('SystemAdmin/Teams/Edit', [
-            'team' => $team,
+        return Inertia::render('SystemAdmin/Teams/Edit', array_merge($data, [
             'editions' => $editions
-        ]);
+        ]));
     }
 
     public function update(Request $request, Team $team)
     {
-        $team->update($request->all());
+        $result = $this->teamService->updateTeam($team->id, $request->all(), auth()->user());
 
         return redirect()->route('system-admin.teams.index')
             ->with('success', 'Team updated successfully.');
@@ -127,7 +87,7 @@ class TeamController extends Controller
 
     public function destroy(Team $team)
     {
-        $team->delete();
+        $this->teamService->deleteTeam($team->id, auth()->user());
 
         return redirect()->route('system-admin.teams.index')
             ->with('success', 'Team deleted successfully.');

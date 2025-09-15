@@ -4,26 +4,90 @@ namespace App\Repositories;
 
 use App\Models\Workshop;
 use App\Models\WorkshopRegistration;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
-class WorkshopRepository
+class WorkshopRepository extends BaseRepository
 {
+    public function __construct()
+    {
+        parent::__construct(new Workshop());
+    }
+    public function getAllOrderedByTitle()
+    {
+        return $this->model->orderBy('title')->get();
+    }
+
+    public function getPaginatedWithRelations(int $perPage = 15)
+    {
+        return $this->model->with(['speakers', 'organizations'])
+            ->latest()
+            ->paginate($perPage);
+    }
+
+    public function findWithRelations(int $id)
+    {
+        return $this->model->with(['hackathon', 'speakers', 'organizations', 'registrations'])
+            ->find($id);
+    }
+
+    public function findWithSpeakersAndOrganizations(int $id)
+    {
+        return $this->model->with(['speakers', 'organizations'])
+            ->find($id);
+    }
+
+    public function findWithAttendance(int $id)
+    {
+        return $this->model->with('attendances.user')
+            ->find($id);
+    }
+
+    public function updateWithRelations(int $id, array $data)
+    {
+        $workshop = $this->model->find($id);
+
+        // Separate relation data from workshop data
+        $workshopData = collect($data)->except(['speaker_ids', 'organization_ids'])->toArray();
+        $workshop->update($workshopData);
+
+        // Sync speakers if provided
+        if (isset($data['speaker_ids'])) {
+            $speakerData = [];
+            foreach ($data['speaker_ids'] as $index => $speakerId) {
+                $speakerData[$speakerId] = ['role' => 'main_speaker', 'order' => $index + 1];
+            }
+            $workshop->speakers()->sync($speakerData);
+        }
+
+        // Sync organizations if provided
+        if (isset($data['organization_ids'])) {
+            $orgData = [];
+            foreach ($data['organization_ids'] as $orgId) {
+                $orgData[$orgId] = ['role' => 'organizer'];
+            }
+            $workshop->organizations()->sync($orgData);
+        }
+
+        return $workshop;
+    }
+
     public function getAll()
     {
-        return Workshop::with(['supervisors', 'registrations'])->get();
+        return $this->model->with(['supervisors', 'registrations'])->get();
     }
 
     public function getUpcoming()
     {
-        return Workshop::where('start_time', '>=', now())
+        return $this->model->where('start_time', '>=', now())
             ->orderBy('start_time', 'asc')
             ->with('supervisors')
             ->get();
     }
 
-    public function find($id)
+    public function findOrFail(string $id, array $columns = ['*']): Model
     {
-        return Workshop::findOrFail($id);
+        return $this->model->select($columns)->findOrFail($id);
     }
 
     public function getUserWorkshops($userId)

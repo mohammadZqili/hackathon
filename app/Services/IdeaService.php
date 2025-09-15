@@ -26,6 +26,14 @@ class IdeaService extends BaseService
         $this->editionRepository = $editionRepository;
     }
 
+    /**
+     * Get idea statistics
+     */
+    public function getStatistics(): array
+    {
+        return $this->ideaRepo->getStatistics([]);
+    }
+
     public function getTeamIdea($userId)
     {
         $team = $this->teamRepo->findByLeaderId($userId);

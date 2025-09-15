@@ -3,16 +3,27 @@
 namespace App\Http\Controllers\SystemAdmin;
 
 use App\Http\Controllers\Controller;
+use App\Services\OrganizationService;
+use App\Services\SpeakerService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\Organization;
-use App\Models\Speaker;
 
 class OrganizationController extends Controller
 {
+    protected OrganizationService $organizationService;
+    protected SpeakerService $speakerService;
+
+    public function __construct(
+        OrganizationService $organizationService,
+        SpeakerService $speakerService
+    ) {
+        $this->organizationService = $organizationService;
+        $this->speakerService = $speakerService;
+    }
     public function index()
     {
-        $organizations = Organization::paginate(15);
+        $organizations = $this->organizationService->getPaginatedOrganizations(15);
 
         return Inertia::render('SystemAdmin/Organizations/Index', [
             'organizations' => $organizations
@@ -21,8 +32,8 @@ class OrganizationController extends Controller
 
     public function create()
     {
-        $speakers = Speaker::orderBy('name')->get();
-        
+        $speakers = $this->speakerService->getAllSpeakers();
+
         return Inertia::render('SystemAdmin/Organizations/Create', [
             'speakers' => $speakers
         ]);
@@ -43,7 +54,7 @@ class OrganizationController extends Controller
             'logo_path' => 'nullable|string',
         ]);
 
-        $organization = Organization::create($validated);
+        $organization = $this->organizationService->createOrganization($validated);
 
         return redirect()->route('system-admin.organizations.index')
             ->with('success', 'Organization created successfully.');
@@ -51,18 +62,20 @@ class OrganizationController extends Controller
 
     public function show(Organization $organization)
     {
+        $organizationData = $this->organizationService->getOrganizationDetails($organization->id);
+
         return Inertia::render('SystemAdmin/Organizations/Show', [
-            'organization' => $organization
+            'organization' => $organizationData
         ]);
     }
 
     public function edit(Organization $organization)
     {
-        $speakers = Speaker::orderBy('name')->get();
-        $organization->load('speakers');
-        
+        $speakers = $this->speakerService->getAllSpeakers();
+        $organizationData = $this->organizationService->getOrganizationWithSpeakers($organization->id);
+
         return Inertia::render('SystemAdmin/Organizations/Edit', [
-            'organization' => $organization,
+            'organization' => $organizationData,
             'speakers' => $speakers
         ]);
     }
@@ -82,7 +95,7 @@ class OrganizationController extends Controller
             'logo_path' => 'nullable|string',
         ]);
 
-        $organization->update($validated);
+        $this->organizationService->updateOrganization($organization->id, $validated);
 
         return redirect()->route('system-admin.organizations.index')
             ->with('success', 'Organization updated successfully.');
@@ -90,7 +103,7 @@ class OrganizationController extends Controller
 
     public function destroy(Organization $organization)
     {
-        $organization->delete();
+        $this->organizationService->deleteOrganization($organization->id);
 
         return redirect()->route('system-admin.organizations.index')
             ->with('success', 'Organization deleted successfully.');
@@ -98,13 +111,13 @@ class OrganizationController extends Controller
 
     public function activate(Organization $organization)
     {
-        $organization->update(['is_active' => true]);
+        $this->organizationService->activateOrganization($organization->id);
         return response()->json(['message' => 'Organization activated successfully']);
     }
 
     public function deactivate(Organization $organization)
     {
-        $organization->update(['is_active' => false]);
+        $this->organizationService->deactivateOrganization($organization->id);
         return response()->json(['message' => 'Organization deactivated successfully']);
     }
 }

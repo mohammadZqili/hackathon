@@ -18,6 +18,54 @@ class WorkshopService extends BaseService
         $this->workshopRepo = $workshopRepo;
     }
 
+
+    /**
+     * Get paginated workshops
+     */
+    public function getPaginatedWorkshops(int $perPage = 15)
+    {
+        return $this->workshopRepo->getPaginatedWithRelations($perPage);
+    }
+
+    /**
+     * Get workshop with relations
+     */
+    public function getWorkshopWithRelations(int $id)
+    {
+        return $this->workshopRepo->findWithSpeakersAndOrganizations($id);
+    }
+
+    /**
+     * Get workshop with attendance
+     */
+    public function getWorkshopWithAttendance(int $id)
+    {
+        return $this->workshopRepo->findWithAttendance($id);
+    }
+
+    /**
+     * Get workshop details with all relations for display
+     */
+    public function getWorkshopDetails(int $id)
+    {
+        $workshop = $this->workshopRepo->findWithSpeakersAndOrganizations($id);
+
+        if (!$workshop) {
+            return null;
+        }
+
+        // Load additional relations if needed
+        $workshop->load(['attendees', 'speakers', 'organizations']);
+
+        // Add computed attributes
+        $workshop->attendees_count = $workshop->attendees()->count();
+        $workshop->is_full = $workshop->isFull();
+        $workshop->can_register = $workshop->canRegister();
+        $workshop->available_seats = $workshop->max_attendees - $workshop->current_attendees;
+
+        return $workshop;
+    }
+
     /**
      * Validate workshop data with business rules
      * Following Meta/Google standards for comprehensive validation
@@ -111,8 +159,8 @@ class WorkshopService extends BaseService
             // Prepare workshop data
             $workshopData = collect($data)->except(['speaker_ids', 'organization_ids', 'remote_link'])->toArray();
 
-            // Add hackathon_id from active edition
-            $activeEdition = Edition::where('is_active', true)->first();
+            // Add hackathon_id from current edition
+            $activeEdition = Edition::where('is_current', true)->first();
             $workshopData['hackathon_id'] = $activeEdition ? $activeEdition->id : 1;
 
             // Handle remote link for online workshops
@@ -217,6 +265,81 @@ class WorkshopService extends BaseService
             }
 
             return $this->workshopRepo->unregisterUser($userId, $workshopId);
+        });
+    }
+
+    /**
+     * Update an existing workshop
+     */
+    public function updateWorkshop(int $workshopId, array $data, User $updatedBy): Workshop
+    {
+        return DB::transaction(function () use ($workshopId, $data, $updatedBy) {
+            // Find the workshop
+            $workshop = Workshop::findOrFail($workshopId);
+
+            // Prepare workshop data
+            $workshopData = collect($data)->except(['speaker_ids', 'organization_ids'])->toArray();
+
+            // Update workshop
+            $workshop->update($workshopData);
+
+            // Update speakers if provided
+            if (isset($data['speaker_ids'])) {
+                $speakerData = [];
+                foreach ($data['speaker_ids'] as $index => $speakerId) {
+                    if ($speakerId) {
+                        $speakerData[$speakerId] = [
+                            'role' => $index === 0 ? 'main_speaker' : 'co_speaker',
+                            'order' => $index + 1,
+                            'updated_at' => now()
+                        ];
+                    }
+                }
+                $workshop->speakers()->sync($speakerData);
+            }
+
+            // Update organizations if provided
+            if (isset($data['organization_ids'])) {
+                $orgData = [];
+                foreach ($data['organization_ids'] as $orgId) {
+                    if ($orgId) {
+                        $orgData[$orgId] = [
+                            'role' => 'organizer',
+                            'updated_at' => now()
+                        ];
+                    }
+                }
+                $workshop->organizations()->sync($orgData);
+            }
+
+            // Log update activity (if activity logging is available)
+            if (function_exists('activity')) {
+                activity()
+                    ->performedOn($workshop)
+                    ->causedBy($updatedBy)
+                    ->withProperties(['workshop_title' => $workshop->title])
+                    ->log('Workshop updated');
+            }
+
+            return $workshop->fresh(['speakers', 'organizations']);
+        });
+    }
+
+    /**
+     * Delete a workshop
+     */
+    public function deleteWorkshop(int $workshopId): bool
+    {
+        return DB::transaction(function () use ($workshopId) {
+            $workshop = Workshop::findOrFail($workshopId);
+
+            // Remove all relationships
+            $workshop->speakers()->detach();
+            $workshop->organizations()->detach();
+            $workshop->attendees()->detach();
+
+            // Delete the workshop
+            return $workshop->delete();
         });
     }
 }

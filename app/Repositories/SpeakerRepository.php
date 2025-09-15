@@ -13,6 +13,16 @@ class SpeakerRepository extends BaseRepository
         parent::__construct(new Speaker());
     }
 
+    public function getAllOrderedByName()
+    {
+        return $this->model->orderBy('name')->get();
+    }
+
+    public function findWithOrganization(int $id)
+    {
+        return $this->model->with('organization')->find($id);
+    }
+
     public function getPaginatedWithFilters(array $filters, int $perPage = 15): LengthAwarePaginator
     {
         $query = $this->query()

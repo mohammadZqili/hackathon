@@ -48,19 +48,24 @@ class SettingsController extends Controller
     public function updateBranding(Request $request)
     {
         $validated = $request->validate([
-            'app_name' => 'required|string|max:255',
+            'app_name' => 'nullable|string|max:255',
             'app_logo' => 'nullable|string',
-            'primary_color' => 'required|string|max:7',
-            'secondary_color' => 'required|string|max:7',
+            'primary_color' => 'nullable|string|max:7',
+            'secondary_color' => 'nullable|string|max:7',
             'footer_text' => 'nullable|string',
         ]);
-        
+
+        // Filter out empty values
+        $validated = array_filter($validated, function($value) {
+            return $value !== null && $value !== '';
+        });
+
         try {
             $result = $this->settingService->updateBrandingSettings($validated, auth()->user());
-            
+
             // Clear config cache
             Artisan::call('config:clear');
-            
+
             return back()->with('success', $result['message']);
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()]);
@@ -85,21 +90,26 @@ class SettingsController extends Controller
     public function updateSmtp(Request $request)
     {
         $validated = $request->validate([
-            'smtp_host' => 'required|string',
-            'smtp_port' => 'required|integer',
-            'smtp_username' => 'required|string',
+            'smtp_host' => 'nullable|string',
+            'smtp_port' => 'nullable|integer',
+            'smtp_username' => 'nullable|string',
             'smtp_password' => 'nullable|string',
-            'smtp_encryption' => 'nullable|in:tls,ssl',
-            'smtp_from_address' => 'required|email',
-            'smtp_from_name' => 'required|string',
+            'smtp_encryption' => 'nullable|in:tls,ssl,',
+            'smtp_from_address' => 'nullable|email',
+            'smtp_from_name' => 'nullable|string',
         ]);
-        
+
+        // Filter out empty values
+        $validated = array_filter($validated, function($value) {
+            return $value !== null && $value !== '';
+        });
+
         try {
             $result = $this->settingService->updateSmtpSettings($validated, auth()->user());
-            
+
             // Clear config cache
             Artisan::call('config:clear');
-            
+
             return back()->with('success', $result['message']);
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()]);
@@ -164,18 +174,23 @@ class SettingsController extends Controller
     public function updateSms(Request $request)
     {
         $validated = $request->validate([
-            'sms_provider' => 'required|in:twilio,nexmo,textlocal',
-            'sms_api_key' => 'required|string',
+            'sms_provider' => 'nullable|in:twilio,nexmo,textlocal',
+            'sms_api_key' => 'nullable|string',
             'sms_api_secret' => 'nullable|string',
-            'sms_from_number' => 'required|string',
+            'sms_from_number' => 'nullable|string',
         ]);
-        
+
+        // Filter out empty values
+        $validated = array_filter($validated, function($value) {
+            return $value !== null && $value !== '';
+        });
+
         try {
             $result = $this->settingService->updateSmsSettings($validated, auth()->user());
-            
+
             // Clear config cache
             Artisan::call('config:clear');
-            
+
             return back()->with('success', $result['message']);
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()]);

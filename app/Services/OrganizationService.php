@@ -23,9 +23,49 @@ class OrganizationService extends BaseService
     }
 
     /**
-     * Get paginated organization_PLURAL based on user role and filters
+     * Get all organizations
      */
-    public function getPaginatedOrganizations(User $user, array $filters = [], int $perPage = 15): array
+    public function getAllOrganizations()
+    {
+        return $this->organizationRepository->getAllOrderedByName();
+    }
+
+    /**
+     * Get paginated organizations (simple version for SystemAdmin)
+     */
+    public function getPaginatedOrganizations(int $perPage = 15)
+    {
+        return $this->organizationRepository->paginate($perPage);
+    }
+
+    /**
+     * Get organization with speakers
+     */
+    public function getOrganizationWithSpeakers(int $id)
+    {
+        return $this->organizationRepository->findWithSpeakers($id);
+    }
+
+    /**
+     * Activate organization
+     */
+    public function activateOrganization(int $id): bool
+    {
+        return $this->organizationRepository->update($id, ['is_active' => true]);
+    }
+
+    /**
+     * Deactivate organization
+     */
+    public function deactivateOrganization(int $id): bool
+    {
+        return $this->organizationRepository->update($id, ['is_active' => false]);
+    }
+
+    /**
+     * Get paginated organizations based on user role and filters
+     */
+    public function getPaginatedOrganizationsWithFilters(User $user, array $filters = [], int $perPage = 15): array
     {
         // Build filters based on user role
         $roleFilters = $this->buildRoleFilters($user, $filters);
@@ -70,9 +110,17 @@ class OrganizationService extends BaseService
     }
 
     /**
-     * Create a new organization
+     * Create organization (simple version)
      */
-    public function createOrganization(array $data, User $user): array
+    public function createOrganization(array $data)
+    {
+        return $this->organizationRepository->create($data);
+    }
+
+    /**
+     * Create a new organization (with user permissions)
+     */
+    public function createOrganizationWithUser(array $data, User $user): array
     {
         // Check permissions
         if (!$this->userCanCreateOrganization($user)) {

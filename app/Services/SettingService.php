@@ -78,12 +78,22 @@ class SettingService extends BaseService
 
         DB::beginTransaction();
         try {
-            // Update each branding setting
-            SystemSetting::set('app_name', $data['app_name'], 'branding');
-            SystemSetting::set('app_logo', $data['app_logo'] ?? null, 'branding');
-            SystemSetting::set('primary_color', $data['primary_color'], 'branding');
-            SystemSetting::set('secondary_color', $data['secondary_color'], 'branding');
-            SystemSetting::set('footer_text', $data['footer_text'] ?? null, 'branding');
+            // Update each branding setting only if provided
+            if (isset($data['app_name'])) {
+                SystemSetting::set('app_name', $data['app_name'], 'branding');
+            }
+            if (isset($data['app_logo'])) {
+                SystemSetting::set('app_logo', $data['app_logo'], 'branding');
+            }
+            if (isset($data['primary_color'])) {
+                SystemSetting::set('primary_color', $data['primary_color'], 'branding');
+            }
+            if (isset($data['secondary_color'])) {
+                SystemSetting::set('secondary_color', $data['secondary_color'], 'branding');
+            }
+            if (isset($data['footer_text'])) {
+                SystemSetting::set('footer_text', $data['footer_text'], 'branding');
+            }
 
             // Clear settings cache
             SettingsServiceProvider::clearCache();
@@ -138,19 +148,28 @@ class SettingService extends BaseService
 
         DB::beginTransaction();
         try {
-            // Update each SMTP setting
-            SystemSetting::set('mail_host', $data['smtp_host'], 'smtp');
-            SystemSetting::set('mail_port', $data['smtp_port'], 'smtp');
-            SystemSetting::set('mail_username', $data['smtp_username'], 'smtp');
-
-            // Only update password if provided
+            // Update each SMTP setting only if provided
+            if (isset($data['smtp_host'])) {
+                SystemSetting::set('mail_host', $data['smtp_host'], 'smtp');
+            }
+            if (isset($data['smtp_port'])) {
+                SystemSetting::set('mail_port', $data['smtp_port'], 'smtp');
+            }
+            if (isset($data['smtp_username'])) {
+                SystemSetting::set('mail_username', $data['smtp_username'], 'smtp');
+            }
             if (!empty($data['smtp_password'])) {
                 SystemSetting::set('mail_password', $data['smtp_password'], 'smtp');
             }
-
-            SystemSetting::set('mail_encryption', $data['smtp_encryption'] ?? null, 'smtp');
-            SystemSetting::set('mail_from_address', $data['smtp_from_address'], 'smtp');
-            SystemSetting::set('mail_from_name', $data['smtp_from_name'], 'smtp');
+            if (isset($data['smtp_encryption'])) {
+                SystemSetting::set('mail_encryption', $data['smtp_encryption'], 'smtp');
+            }
+            if (isset($data['smtp_from_address'])) {
+                SystemSetting::set('mail_from_address', $data['smtp_from_address'], 'smtp');
+            }
+            if (isset($data['smtp_from_name'])) {
+                SystemSetting::set('mail_from_name', $data['smtp_from_name'], 'smtp');
+            }
 
             // Clear settings cache
             SettingsServiceProvider::clearCache();
@@ -207,16 +226,26 @@ class SettingService extends BaseService
         DB::beginTransaction();
         try {
             // Update notification settings - store booleans as '1' or '0'
-            SystemSetting::set('notification_email_enabled', $data['email_enabled'] ? '1' : '0', 'notifications');
-            SystemSetting::set('notification_sms_enabled', $data['sms_enabled'] ? '1' : '0', 'notifications');
-            SystemSetting::set('notification_push_enabled', $data['push_enabled'] ? '1' : '0', 'notifications');
-            SystemSetting::set('notification_in_app_enabled', $data['in_app_enabled'] ? '1' : '0', 'notifications');
+            if (isset($data['email_enabled'])) {
+                SystemSetting::set('notification_email_enabled', $data['email_enabled'] ? '1' : '0', 'notifications');
+            }
+            if (isset($data['sms_enabled'])) {
+                SystemSetting::set('notification_sms_enabled', $data['sms_enabled'] ? '1' : '0', 'notifications');
+            }
+            if (isset($data['push_enabled'])) {
+                SystemSetting::set('notification_push_enabled', $data['push_enabled'] ? '1' : '0', 'notifications');
+            }
+            if (isset($data['in_app_enabled'])) {
+                SystemSetting::set('notification_in_app_enabled', $data['in_app_enabled'] ? '1' : '0', 'notifications');
+            }
 
             if (isset($data['email_digest'])) {
                 SystemSetting::set('notification_email_digest', $data['email_digest'], 'notifications');
             }
 
-            SystemSetting::set('notification_quiet_hours_enabled', $data['quiet_hours_enabled'] ? '1' : '0', 'notifications');
+            if (isset($data['quiet_hours_enabled'])) {
+                SystemSetting::set('notification_quiet_hours_enabled', $data['quiet_hours_enabled'] ? '1' : '0', 'notifications');
+            }
 
             if (isset($data['quiet_hours_start'])) {
                 SystemSetting::set('notification_quiet_hours_start', $data['quiet_hours_start'], 'notifications');
@@ -276,11 +305,19 @@ class SettingService extends BaseService
 
         DB::beginTransaction();
         try {
-            // Update SMS settings
-            SystemSetting::set('sms_provider', $data['sms_provider'], 'sms');
-            SystemSetting::set('sms_api_key', $data['sms_api_key'], 'sms');
-            SystemSetting::set('sms_api_secret', $data['sms_api_secret'] ?? null, 'sms');
-            SystemSetting::set('sms_from_number', $data['sms_from_number'], 'sms');
+            // Update SMS settings only if provided
+            if (isset($data['sms_provider'])) {
+                SystemSetting::set('sms_provider', $data['sms_provider'], 'sms');
+            }
+            if (isset($data['sms_api_key'])) {
+                SystemSetting::set('sms_api_key', $data['sms_api_key'], 'sms');
+            }
+            if (isset($data['sms_api_secret'])) {
+                SystemSetting::set('sms_api_secret', $data['sms_api_secret'], 'sms');
+            }
+            if (isset($data['sms_from_number'])) {
+                SystemSetting::set('sms_from_number', $data['sms_from_number'], 'sms');
+            }
 
             // Clear settings cache
             SettingsServiceProvider::clearCache();

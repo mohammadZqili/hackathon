@@ -24,6 +24,14 @@ class TrackService extends BaseService
     }
 
     /**
+     * Get track supervisors
+     */
+    public function getTrackSupervisors()
+    {
+        return $this->trackRepository->getTrackSupervisors();
+    }
+
+    /**
      * Get paginated tracks based on user role and filters
      */
     public function getPaginatedTracks(User $user, array $filters = [], int $perPage = 15): array
@@ -262,7 +270,8 @@ class TrackService extends BaseService
     public function getFormData(User $user, ?int $trackId = null): array
     {
         $data = [
-            'editions' => $this->getEditionsForUser($user)
+            'editions' => $this->getEditionsForUser($user),
+            'hackathons' => $this->getHackathonsForUser($user)
         ];
 
         if ($trackId) {
@@ -365,6 +374,23 @@ class TrackService extends BaseService
         }
 
         return $roleFilters;
+    }
+
+    /**
+     * Get hackathons available to user
+     */
+    protected function getHackathonsForUser(User $user): Collection
+    {
+        switch ($user->user_type) {
+            case 'system_admin':
+                return \App\Models\Hackathon::all(['id', 'name']);
+            case 'hackathon_admin':
+            case 'track_supervisor':
+                // For now, return all hackathons - can be filtered later based on requirements
+                return \App\Models\Hackathon::all(['id', 'name']);
+            default:
+                return collect();
+        }
     }
 
     /**

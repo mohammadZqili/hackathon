@@ -22,7 +22,7 @@ class IdeaRepository extends BaseRepository
     public function getPaginatedWithFilters(array $filters, int $perPage = 15): LengthAwarePaginator
     {
         $query = $this->query()
-            ->with(['team.leader', 'team.members', 'track', 'reviews.reviewer'])
+            ->with(['team.leader', 'team.members', 'track', 'reviewer'])
             ->withCount(['reviews']);
 
         // Apply filters
@@ -94,7 +94,7 @@ class IdeaRepository extends BaseRepository
                 'team.leader',
                 'team.members.user',
                 'track',
-                'reviews.reviewer',
+                'reviewer',
                 'files',
                 'auditLogs.user'
             ])

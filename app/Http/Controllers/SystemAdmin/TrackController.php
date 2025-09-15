@@ -25,7 +25,7 @@ class TrackController extends Controller
     {
         $filters = $request->only(['edition_id', 'status', 'search']);
         $perPage = $request->get('per_page', 15);
-        
+
         $data = $this->trackService->getPaginatedTracks(
             auth()->user(),
             $filters,
@@ -41,7 +41,7 @@ class TrackController extends Controller
     public function create(): Response
     {
         $data = $this->trackService->getFormData(auth()->user());
-        
+
         return Inertia::render('SystemAdmin/Tracks/Create', $data);
     }
 
@@ -62,7 +62,7 @@ class TrackController extends Controller
 
         try {
             $result = $this->trackService->createTrack($validated, auth()->user());
-            
+
             return redirect()->route('system-admin.tracks.index')
                 ->with('success', $result['message']);
         } catch (\Exception $e) {
@@ -76,7 +76,7 @@ class TrackController extends Controller
     public function show(Track $track): Response
     {
         $data = $this->trackService->getTrackDetails($track->id, auth()->user());
-        
+
         if (!$data) {
             abort(404, 'Track not found or access denied.');
         }
@@ -90,7 +90,7 @@ class TrackController extends Controller
     public function edit(Track $track): Response
     {
         $data = $this->trackService->getFormData(auth()->user(), $track->id);
-        
+
         if (!isset($data['track'])) {
             abort(404, 'Track not found or access denied.');
         }
@@ -115,7 +115,7 @@ class TrackController extends Controller
 
         try {
             $result = $this->trackService->updateTrack($track->id, $validated, auth()->user());
-            
+
             return redirect()->route('system-admin.tracks.show', $track)
                 ->with('success', $result['message']);
         } catch (\Exception $e) {
@@ -130,7 +130,7 @@ class TrackController extends Controller
     {
         try {
             $result = $this->trackService->deleteTrack($track->id, auth()->user());
-            
+
             return redirect()->route('system-admin.tracks.index')
                 ->with('success', $result['message']);
         } catch (\Exception $e) {
@@ -144,10 +144,10 @@ class TrackController extends Controller
     public function export(Request $request)
     {
         $filters = $request->only(['edition_id', 'status', 'search']);
-        
+
         try {
             $result = $this->trackService->exportTracks(auth()->user(), $filters);
-            
+
             $headers = [
                 'Content-Type' => 'text/csv',
                 'Content-Disposition' => 'attachment; filename="' . $result['filename'] . '"',

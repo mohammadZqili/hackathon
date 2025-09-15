@@ -32,6 +32,83 @@ class TeamService
     }
 
     /**
+     * Get paginated teams
+     */
+    public function getPaginatedTeams($user, array $filters = [], int $perPage = 15)
+    {
+        return [
+            'teams' => $this->teamRepository->getPaginatedWithFilters($filters, $perPage),
+            'filters' => $filters
+        ];
+    }
+
+    /**
+     * Get team details
+     */
+    public function getTeamDetails(int $id, $user)
+    {
+        $team = $this->teamRepository->find($id);
+        if ($team) {
+            $team->load(['leader', 'members', 'idea', 'edition']);
+        }
+        return ['team' => $team];
+    }
+
+    /**
+     * Create team
+     */
+    public function createTeam(array $data, $user)
+    {
+        DB::beginTransaction();
+        try {
+            $team = $this->teamRepository->create([
+                'name' => $data['name'],
+                'description' => $data['description'] ?? null,
+                'edition_id' => $data['edition_id'],
+                'leader_id' => $data['leader_id'] ?? null,
+                'max_members' => $data['max_members'] ?? 5,
+                'status' => 'active'
+            ]);
+
+            // Add leader as a member if specified
+            if (!empty($data['leader_id'])) {
+                $team->members()->attach($data['leader_id'], ['role' => 'leader']);
+            }
+
+            // Add other members
+            if (!empty($data['member_ids'])) {
+                foreach ($data['member_ids'] as $memberId) {
+                    if ($memberId != $data['leader_id']) {
+                        $team->members()->attach($memberId, ['role' => 'member']);
+                    }
+                }
+            }
+
+            DB::commit();
+            return $team;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * Update team
+     */
+    public function updateTeam(int $id, array $data, $user)
+    {
+        return $this->teamRepository->update($id, $data);
+    }
+
+    /**
+     * Delete team
+     */
+    public function deleteTeam(int $id, $user)
+    {
+        return $this->teamRepository->delete($id);
+    }
+
+    /**
      * Get the team led by the user
      */
     public function getMyTeam(User $user): ?Team

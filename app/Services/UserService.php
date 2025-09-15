@@ -24,6 +24,14 @@ class UserService extends BaseService
     }
 
     /**
+     * Get users by type
+     */
+    public function getUsersByType(string $userType): Collection
+    {
+        return $this->userRepository->getUsersByType($userType);
+    }
+
+    /**
      * Get paginated users based on user role and filters
      */
     public function getPaginatedUsers(User $user, array $filters = [], int $perPage = 15): array

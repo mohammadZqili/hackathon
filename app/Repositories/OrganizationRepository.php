@@ -13,6 +13,11 @@ class OrganizationRepository extends BaseRepository
         parent::__construct(new Organization());
     }
 
+    public function getAllOrderedByName()
+    {
+        return $this->model->orderBy('name')->get();
+    }
+
     public function getPaginatedWithFilters(array $filters, int $perPage = 15): LengthAwarePaginator
     {
         $query = $this->query()
@@ -36,6 +41,11 @@ class OrganizationRepository extends BaseRepository
         }
 
         return $query->latest()->paginate($perPage)->withQueryString();
+    }
+
+    public function findWithSpeakers(int $id)
+    {
+        return $this->model->with('speakers')->find($id);
     }
 
     public function findWithFullDetails(int $id): ?Organization
