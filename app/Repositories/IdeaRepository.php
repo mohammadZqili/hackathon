@@ -33,7 +33,12 @@ class IdeaRepository extends BaseRepository
         }
 
         if (!empty($filters['track_id'])) {
-            $query->where('track_id', $filters['track_id']);
+            // Handle both single track ID and array of track IDs
+            if (is_array($filters['track_id'])) {
+                $query->whereIn('track_id', $filters['track_id']);
+            } else {
+                $query->where('track_id', $filters['track_id']);
+            }
         }
 
         if (!empty($filters['status'])) {

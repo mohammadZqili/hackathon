@@ -25,7 +25,12 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void {
         // Register the Settings Service Provider
         $this->app->register(\App\Providers\SettingsServiceProvider::class);
-        
+
+        // Register EditionContext as singleton
+        $this->app->singleton(\App\Services\EditionContext::class, function ($app) {
+            return new \App\Services\EditionContext();
+        });
+
         Health::checks([
             UsedDiskSpaceCheck::new(),
             DatabaseCheck::new(),

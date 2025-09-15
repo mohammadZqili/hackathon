@@ -33,6 +33,11 @@ class TeamRepository extends BaseRepository
             $query->where('track_id', $filters['track_id']);
         }
 
+        // Support filtering by multiple track IDs (for track supervisors)
+        if (!empty($filters['track_ids']) && is_array($filters['track_ids'])) {
+            $query->whereIn('track_id', $filters['track_ids']);
+        }
+
         if (!empty($filters['status'])) {
             $query->where('status', $filters['status']);
         }

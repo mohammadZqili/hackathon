@@ -78,6 +78,8 @@ class Kernel extends HttpKernel
         'hackathon_admin' => \App\Http\Middleware\HackathonAdminMiddleware::class,
         'check_hackathon_admin' => \App\Http\Middleware\CheckHackathonAdminRole::class,
         'check_track_supervisor' => \App\Http\Middleware\CheckTrackSupervisorRole::class,
+        'resolve.edition' => \App\Http\Middleware\ResolveEditionMiddleware::class,
+        'scope.ts' => \App\Http\Middleware\TrackSupervisorScopeMiddleware::class,
         'track_supervisor' => \App\Http\Middleware\TrackSupervisorMiddleware::class,
         'team_member' => \App\Http\Middleware\TeamMemberMiddleware::class,
         'team.lead' => \App\Http\Middleware\TeamLeadMiddleware::class,

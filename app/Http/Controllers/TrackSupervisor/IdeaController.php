@@ -5,6 +5,7 @@ namespace App\Http\Controllers\TrackSupervisor;
 use App\Http\Controllers\Controller;
 use App\Services\IdeaService;
 use App\Services\TrackService;
+use App\Services\EditionContext;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\Idea;
@@ -14,28 +15,48 @@ class IdeaController extends Controller
 {
     protected IdeaService $ideaService;
     protected TrackService $trackService;
+    protected EditionContext $editionContext;
 
-    public function __construct(IdeaService $ideaService, TrackService $trackService)
-    {
+    public function __construct(
+        IdeaService $ideaService,
+        TrackService $trackService,
+        EditionContext $editionContext
+    ) {
         $this->ideaService = $ideaService;
         $this->trackService = $trackService;
+        $this->editionContext = $editionContext;
     }
     /**
-     * Display a listing of all ideas across all editions.
+     * Display a listing of ideas in supervisor's tracks and current edition.
      */
     public function index(Request $request)
     {
+        $edition = $this->editionContext->current();
+        $user = auth()->user();
+
+        // Get track IDs assigned to this supervisor in current edition
+        $trackIds = $user->tracksInEdition($edition->id)->pluck('tracks.id')->toArray();
+
+        // Add filters for edition and tracks
+        $filters = array_merge(
+            $request->only(['search', 'status', 'review_status']),
+            [
+                'edition_id' => $edition->id,
+                'track_id' => $trackIds  // Will filter to only these track IDs
+            ]
+        );
+
         $data = $this->ideaService->getPaginatedIdeas(
-            auth()->user(),
-            $request->only(['search', 'status', 'track_id', 'edition_id', 'review_status']),
+            $user,
+            $filters,
             $request->get('per_page', 15)
         );
 
-        // Get tracks for filter dropdown
+        // Get only assigned tracks for filter dropdown
         $trackData = $this->trackService->getPaginatedTracks(
-            auth()->user(),
-            [],
-            1000 // Get all tracks
+            $user,
+            ['edition_id' => $edition->id],
+            1000
         );
 
         // Get track supervisors through service
@@ -43,7 +64,9 @@ class IdeaController extends Controller
 
         return Inertia::render('TrackSupervisor/Ideas/Index', array_merge($data, [
             'tracks' => $trackData['tracks']->items(),
-            'supervisors' => $supervisors
+            'supervisors' => $supervisors,
+            'current_edition' => $edition,
+            'assigned_tracks' => $trackIds
         ]));
     }
 
@@ -52,15 +75,8 @@ class IdeaController extends Controller
      */
     public function create()
     {
-        $trackData = $this->trackService->getPaginatedTracks(
-            auth()->user(),
-            [],
-            1000 // Get all tracks
-        );
-
-        return Inertia::render('TrackSupervisor/Ideas/Create', [
-            'tracks' => $trackData['tracks']->items()
-        ]);
+        // Track supervisors cannot create ideas
+        abort(403, 'Track supervisors are not authorized to create ideas.');
     }
 
     /**
@@ -68,6 +84,9 @@ class IdeaController extends Controller
      */
     public function show(Idea $idea)
     {
+        // Check policy
+        $this->authorize('view', $idea);
+
         $data = $this->ideaService->getIdeaDetails($idea->id, auth()->user());
 
         if (!$data) {
@@ -111,19 +130,8 @@ class IdeaController extends Controller
      */
     public function edit(Idea $idea)
     {
-        $idea->load(['team', 'track', 'edition', 'files']);
-
-        // Get tracks for dropdown
-        $trackData = $this->trackService->getPaginatedTracks(
-            auth()->user(),
-            [],
-            1000 // Get all tracks
-        );
-
-        return Inertia::render('TrackSupervisor/Ideas/Edit', [
-            'idea' => $idea,
-            'tracks' => $trackData['tracks']->items(),
-        ]);
+        // Track supervisors cannot edit ideas directly
+        abort(403, 'Track supervisors are not authorized to edit ideas.');
     }
 
     /**
@@ -131,42 +139,8 @@ class IdeaController extends Controller
      */
     public function update(Request $request, Idea $idea)
     {
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'problem_statement' => 'required|string',
-            'solution_approach' => 'required|string',
-            'expected_impact' => 'nullable|string',
-            'track_id' => 'required|exists:tracks,id',
-            'status' => 'required|in:draft,submitted,under_review,needs_revision,accepted,rejected',
-            'technologies' => 'nullable|array',
-        ]);
-
-        try {
-            // Handle technologies field
-            if (isset($validated['technologies']) && is_array($validated['technologies'])) {
-                $validated['technologies'] = json_encode($validated['technologies']);
-            }
-
-            // Update the idea directly as System Admin
-            $idea->update($validated);
-
-            // Log the action
-            if (method_exists($idea, 'logAction')) {
-                $idea->logAction(
-                    'idea_updated',
-                    'idea',
-                    $idea->id,
-                    'Idea updated by System Admin',
-                    auth()->user()
-                );
-            }
-
-            return redirect()->route('system-admin.ideas.show', $idea->id)
-                ->with('success', 'Idea updated successfully.');
-        } catch (\Exception $e) {
-            return back()->withErrors(['error' => $e->getMessage()]);
-        }
+        // Track supervisors cannot update ideas directly
+        abort(403, 'Track supervisors are not authorized to update ideas.');
     }
 
     /**
@@ -174,6 +148,9 @@ class IdeaController extends Controller
      */
     public function review(Idea $idea)
     {
+        // Check policy - can this supervisor review this idea?
+        $this->authorize('review', $idea);
+
         $idea->load(['team', 'track', 'files']);
 
         $supervisors = User::role('track_supervisor')->get();
@@ -193,10 +170,13 @@ class IdeaController extends Controller
     }
 
     /**
-     * Process idea review (System Admin can review any idea)
+     * Process idea review (Track supervisors can review ideas in their tracks)
      */
     public function processReview(Request $request, Idea $idea)
     {
+        // Check policy
+        $this->authorize('review', $idea);
+
         $validated = $request->validate([
             'status' => 'required|in:draft,submitted,under_review,needs_revision,accepted,rejected,pending_review,in_progress,completed',
             'reviewed_by' => 'nullable|exists:users,id',
@@ -217,7 +197,7 @@ class IdeaController extends Controller
                 // TODO: Trigger notification service here
             }
 
-            return redirect()->route('system-admin.ideas.show', $idea->id)
+            return redirect()->route('track-supervisor.ideas.show', $idea->id)
                 ->with('success', $result['message']);
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()]);
@@ -342,17 +322,12 @@ class IdeaController extends Controller
     }
 
     /**
-     * Delete an idea (System Admin only)
+     * Delete an idea (Track supervisors cannot delete)
      */
     public function destroy(Idea $idea)
     {
-        try {
-            $result = $this->ideaService->deleteIdea($idea->id, auth()->user());
-            return redirect()->route('system-admin.ideas.index')
-                ->with('success', $result['message']);
-        } catch (\Exception $e) {
-            return back()->withErrors(['error' => $e->getMessage()]);
-        }
+        // Track supervisors cannot delete ideas
+        abort(403, 'Track supervisors are not authorized to delete ideas.');
     }
 
     /**

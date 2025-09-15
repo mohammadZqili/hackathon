@@ -400,6 +400,97 @@ class User extends Authenticatable implements Auditable
     }
 
     /**
+     * Get tracks supervised by this user in a specific edition
+     */
+    public function tracksInEdition($editionId)
+    {
+        return $this->supervisedTracks()
+            ->where('tracks.edition_id', $editionId);
+    }
+
+    /**
+     * Get the single track assigned to this supervisor in current edition
+     * Track supervisors have only ONE track assignment
+     */
+    public function getAssignedTrack($editionId)
+    {
+        if (!$this->hasRole('track_supervisor')) {
+            return null;
+        }
+
+        return $this->supervisedTracks()
+            ->where('tracks.edition_id', $editionId)
+            ->first();
+    }
+
+    /**
+     * Get the single track ID for this supervisor
+     */
+    public function getAssignedTrackId($editionId)
+    {
+        $track = $this->getAssignedTrack($editionId);
+        return $track ? $track->id : null;
+    }
+
+    /**
+     * Get assigned track IDs for a specific edition (or all if admin)
+     */
+    public function getAssignedTrackIds($editionId = null)
+    {
+        // System admins and hackathon admins have no restrictions
+        if ($this->hasRole('system_admin') || $this->hasRole('hackathon_admin')) {
+            return null; // No restriction
+        }
+
+        // Track supervisors only see their assigned tracks
+        if ($this->hasRole('track_supervisor')) {
+            $query = $this->supervisedTracks();
+            if ($editionId) {
+                $query->where('tracks.edition_id', $editionId);
+            }
+            return $query->pluck('tracks.id')->toArray();
+        }
+
+        // Other roles have no track access
+        return [];
+    }
+
+    /**
+     * Check if user can access a specific track
+     */
+    public function canAccessTrack($trackId, $editionId = null)
+    {
+        // Admins can access all tracks
+        if ($this->hasRole(['system_admin', 'hackathon_admin'])) {
+            return true;
+        }
+
+        // Track supervisors check assigned tracks
+        if ($this->hasRole('track_supervisor')) {
+            $assignedTracks = $this->getAssignedTrackIds($editionId);
+            return in_array($trackId, $assignedTracks);
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if user has any tracks in the given edition
+     */
+    public function hasTracksInEdition($editionId)
+    {
+        if ($this->hasRole(['system_admin', 'hackathon_admin'])) {
+            return true;
+        }
+
+        if ($this->hasRole('track_supervisor')) {
+            return $this->tracksInEdition($editionId)->exists();
+        }
+
+        return false;
+    }
+
+    /**
      * Get supervised workshops for workshop supervisors
      */
     public function supervisedWorkshops()
