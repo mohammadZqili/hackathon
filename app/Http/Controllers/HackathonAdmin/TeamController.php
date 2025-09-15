@@ -159,18 +159,21 @@ class TeamController extends Controller
         return back()->withErrors(['email' => $result['message']]);
     }
 
-    public function removeMember(Team $team, User $user)
+    public function removeMember(Team $team, $user)
     {
+        // Handle both User model and ID string
+        $userId = $user instanceof User ? $user->id : (int)$user;
+
         // Check if user is in the team
-        if (!$team->members()->where('user_id', $user->id)->exists()) {
+        if (!$team->members()->where('user_id', $userId)->exists()) {
             return back()->withErrors(['error' => 'User is not a member of this team.']);
         }
 
         // Remove member from team
-        $team->members()->detach($user->id);
+        $team->members()->detach($userId);
 
         // If this was the leader, clear the leader_id
-        if ($team->leader_id == $user->id) {
+        if ($team->leader_id == $userId) {
             $team->update(['leader_id' => null]);
         }
 

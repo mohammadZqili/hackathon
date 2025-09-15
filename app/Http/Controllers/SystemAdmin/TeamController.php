@@ -119,16 +119,7 @@ class TeamController extends Controller
 
     public function update(Request $request, Team $team)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'edition_id' => 'required|exists:editions,id',
-            'leader_id' => 'nullable|exists:users,id',
-            'max_members' => 'nullable|integer|min:1|max:10',
-            'status' => 'required|in:active,inactive,disqualified'
-        ]);
-
-        $team->update($validated);
+        $team->update($request->all());
 
         return redirect()->route('system-admin.teams.index')
             ->with('success', 'Team updated successfully.');
@@ -160,9 +151,12 @@ class TeamController extends Controller
         return back()->withErrors(['email' => $result['message']]);
     }
 
-    public function removeMember(Team $team, User $user)
+    public function removeMember(Team $team, $user)
     {
-        $success = $this->teamService->removeTeamMember($team, $user->id);
+        // Handle both User model and ID string
+        $userId = $user instanceof User ? $user->id : (int)$user;
+
+        $success = $this->teamService->removeTeamMember($team, $userId);
 
         if ($success) {
             return back()->with('success', 'Member removed successfully.');

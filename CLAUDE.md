@@ -1,192 +1,276 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code when working with this repository.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
-GuacPanel - Hackathon Management System built with Laravel 11 and Vue.js 3
+
+GuacPanel Hackathon Management System - A multi-role Laravel 11 application with Vue.js 3, Inertia.js, and Tailwind CSS 4 for managing hackathon events, teams, ideas, and workshops.
+
+## Tech Stack
+
+- **Backend**: Laravel 11, PHP 8.2+
+- **Frontend**: Vue.js 3, Inertia.js, Tailwind CSS 4
+- **Database**: MySQL/SQLite
+- **Build Tools**: Vite 6
+- **Authentication**: Laravel Fortify, Sanctum
+- **Permissions**: Spatie Laravel Permission
+- **Testing**: PHPUnit, Pest
+- **Search**: Typesense Scout Driver
+- **File Management**: FilePond
+- **Rich Text**: TipTap Editor
+- **Charts**: ApexCharts
 
 ## Development Commands
 
-### Frontend Development
+### Essential Commands
 ```bash
-npm run dev        # Start Vite development server
-npm run build      # Build for production
+# Development servers (run both)
+npm run dev                           # Start Vite dev server (hot reload)
+php artisan serve                     # Start Laravel server
+
+# Database
+php artisan migrate                   # Run migrations
+php artisan db:seed                   # Seed database
+php artisan migrate:fresh --seed      # Reset and reseed database
+
+# Build for production
+npm run build                         # Build frontend assets
+php artisan config:cache              # Cache configuration
+php artisan route:cache               # Cache routes
+
+# Testing
+vendor/bin/phpunit                   # Run PHPUnit tests
+vendor/bin/pest                      # Run Pest tests
+php artisan test                     # Run application tests
+
+# Cache management
+php artisan cache:clear              # Clear application cache
+php artisan config:clear             # Clear config cache
+php artisan view:clear               # Clear view cache
 ```
 
-### Laravel Commands
-```bash
-php artisan serve                    # Start Laravel development server
-php artisan migrate                  # Run database migrations
-php artisan db:seed                  # Seed the database
-php artisan migrate:fresh --seed     # Fresh migration with seeding
+## Architecture
+
+### CRITICAL: MUST FOLLOW Controller -> Service -> Repository -> Model Pattern
+
+**THIS IS MANDATORY FOR ALL FEATURES - NO EXCEPTIONS**
+
+The application uses a strict layered architecture:
+
+1. **Controllers** (app/Http/Controllers/)
+   - ONLY handle HTTP requests/responses
+   - MUST call Service methods for ALL business logic
+   - Return Inertia views or JSON responses
+   - NO direct database queries
+   - NO business logic
+
+2. **Services** (app/Services/)
+   - Contains ALL business logic
+   - MUST call Repository methods for data access
+   - Handle database transactions
+   - Process and transform data
+   - Validate business rules
+
+3. **Repositories** (app/Repositories/)
+   - ONLY database queries and data access
+   - NO business logic
+   - Return Eloquent models or collections
+   - Extend BaseRepository
+
+4. **Models** (app/Models/)
+   - Database table representation
+   - Define relationships
+   - Casts and mutators only
+   - NO business logic
+
+### Multi-Role System
+Seven distinct user roles with specific permissions:
+1. **system_admin**: Full system control
+2. **hackathon_admin**: Edition management
+3. **track_supervisor**: Track and team oversight
+4. **workshop_supervisor**: Workshop management
+5. **team_leader**: Team management
+6. **team_member**: Idea submission and collaboration
+7. **visitor**: Workshop attendance only
+
+### Frontend Structure
+- **Pages**: Role-specific Vue components in `resources/js/Pages/{Role}/`
+- **Layouts**: Default, Auth, and Public layouts
+- **Components**: Reusable components in `resources/js/Components/`
+- **Composables**: Shared logic in `resources/js/Composables/`
+
+## Key Development Patterns
+
+### Controller Pattern
+```php
+public function index(Request $request)
+{
+    return Inertia::render('RoleName/PageName/Index', [
+        'data' => $this->service->getData($request),
+        'filters' => $request->only(['search', 'status'])
+    ]);
+}
 ```
 
-### Testing
-```bash
-vendor/bin/phpunit          # Run PHPUnit tests
-vendor/bin/pest             # Run Pest tests
+### Service Pattern
+```php
+class EntityService extends BaseService implements EntityServiceInterface
+{
+    public function __construct(EntityRepositoryInterface $repository)
+    {
+        parent::__construct($repository);
+    }
+}
 ```
 
-## Project-Specific Instructions
+### Vue Page Pattern
+```vue
+<script setup>
+import { useForm } from '@inertiajs/vue3'
+import Default from '@/Layouts/Default.vue'
 
-### System Admin Page Development Guidelines
+const props = defineProps({
+    data: Object
+})
 
-#### Layout Requirements
-- Always use Default layout with header and sidebar: `import Default from '../../../Layouts/Default.vue'`
-- Use `<Head title="[Page Title]" />` for page titles
-- Wrap content in `<Default>` component
+const form = useForm({
+    field: props.data?.field || ''
+})
 
-#### Theme Color Implementation
-All System Admin pages must use dynamic GuacPanel theme colors. Add this to every page:
+const submit = () => {
+    form.post(route('route.name'))
+}
+</script>
+```
 
+### Dynamic Theme System
+All pages must use dynamic theme colors:
 ```javascript
-// Add to script setup
 const themeColor = ref({
     primary: '#0d9488',
     hover: '#0f766e',
-    rgb: '13, 148, 136',
-    gradientFrom: '#0d9488',
-    gradientTo: '#14b8a6'
+    rgb: '13, 148, 136'
 })
 
 onMounted(() => {
     const root = document.documentElement
-    const primary = getComputedStyle(root).getPropertyValue('--primary-color').trim() || '#0d9488'
-    const hover = getComputedStyle(root).getPropertyValue('--primary-hover').trim() || '#0f766e'
-    const rgb = getComputedStyle(root).getPropertyValue('--primary-color-rgb').trim() || '13, 148, 136'
-    const gradientFrom = getComputedStyle(root).getPropertyValue('--primary-gradient-from').trim() || '#0d9488'
-    const gradientTo = getComputedStyle(root).getPropertyValue('--primary-gradient-to').trim() || '#14b8a6'
-
-    themeColor.value = {
-        primary: primary || themeColor.value.primary,
-        hover: hover || themeColor.value.hover,
-        rgb: rgb || themeColor.value.rgb,
-        gradientFrom: gradientFrom || themeColor.value.gradientFrom,
-        gradientTo: gradientTo || themeColor.value.gradientTo
-    }
+    themeColor.value.primary = getComputedStyle(root)
+        .getPropertyValue('--primary-color').trim() || '#0d9488'
 })
-
-const themeStyles = computed(() => ({
-    '--theme-primary': themeColor.value.primary,
-    '--theme-hover': themeColor.value.hover,
-    '--theme-rgb': themeColor.value.rgb,
-    '--theme-gradient-from': themeColor.value.gradientFrom,
-    '--theme-gradient-to': themeColor.value.gradientTo,
-}))
 ```
 
-#### Color Application Rules
-- **Never use hardcoded colors** like `text-blue-500` or `bg-green-100`
-- Primary text/links: `:style="{ color: themeColor.primary }"`
-- Buttons: `:style="{ background: \`linear-gradient(135deg, \${themeColor.gradientFrom}, \${themeColor.gradientTo})\` }"`
-- Focus states: `:style="{ '--tw-ring-color': themeColor.primary }"`
-- Active/selected states: Use theme primary color
-- Status badges: Use theme color with appropriate opacity
+## Database Conventions
 
-#### Form Styling
-```vue
-<style scoped>
-input[type="text"]:focus,
-input[type="number"]:focus,
-input[type="date"]:focus,
-select:focus,
-textarea:focus {
-    border-color: var(--theme-primary) !important;
-    box-shadow: 0 0 0 3px rgba(var(--theme-rgb), 0.1) !important;
-}
+### Migrations
+- Use descriptive names: `2024_01_01_000000_create_entity_table.php`
+- Always include timestamps and soft deletes where appropriate
+- Foreign keys should cascade on delete when appropriate
 
-input[type="checkbox"]:checked {
-    background-color: var(--theme-primary) !important;
-    border-color: var(--theme-primary) !important;
-}
-</style>
-```
+### Models
+- Use singular names: `User`, `Team`, `Idea`
+- Define relationships clearly
+- Use casts for JSON fields and dates
+- Implement soft deletes where needed
 
-#### Dark Mode Support
-Always include dark mode variants:
-- `text-gray-900 dark:text-white` for main text
-- `bg-white dark:bg-gray-800` for cards/containers
-- `border-gray-300 dark:border-gray-600` for borders
-- `text-gray-600 dark:text-gray-400` for secondary text
+## API Routes Pattern
 
-#### Design Sources
-- Page structures: `/design_files/vue_files_tailwind/Admin role/[FOLDER_NAME]/`
-- Design images: `/design_files/figma_images/Admin/`
-- Use exact content structure from design files BUT replace static colors with theme colors
-
-#### Reusable Components
-Always use existing components when available:
-- FilePondUploader for file uploads
-- RichTextEditor for text editing (TipTap)
-- Existing table components with theme colors
-- Modal/dialog components from the codebase
-
-#### Reference Pages
-- **Ideas Page** (theme integration example): `/resources/js/Pages/SystemAdmin/Ideas/Index.vue`
-- **Editions Pages** (complete CRUD): `/resources/js/Pages/SystemAdmin/Editions/`
-- **News Pages** (media handling): `/resources/js/Pages/SystemAdmin/News/`
-
-### Important Development Notes
-- Always use real data, not mock data
-- Ensure all CRUD operations are functional
-- Test with different theme colors by changing GuacPanel settings
-- Verify dark mode works correctly
-- Maintain responsive design
-- Check form focus states use theme colors
-- Always track tasks in TASKS.md with prompt, time, and description
-- Technical notes and preferences should be documented in CLAUDE.md
-
-## Settings System Implementation Notes
-
-### Database Structure
-The settings system uses a key-value structure in the `system_settings` table:
-- `key`: Unique identifier for the setting
-- `value`: String value (booleans stored as '1' or '0')
-- `group`: Category (smtp, branding, notifications, sms, twitter)
-- `type`: Data type hint (string, boolean, integer, json)
-
-### Settings Access Pattern
+### Role-based routing structure:
 ```php
-// PHP access via helper
-use App\Helpers\Settings;
-$appName = Settings::get('app.name');
-$emailEnabled = Settings::emailNotificationsEnabled();
-
-// Vue component access
-$page.props.settings.app_name
-$page.props.settings.notifications.email_enabled
+Route::prefix('system-admin')->name('system-admin.')
+    ->middleware(['auth', 'role:system_admin'])
+    ->group(function () {
+        Route::resource('editions', EditionController::class);
+    });
 ```
 
-### Boolean Handling
-- Always store booleans as '1' (true) or '0' (false) strings in database
-- Use `$request->boolean()` in controllers for checkbox handling
-- Convert to proper boolean when retrieving: `$value === '1'`
+## Settings System
 
-### Cache Strategy
-- Settings cached for 3600 seconds (1 hour)
-- Cache cleared on any update via `SettingsServiceProvider::clearCache()`
-- Config cache also cleared with `\Artisan::call('config:clear')`
+### Database Key-Value Store
+Settings stored in `system_settings` table:
+- Access via `Settings::get('key')` helper
+- Boolean values stored as '1' or '0' strings
+- Cached for 1 hour, cleared on updates
 
-### Form Handling with Inertia
+### Form Handling
 ```javascript
-// Use useForm for proper form handling
 const form = useForm({
-    field: props.settings?.field || defaultValue
+    setting_key: props.settings?.setting_key || defaultValue
 })
-
-// Transform data if needed
-form.transform(() => processedData).post(route('route.name'))
 ```
 
-### Transaction Safety
-All settings updates wrapped in database transactions:
-```php
-DB::beginTransaction();
-try {
-    // Update settings
-    DB::commit();
-} catch (\Exception $e) {
-    DB::rollBack();
-    // Handle error
-}
+## Important Files & Locations
+
+### Configuration
+- `.env` - Environment variables
+- `config/` - Laravel configuration
+- `database/migrations/` - Database schema
+- `database/seeders/` - Initial data
+
+### Role-Specific Code
+- `app/Http/Controllers/{Role}/` - Role controllers
+- `resources/js/Pages/{Role}/` - Role Vue pages
+- `app/Services/` - Business logic services
+- `app/Repositories/` - Data access repositories
+
+### Design References
+- `design_files/vue_files_tailwind/` - Template references
+- `design_files/figma_images/` - Design mockups
+
+## Common Pitfalls to Avoid
+
+1. **Never hardcode colors** - Use theme system variables
+2. **Always check user permissions** - Use middleware and gates
+3. **Use existing components** - Don't recreate FilePondUploader, RichTextEditor, etc.
+4. **Follow role hierarchy** - Respect the multi-tenant edition isolation
+5. **Use transactions** - Wrap multi-table updates in DB transactions
+6. **Cache carefully** - Clear caches after settings/config changes
+
+## Testing Approach
+
+### Unit Tests
+- Test services and repositories independently
+- Mock external dependencies
+- Focus on business logic
+
+### Feature Tests
+- Test complete user flows
+- Include authentication and authorization
+- Test with different user roles
+
+### Run specific tests:
+```bash
+php artisan test --filter=EditionTest
+vendor/bin/pest --filter "can create edition"
 ```
+
+## Debugging Tips
+
+### Common Issues
+1. **403 Forbidden**: Check user roles and permissions
+2. **419 Page Expired**: CSRF token issue, check session config
+3. **500 Server Error**: Check Laravel logs in `storage/logs/`
+4. **Vite connection failed**: Ensure `npm run dev` is running
+
+### Useful Commands
+```bash
+php artisan route:list --name=system-admin  # List specific routes
+php artisan tinker                          # Interactive shell
+php artisan db:show                         # Database info
+tail -f storage/logs/laravel.log           # Watch logs
+```
+
+## Deployment Considerations
+
+1. Run `npm run build` for production assets
+2. Set `APP_ENV=production` and `APP_DEBUG=false`
+3. Generate application key: `php artisan key:generate`
+4. Cache configuration: `php artisan config:cache`
+5. Cache routes: `php artisan route:cache`
+6. Run migrations: `php artisan migrate --force`
+7. Set proper file permissions on `storage/` and `bootstrap/cache/`
+
+## External Documentation
+
+- Design system in `/design_files/`
+- Role definitions in `files/ROLES_AND_RESPONSIBILITIES.md`
+- Implementation guides in `files/WRITE_IMPLEMENTATION/`

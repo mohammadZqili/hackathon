@@ -90,6 +90,69 @@ class IdeaController extends Controller
     }
 
     /**
+     * Show the form for editing the specified idea.
+     */
+    public function edit(Idea $idea)
+    {
+        $idea->load(['team', 'track', 'edition', 'files']);
+
+        // Get tracks for dropdown
+        $trackData = $this->trackService->getPaginatedTracks(
+            auth()->user(),
+            [],
+            1000 // Get all tracks
+        );
+
+        return Inertia::render('SystemAdmin/Ideas/Edit', [
+            'idea' => $idea,
+            'tracks' => $trackData['tracks']->items(),
+        ]);
+    }
+
+    /**
+     * Update the specified idea in storage.
+     */
+    public function update(Request $request, Idea $idea)
+    {
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'problem_statement' => 'required|string',
+            'solution_approach' => 'required|string',
+            'expected_impact' => 'nullable|string',
+            'track_id' => 'required|exists:tracks,id',
+            'status' => 'required|in:draft,submitted,under_review,needs_revision,accepted,rejected',
+            'technologies' => 'nullable|array',
+        ]);
+
+        try {
+            // Handle technologies field
+            if (isset($validated['technologies']) && is_array($validated['technologies'])) {
+                $validated['technologies'] = json_encode($validated['technologies']);
+            }
+
+            // Update the idea directly as System Admin
+            $idea->update($validated);
+
+            // Log the action
+            if (method_exists($idea, 'logAction')) {
+                $idea->logAction(
+                    'idea_updated',
+                    'idea',
+                    $idea->id,
+                    'Idea updated by System Admin',
+                    auth()->user()
+                );
+            }
+
+            return redirect()->route('system-admin.ideas.show', $idea->id)
+                ->with('success', 'Idea updated successfully.');
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => $e->getMessage()]);
+        }
+    }
+
+    /**
      * Show the review page for an idea
      */
     public function review(Idea $idea)

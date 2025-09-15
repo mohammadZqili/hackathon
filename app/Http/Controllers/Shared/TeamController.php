@@ -238,8 +238,12 @@ class TeamController extends Controller
     /**
      * Remove member from team
      */
-    public function removeMember(Team $team, User $member)
+    public function removeMember(Team $team, $member)
     {
+        // Handle both User model and ID string
+        $memberId = $member instanceof User ? $member->id : (int)$member;
+        $memberModel = $member instanceof User ? $member : User::find($memberId);
+
         $user = auth()->user();
 
         // Check permission based on user_type
@@ -249,15 +253,17 @@ class TeamController extends Controller
         }
 
         // Cannot remove team leader
-        if ($member->id === $team->leader_id) {
+        if ($memberId === $team->leader_id) {
             return back()->withErrors(['error' => 'Cannot remove team leader']);
         }
 
         // Remove member
-        $team->members()->detach($member->id);
+        $team->members()->detach($memberId);
 
-        // Update user's team_id
-        $member->update(['team_id' => null]);
+        // Update user's team_id if member model is available
+        if ($memberModel) {
+            $memberModel->update(['team_id' => null]);
+        }
 
         return back()->with('success', 'Member removed successfully');
     }
