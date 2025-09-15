@@ -3,14 +3,24 @@
 namespace App\Http\Controllers\SystemAdmin;
 
 use App\Http\Controllers\Controller;
+use App\Services\WorkshopService;
+use App\Rules\WorkshopTimeValidation;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\Workshop;
 use App\Models\Speaker;
 use App\Models\Organization;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class WorkshopController extends Controller
 {
+    protected WorkshopService $workshopService;
+
+    public function __construct(WorkshopService $workshopService)
+    {
+        $this->workshopService = $workshopService;
+    }
     public function index()
     {
         $workshops = Workshop::with(['speakers', 'organizations'])
@@ -45,52 +55,72 @@ class WorkshopController extends Controller
 
     public function store(Request $request)
     {
+        // First level validation - basic field requirements
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'type' => 'nullable|string|max:50',
-            'start_time' => 'required|date',
-            'end_time' => 'required|date|after:start_time',
-            'format' => 'nullable|in:online,offline,hybrid',
-            'location' => 'nullable|string|max:255',
-            'max_attendees' => 'nullable|integer|min:1',
-            'prerequisites' => 'nullable|string',
+            'description' => 'nullable|string|max:5000',
+            'type' => 'nullable|string|in:workshop,seminar,lecture,panel',
+            'start_time' => 'required|date|after:now',
+            'end_time' => ['required', 'date', new WorkshopTimeValidation()],
+            'format' => 'required|in:online,offline,hybrid',
+            'location' => 'required_unless:format,online|nullable|string|max:255',
+            'remote_link' => 'required_if:format,online|nullable|url|max:500',
+            'max_attendees' => 'nullable|integer|min:1|max:1000',
+            'prerequisites' => 'nullable|string|max:1000',
             'materials' => 'nullable|array',
             'is_active' => 'boolean',
             'requires_registration' => 'boolean',
-            'registration_deadline' => 'nullable|date|before:start_time',
+            'registration_deadline' => 'nullable|date|before:start_time|after:now',
             'speaker_ids' => 'nullable|array',
             'speaker_ids.*' => 'exists:speakers,id',
             'organization_ids' => 'nullable|array',
             'organization_ids.*' => 'exists:organizations,id',
+        ], [
+            // Custom error messages for better UX
+            'start_time.after' => 'The workshop start time must be in the future.',
+            'end_time.required' => 'Please specify when the workshop ends.',
+            'location.required_unless' => 'Please specify the workshop location.',
+            'remote_link.required_if' => 'Please provide the online meeting link.',
+            'registration_deadline.before' => 'Registration must close before the workshop starts.',
         ]);
 
-        // Remove relation fields from validated data
-        $workshopData = collect($validated)->except(['speaker_ids', 'organization_ids'])->toArray();
-        
-        // Create the workshop
-        $workshop = Workshop::create($workshopData);
-
-        // Attach speakers if provided
-        if (!empty($validated['speaker_ids'])) {
-            $speakerData = [];
-            foreach ($validated['speaker_ids'] as $index => $speakerId) {
-                $speakerData[$speakerId] = ['role' => 'main_speaker', 'order' => $index + 1];
+        // Use service layer for business logic and additional validation
+        DB::beginTransaction();
+        try {
+            // Additional business validation through service
+            $additionalValidation = $this->workshopService->validateWorkshopData($validated);
+            if (!$additionalValidation['valid']) {
+                throw ValidationException::withMessages($additionalValidation['errors']);
             }
-            $workshop->speakers()->attach($speakerData);
-        }
 
-        // Attach organizations if provided
-        if (!empty($validated['organization_ids'])) {
-            $orgData = [];
-            foreach ($validated['organization_ids'] as $orgId) {
-                $orgData[$orgId] = ['role' => 'organizer'];
-            }
-            $workshop->organizations()->attach($orgData);
-        }
+            // Create workshop through service
+            $workshop = $this->workshopService->createWorkshop(
+                $validated,
+                auth()->user()
+            );
 
-        return redirect()->route('system-admin.workshops.index')
-            ->with('success', 'Workshop created successfully.');
+            DB::commit();
+
+            return redirect()->route('system-admin.workshops.index')
+                ->with('success', 'Workshop created successfully.');
+
+        } catch (ValidationException $e) {
+            DB::rollBack();
+            throw $e;
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            // Log the error for monitoring (Meta/Google best practice)
+            \Log::error('Workshop creation failed', [
+                'user_id' => auth()->id(),
+                'data' => $validated,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return back()->withInput()
+                ->withErrors(['error' => 'Failed to create workshop. Please try again.']);
+        }
     }
 
     public function show(Workshop $workshop)

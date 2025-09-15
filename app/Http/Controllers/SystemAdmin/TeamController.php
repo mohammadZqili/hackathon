@@ -153,8 +153,8 @@ class TeamController extends Controller
 
     public function removeMember(Team $team, $user)
     {
-        // Handle both User model and ID string
-        $userId = $user instanceof User ? $user->id : (int)$user;
+        // Handle both User model and string ID (ULIDs are strings)
+        $userId = $user instanceof User ? $user->id : (string)$user;
 
         $success = $this->teamService->removeTeamMember($team, $userId);
 

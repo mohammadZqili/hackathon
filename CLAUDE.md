@@ -54,6 +54,14 @@ php artisan view:clear               # Clear view cache
 ### CRITICAL: MUST FOLLOW Controller -> Service -> Repository -> Model Pattern
 
 **THIS IS MANDATORY FOR ALL FEATURES - NO EXCEPTIONS**
+**THIS PATTERN ENSURES CODE REUSABILITY AND MAINTAINABILITY**
+
+Why this pattern is REQUIRED:
+- **Services are REUSABLE** - Multiple controllers can use the same service
+- **Repositories are REUSABLE** - Multiple services can use the same repository
+- **Business logic is CENTRALIZED** - One place to update, affects all users
+- **Testing is EASIER** - Each layer can be tested independently
+- **Code is MAINTAINABLE** - Clear separation of concerns
 
 The application uses a strict layered architecture:
 
@@ -216,14 +224,57 @@ const form = useForm({
 - `design_files/vue_files_tailwind/` - Template references
 - `design_files/figma_images/` - Design mockups
 
+## CRITICAL RULES - NEVER VIOLATE THESE
+
+### 1. ALWAYS CHECK FOR EXISTING CODE FIRST
+- **SEARCH for existing models** before creating new ones (e.g., Edition NOT HackathonEdition)
+- **SEARCH for existing services** before creating new ones
+- **SEARCH for existing repositories** before creating new ones
+- **LOOK at similar files** in the same directory for patterns
+
+### 2. EXISTING MODELS - DO NOT CREATE DUPLICATES
+- `Edition` (NOT HackathonEdition - this already exists!)
+- `Team`
+- `User`
+- `Idea`
+- `Track`
+- `Organization`
+- `Speaker`
+- `Workshop`
+- `News`
+- `CheckIn`
+
+### 3. FOLLOW THE ARCHITECTURE STRICTLY FOR CODE REUSABILITY
+```
+Controller -> Service -> Repository -> Model
+```
+- **NEVER skip layers** - This breaks reusability
+- **NEVER put business logic in controllers** - Other controllers can't reuse it
+- **NEVER query database from controllers** - Makes code duplicate everywhere
+- **ALWAYS use services for business logic** - So ALL controllers can reuse the same logic
+- **ALWAYS use repositories for data access** - So ALL services can reuse the same queries
+
+Example of REUSABILITY:
+- TeamService is used by SystemAdmin, HackathonAdmin, TrackSupervisor controllers
+- UserRepository is used by UserService, TeamService, AuthService
+- One change in service = affects all controllers using it (GOOD!)
+
+### 4. IMPORT PATTERNS - COPY FROM SAME DIRECTORY
+- Check how other files in THE SAME directory import components
+- SystemAdmin subdirectories use: `import Default from '../../../Layouts/Default.vue'`
+- Ideas pages specifically use: `import Default from '@/Layouts/Default.vue'`
+
 ## Common Pitfalls to Avoid
 
-1. **Never hardcode colors** - Use theme system variables
-2. **Always check user permissions** - Use middleware and gates
-3. **Use existing components** - Don't recreate FilePondUploader, RichTextEditor, etc.
-4. **Follow role hierarchy** - Respect the multi-tenant edition isolation
-5. **Use transactions** - Wrap multi-table updates in DB transactions
-6. **Cache carefully** - Clear caches after settings/config changes
+1. **Creating duplicate models** (HackathonEdition when Edition exists)
+2. **Wrong import paths** - Always check existing files in same directory
+3. **Skipping service layer** - Controllers must NEVER have business logic
+4. **Never hardcode colors** - Use theme system variables
+5. **Always check user permissions** - Use middleware and gates
+6. **Use existing components** - Don't recreate FilePondUploader, RichTextEditor, etc.
+7. **Follow role hierarchy** - Respect the multi-tenant edition isolation
+8. **Use transactions** - Wrap multi-table updates in DB transactions
+9. **Cache carefully** - Clear caches after settings/config changes
 
 ## Testing Approach
 

@@ -240,8 +240,8 @@ class TeamController extends Controller
      */
     public function removeMember(Team $team, $member)
     {
-        // Handle both User model and ID string
-        $memberId = $member instanceof User ? $member->id : (int)$member;
+        // Handle both User model and string ID (ULIDs are strings)
+        $memberId = $member instanceof User ? $member->id : (string)$member;
         $memberModel = $member instanceof User ? $member : User::find($memberId);
 
         $user = auth()->user();

@@ -295,7 +295,7 @@ class TeamService
     /**
      * Remove a team member
      */
-    public function removeTeamMember(Team $team, int $memberId): bool
+    public function removeTeamMember(Team $team, string $memberId): bool
     {
         // Cannot remove the leader
         if ($team->leader_id === $memberId) {
@@ -308,7 +308,7 @@ class TeamService
     /**
      * Accept a pending member
      */
-    public function acceptMember(Team $team, int $memberId): bool
+    public function acceptMember(Team $team, string $memberId): bool
     {
         return $this->teamRepository->acceptMember($team->id, $memberId);
     }
@@ -316,7 +316,7 @@ class TeamService
     /**
      * Reject a pending member
      */
-    public function rejectMember(Team $team, int $memberId): bool
+    public function rejectMember(Team $team, string $memberId): bool
     {
         return $this->teamRepository->rejectMember($team->id, $memberId);
     }
