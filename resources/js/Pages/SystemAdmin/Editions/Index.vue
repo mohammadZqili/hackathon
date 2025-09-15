@@ -95,7 +95,7 @@
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-center">
-                                    <span v-if="edition.is_active"
+                                    <span v-if="edition.is_current"
                                           class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">
                                         {{ t('admin.status.active') }}
                                     </span>
@@ -129,7 +129,7 @@
                 </div>
 
                 <!-- Pagination -->
-                <div v-if="editions.links && editions.data.length > 0" 
+                <div v-if="editions.links && editions.data.length > 0"
                      class="bg-white dark:bg-gray-800 px-4 py-3 border-t border-gray-200 dark:border-gray-700 sm:px-6">
                     <div class="flex items-center justify-between">
                         <div class="flex-1 flex justify-between sm:hidden">

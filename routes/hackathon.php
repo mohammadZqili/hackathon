@@ -106,7 +106,7 @@ Route::middleware(['auth', 'role:system_admin|permission:manage-hackathon-editio
     Route::get('tracks/export', [SystemAdminTrackController::class, 'export'])->name('tracks.export');
 
     // Global Idea Management
-    Route::resource('ideas', SystemAdminIdeaController::class)->only(['index', 'show', 'destroy']);
+    Route::resource('ideas', SystemAdminIdeaController::class);
     Route::get('ideas/{idea}/review', [SystemAdminIdeaController::class, 'review'])->name('ideas.review');
     Route::post('ideas/{idea}/process-review', [SystemAdminIdeaController::class, 'processReview'])->name('ideas.process-review');
     Route::post('ideas/{idea}/review/accept', [SystemAdminIdeaController::class, 'accept'])->name('ideas.review.accept');
@@ -220,7 +220,7 @@ Route::middleware(['auth', 'role:hackathon_admin|permission:manage-current-editi
     Route::get('tracks/export', [HackathonAdminTrackController::class, 'export'])->name('tracks.export');
 
     // Global Idea Management
-    Route::resource('ideas', HackathonAdminIdeaController::class)->only(['index', 'show', 'destroy']);
+    Route::resource('ideas', HackathonAdminIdeaController::class);
     Route::get('ideas/{idea}/review', [HackathonAdminIdeaController::class, 'review'])->name('ideas.review');
     Route::post('ideas/{idea}/process-review', [HackathonAdminIdeaController::class, 'processReview'])->name('ideas.process-review');
     Route::post('ideas/{idea}/review/accept', [HackathonAdminIdeaController::class, 'accept'])->name('ideas.review.accept');
@@ -334,7 +334,7 @@ Route::middleware(['auth', 'role:track_supervisor|permission:view-assigned-track
     Route::get('tracks/export', [TrackSupervisorTrackController::class, 'export'])->name('tracks.export');
 
     // Global Idea Management
-    Route::resource('ideas', TrackSupervisorIdeaController::class)->only(['index', 'show', 'destroy']);
+    Route::resource('ideas', TrackSupervisorIdeaController::class);
     Route::get('ideas/{idea}/review', [TrackSupervisorIdeaController::class, 'review'])->name('ideas.review');
     Route::post('ideas/{idea}/process-review', [TrackSupervisorIdeaController::class, 'processReview'])->name('ideas.process-review');
     Route::post('ideas/{idea}/review/accept', [TrackSupervisorIdeaController::class, 'accept'])->name('ideas.review.accept');

@@ -1,11 +1,11 @@
 <template>
     <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
             <!-- Modal Header -->
-            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
                 <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                        {{ t('admin.teams.add_member') }} {{ team.name }}
+                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white">
+                        {{ t('admin.teams.add_team_member') }}
                     </h3>
                     <button @click="$emit('close')"
                             class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 transition-colors">
@@ -17,100 +17,106 @@
             </div>
 
             <!-- Modal Body -->
-            <form @submit.prevent="submit" class="p-6">
-                <!-- Search User -->
-                <div class="mb-6">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        {{ t('admin.form.search_user') }}
+            <form @submit.prevent="submit" class="p-6 space-y-5">
+                <!-- Full Name -->
+                <div>
+                    <label for="name" class="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
+                        {{ t('admin.teams.full_name') }}
                     </label>
-                    <div class="relative">
-                        <input v-model="searchQuery"
-                               @input="searchUsers"
-                               type="text"
-                               :placeholder="t('admin.teams.search_users_placeholder')"
-                               class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors pl-10"
-                               :style="{ '--tw-ring-color': themeColor.primary }">
-                        <svg class="absolute left-3 top-3 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                        </svg>
-                    </div>
+                    <input v-model="form.name"
+                           type="text"
+                           id="name"
+                           :placeholder="t('admin.teams.enter_members_full_name')"
+                           class="w-full h-14 px-4 rounded-xl bg-gray-100 dark:bg-gray-700 border-0 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-opacity-50 transition-all duration-200"
+                           :class="{ 'ring-2 ring-red-500': form.errors.name }"
+                           :style="{ '--tw-ring-color': themeColor.primary }">
+                    <p v-if="form.errors.name" class="mt-1 text-sm text-red-600 dark:text-red-400">
+                        {{ form.errors.name }}
+                    </p>
+                </div>
 
-                    <!-- Search Results -->
-                    <div v-if="searchResults.length > 0" 
-                         class="mt-2 max-h-48 overflow-y-auto border border-gray-200 dark:border-gray-600 rounded-lg">
-                        <div v-for="user in searchResults" :key="user.id"
-                             @click="selectUser(user)"
-                             class="px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <div class="font-medium text-gray-900 dark:text-white">{{ user.name }}</div>
-                                    <div class="text-sm text-gray-500 dark:text-gray-400">{{ user.email }}</div>
-                                </div>
-                                <span v-if="user.team_id" 
-                                      class="text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100">
-                                    {{ t('admin.teams.in_team') }}
-                                </span>
-                            </div>
-                        </div>
+                <!-- Team Name (Read-only) -->
+                <div>
+                    <label for="team" class="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
+                        {{ t('admin.teams.team_name') }}
+                    </label>
+                    <div class="w-full h-14 px-4 rounded-xl bg-gray-100 dark:bg-gray-700 border-0 text-gray-600 dark:text-gray-400 flex items-center">
+                        {{ team.name }}
                     </div>
                 </div>
 
-                <!-- Selected User -->
-                <div v-if="form.user_id" class="mb-6">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        {{ t('admin.form.selected_user') }}
+                <!-- Email -->
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
+                        {{ t('admin.teams.email') }}
                     </label>
-                    <div class="p-4 rounded-lg border border-gray-200 dark:border-gray-600">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <div class="font-medium text-gray-900 dark:text-white">{{ selectedUser.name }}</div>
-                                <div class="text-sm" :style="{ color: themeColor.primary }">{{ selectedUser.email }}</div>
-                            </div>
-                            <button @click="clearSelection" type="button"
-                                    class="text-red-500 hover:text-red-600 transition-colors">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
+                    <input v-model="form.email"
+                           type="email"
+                           id="email"
+                           :placeholder="t('admin.teams.enter_members_email')"
+                           class="w-full h-14 px-4 rounded-xl bg-gray-100 dark:bg-gray-700 border-0 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-opacity-50 transition-all duration-200"
+                           :class="{ 'ring-2 ring-red-500': form.errors.email }"
+                           :style="{ '--tw-ring-color': themeColor.primary }">
+                    <p v-if="form.errors.email" class="mt-1 text-sm text-red-600 dark:text-red-400">
+                        {{ form.errors.email }}
+                    </p>
                 </div>
 
-                <!-- Role Selection -->
-                <div class="mb-6">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        {{ t('admin.form.member_role') }}
+                <!-- Mobile Number -->
+                <div>
+                    <label for="phone" class="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
+                        {{ t('admin.teams.mobile_number') }}
                     </label>
-                    <select v-model="form.role"
-                            class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-opacity-50 transition-colors"
-                            :style="{ '--tw-ring-color': themeColor.primary }">
-                        <option value="member">{{ t('admin.teams.team_member') }}</option>
-                        <option value="leader">{{ t('admin.teams.team_leader') }}</option>
-                        <option value="co-leader">{{ t('admin.teams.co_leader') }}</option>
-                    </select>
+                    <input v-model="form.phone"
+                           type="tel"
+                           id="phone"
+                           :placeholder="t('admin.teams.enter_members_mobile_number')"
+                           class="w-full h-14 px-4 rounded-xl bg-gray-100 dark:bg-gray-700 border-0 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-opacity-50 transition-all duration-200"
+                           :class="{ 'ring-2 ring-red-500': form.errors.phone }"
+                           :style="{ '--tw-ring-color': themeColor.primary }">
+                    <p v-if="form.errors.phone" class="mt-1 text-sm text-red-600 dark:text-red-400">
+                        {{ form.errors.phone }}
+                    </p>
+                </div>
+
+                <!-- Send Email Notification -->
+                <div class="flex items-center">
+                    <input v-model="form.send_invitation"
+                           type="checkbox"
+                           id="send_invitation"
+                           class="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-primary focus:ring-2 focus:ring-opacity-50"
+                           :style="{
+                               '--tw-text-opacity': '1',
+                               'accent-color': themeColor.primary
+                           }">
+                    <label for="send_invitation" class="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                        {{ t('admin.teams.send_invitation_email') }}
+                    </label>
                 </div>
 
                 <!-- Error Messages -->
-                <div v-if="form.errors && Object.keys(form.errors).length > 0" 
-                     class="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                    <div v-for="(error, key) in form.errors" :key="key" class="text-sm text-red-600 dark:text-red-400">
-                        {{ error }}
-                    </div>
+                <div v-if="errorMessage"
+                     class="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                    <p class="text-sm text-red-600 dark:text-red-400">{{ errorMessage }}</p>
+                </div>
+
+                <!-- Success Message -->
+                <div v-if="successMessage"
+                     class="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                    <p class="text-sm text-green-600 dark:text-green-400">{{ successMessage }}</p>
                 </div>
 
                 <!-- Actions -->
-                <div class="flex justify-end gap-4">
-                    <button @click="$emit('close')" type="button"
-                            class="px-6 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                        {{ t('admin.actions.cancel') }}
-                    </button>
+                <div class="flex justify-end pt-4">
                     <button type="submit"
-                            :disabled="!form.user_id || form.processing"
-                            class="px-6 py-2 rounded-lg text-white font-medium transition-all duration-200 disabled:opacity-50"
+                            :disabled="form.processing || !form.name || !form.email"
+                            class="px-6 py-3 rounded-xl text-white font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                             :style="{
-                                background: `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})`,
+                                background: form.processing || !form.name || !form.email
+                                    ? '#9ca3af'
+                                    : `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})`,
                             }">
-                        {{ form.processing ? t('admin.actions.adding') : t('admin.teams.add_member') }}
+                        {{ form.processing ? t('admin.actions.sending') : t('admin.teams.send_invitation') }}
                     </button>
                 </div>
             </form>
@@ -120,11 +126,10 @@
 
 <script setup>
 import { useLocalization } from '@/composables/useLocalization'
-
-const { t, isRTL, direction, locale } = useLocalization()
 import { useForm } from '@inertiajs/vue3'
 import { ref } from 'vue'
-import axios from 'axios'
+
+const { t, isRTL, direction, locale } = useLocalization()
 
 const props = defineProps({
     team: {
@@ -139,62 +144,41 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'success'])
 
-const searchQuery = ref('')
-const searchResults = ref([])
-const selectedUser = ref(null)
-const searching = ref(false)
+const errorMessage = ref('')
+const successMessage = ref('')
 
 const form = useForm({
-    user_id: null,
+    name: '',
+    email: '',
+    phone: '',
     team_id: props.team.id,
-    role: 'member'
+    send_invitation: true
 })
 
-const searchUsers = async () => {
-    if (searchQuery.value.length < 2) {
-        searchResults.value = []
-        return
-    }
-
-    searching.value = true
-    try {
-        const response = await axios.get(route('system-admin.users.search'), {
-            params: { q: searchQuery.value }
-        })
-        searchResults.value = response.data.users || []
-    } catch (error) {
-        console.error('Error searching users:', error)
-        searchResults.value = []
-    } finally {
-        searching.value = false
-    }
-}
-
-const selectUser = (user) => {
-    if (user.team_id && user.team_id !== props.team.id) {
-        if (!confirm(t('admin.teams.confirm_move_member', { name: user.name }))) {
-            return
-        }
-    }
-    
-    selectedUser.value = user
-    form.user_id = user.id
-    searchResults.value = []
-    searchQuery.value = ''
-}
-
-const clearSelection = () => {
-    selectedUser.value = null
-    form.user_id = null
-}
-
 const submit = () => {
+    errorMessage.value = ''
+    successMessage.value = ''
+
     form.post(route('system-admin.teams.add-member', props.team.id), {
         onSuccess: () => {
-            emit('success')
+            successMessage.value = form.send_invitation
+                ? t('admin.teams.member_added_email_sent')
+                : t('admin.teams.member_added_successfully')
+
+            setTimeout(() => {
+                emit('success')
+            }, 1500)
         },
         onError: (errors) => {
-            console.error('Error adding member:', errors)
+            if (errors.email) {
+                errorMessage.value = errors.email
+            } else if (errors.name) {
+                errorMessage.value = errors.name
+            } else if (errors.phone) {
+                errorMessage.value = errors.phone
+            } else {
+                errorMessage.value = t('admin.teams.error_adding_member')
+            }
         }
     })
 }
@@ -202,8 +186,20 @@ const submit = () => {
 
 <style scoped>
 input[type="text"]:focus,
-select:focus {
+input[type="email"]:focus,
+input[type="tel"]:focus {
+    outline: none !important;
     border-color: var(--theme-primary) !important;
+    box-shadow: 0 0 0 3px rgba(var(--theme-rgb), 0.1) !important;
+}
+
+input[type="checkbox"]:checked {
+    background-color: var(--theme-primary) !important;
+    border-color: var(--theme-primary) !important;
+}
+
+input[type="checkbox"]:focus {
+    outline: none !important;
     box-shadow: 0 0 0 3px rgba(var(--theme-rgb), 0.1) !important;
 }
 </style>

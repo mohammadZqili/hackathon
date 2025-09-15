@@ -8,8 +8,12 @@ use App\Repositories\UserRepository;
 use App\Models\Team;
 use App\Models\User;
 use App\Models\Idea;
+use App\Mail\TeamInvitation;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class TeamService
 {
@@ -149,7 +153,7 @@ class TeamService
         DB::beginTransaction();
         try {
             $user = $this->userRepository->findByEmail($email);
-            
+
             if (!$user) {
                 DB::rollBack();
                 return ['success' => false, 'message' => 'User not found with this email'];
@@ -159,7 +163,7 @@ class TeamService
             $existingTeam = $this->teamRepository->getTeamsForUser($user->id)
                 ->where('hackathon_id', $team->hackathon_id)
                 ->first();
-                
+
             if ($existingTeam) {
                 DB::rollBack();
                 return ['success' => false, 'message' => 'User is already in another team for this hackathon'];
@@ -179,7 +183,7 @@ class TeamService
             ];
 
             $member = $this->teamRepository->addMember($team->id, $memberData);
-            
+
             if ($member) {
                 DB::commit();
                 // TODO: Send invitation email to user
@@ -188,10 +192,103 @@ class TeamService
 
             DB::rollBack();
             return ['success' => false, 'message' => 'Failed to add member'];
-            
+
         } catch (\Exception $e) {
             DB::rollBack();
             return ['success' => false, 'message' => 'An error occurred: ' . $e->getMessage()];
+        }
+    }
+
+    /**
+     * Add a new team member with invitation
+     */
+    public function addMemberWithInvitation(Team $team, array $data): array
+    {
+        DB::beginTransaction();
+        try {
+            // Check if user with this email already exists
+            $user = $this->userRepository->findByEmail($data['email']);
+
+            if (!$user) {
+                // Create new user if they don't exist
+                $userData = [
+                    'name' => $data['name'],
+                    'email' => $data['email'],
+                    'phone' => $data['phone'] ?? null,
+                    'password' => bcrypt(Str::random(12)), // Generate random password
+                    'role' => 'team_member',
+                    'email_verified_at' => null
+                ];
+
+                $user = $this->userRepository->create($userData);
+            } else {
+                // Update existing user's phone if provided
+                if (!empty($data['phone'])) {
+                    $this->userRepository->update($user->id, ['phone' => $data['phone']]);
+                }
+            }
+
+            // Check if user is already in any team for this edition
+            $existingTeam = DB::table('team_members')
+                ->join('teams', 'teams.id', '=', 'team_members.team_id')
+                ->where('team_members.user_id', $user->id)
+                ->where('teams.edition_id', $team->edition_id)
+                ->first();
+
+            if ($existingTeam) {
+                // Remove from previous team if different
+                if ($existingTeam->team_id !== $team->id) {
+                    DB::table('team_members')
+                        ->where('team_id', $existingTeam->team_id)
+                        ->where('user_id', $user->id)
+                        ->delete();
+                } else {
+                    DB::rollBack();
+                    return ['success' => false, 'message' => 'User is already a member of this team.'];
+                }
+            }
+
+            // Check if team is full
+            $currentMembers = DB::table('team_members')
+                ->where('team_id', $team->id)
+                ->count();
+
+            if ($currentMembers >= $team->max_members) {
+                DB::rollBack();
+                return ['success' => false, 'message' => 'Team is already at maximum capacity.'];
+            }
+
+            // Add member to team
+            $memberData = [
+                'user_id' => $user->id,
+                'role' => 'member',
+                'status' => 'accepted',
+                'joined_at' => now()
+            ];
+
+            $this->teamRepository->addMember($team->id, $memberData);
+
+            // Send invitation email if requested
+            if (!empty($data['send_invitation']) && $data['send_invitation']) {
+                try {
+                    Mail::to($user->email)->send(new TeamInvitation($user, $team));
+                } catch (\Exception $e) {
+                    Log::error('Failed to send team invitation email: ' . $e->getMessage());
+                    // Don't fail the whole operation if email fails
+                }
+            }
+
+            DB::commit();
+            return [
+                'success' => true,
+                'message' => $data['send_invitation'] ? 'Member added and invitation sent successfully.' : 'Member added successfully.',
+                'user' => $user
+            ];
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error adding team member: ' . $e->getMessage());
+            return ['success' => false, 'message' => 'An error occurred while adding the member.'];
         }
     }
 

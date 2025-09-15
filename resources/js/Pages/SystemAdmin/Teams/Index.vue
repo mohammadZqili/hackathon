@@ -84,12 +84,6 @@
                                             {{ t('admin.actions.edit') }}
                                         </button>
                                         <span :style="{ color: themeColor.primary }">|</span>
-                                        <button @click="openAddMemberModal(team)"
-                                                class="font-bold hover:underline transition-colors text-sm"
-                                                :style="{ color: themeColor.primary }">
-                                            {{ t('admin.teams.members') }}
-                                        </button>
-                                        <span :style="{ color: themeColor.primary }">|</span>
                                         <button @click="deleteTeam(team)"
                                                 class="font-bold hover:underline transition-colors text-sm"
                                                 :style="{ color: themeColor.primary }">
@@ -104,7 +98,7 @@
             </div>
 
             <!-- Pagination -->
-            <div v-if="teams.links && teams.total > teams.per_page" 
+            <div v-if="teams.links && teams.total > teams.per_page"
                  class="px-6 py-3">
                 <nav class="flex items-center justify-between">
                     <div class="text-sm text-gray-700 dark:text-gray-300">
@@ -132,7 +126,7 @@
             </div>
 
             <!-- Add Member Modal -->
-            <AddMemberModal v-if="showAddMemberModal" 
+            <AddMemberModal v-if="showAddMemberModal"
                             :team="selectedTeam"
                             :theme-color="themeColor"
                             @close="closeAddMemberModal"

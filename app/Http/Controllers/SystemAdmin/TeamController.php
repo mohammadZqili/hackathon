@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\SystemAdmin;
 
 use App\Http\Controllers\Controller;
+use App\Services\TeamService;
+use App\Repositories\TeamRepository;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\Team;
@@ -11,17 +13,24 @@ use App\Models\Edition;
 
 class TeamController extends Controller
 {
+    protected TeamService $teamService;
+    protected TeamRepository $teamRepository;
+
+    public function __construct(TeamService $teamService, TeamRepository $teamRepository)
+    {
+        $this->teamService = $teamService;
+        $this->teamRepository = $teamRepository;
+    }
     public function index(Request $request)
     {
-        $query = Team::with(['leader', 'members', 'idea', 'edition']);
-        
-        if ($request->filled('search')) {
-            $search = $request->input('search');
-            $query->where('name', 'like', "%{$search}%");
-        }
-        
-        $teams = $query->latest()->paginate(15);
-        
+        $filters = [
+            'search' => $request->input('search'),
+            'edition_id' => $request->input('edition_id'),
+            'status' => $request->input('status')
+        ];
+
+        $teams = $this->teamRepository->getPaginatedWithFilters($filters, 15);
+
         // Add members count to each team
         $teams->getCollection()->transform(function ($team) {
             $team->members_count = $team->members->count();
@@ -29,7 +38,8 @@ class TeamController extends Controller
         });
 
         return Inertia::render('SystemAdmin/Teams/Index', [
-            'teams' => $teams
+            'teams' => $teams,
+            'filters' => $filters
         ]);
     }
 
@@ -95,8 +105,9 @@ class TeamController extends Controller
     public function edit(Team $team)
     {
         $team->load(['leader', 'members', 'idea', 'edition']);
-        
+
         $editions = Edition::orderBy('year', 'desc')
+            ->where('is_current',1)
             ->orderBy('name', 'asc')
             ->get();
 
@@ -134,47 +145,30 @@ class TeamController extends Controller
     public function addMember(Request $request, Team $team)
     {
         $validated = $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'role' => 'required|in:member,leader,co-leader'
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'phone' => 'nullable|string|max:20',
+            'send_invitation' => 'nullable|boolean'
         ]);
 
-        // Check if user is already in the team
-        if ($team->members()->where('user_id', $validated['user_id'])->exists()) {
-            return back()->withErrors(['user_id' => 'User is already a member of this team.']);
+        $result = $this->teamService->addMemberWithInvitation($team, $validated);
+
+        if ($result['success']) {
+            return back()->with('success', $result['message']);
         }
 
-        // Check if team is full
-        if ($team->members()->count() >= $team->max_members) {
-            return back()->withErrors(['user_id' => 'Team is already at maximum capacity.']);
-        }
-
-        // If making this user a leader, update the team's leader_id
-        if ($validated['role'] === 'leader') {
-            $team->update(['leader_id' => $validated['user_id']]);
-        }
-
-        // Add member to team
-        $team->members()->attach($validated['user_id'], ['role' => $validated['role']]);
-
-        return back()->with('success', 'Member added successfully.');
+        return back()->withErrors(['email' => $result['message']]);
     }
 
     public function removeMember(Team $team, User $user)
     {
-        // Check if user is in the team
-        if (!$team->members()->where('user_id', $user->id)->exists()) {
-            return back()->withErrors(['error' => 'User is not a member of this team.']);
+        $success = $this->teamService->removeTeamMember($team, $user->id);
+
+        if ($success) {
+            return back()->with('success', 'Member removed successfully.');
         }
 
-        // Remove member from team
-        $team->members()->detach($user->id);
-
-        // If this was the leader, clear the leader_id
-        if ($team->leader_id == $user->id) {
-            $team->update(['leader_id' => null]);
-        }
-
-        return back()->with('success', 'Member removed successfully.');
+        return back()->withErrors(['error' => 'Failed to remove member from team.']);
     }
 
     public function export()

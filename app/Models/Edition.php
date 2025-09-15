@@ -7,35 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Edition extends Model
+class Edition extends HackathonEdition
 {
-    use HasFactory;
 
-    protected $fillable = [
-        'name',
-        'year',
-        'registration_start_date',
-        'registration_end_date',
-        'hackathon_start_date',
-        'hackathon_end_date',
-        'admin_id',
-        'description',
-        'location',
-        'max_teams',
-        'max_team_members',
-        'is_active',
-        'settings'
-    ];
-
-    protected $casts = [
-        'registration_start_date' => 'date',
-        'registration_end_date' => 'date',
-        'hackathon_start_date' => 'date',
-        'hackathon_end_date' => 'date',
-        'is_active' => 'boolean',
-        'settings' => 'array'
-    ];
-
+    protected $table = 'hackathon_editions';
     public function admin(): BelongsTo
     {
         return $this->belongsTo(User::class, 'admin_id');

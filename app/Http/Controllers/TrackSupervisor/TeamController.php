@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\TrackSupervisor;
 
 use App\Http\Controllers\Controller;
+use App\Services\TeamService;
+use App\Repositories\TeamRepository;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\Team;
@@ -11,6 +13,14 @@ use App\Models\Edition;
 
 class TeamController extends Controller
 {
+    protected TeamService $teamService;
+    protected TeamRepository $teamRepository;
+
+    public function __construct(TeamService $teamService, TeamRepository $teamRepository)
+    {
+        $this->teamService = $teamService;
+        $this->teamRepository = $teamRepository;
+    }
     public function index(Request $request)
     {
         $query = Team::with(['leader', 'members', 'idea', 'edition']);
@@ -134,29 +144,19 @@ class TeamController extends Controller
     public function addMember(Request $request, Team $team)
     {
         $validated = $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'role' => 'required|in:member,leader,co-leader'
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'phone' => 'nullable|string|max:20',
+            'send_invitation' => 'nullable|boolean'
         ]);
 
-        // Check if user is already in the team
-        if ($team->members()->where('user_id', $validated['user_id'])->exists()) {
-            return back()->withErrors(['user_id' => 'User is already a member of this team.']);
+        $result = $this->teamService->addMemberWithInvitation($team, $validated);
+
+        if ($result['success']) {
+            return back()->with('success', $result['message']);
         }
 
-        // Check if team is full
-        if ($team->members()->count() >= $team->max_members) {
-            return back()->withErrors(['user_id' => 'Team is already at maximum capacity.']);
-        }
-
-        // If making this user a leader, update the team's leader_id
-        if ($validated['role'] === 'leader') {
-            $team->update(['leader_id' => $validated['user_id']]);
-        }
-
-        // Add member to team
-        $team->members()->attach($validated['user_id'], ['role' => $validated['role']]);
-
-        return back()->with('success', 'Member added successfully.');
+        return back()->withErrors(['email' => $result['message']]);
     }
 
     public function removeMember(Team $team, User $user)

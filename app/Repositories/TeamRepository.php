@@ -21,8 +21,8 @@ class TeamRepository extends BaseRepository
     public function getPaginatedWithFilters(array $filters, int $perPage = 15): LengthAwarePaginator
     {
         $query = $this->query()
-            ->with(['leader', 'members.user', 'track', 'edition', 'ideas'])
-            ->withCount(['members', 'ideas']);
+            ->with(['leader', 'members', 'track', 'edition', 'idea'])
+            ->withCount(['members']);
 
         // Apply filters
         if (!empty($filters['edition_id'])) {
@@ -61,8 +61,8 @@ class TeamRepository extends BaseRepository
     public function findWithFullDetails(string $id): ?Team
     {
         return $this->query()
-            ->with(['leader', 'members.user', 'track', 'edition', 'ideas.reviewer', 'workshops'])
-            ->withCount(['members', 'ideas'])
+            ->with(['leader', 'members', 'track', 'edition', 'idea'])
+            ->withCount(['members'])
             ->find($id);
     }
 
@@ -91,7 +91,7 @@ class TeamRepository extends BaseRepository
             'active' => (clone $query)->where('status', 'active')->count(),
             'pending' => (clone $query)->where('status', 'pending')->count(),
             'disqualified' => (clone $query)->where('status', 'disqualified')->count(),
-            'with_ideas' => (clone $query)->has('ideas')->count(),
+            'with_ideas' => (clone $query)->has('idea')->count(),
             'total_members' => TeamMember::whereIn('team_id', (clone $query)->pluck('id'))->count(),
         ];
     }
@@ -113,7 +113,7 @@ class TeamRepository extends BaseRepository
     public function findMemberTeam(string $userId): ?TeamMember
     {
         return TeamMember::where('user_id', $userId)
-            ->with('team.members.user', 'team.track', 'team.edition')
+            ->with('team.members', 'team.track', 'team.edition')
             ->first();
     }
 
@@ -146,8 +146,8 @@ class TeamRepository extends BaseRepository
     public function getForExport(array $filters = []): Collection
     {
         $query = $this->query()
-            ->with(['leader', 'members.user', 'track', 'edition'])
-            ->withCount(['members', 'ideas']);
+            ->with(['leader', 'members', 'track', 'edition'])
+            ->withCount(['members']);
 
         if (!empty($filters['edition_id'])) {
             $query->where('edition_id', $filters['edition_id']);
@@ -174,7 +174,7 @@ class TeamRepository extends BaseRepository
             return false;
         }
 
-        return $team->ideas()->exists() || $team->members()->exists();
+        return $team->idea()->exists() || $team->members()->exists();
     }
 
     /**
@@ -206,7 +206,7 @@ class TeamRepository extends BaseRepository
     {
         return $this->query()
             ->where('track_id', $trackId)
-            ->with(['leader', 'members.user', 'ideas'])
+            ->with(['leader', 'members', 'idea'])
             ->get();
     }
 
