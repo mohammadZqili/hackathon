@@ -35,6 +35,7 @@ onMounted(() => {
         gradientFrom: gradientFrom || themeColor.value.gradientFrom,
         gradientTo: gradientTo || themeColor.value.gradientTo
     }
+
 })
 
 const themeStyles = computed(() => ({
@@ -46,14 +47,61 @@ const themeStyles = computed(() => ({
 }))
 
 const form = useForm({
-    site_name: props.settings?.site_name || '',
-    logo: null,
-    primary_color: props.settings?.primary_color || '#3B82F6',
+    app_name: props.settings?.app_name || '',
+    app_logo: null,
+    primary_color: props.settings?.primary_color || '#0d9488',
     footer_text: props.settings?.footer_text || ''
 })
 
+// Handle logo display
+const currentLogo = ref(props.settings?.app_logo || null)
+const logoPreview = ref(null)
+
+// Compute the actual logo URL to display
+const displayLogo = computed(() => {
+    if (logoPreview.value) {
+        return logoPreview.value
+    }
+    if (currentLogo.value) {
+        // If it's already a full URL, use it
+        if (currentLogo.value.startsWith('http') || currentLogo.value.startsWith('/storage/')) {
+            return currentLogo.value
+        }
+        // Otherwise prepend /storage/
+        return `/storage/${currentLogo.value}`
+    }
+    return null
+})
+
 const handleLogoUpload = (event) => {
-    form.logo = event.target.files[0]
+    const file = event.target.files[0]
+    if (file) {
+        form.app_logo = file
+        // Create preview URL
+        const reader = new FileReader()
+        reader.onload = (e) => {
+            logoPreview.value = e.target.result
+        }
+        reader.readAsDataURL(file)
+    }
+}
+
+const handleImageError = (event) => {
+    console.error('Failed to load image:', currentLogo.value)
+    event.target.style.display = 'none'
+}
+
+const submitForm = () => {
+    form.post(route('system-admin.settings.branding.update'), {
+        forceFormData: true,
+        preserveScroll: true,
+        preserveState: false,
+        onSuccess: (page) => {
+            // Clear preview after successful save
+            logoPreview.value = null
+            // The page will refresh with new data from redirect
+        }
+    })
 }
 </script>
 
@@ -79,12 +127,12 @@ textarea:focus {
             <div class="max-w-2xl mx-auto" :class="{ 'rtl': isRTL }">
                 <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-8">{{ t('admin.settings.branding') }}</h1>
 
-                <form @submit.prevent="form.post(route('system-admin.settings.branding.update'))"
+                <form @submit.prevent="submitForm"
                       class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                     <div class="space-y-6">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('admin.settings.site_name') }}</label>
-                            <input v-model="form.site_name" 
+                            <input v-model="form.app_name" 
                                    type="text" 
                                    required
                                    class="mt-1 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
@@ -92,11 +140,22 @@ textarea:focus {
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('admin.settings.logo') }}</label>
-                            <input type="file" 
+
+                            <!-- Current/Preview Logo -->
+                            <div v-if="displayLogo" class="mt-2 mb-4">
+                                <img :src="displayLogo"
+                                     alt="Logo"
+                                     class="h-20 object-contain bg-gray-100 dark:bg-gray-700 rounded p-2"
+                                     @error="handleImageError" />
+                                <p v-if="currentLogo && !logoPreview" class="text-xs text-gray-500 mt-1">Current: {{ currentLogo }}</p>
+                            </div>
+
+                            <input type="file"
                                    @change="handleLogoUpload"
                                    accept="image/*"
-                                   class="mt-1 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:text-white" 
+                                   class="mt-1 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:text-white"
                                    :style="{ 'file:bg': `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})` }" />
+                            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ t('admin.settings.logo_help', 'Upload a logo image (PNG, JPG, GIF)') }}</p>
                         </div>
 
                         <div>

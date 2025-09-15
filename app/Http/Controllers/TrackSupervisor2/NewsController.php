@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\TrackSupervisor;
 
 use App\Http\Controllers\Controller;
-use App\Services\NewsService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\News;
@@ -13,21 +12,15 @@ use Illuminate\Support\Facades\Validator;
 
 class NewsController extends Controller
 {
-    protected NewsService $newsService;
-
-    public function __construct(NewsService $newsService)
+    public function index()
     {
-        $this->newsService = $newsService;
-    }
-    public function index(Request $request)
-    {
-        $data = $this->newsService->getPaginatedNewsAdmin(
-            auth()->user(),
-            $request->only(['search', 'status', 'category_id']),
-            $request->get('per_page', 15)
-        );
+        $news = News::with(['author'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(15);
 
-        return Inertia::render('TrackSupervisor/News/Index', $data);
+        return Inertia::render('TrackSupervisor/News/Index', [
+            'news' => $news
+        ]);
     }
 
     public function create()
@@ -62,13 +55,58 @@ class NewsController extends Controller
             'gallery_images.*' => 'nullable|string' // Now expects paths from FilePond
         ]);
 
-        try {
-            $result = $this->newsService->createNewsAdmin($validated, auth()->user());
-            return redirect()->route('system-admin.news.index')
-                ->with('success', $result['message']);
-        } catch (\Exception $e) {
-            return back()->withErrors(['error' => $e->getMessage()]);
+        // Handle main image - move from temp to permanent storage
+        $featuredImagePath = null;
+        if (!empty($validated['main_image'])) {
+            $tempPath = $validated['main_image'];
+            if (Storage::disk('public')->exists($tempPath)) {
+                $filename = basename($tempPath);
+                $newPath = 'news/featured/' . $filename;
+                Storage::disk('public')->move($tempPath, $newPath);
+                $featuredImagePath = $newPath;
+            }
         }
+
+        // Handle gallery images - move from temp to permanent storage
+        $galleryImages = [];
+        if (!empty($validated['gallery_images'])) {
+            foreach ($validated['gallery_images'] as $tempPath) {
+                if (Storage::disk('public')->exists($tempPath)) {
+                    $filename = basename($tempPath);
+                    $newPath = 'news/gallery/' . $filename;
+                    Storage::disk('public')->move($tempPath, $newPath);
+                    $galleryImages[] = $newPath;
+                }
+            }
+        }
+
+        // Process keywords into tags array
+        $tags = [];
+        if (!empty($validated['keywords'])) {
+            $tags = array_map('trim', explode(',', $validated['keywords']));
+        }
+
+        // Create the news article
+        $news = News::create([
+            'title' => $validated['title'],
+            'slug' => Str::slug($validated['title']),
+            'content' => $validated['content'],
+            'excerpt' => Str::limit(strip_tags($validated['content']), 200),
+            'featured_image_path' => $featuredImagePath,
+            'status' => 'draft',
+            'author_id' => auth()->id(),
+            'tags' => $tags,
+            'auto_post_twitter' => $validated['publish_to_twitter'] ?? false,
+            'seo_data' => [
+                'keywords' => $validated['keywords'] ?? '',
+                'video_url' => $validated['video_url'] ?? '',
+                'twitter_message' => $validated['twitter_message'] ?? '',
+                'gallery_images' => $galleryImages
+            ]
+        ]);
+
+        return redirect()->route('track-supervisor.news.index')
+            ->with('success', 'News article created successfully.');
     }
 
     public function show(News $news)
@@ -111,16 +149,12 @@ class NewsController extends Controller
     {
         // Check if this is a partial update (e.g., just toggling Twitter publish)
         if ($request->has('publish_to_twitter') && count($request->all()) === 1) {
-            try {
-                $this->newsService->updateNewsAdmin($news->id, [
-                    'auto_post_twitter' => $request->boolean('publish_to_twitter')
-                ], auth()->user());
+            $news->update([
+                'auto_post_twitter' => $request->boolean('publish_to_twitter')
+            ]);
 
-                return redirect()->route('system-admin.news.index')
-                    ->with('success', 'Twitter publishing setting updated.');
-            } catch (\Exception $e) {
-                return back()->withErrors(['error' => $e->getMessage()]);
-            }
+            return redirect()->route('track-supervisor.news.index')
+                ->with('success', 'Twitter publishing setting updated.');
         }
 
         $validated = $request->validate([
@@ -136,46 +170,86 @@ class NewsController extends Controller
             'gallery_images.*' => 'nullable|string'
         ]);
 
-        try {
-            $result = $this->newsService->updateNewsAdmin($news->id, $validated, auth()->user());
-            return redirect()->route('system-admin.news.index')
-                ->with('success', $result['message']);
-        } catch (\Exception $e) {
-            return back()->withErrors(['error' => $e->getMessage()]);
+        // Handle main image - move from temp to permanent storage
+        $featuredImagePath = $news->featured_image_path;
+        if (!empty($validated['main_image'])) {
+            $tempPath = $validated['main_image'];
+            if (Storage::disk('public')->exists($tempPath)) {
+                // Delete old image if exists
+                if ($featuredImagePath) {
+                    Storage::disk('public')->delete($featuredImagePath);
+                }
+                $filename = basename($tempPath);
+                $newPath = 'news/featured/' . $filename;
+                Storage::disk('public')->move($tempPath, $newPath);
+                $featuredImagePath = $newPath;
+            }
         }
+
+        // Handle gallery images - merge with existing
+        $existingGallery = $news->seo_data['gallery_images'] ?? [];
+        $galleryImages = $existingGallery;
+
+        if (!empty($validated['gallery_images'])) {
+            foreach ($validated['gallery_images'] as $tempPath) {
+                if (Storage::disk('public')->exists($tempPath)) {
+                    $filename = basename($tempPath);
+                    $newPath = 'news/gallery/' . $filename;
+                    Storage::disk('public')->move($tempPath, $newPath);
+                    $galleryImages[] = $newPath;
+                }
+            }
+        }
+
+        // Process keywords into tags array
+        $tags = [];
+        if (!empty($validated['keywords'])) {
+            $tags = array_map('trim', explode(',', $validated['keywords']));
+        }
+
+        // Update the news article
+        $news->update([
+            'title' => $validated['title'],
+            'slug' => Str::slug($validated['title']),
+            'content' => $validated['content'],
+            'excerpt' => Str::limit(strip_tags($validated['content']), 200),
+            'featured_image_path' => $featuredImagePath,
+            'tags' => $tags,
+            'auto_post_twitter' => $validated['publish_to_twitter'] ?? false,
+            'seo_data' => [
+                'keywords' => $validated['keywords'] ?? '',
+                'video_url' => $validated['video_url'] ?? '',
+                'twitter_message' => $validated['twitter_message'] ?? '',
+                'gallery_images' => $galleryImages
+            ]
+        ]);
+
+        return redirect()->route('track-supervisor.news.index')
+            ->with('success', 'News article updated successfully.');
     }
 
     public function destroy(News $news)
     {
-        try {
-            $result = $this->newsService->deleteNewsAdmin($news->id, auth()->user());
-            return redirect()->route('system-admin.news.index')
-                ->with('success', $result['message']);
-        } catch (\Exception $e) {
-            return back()->withErrors(['error' => $e->getMessage()]);
-        }
+        $news->delete();
+
+        return redirect()->route('track-supervisor.news.index')
+            ->with('success', 'News article deleted successfully.');
     }
 
     public function publish(News $news)
     {
-        try {
-            $result = $this->newsService->publishNewsAdmin($news->id, auth()->user());
-            return redirect()->route('system-admin.news.index')
-                ->with('success', $result['message']);
-        } catch (\Exception $e) {
-            return back()->withErrors(['error' => $e->getMessage()]);
-        }
+        $news->publish();
+
+        return redirect()->route('track-supervisor.news.index')
+            ->with('success', 'News article published successfully.');
     }
 
     public function unpublish(News $news)
     {
-        try {
-            $result = $this->newsService->unpublishNewsAdmin($news->id, auth()->user());
-            return redirect()->route('system-admin.news.index')
-                ->with('success', $result['message']);
-        } catch (\Exception $e) {
-            return back()->withErrors(['error' => $e->getMessage()]);
-        }
+        $news->update(['status' => 'draft']);
+
+        return redirect()->route('track-supervisor.news.index')
+            ->with('success', 'News article unpublished successfully.');
     }
 
     /**
@@ -267,11 +341,13 @@ class NewsController extends Controller
     public function mediaCenter()
     {
         // Get all news articles with their media
-        $articles = $this->newsService->getArticlesForMediaCenter();
+        $articles = News::select('id', 'title')->orderBy('created_at', 'desc')->get();
 
         // Collect all media files from news articles
         $media = [];
-        $newsItems = $this->newsService->getNewsWithMedia();
+        $newsItems = News::whereNotNull('featured_image_path')
+            ->orWhereNotNull('seo_data->gallery_images')
+            ->get();
 
         foreach ($newsItems as $news) {
             // Add featured image
@@ -338,7 +414,7 @@ class NewsController extends Controller
         $type = $parts[0]; // 'featured', 'gallery', or 'video'
         $newsId = $parts[1];
 
-        $news = $this->newsService->findOrFail($newsId);
+        $news = News::findOrFail($newsId);
 
         if ($type === 'featured') {
             return response()->json([
@@ -362,7 +438,7 @@ class NewsController extends Controller
         $type = $parts[0]; // 'featured', 'gallery', or 'video'
         $newsId = $parts[1];
 
-        $news = $this->newsService->findOrFail($newsId);
+        $news = News::findOrFail($newsId);
 
         if ($type === 'featured') {
             // Delete the featured image

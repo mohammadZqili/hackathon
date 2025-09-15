@@ -97,8 +97,21 @@ class TrackService extends BaseService
 
         DB::beginTransaction();
         try {
+            // Extract supervisor_id if present
+            $supervisorId = $data['supervisor_id'] ?? null;
+            $trackData = collect($data)->except(['supervisor_id'])->toArray();
+
             // Create track
-            $track = $this->trackRepository->create($data);
+            $track = $this->trackRepository->create($trackData);
+
+            // Assign supervisor if provided
+            if ($supervisorId) {
+                $track->supervisors()->attach($supervisorId, [
+                    'is_primary' => true,
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]);
+            }
 
             // Log activity
             Log::info('Track created', [
@@ -150,8 +163,27 @@ class TrackService extends BaseService
 
         DB::beginTransaction();
         try {
+            // Extract supervisor_id if present
+            $supervisorId = $data['supervisor_id'] ?? null;
+            $trackData = collect($data)->except(['supervisor_id'])->toArray();
+
             // Update track
-            $this->trackRepository->update($trackId, $data);
+            $this->trackRepository->update($trackId, $trackData);
+
+            // Update supervisor assignment
+            if (isset($data['supervisor_id'])) {
+                // Remove existing primary supervisor
+                $track->supervisors()->wherePivot('is_primary', true)->detach();
+
+                // Assign new supervisor if provided
+                if ($supervisorId) {
+                    $track->supervisors()->attach($supervisorId, [
+                        'is_primary' => true,
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ]);
+                }
+            }
 
             // Refresh track data
             $track = $this->trackRepository->findWithFullDetails($trackId);
@@ -271,17 +303,30 @@ class TrackService extends BaseService
     {
         $data = [
             'editions' => $this->getEditionsForUser($user),
-            'hackathons' => $this->getHackathonsForUser($user)
+            'hackathons' => $this->getHackathonsForUser($user),
+            'supervisors' => $this->getAvailableSupervisors($user)
         ];
 
         if ($trackId) {
-            $track = $this->trackRepository->find($trackId);
+            $track = $this->trackRepository->findWithFullDetails($trackId);
             if ($track && $this->userCanAccessTrack($user, $track)) {
                 $data['track'] = $track;
             }
         }
 
         return $data;
+    }
+
+    /**
+     * Get available supervisors for track assignment
+     */
+    protected function getAvailableSupervisors(User $user): Collection
+    {
+        // Get users with track_supervisor role or system_admin role
+        return \App\Models\User::whereIn('user_type', ['system_admin', 'track_supervisor'])
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name', 'email', 'user_type']);
     }
 
     /**
@@ -410,7 +455,7 @@ class TrackService extends BaseService
 
             case 'track_supervisor':
                 // Get editions from supervised tracks
-                $tracks = $this->trackRepository->getTracksBySupervisor($user->id);
+                $tracks = $this->trackRepository->getTracksBySupervisor((int) $user->id);
                 $editionIds = $tracks->pluck('edition_id')->unique()->filter();
 
                 if ($editionIds->isEmpty()) {

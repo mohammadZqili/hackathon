@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Storage;
 
 class SettingsController extends Controller
 {
@@ -49,13 +50,22 @@ class SettingsController extends Controller
     {
         $validated = $request->validate([
             'app_name' => 'nullable|string|max:255',
-            'app_logo' => 'nullable|string',
+            'app_logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'primary_color' => 'nullable|string|max:7',
             'secondary_color' => 'nullable|string|max:7',
             'footer_text' => 'nullable|string',
         ]);
 
-        // Filter out empty values
+        // Handle logo upload if present
+        if ($request->hasFile('app_logo')) {
+            $logoFile = $request->file('app_logo');
+
+            // Store the logo in the public storage
+            $logoPath = $logoFile->store('logos', 'public');
+            $validated['app_logo'] = '/storage/' . $logoPath;
+        }
+
+        // Filter out empty values except for app_logo which might be a path
         $validated = array_filter($validated, function($value) {
             return $value !== null && $value !== '';
         });
@@ -66,7 +76,7 @@ class SettingsController extends Controller
             // Clear config cache
             Artisan::call('config:clear');
 
-            return back()->with('success', $result['message']);
+            return redirect()->route('system-admin.settings.branding')->with('success', $result['message']);
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()]);
         }

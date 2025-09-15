@@ -58,6 +58,7 @@ class TrackController extends Controller
             'max_teams' => 'nullable|integer|min:1',
             'evaluation_criteria' => 'nullable|array',
             'is_active' => 'required|boolean',
+            'supervisor_id' => 'nullable|exists:users,id',
         ]);
 
         try {
@@ -111,6 +112,7 @@ class TrackController extends Controller
             'max_teams' => 'nullable|integer|min:1',
             'evaluation_criteria' => 'nullable|array',
             'is_active' => 'required|boolean',
+            'supervisor_id' => 'nullable|exists:users,id',
         ]);
 
         try {

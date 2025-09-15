@@ -4,8 +4,6 @@ namespace App\Http\Controllers\TrackSupervisor;
 
 use App\Http\Controllers\Controller;
 use App\Models\Track;
-use App\Models\User;
-use App\Models\HackathonEdition;
 use App\Services\TrackService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -20,62 +18,36 @@ class TrackController extends Controller
         $this->trackService = $trackService;
     }
 
+    /**
+     * Display a listing of tracks
+     */
     public function index(Request $request): Response
     {
-        $query = Track::with(['teams', 'ideas', 'edition', 'hackathon'])
-            ->withCount(['teams', 'ideas']);
+        $filters = $request->only(['edition_id', 'status', 'search']);
+        $perPage = $request->get('per_page', 15);
 
-        // Apply filters
-        if ($request->filled('edition_id')) {
-            $query->where('edition_id', $request->get('edition_id'));
-        }
+        $data = $this->trackService->getPaginatedTracks(
+            auth()->user(),
+            $filters,
+            $perPage
+        );
 
-        if ($request->filled('status')) {
-            $isActive = $request->get('status') === 'active' ? 1 : 0;
-            $query->where('is_active', $isActive);
-        }
-
-        if ($request->filled('search')) {
-            $search = $request->get('search');
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
-            });
-        }
-
-        $tracks = $query->latest()->paginate(15)->withQueryString();
-
-        // Get all editions for filter dropdown
-        $editions = HackathonEdition::orderBy('created_at', 'desc')->get();
-
-        // Get statistics
-        $statistics = [
-            'total' => Track::count(),
-            'active' => Track::where('is_active', true)->count(),
-            'inactive' => Track::where('is_active', false)->count(),
-            'with_teams' => Track::has('teams')->count(),
-            'total_teams' => Track::withCount('teams')->get()->sum('teams_count'),
-            'total_ideas' => Track::withCount('ideas')->get()->sum('ideas_count'),
-        ];
-
-        return Inertia::render('TrackSupervisor/Tracks/Index', [
-            'tracks' => $tracks,
-            'editions' => $editions,
-            'statistics' => $statistics,
-            'filters' => $request->only(['edition_id', 'status', 'search']),
-        ]);
+        return Inertia::render('TrackSupervisor/Tracks/Index', $data);
     }
 
+    /**
+     * Show the form for creating a new track
+     */
     public function create(): Response
     {
-        // Get all editions
-        $editions = HackathonEdition::orderBy('created_at', 'desc')->get();
+        $data = $this->trackService->getFormData(auth()->user());
 
-        return Inertia::render('TrackSupervisor/Tracks/Create', [
-            'editions' => $editions,
-        ]);
+        return Inertia::render('TrackSupervisor/Tracks/Create', $data);
     }
 
+    /**
+     * Store a newly created track
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -86,40 +58,50 @@ class TrackController extends Controller
             'max_teams' => 'nullable|integer|min:1',
             'evaluation_criteria' => 'nullable|array',
             'is_active' => 'required|boolean',
+            'supervisor_id' => 'nullable|exists:users,id',
         ]);
 
         try {
-            $track = $this->trackService->createTrack($validated);
+            $result = $this->trackService->createTrack($validated, auth()->user());
 
-            // Track created successfully
-
-            return redirect()->route('track-supervisor.tracks.index')
-                ->with('success', 'Track created successfully.');
+            return redirect()->route('system-admin.tracks.index')
+                ->with('success', $result['message']);
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()])->withInput();
         }
     }
 
+    /**
+     * Display the specified track
+     */
     public function show(Track $track): Response
     {
-        $track->load(['teams.members', 'ideas.team', 'edition', 'hackathon']);
+        $data = $this->trackService->getTrackDetails($track->id, auth()->user());
 
-        return Inertia::render('TrackSupervisor/Tracks/Show', [
-            'track' => $track,
-        ]);
+        if (!$data) {
+            abort(404, 'Track not found or access denied.');
+        }
+
+        return Inertia::render('TrackSupervisor/Tracks/Show', $data);
     }
 
+    /**
+     * Show the form for editing the specified track
+     */
     public function edit(Track $track): Response
     {
-        // Get all editions
-        $editions = HackathonEdition::orderBy('created_at', 'desc')->get();
+        $data = $this->trackService->getFormData(auth()->user(), $track->id);
 
-        return Inertia::render('TrackSupervisor/Tracks/Edit', [
-            'track' => $track,
-            'editions' => $editions,
-        ]);
+        if (!isset($data['track'])) {
+            abort(404, 'Track not found or access denied.');
+        }
+
+        return Inertia::render('TrackSupervisor/Tracks/Edit', $data);
     }
 
+    /**
+     * Update the specified track
+     */
     public function update(Request $request, Track $track)
     {
         $validated = $request->validate([
@@ -130,76 +112,60 @@ class TrackController extends Controller
             'max_teams' => 'nullable|integer|min:1',
             'evaluation_criteria' => 'nullable|array',
             'is_active' => 'required|boolean',
+            'supervisor_id' => 'nullable|exists:users,id',
         ]);
 
         try {
-            $track = $this->trackService->updateTrack($track->id, $validated);
+            $result = $this->trackService->updateTrack($track->id, $validated, auth()->user());
 
-            // Track updated successfully
-
-            return redirect()->route('track-supervisor.tracks.show', $track)
-                ->with('success', 'Track updated successfully.');
+            return redirect()->route('system-admin.tracks.show', $track)
+                ->with('success', $result['message']);
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()])->withInput();
         }
     }
 
+    /**
+     * Remove the specified track
+     */
     public function destroy(Track $track)
     {
-        // Check if track has teams or ideas
-        if ($track->teams()->exists() || $track->ideas()->exists()) {
-            return back()->with('error', 'Cannot delete track with associated teams or ideas.');
-        }
-
         try {
-            $this->trackService->deleteTrack($track->id);
-            return redirect()->route('track-supervisor.tracks.index')
-                ->with('success', 'Track deleted successfully.');
+            $result = $this->trackService->deleteTrack($track->id, auth()->user());
+
+            return redirect()->route('system-admin.tracks.index')
+                ->with('success', $result['message']);
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()]);
         }
     }
-
 
     /**
      * Export tracks to CSV
      */
     public function export(Request $request)
     {
-        $query = Track::with(['edition', 'hackathon'])
-            ->withCount(['teams', 'ideas']);
+        $filters = $request->only(['edition_id', 'status', 'search']);
 
-        if ($request->filled('edition_id')) {
-            $query->where('edition_id', $request->get('edition_id'));
+        try {
+            $result = $this->trackService->exportTracks(auth()->user(), $filters);
+
+            $headers = [
+                'Content-Type' => 'text/csv',
+                'Content-Disposition' => 'attachment; filename="' . $result['filename'] . '"',
+            ];
+
+            $callback = function() use ($result) {
+                $file = fopen('php://output', 'w');
+                foreach ($result['data'] as $row) {
+                    fputcsv($file, $row);
+                }
+                fclose($file);
+            };
+
+            return response()->stream($callback, 200, $headers);
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => $e->getMessage()]);
         }
-
-        $tracks = $query->get();
-
-        $headers = [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="tracks-export-' . date('Y-m-d') . '.csv"',
-        ];
-
-        $callback = function() use ($tracks) {
-            $file = fopen('php://output', 'w');
-            fputcsv($file, ['ID', 'Name', 'Edition', 'Description', 'Teams Count', 'Ideas Count', 'Status', 'Created At']);
-
-            foreach ($tracks as $track) {
-                fputcsv($file, [
-                    $track->id,
-                    $track->name,
-                    $track->edition->name ?? 'N/A',
-                    $track->description,
-                    $track->teams_count,
-                    $track->ideas_count,
-                    $track->is_active ? 'Active' : 'Inactive',
-                    $track->created_at->format('Y-m-d H:i'),
-                ]);
-            }
-
-            fclose($file);
-        };
-
-        return response()->stream($callback, 200, $headers);
     }
 }

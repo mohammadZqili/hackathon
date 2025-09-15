@@ -3,16 +3,27 @@
 namespace App\Http\Controllers\TrackSupervisor;
 
 use App\Http\Controllers\Controller;
+use App\Services\OrganizationService;
+use App\Services\SpeakerService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\Organization;
-use App\Models\Speaker;
 
 class OrganizationController extends Controller
 {
+    protected OrganizationService $organizationService;
+    protected SpeakerService $speakerService;
+
+    public function __construct(
+        OrganizationService $organizationService,
+        SpeakerService $speakerService
+    ) {
+        $this->organizationService = $organizationService;
+        $this->speakerService = $speakerService;
+    }
     public function index()
     {
-        $organizations = Organization::paginate(15);
+        $organizations = $this->organizationService->getPaginatedOrganizations(15);
 
         return Inertia::render('TrackSupervisor/Organizations/Index', [
             'organizations' => $organizations
@@ -21,7 +32,7 @@ class OrganizationController extends Controller
 
     public function create()
     {
-        $speakers = Speaker::orderBy('name')->get();
+        $speakers = $this->speakerService->getAllSpeakers();
 
         return Inertia::render('TrackSupervisor/Organizations/Create', [
             'speakers' => $speakers
@@ -30,53 +41,83 @@ class OrganizationController extends Controller
 
     public function store(Request $request)
     {
-        // TODO: Implement store functionality
-        return redirect()->route('track-supervisor.organizations.index')
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'website' => 'nullable|string|max:255',
+            'email' => 'nullable|email|max:255',
+            'phone' => 'nullable|string|max:20',
+            'address' => 'nullable|string',
+            'type' => 'nullable|in:government,private,ngo,educational,other',
+            'is_active' => 'boolean',
+            'social_media' => 'nullable|array',
+            'logo_path' => 'nullable|string',
+        ]);
+
+        $organization = $this->organizationService->createOrganization($validated);
+
+        return redirect()->route('system-admin.organizations.index')
             ->with('success', 'Organization created successfully.');
     }
 
     public function show(Organization $organization)
     {
+        $organizationData = $this->organizationService->getOrganizationDetails($organization->id);
+
         return Inertia::render('TrackSupervisor/Organizations/Show', [
-            'organization' => $organization
+            'organization' => $organizationData
         ]);
     }
 
     public function edit(Organization $organization)
     {
-        $speakers = Speaker::orderBy('name')->get();
-        $organization->load('speakers');
+        $speakers = $this->speakerService->getAllSpeakers();
+        $organizationData = $this->organizationService->getOrganizationWithSpeakers($organization->id);
 
         return Inertia::render('TrackSupervisor/Organizations/Edit', [
-            'organization' => $organization,
+            'organization' => $organizationData,
             'speakers' => $speakers
         ]);
     }
 
     public function update(Request $request, Organization $organization)
     {
-        // TODO: Implement update functionality
-        return redirect()->route('track-supervisor.organizations.index')
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'website' => 'nullable|string|max:255',
+            'email' => 'nullable|email|max:255',
+            'phone' => 'nullable|string|max:20',
+            'address' => 'nullable|string',
+            'type' => 'nullable|in:government,private,ngo,educational,other',
+            'is_active' => 'boolean',
+            'social_media' => 'nullable|array',
+            'logo_path' => 'nullable|string',
+        ]);
+
+        $this->organizationService->updateOrganization($organization->id, $validated);
+
+        return redirect()->route('system-admin.organizations.index')
             ->with('success', 'Organization updated successfully.');
     }
 
     public function destroy(Organization $organization)
     {
-        $organization->delete();
+        $this->organizationService->deleteOrganization($organization->id);
 
-        return redirect()->route('track-supervisor.organizations.index')
+        return redirect()->route('system-admin.organizations.index')
             ->with('success', 'Organization deleted successfully.');
     }
 
     public function activate(Organization $organization)
     {
-        // TODO: Implement activate functionality
-        return response()->json(['message' => 'Activate functionality to be implemented']);
+        $this->organizationService->activateOrganization($organization->id);
+        return response()->json(['message' => 'Organization activated successfully']);
     }
 
     public function deactivate(Organization $organization)
     {
-        // TODO: Implement deactivate functionality
-        return response()->json(['message' => 'Deactivate functionality to be implemented']);
+        $this->organizationService->deactivateOrganization($organization->id);
+        return response()->json(['message' => 'Organization deactivated successfully']);
     }
 }

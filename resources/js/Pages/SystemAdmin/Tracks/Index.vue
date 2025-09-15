@@ -164,13 +164,15 @@
                                         <div class="max-w-xs truncate">{{ track.description }}</div>
                                     </td>
                                     <td class="px-4 py-4 text-sm" :style="{ color: themeColor.primary }">
-                                        <span v-if="track.supervisor">{{ track.supervisor.name }}</span>
+                                        <span v-if="track.supervisors && track.supervisors.length > 0">
+                                            {{ track.supervisors.find(s => s.pivot && s.pivot.is_primary)?.name || track.supervisors[0]?.name || t('admin.common.not_assigned') }}
+                                        </span>
                                         <span v-else class="text-gray-400">{{ t('admin.common.not_assigned') }}</span>
                                     </td>
                                     <td class="px-4 py-4 text-sm text-gray-900">{{ track.teams_count || 0 }}</td>
                                     <td class="px-4 py-4 text-sm text-gray-900">{{ track.ideas_count || 0 }}</td>
                                     <td class="px-4 py-4 text-sm">
-                                        <span v-if="track.status === 'active'" class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">{{ t('admin.status.active') }}</span>
+                                        <span v-if="track.is_active" class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">{{ t('admin.status.active') }}</span>
                                         <span v-else class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800">{{ t('admin.status.inactive') }}</span>
                                     </td>
                                     <td class="px-4 py-4 text-sm">

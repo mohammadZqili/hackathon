@@ -4,26 +4,18 @@ namespace App\Http\Controllers\TrackSupervisor;
 
 use App\Http\Controllers\Controller;
 use App\Models\Edition;
-use App\Services\HackathonEditionService;
-use App\Services\UserService;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class EditionController extends Controller
 {
-    protected HackathonEditionService $editionService;
-    protected UserService $userService;
-
-    public function __construct(
-        HackathonEditionService $editionService,
-        UserService $userService
-    ) {
-        $this->editionService = $editionService;
-        $this->userService = $userService;
-    }
     public function index()
     {
-        $editions = $this->editionService->getPaginatedEditions(10);
+        $editions = Edition::with('admin')
+            ->withCount('teams')
+            ->orderBy('year', 'desc')
+            ->paginate(10);
 
         return Inertia::render('TrackSupervisor/Editions/Index', [
             'editions' => $editions
@@ -32,7 +24,9 @@ class EditionController extends Controller
 
     public function create()
     {
-        $admins = $this->userService->getUsersByType('hackathon_admin');
+        $admins = User::role(['hackathon_admin', 'system_admin'])
+            ->select('id', 'name', 'email')
+            ->get();
 
         return Inertia::render('TrackSupervisor/Editions/Create', [
             'admins' => $admins
@@ -56,26 +50,22 @@ class EditionController extends Controller
             'is_active' => 'boolean'
         ]);
 
-        $this->editionService->createEdition($validated);
+        Edition::create($validated);
 
-        return redirect()->route('system-admin.editions.index')
+        return redirect()->route('track-supervisor.editions.index')
             ->with('success', 'Edition created successfully.');
-    }
-
-    public function show(Edition $edition)
-    {
-        $data = $this->editionService->getEditionWithStatistics($edition->id);
-
-        return Inertia::render('TrackSupervisor/Editions/Show', $data);
     }
 
     public function edit(Edition $edition)
     {
-        $admins = $this->userService->getUsersByType('hackathon_admin');
-        $editionData = $this->editionService->getEditionDetails($edition->id);
+        $admins = User::role(['hackathon_admin', 'system_admin'])
+            ->select('id', 'name', 'email')
+            ->get();
+
+        $edition->load('admin');
 
         return Inertia::render('TrackSupervisor/Editions/Edit', [
-            'edition' => $editionData,
+            'edition' => $edition,
             'admins' => $admins
         ]);
     }
@@ -97,37 +87,34 @@ class EditionController extends Controller
             'is_active' => 'boolean'
         ]);
 
-        $this->editionService->updateEdition($edition->id, $validated);
+        $edition->update($validated);
 
-        return redirect()->route('system-admin.editions.index')
+        return redirect()->route('track-supervisor.editions.index')
             ->with('success', 'Edition updated successfully.');
     }
 
     public function destroy(Edition $edition)
     {
-        try {
-            $this->editionService->deleteEdition($edition->id);
-            return redirect()->route('system-admin.editions.index')
-                ->with('success', 'Edition deleted successfully.');
-        } catch (\Exception $e) {
-            return back()->with('error', $e->getMessage());
+        // Check if edition has any associated data
+        if ($edition->teams()->exists() || $edition->ideas()->exists() || $edition->workshops()->exists()) {
+            return back()->with('error', 'Cannot delete edition with existing data.');
         }
+
+        $edition->delete();
+
+        return redirect()->route('track-supervisor.editions.index')
+            ->with('success', 'Edition deleted successfully.');
     }
 
     public function activate(Edition $edition)
     {
-        $this->editionService->activateEdition($edition->id);
+        // Deactivate all other editions
+        Edition::where('id', '!=', $edition->id)->update(['is_active' => false]);
 
-        return redirect()->route('system-admin.editions.index')
+        // Activate this edition
+        $edition->update(['is_active' => true]);
+
+        return redirect()->route('track-supervisor.editions.index')
             ->with('success', 'Edition activated successfully.');
-    }
-
-    public function export()
-    {
-        $csv = $this->editionService->exportToCsv();
-
-        return response($csv)
-            ->header('Content-Type', 'text/csv')
-            ->header('Content-Disposition', 'attachment; filename="editions-' . now()->format('Y-m-d') . '.csv"');
     }
 }

@@ -3,28 +3,28 @@
 namespace App\Http\Controllers\TrackSupervisor;
 
 use App\Http\Controllers\Controller;
+use App\Services\SettingService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use App\Models\SystemSetting;
-use Illuminate\Support\Facades\Cache;
-use App\Providers\SettingsServiceProvider;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Storage;
 
 class SettingsController extends Controller
 {
+    protected SettingService $settingService;
+
+    public function __construct(SettingService $settingService)
+    {
+        $this->settingService = $settingService;
+    }
+
     /**
-     * Display the settings dashboard.
+     * Display settings page
      */
     public function index()
     {
-        $settings = [
-            'smtp' => $this->getSmtpSettings(),
-            'branding' => $this->getBrandingSettings(),
-            'twitter' => $this->getTwitterSettings(),
-            'sms' => $this->getSmsSettings(),
-            'notifications' => $this->getNotificationSettings(),
-        ];
+        $settings = $this->settingService->getAllSettings(auth()->user());
 
         return Inertia::render('TrackSupervisor/Settings/Index', [
             'settings' => $settings
@@ -32,389 +32,215 @@ class SettingsController extends Controller
     }
 
     /**
-     * Display SMTP settings.
-     */
-    public function smtp()
-    {
-        $smtpSettings = $this->getSmtpSettings();
-
-        return Inertia::render('TrackSupervisor/Settings/Smtp', [
-            'settings' => $smtpSettings
-        ]);
-    }
-
-    /**
-     * Update SMTP settings.
-     */
-    public function updateSmtp(Request $request)
-    {
-        try {
-            $validated = $request->validate([
-                'mail_host' => 'nullable|string',
-                'mail_port' => 'nullable|integer',
-                'mail_username' => 'nullable|string',
-                'mail_password' => 'nullable|string',
-                'mail_encryption' => 'nullable|in:tls,ssl,',
-                'mail_from_address' => 'nullable|email',
-            ]);
-
-            DB::beginTransaction();
-
-            foreach ($validated as $key => $value) {
-                if ($value !== null && $value !== '') {
-                    SystemSetting::updateOrCreate(
-                        ['key' => $key],
-                        ['value' => $value, 'group' => 'smtp']
-                    );
-                }
-            }
-
-            DB::commit();
-
-            // Clear all settings cache
-            SettingsServiceProvider::clearCache();
-
-            // Clear config cache to apply new settings
-            \Artisan::call('config:clear');
-
-            return redirect()->route('track-supervisor.settings.index')
-                ->with('success', 'SMTP settings updated successfully.');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('SMTP settings update failed: ' . $e->getMessage());
-
-            return redirect()->route('track-supervisor.settings.index')
-                ->with('error', 'Failed to update SMTP settings.');
-        }
-    }
-
-    /**
-     * Display branding settings.
+     * Display branding settings
      */
     public function branding()
     {
-        $brandingSettings = $this->getBrandingSettings();
+        $settings = $this->settingService->getBrandingSettings(auth()->user());
 
         return Inertia::render('TrackSupervisor/Settings/Branding', [
-            'settings' => $brandingSettings
+            'settings' => $settings
         ]);
     }
 
     /**
-     * Update branding settings.
+     * Update branding settings
      */
     public function updateBranding(Request $request)
     {
+        $validated = $request->validate([
+            'app_name' => 'nullable|string|max:255',
+            'app_logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'primary_color' => 'nullable|string|max:7',
+            'secondary_color' => 'nullable|string|max:7',
+            'footer_text' => 'nullable|string',
+        ]);
+
+        // Handle logo upload if present
+        if ($request->hasFile('app_logo')) {
+            $logoFile = $request->file('app_logo');
+
+            // Store the logo in the public storage
+            $logoPath = $logoFile->store('logos', 'public');
+            $validated['app_logo'] = '/storage/' . $logoPath;
+        }
+
+        // Filter out empty values except for app_logo which might be a path
+        $validated = array_filter($validated, function($value) {
+            return $value !== null && $value !== '';
+        });
+
         try {
-            $validated = $request->validate([
-                'app_name' => 'nullable|string|max:255',
-                'logo' => 'nullable|image|max:2048',
-                'primary_color' => 'nullable|string|max:7',
-                'secondary_color' => 'nullable|string|max:7',
-                'success_color' => 'nullable|string|max:7',
-                'danger_color' => 'nullable|string|max:7',
-            ]);
+            $result = $this->settingService->updateBrandingSettings($validated, auth()->user());
 
-            DB::beginTransaction();
+            // Clear config cache
+            Artisan::call('config:clear');
 
-            // Handle file upload
-            if ($request->hasFile('logo')) {
-                $logoPath = $request->file('logo')->store('branding', 'public');
-                $validated['app_logo'] = $logoPath;
-                unset($validated['logo']);
-            }
-
-            foreach ($validated as $key => $value) {
-                if ($value !== null && $value !== '') {
-                    SystemSetting::updateOrCreate(
-                        ['key' => $key],
-                        ['value' => $value, 'group' => 'branding']
-                    );
-                }
-            }
-
-            DB::commit();
-
-            // Clear all settings cache
-            SettingsServiceProvider::clearCache();
-
-            // Clear config cache to apply new settings
-            \Artisan::call('config:clear');
-
-            return redirect()->route('track-supervisor.settings.index')
-                ->with('success', 'Branding settings updated successfully.');
+            return redirect()->route('system-admin.settings.branding')->with('success', $result['message']);
         } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Branding settings update failed: ' . $e->getMessage());
-
-            return redirect()->route('track-supervisor.settings.index')
-                ->with('error', 'Failed to update branding settings.');
+            return back()->withErrors(['error' => $e->getMessage()]);
         }
     }
 
     /**
-     * Display Twitter settings.
+     * Display SMTP settings
      */
-    public function twitter()
+    public function smtp()
     {
-        $twitterSettings = $this->getTwitterSettings();
+        $settings = $this->settingService->getSmtpSettings(auth()->user());
 
-        return Inertia::render('TrackSupervisor/Settings/Twitter', [
-            'settings' => $twitterSettings
+        return Inertia::render('TrackSupervisor/Settings/Smtp', [
+            'settings' => $settings
         ]);
     }
 
     /**
-     * Update Twitter settings.
+     * Update SMTP settings
      */
-    public function updateTwitter(Request $request)
+    public function updateSmtp(Request $request)
     {
+        $validated = $request->validate([
+            'smtp_host' => 'nullable|string',
+            'smtp_port' => 'nullable|integer',
+            'smtp_username' => 'nullable|string',
+            'smtp_password' => 'nullable|string',
+            'smtp_encryption' => 'nullable|in:tls,ssl,',
+            'smtp_from_address' => 'nullable|email',
+            'smtp_from_name' => 'nullable|string',
+        ]);
+
+        // Filter out empty values
+        $validated = array_filter($validated, function($value) {
+            return $value !== null && $value !== '';
+        });
+
         try {
-            $validated = $request->validate([
-                'twitter_api_key' => 'nullable|string',
-                'twitter_api_secret' => 'nullable|string',
-                'twitter_access_token' => 'nullable|string',
-                'twitter_access_token_secret' => 'nullable|string',
-                'twitter_auto_post' => 'boolean',
-            ]);
+            $result = $this->settingService->updateSmtpSettings($validated, auth()->user());
 
-            DB::beginTransaction();
+            // Clear config cache
+            Artisan::call('config:clear');
 
-            foreach ($validated as $key => $value) {
-                SystemSetting::updateOrCreate(
-                    ['key' => $key],
-                    ['value' => $value, 'group' => 'twitter']
-                );
-            }
-
-            DB::commit();
-
-            // Clear all settings cache
-            SettingsServiceProvider::clearCache();
-
-            // Clear config cache to apply new settings
-            \Artisan::call('config:clear');
-
-            return redirect()->route('track-supervisor.settings.index')
-                ->with('success', 'Twitter settings updated successfully.');
+            return back()->with('success', $result['message']);
         } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Twitter settings update failed: ' . $e->getMessage());
-
-            return redirect()->route('track-supervisor.settings.index')
-                ->with('error', 'Failed to update Twitter settings.');
+            return back()->withErrors(['error' => $e->getMessage()]);
         }
     }
 
     /**
-     * Display SMS settings.
+     * Display notification settings
      */
-    public function sms()
+    public function notifications()
     {
-        $smsSettings = $this->getSmsSettings();
+        $settings = $this->settingService->getNotificationSettings(auth()->user());
 
-        return Inertia::render('TrackSupervisor/Settings/Sms', [
-            'settings' => $smsSettings
+        return Inertia::render('TrackSupervisor/Settings/Notifications', [
+            'settings' => $settings
         ]);
     }
 
     /**
-     * Update SMS settings.
-     */
-    public function updateSms(Request $request)
-    {
-        try {
-            $validated = $request->validate([
-                'sms_provider' => 'nullable|in:twilio,nexmo,messagebird,custom',
-                'sms_api_key' => 'nullable|string',
-                'sms_api_secret' => 'nullable|string',
-                'sms_from_number' => 'nullable|string',
-            ]);
-
-            DB::beginTransaction();
-
-            foreach ($validated as $key => $value) {
-                SystemSetting::updateOrCreate(
-                    ['key' => $key],
-                    ['value' => $value, 'group' => 'sms']
-                );
-            }
-
-            DB::commit();
-
-            // Clear all settings cache
-            SettingsServiceProvider::clearCache();
-
-            // Clear config cache to apply new settings
-            \Artisan::call('config:clear');
-
-            return redirect()->route('track-supervisor.settings.index')
-                ->with('success', 'SMS settings updated successfully.');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('SMS settings update failed: ' . $e->getMessage());
-
-            return redirect()->route('track-supervisor.settings.index')
-                ->with('error', 'Failed to update SMS settings.');
-        }
-    }
-
-    /**
-     * Update notification settings.
+     * Update notification settings
      */
     public function updateNotifications(Request $request)
     {
+        $validated = $request->validate([
+            'email_enabled' => 'boolean',
+            'sms_enabled' => 'boolean',
+            'push_enabled' => 'boolean',
+            'in_app_enabled' => 'boolean',
+            'email_digest' => 'nullable|in:daily,weekly,never',
+            'quiet_hours_enabled' => 'boolean',
+            'quiet_hours_start' => 'nullable|date_format:H:i',
+            'quiet_hours_end' => 'nullable|date_format:H:i',
+        ]);
+
         try {
-            Log::info('Notification settings update request received', $request->all());
+            $result = $this->settingService->updateNotificationSettings($validated, auth()->user());
 
-            DB::beginTransaction();
+            // Clear config cache
+            Artisan::call('config:clear');
 
-            // Process all notification settings
-            $notifications = [
-                'notification_email_enabled' => $request->boolean('email_enabled') ? '1' : '0',
-                'notification_sms_enabled' => $request->boolean('sms_enabled') ? '1' : '0',
-                'notification_push_enabled' => $request->boolean('push_enabled') ? '1' : '0',
-                'notification_in_app_enabled' => $request->boolean('in_app_enabled') ? '1' : '0',
-            ];
-
-            foreach ($notifications as $key => $value) {
-                SystemSetting::updateOrCreate(
-                    ['key' => $key],
-                    [
-                        'value' => $value,
-                        'group' => 'notifications',
-                        'type' => 'boolean'
-                    ]
-                );
-
-                Log::info("Notification setting updated: {$key} = {$value}");
-            }
-
-            DB::commit();
-
-            // Clear all settings cache
-            SettingsServiceProvider::clearCache();
-
-            // Clear config cache to apply new settings
-            \Artisan::call('config:clear');
-
-            Log::info('Notification settings updated successfully');
-
-            return redirect()->route('track-supervisor.settings.index')
-                ->with('success', 'Notification settings updated successfully.');
-
+            return back()->with('success', $result['message']);
         } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Notification settings update failed: ' . $e->getMessage());
-
-            return redirect()->route('track-supervisor.settings.index')
-                ->with('error', 'Failed to update notification settings: ' . $e->getMessage());
+            return back()->withErrors(['error' => $e->getMessage()]);
         }
     }
 
     /**
-     * Get SMTP settings.
+     * Display SMS settings
      */
-    private function getSmtpSettings(): array
+    public function sms()
     {
-        return Cache::remember('smtp_settings', 3600, function () {
-            $settings = SystemSetting::where('group', 'smtp')
-                ->pluck('value', 'key')
-                ->toArray();
+        $settings = $this->settingService->getSmsSettings(auth()->user());
 
-            return [
-                'mail_host' => $settings['mail_host'] ?? '',
-                'mail_port' => $settings['mail_port'] ?? 587,
-                'mail_username' => $settings['mail_username'] ?? '',
-                'mail_password' => $settings['mail_password'] ?? '',
-                'mail_encryption' => $settings['mail_encryption'] ?? 'tls',
-                'mail_from_address' => $settings['mail_from_address'] ?? '',
-                'mail_from_name' => $settings['mail_from_name'] ?? '',
-            ];
-        });
+        return Inertia::render('TrackSupervisor/Settings/Sms', [
+            'settings' => $settings
+        ]);
     }
 
     /**
-     * Get branding settings.
+     * Update SMS settings
      */
-    private function getBrandingSettings(): array
+    public function updateSms(Request $request)
     {
-        return Cache::remember('branding_settings', 3600, function () {
-            $settings = SystemSetting::where('group', 'branding')
-                ->pluck('value', 'key')
-                ->toArray();
+        $validated = $request->validate([
+            'sms_provider' => 'nullable|in:twilio,nexmo,textlocal',
+            'sms_api_key' => 'nullable|string',
+            'sms_api_secret' => 'nullable|string',
+            'sms_from_number' => 'nullable|string',
+        ]);
 
-            $logo = $settings['app_logo'] ?? '';
-
-            return [
-                'app_name' => $settings['app_name'] ?? 'GuacPanel',
-                'app_logo' => $logo,
-                'logo_url' => $logo ? asset('storage/' . $logo) : null,
-                'app_favicon' => $settings['app_favicon'] ?? '',
-                'primary_color' => $settings['primary_color'] ?? '#0d9488',
-                'secondary_color' => $settings['secondary_color'] ?? '#14b8a6',
-                'success_color' => $settings['success_color'] ?? '#10b981',
-                'danger_color' => $settings['danger_color'] ?? '#ef4444',
-            ];
+        // Filter out empty values
+        $validated = array_filter($validated, function($value) {
+            return $value !== null && $value !== '';
         });
+
+        try {
+            $result = $this->settingService->updateSmsSettings($validated, auth()->user());
+
+            // Clear config cache
+            Artisan::call('config:clear');
+
+            return back()->with('success', $result['message']);
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => $e->getMessage()]);
+        }
     }
 
     /**
-     * Get Twitter settings.
+     * Display Twitter settings
      */
-    private function getTwitterSettings(): array
+    public function twitter()
     {
-        return Cache::remember('twitter_settings', 3600, function () {
-            $settings = SystemSetting::where('group', 'twitter')
-                ->pluck('value', 'key')
-                ->toArray();
+        $settings = $this->settingService->getTwitterSettings(auth()->user());
 
-            return [
-                'twitter_api_key' => $settings['twitter_api_key'] ?? '',
-                'twitter_api_secret' => $settings['twitter_api_secret'] ?? '',
-                'twitter_access_token' => $settings['twitter_access_token'] ?? '',
-                'twitter_access_token_secret' => $settings['twitter_access_token_secret'] ?? '',
-                'twitter_auto_post' => isset($settings['twitter_auto_post']) && $settings['twitter_auto_post'] === '1',
-            ];
-        });
+        return Inertia::render('TrackSupervisor/Settings/Twitter', [
+            'settings' => $settings
+        ]);
     }
 
     /**
-     * Get SMS settings.
+     * Update Twitter settings
      */
-    private function getSmsSettings(): array
+    public function updateTwitter(Request $request)
     {
-        return Cache::remember('sms_settings', 3600, function () {
-            $settings = SystemSetting::where('group', 'sms')
-                ->pluck('value', 'key')
-                ->toArray();
+        $validated = $request->validate([
+            'twitter_api_key' => 'nullable|string',
+            'twitter_api_secret' => 'nullable|string',
+            'twitter_access_token' => 'nullable|string',
+            'twitter_access_token_secret' => 'nullable|string',
+            'twitter_auto_post' => 'boolean',
+        ]);
 
-            return [
-                'sms_provider' => $settings['sms_provider'] ?? 'twilio',
-                'sms_api_key' => $settings['sms_api_key'] ?? '',
-                'sms_api_secret' => $settings['sms_api_secret'] ?? '',
-                'sms_from_number' => $settings['sms_from_number'] ?? '',
-            ];
-        });
-    }
+        try {
+            $result = $this->settingService->updateTwitterSettings($validated, auth()->user());
 
-    /**
-     * Get notification settings.
-     */
-    private function getNotificationSettings(): array
-    {
-        return Cache::remember('notification_settings', 3600, function () {
-            // Get all notification settings
-            $settings = SystemSetting::where('group', 'notifications')
-                ->pluck('value', 'key')
-                ->toArray();
+            // Clear config cache
+            Artisan::call('config:clear');
 
-            return [
-                'email_enabled' => isset($settings['notification_email_enabled']) && $settings['notification_email_enabled'] === '1',
-                'sms_enabled' => isset($settings['notification_sms_enabled']) && $settings['notification_sms_enabled'] === '1',
-                'push_enabled' => isset($settings['notification_push_enabled']) && $settings['notification_push_enabled'] === '1',
-                'in_app_enabled' => isset($settings['notification_in_app_enabled']) && $settings['notification_in_app_enabled'] === '1',
-            ];
-        });
+            return back()->with('success', $result['message']);
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => $e->getMessage()]);
+        }
     }
 }

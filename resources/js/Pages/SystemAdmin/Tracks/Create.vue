@@ -165,6 +165,22 @@
                             </div>
                         </div>
 
+                        <!-- Assigned Supervisor -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                {{ t('admin.tracks.assigned_supervisor') }}
+                            </label>
+                            <select v-model="form.supervisor_id"
+                                    class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-opacity-50 focus:border-transparent transition-all duration-200"
+                                    :style="{ '--tw-ring-color': themeColor.primary }">
+                                <option value="">{{ t('admin.tracks.select_supervisor') }}</option>
+                                <option v-for="supervisor in supervisors" :key="supervisor.id" :value="supervisor.id">
+                                    {{ supervisor.name }} - {{ supervisor.user_type === 'system_admin' ? 'System Admin' : 'Track Supervisor' }}
+                                </option>
+                            </select>
+                            <p v-if="form.errors.supervisor_id" class="mt-1 text-sm text-red-600">{{ form.errors.supervisor_id }}</p>
+                        </div>
+
                         <!-- Evaluation Criteria (Optional) -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -241,7 +257,8 @@ const { t, isRTL: isRTLFromLocale, direction, locale } = useLocalization()
 
 const props = defineProps({
     hackathons: Array,
-    editions: Array
+    editions: Array,
+    supervisors: Array
 })
 
 // Theme configuration
@@ -267,6 +284,7 @@ const form = useForm({
     hackathon_id: '',
     edition_id: null,
     max_teams: null,
+    supervisor_id: null,
     evaluation_criteria: [],
     is_active: true
 })

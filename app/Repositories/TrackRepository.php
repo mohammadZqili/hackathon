@@ -28,7 +28,7 @@ class TrackRepository extends BaseRepository
     public function getPaginatedWithFilters(array $filters, int $perPage = 15): LengthAwarePaginator
     {
         $query = $this->query()
-            ->with(['teams', 'ideas', 'edition', 'hackathon'])
+            ->with(['teams', 'ideas', 'edition', 'hackathon', 'supervisors'])
             ->withCount(['teams', 'ideas']);
 
         // Apply filters
@@ -66,7 +66,7 @@ class TrackRepository extends BaseRepository
     public function findWithFullDetails(int $id): ?Track
     {
         return $this->query()
-            ->with(['teams.members', 'ideas.team', 'edition', 'hackathon'])
+            ->with(['teams.members', 'ideas.team', 'edition', 'hackathon', 'supervisors'])
             ->find($id);
     }
 
@@ -95,6 +95,7 @@ class TrackRepository extends BaseRepository
             'active' => (clone $query)->where('is_active', true)->count(),
             'inactive' => (clone $query)->where('is_active', false)->count(),
             'with_teams' => (clone $query)->has('teams')->count(),
+            'with_supervisor' => (clone $query)->has('supervisors')->count(),
             'total_teams' => (clone $query)->withCount('teams')->get()->sum('teams_count'),
             'total_ideas' => (clone $query)->withCount('ideas')->get()->sum('ideas_count'),
         ];
@@ -176,8 +177,10 @@ class TrackRepository extends BaseRepository
     /**
      * Get tracks by supervisor
      */
-    public function getTracksBySupervisor(int $userId): Collection
+    public function getTracksBySupervisor(int|string $userId): Collection
     {
+        $userId = (int) $userId; // Ensure userId is always an integer
+
         return $this->query()
             ->whereHas('supervisors', function ($q) use ($userId) {
                 $q->where('user_id', $userId);

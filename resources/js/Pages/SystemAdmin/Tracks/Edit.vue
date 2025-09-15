@@ -165,6 +165,22 @@
                             </div>
                         </div>
 
+                        <!-- Assigned Supervisor -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                {{ t('admin.tracks.assigned_supervisor') }}
+                            </label>
+                            <select v-model="form.supervisor_id"
+                                    class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-opacity-50 focus:border-transparent transition-all duration-200"
+                                    :style="{ '--tw-ring-color': themeColor.primary }">
+                                <option value="">{{ t('admin.tracks.select_supervisor') }}</option>
+                                <option v-for="supervisor in supervisors" :key="supervisor.id" :value="supervisor.id">
+                                    {{ supervisor.name }} - {{ supervisor.user_type === 'system_admin' ? 'System Admin' : 'Track Supervisor' }}
+                                </option>
+                            </select>
+                            <p v-if="form.errors.supervisor_id" class="mt-1 text-sm text-red-600">{{ form.errors.supervisor_id }}</p>
+                        </div>
+
                         <!-- Evaluation Criteria (Optional) -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -242,7 +258,8 @@ const { t, isRTL: isRTLFromLocale, direction, locale } = useLocalization()
 const props = defineProps({
     track: Object,
     hackathons: Array,
-    editions: Array
+    editions: Array,
+    supervisors: Array
 })
 
 // Theme configuration
@@ -261,6 +278,10 @@ const themeStyles = computed(() => ({
 // Use isRTL from localization composable
 const isRTL = isRTLFromLocale
 
+// Get current supervisor ID
+const currentSupervisorId = props.track?.supervisors?.find(s => s.pivot?.is_primary)?.id ||
+    (props.track?.supervisors?.length > 0 ? props.track.supervisors[0].id : null)
+
 // Form setup
 const form = useForm({
     name: props.track?.name || '',
@@ -269,7 +290,8 @@ const form = useForm({
     edition_id: props.track?.edition_id || null,
     max_teams: props.track?.max_teams || null,
     evaluation_criteria: props.track?.evaluation_criteria || [],
-    is_active: props.track?.is_active !== undefined ? props.track.is_active : true
+    is_active: props.track?.is_active !== undefined ? props.track.is_active : true,
+    supervisor_id: currentSupervisorId
 })
 
 // Methods

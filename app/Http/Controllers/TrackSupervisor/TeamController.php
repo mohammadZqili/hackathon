@@ -4,50 +4,38 @@ namespace App\Http\Controllers\TrackSupervisor;
 
 use App\Http\Controllers\Controller;
 use App\Services\TeamService;
-use App\Repositories\TeamRepository;
+use App\Services\HackathonEditionService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\Team;
 use App\Models\User;
-use App\Models\Edition;
 
 class TeamController extends Controller
 {
     protected TeamService $teamService;
-    protected TeamRepository $teamRepository;
+    protected HackathonEditionService $editionService;
 
-    public function __construct(TeamService $teamService, TeamRepository $teamRepository)
-    {
+    public function __construct(
+        TeamService $teamService,
+        HackathonEditionService $editionService
+    ) {
         $this->teamService = $teamService;
-        $this->teamRepository = $teamRepository;
+        $this->editionService = $editionService;
     }
     public function index(Request $request)
     {
-        $query = Team::with(['leader', 'members', 'idea', 'edition']);
+        $data = $this->teamService->getPaginatedTeams(
+            auth()->user(),
+            $request->only(['search', 'edition_id', 'status']),
+            15
+        );
 
-        if ($request->filled('search')) {
-            $search = $request->input('search');
-            $query->where('name', 'like', "%{$search}%");
-        }
-
-        $teams = $query->latest()->paginate(15);
-
-        // Add members count to each team
-        $teams->getCollection()->transform(function ($team) {
-            $team->members_count = $team->members->count();
-            return $team;
-        });
-
-        return Inertia::render('TrackSupervisor/Teams/Index', [
-            'teams' => $teams
-        ]);
+        return Inertia::render('TrackSupervisor/Teams/Index', $data);
     }
 
     public function create()
     {
-        $editions = Edition::orderBy('year', 'desc')
-            ->orderBy('name', 'asc')
-            ->get();
+        $editions = $this->editionService->getAllEditions(auth()->user());
 
         return Inertia::render('TrackSupervisor/Teams/Create', [
             'editions' => $editions
@@ -59,85 +47,49 @@ class TeamController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'edition_id' => 'required|exists:editions,id',
+            'edition_id' => 'required|exists:hackathon_editions,id',
             'leader_id' => 'nullable|exists:users,id',
             'max_members' => 'nullable|integer|min:1|max:10',
             'member_ids' => 'nullable|array',
             'member_ids.*' => 'exists:users,id'
         ]);
 
-        $team = Team::create([
-            'name' => $validated['name'],
-            'description' => $validated['description'] ?? null,
-            'edition_id' => $validated['edition_id'],
-            'leader_id' => $validated['leader_id'] ?? null,
-            'max_members' => $validated['max_members'] ?? 5,
-            'status' => 'active'
-        ]);
+        $result = $this->teamService->createTeam($validated, auth()->user());
 
-        // Add leader as a member if specified
-        if (!empty($validated['leader_id'])) {
-            $team->members()->attach($validated['leader_id'], ['role' => 'leader']);
-        }
-
-        // Add other members
-        if (!empty($validated['member_ids'])) {
-            foreach ($validated['member_ids'] as $memberId) {
-                if ($memberId != $validated['leader_id']) {
-                    $team->members()->attach($memberId, ['role' => 'member']);
-                }
-            }
-        }
-
-        return redirect()->route('track-supervisor.teams.index')
+        return redirect()->route('system-admin.teams.index')
             ->with('success', 'Team created successfully.');
     }
 
     public function show(Team $team)
     {
-        $team->load(['leader', 'members', 'idea', 'edition']);
+        $data = $this->teamService->getTeamDetails($team->id, auth()->user());
 
-        return Inertia::render('TrackSupervisor/Teams/Show', [
-            'team' => $team
-        ]);
+        return Inertia::render('TrackSupervisor/Teams/Show', $data);
     }
 
     public function edit(Team $team)
     {
-        $team->load(['leader', 'members', 'idea', 'edition']);
+        $data = $this->teamService->getTeamDetails($team->id, auth()->user());
+        $editions = $this->editionService->getAllEditions(auth()->user());
 
-        $editions = Edition::orderBy('year', 'desc')
-            ->orderBy('name', 'asc')
-            ->get();
-
-        return Inertia::render('TrackSupervisor/Teams/Edit', [
-            'team' => $team,
+        return Inertia::render('TrackSupervisor/Teams/Edit', array_merge($data, [
             'editions' => $editions
-        ]);
+        ]));
     }
 
     public function update(Request $request, Team $team)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'edition_id' => 'required|exists:editions,id',
-            'leader_id' => 'nullable|exists:users,id',
-            'max_members' => 'nullable|integer|min:1|max:10',
-            'status' => 'required|in:active,inactive,disqualified'
-        ]);
+        $result = $this->teamService->updateTeam($team->id, $request->all(), auth()->user());
 
-        $team->update($validated);
-
-        return redirect()->route('track-supervisor.teams.index')
+        return redirect()->route('system-admin.teams.index')
             ->with('success', 'Team updated successfully.');
     }
 
     public function destroy(Team $team)
     {
-        $team->delete();
+        $this->teamService->deleteTeam($team->id, auth()->user());
 
-        return redirect()->route('track-supervisor.teams.index')
+        return redirect()->route('system-admin.teams.index')
             ->with('success', 'Team deleted successfully.');
     }
 
@@ -164,20 +116,13 @@ class TeamController extends Controller
         // Handle both User model and string ID (ULIDs are strings)
         $userId = $user instanceof User ? $user->id : (string)$user;
 
-        // Check if user is in the team
-        if (!$team->members()->where('user_id', $userId)->exists()) {
-            return back()->withErrors(['error' => 'User is not a member of this team.']);
+        $success = $this->teamService->removeTeamMember($team, $userId);
+
+        if ($success) {
+            return back()->with('success', 'Member removed successfully.');
         }
 
-        // Remove member from team
-        $team->members()->detach($userId);
-
-        // If this was the leader, clear the leader_id
-        if ($team->leader_id == $userId) {
-            $team->update(['leader_id' => null]);
-        }
-
-        return back()->with('success', 'Member removed successfully.');
+        return back()->withErrors(['error' => 'Failed to remove member from team.']);
     }
 
     public function export()

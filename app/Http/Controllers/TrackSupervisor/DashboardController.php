@@ -3,84 +3,56 @@
 namespace App\Http\Controllers\TrackSupervisor;
 
 use App\Http\Controllers\Controller;
-use App\Models\HackathonEdition;
-use App\Models\Team;
-use App\Models\Idea;
-use App\Models\User;
-use App\Models\Workshop;
+use App\Services\DashboardService;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function index(): Response
+    protected DashboardService $dashboardService;
+
+    public function __construct(DashboardService $dashboardService)
     {
-        $currentEdition = HackathonEdition::where('is_current', true)->first();
-
-        $statistics = [
-            'total_editions' => HackathonEdition::count(),
-            'total_users' => User::count(),
-            'total_teams' => Team::count(),
-            'total_ideas' => Idea::count(),
-            'total_workshops' => Workshop::count(),
-            'current_edition' => $currentEdition ? [
-                'name' => $currentEdition->name,
-                'year' => $currentEdition->year,
-                'status' => $currentEdition->status,
-                'teams_count' => Team::where('hackathon_id', $currentEdition->id)->count(),
-                'ideas_count' => Idea::whereHas('team', function($q) use ($currentEdition) {
-                    $q->where('hackathon_id', $currentEdition->id);
-                })->count(),
-            ] : null,
-            'recent_activities' => $this->getRecentActivities(),
-        ];
-
-        return Inertia::render('TrackSupervisor/Dashboard', [
-            'statistics' => $statistics,
-        ]);
+        $this->dashboardService = $dashboardService;
     }
 
-    private function getRecentActivities(): array
+    /**
+     * Display dashboard
+     */
+    public function index(Request $request)
     {
-        $activities = [];
+        $data = $this->dashboardService->getDashboardData(
+            auth()->user(),
+            $request->only(['edition_id', 'date_range'])
+        );
 
-        // Recent teams
-        $recentTeams = Team::with('leader')
-            ->latest()
-            ->take(5)
-            ->get()
-            ->map(function ($team) {
-                return [
-                    'type' => 'team_created',
-                    'message' => "New team \"{$team->name}\" created by {$team->leader->name}",
-                    'time' => $team->created_at->diffForHumans(),
-                    'icon' => 'users',
-                ];
-            });
+        return Inertia::render('TrackSupervisor/Dashboard/Index', $data);
+    }
 
-        // Recent ideas
-        $recentIdeas = Idea::with('team')
-            ->latest()
-            ->take(5)
-            ->get()
-            ->map(function ($idea) {
-                return [
-                    'type' => 'idea_submitted',
-                    'message' => "New idea \"{$idea->title}\" submitted by team {$idea->team->name}",
-                    'time' => $idea->created_at->diffForHumans(),
-                    'icon' => 'lightbulb',
-                ];
-            });
+    /**
+     * Get chart data
+     */
+    public function chartData(Request $request)
+    {
+        $data = $this->dashboardService->getChartData(
+            auth()->user(),
+            $request->get('type', 'registrations'),
+            $request->only(['edition_id', 'date_range'])
+        );
 
-        // Merge and sort by time
-        $activities = $recentTeams->merge($recentIdeas)
-            ->sortByDesc(function ($item) {
-                return $item['time'];
-            })
-            ->take(10)
-            ->values()
-            ->toArray();
+        return response()->json($data);
+    }
 
-        return $activities;
+    /**
+     * Get activity feed
+     */
+    public function activity(Request $request)
+    {
+        $data = $this->dashboardService->getActivityFeed(
+            auth()->user(),
+            $request->get('limit', 20)
+        );
+
+        return response()->json($data);
     }
 }

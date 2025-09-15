@@ -3,22 +3,36 @@
 namespace App\Http\Controllers\TrackSupervisor;
 
 use App\Http\Controllers\Controller;
+use App\Services\WorkshopService;
+use App\Services\SpeakerService;
+use App\Services\OrganizationService;
+use App\Rules\WorkshopTimeValidation;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\Workshop;
-use App\Models\Speaker;
-use App\Models\Organization;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class WorkshopController extends Controller
 {
+    protected WorkshopService $workshopService;
+    protected SpeakerService $speakerService;
+    protected OrganizationService $organizationService;
+
+    public function __construct(
+        WorkshopService $workshopService,
+        SpeakerService $speakerService,
+        OrganizationService $organizationService
+    ) {
+        $this->workshopService = $workshopService;
+        $this->speakerService = $speakerService;
+        $this->organizationService = $organizationService;
+    }
     public function index()
     {
-        $workshops = Workshop::with(['speakers', 'organizations'])
-            ->latest()
-            ->paginate(15);
-
-        $speakers = Speaker::orderBy('name')->get();
-        $organizations = Organization::orderBy('name')->get();
+        $workshops = $this->workshopService->getPaginatedWorkshops(15);
+        $speakers = $this->speakerService->getAllSpeakers();
+        $organizations = $this->organizationService->getAllOrganizations();
 
         return Inertia::render('TrackSupervisor/Workshops/Index', [
             'workshops' => $workshops,
@@ -29,13 +43,8 @@ class WorkshopController extends Controller
 
     public function create()
     {
-        $speakers = Speaker::orderBy('name')->get();
-        $organizations = Organization::orderBy('name')->get();
-
-        \Log::info('Workshop Create Data', [
-            'speakers_count' => $speakers->count(),
-            'organizations_count' => $organizations->count()
-        ]);
+        $speakers = $this->speakerService->getAllSpeakers();
+        $organizations = $this->organizationService->getAllOrganizations();
 
         return Inertia::render('TrackSupervisor/Workshops/Create', [
             'speakers' => $speakers,
@@ -45,27 +54,91 @@ class WorkshopController extends Controller
 
     public function store(Request $request)
     {
-        return redirect()->route('track-supervisor.workshops.index')
-            ->with('success', 'Workshop created successfully.');
+        // First level validation - basic field requirements
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string|max:5000',
+            'type' => 'nullable|string|in:workshop,seminar,lecture,panel',
+            'start_time' => 'required|date|after:now',
+            'end_time' => ['required', 'date', new WorkshopTimeValidation()],
+            'format' => 'required|in:online,offline,hybrid',
+            'location' => 'required_unless:format,online|nullable|string|max:255',
+            'remote_link' => 'required_if:format,online|nullable|url|max:500',
+            'max_attendees' => 'nullable|integer|min:1|max:1000',
+            'prerequisites' => 'nullable|string|max:1000',
+            'materials' => 'nullable|array',
+            'is_active' => 'boolean',
+            'requires_registration' => 'boolean',
+            'registration_deadline' => 'nullable|date|before:start_time|after:now',
+            'speaker_ids' => 'nullable|array',
+            'speaker_ids.*' => 'exists:speakers,id',
+            'organization_ids' => 'nullable|array',
+            'organization_ids.*' => 'exists:organizations,id',
+        ], [
+            // Custom error messages for better UX
+            'start_time.after' => 'The workshop start time must be in the future.',
+            'end_time.required' => 'Please specify when the workshop ends.',
+            'location.required_unless' => 'Please specify the workshop location.',
+            'remote_link.required_if' => 'Please provide the online meeting link.',
+            'registration_deadline.before' => 'Registration must close before the workshop starts.',
+        ]);
+
+        // Use service layer for business logic and additional validation
+        DB::beginTransaction();
+        try {
+            // Additional business validation through service
+            $additionalValidation = $this->workshopService->validateWorkshopData($validated);
+            if (!$additionalValidation['valid']) {
+                throw ValidationException::withMessages($additionalValidation['errors']);
+            }
+
+            // Create workshop through service
+            $workshop = $this->workshopService->createWorkshop(
+                $validated,
+                auth()->user()
+            );
+
+            DB::commit();
+
+            return redirect()->route('system-admin.workshops.index')
+                ->with('success', 'Workshop created successfully.');
+
+        } catch (ValidationException $e) {
+            DB::rollBack();
+            throw $e;
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            // Log the error for monitoring (Meta/Google best practice)
+            \Log::error('Workshop creation failed', [
+                'user_id' => auth()->id(),
+                'data' => $validated,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return back()->withInput()
+                ->withErrors(['error' => 'Failed to create workshop. Please try again.']);
+        }
     }
 
     public function show(Workshop $workshop)
     {
-        $workshop->load(['hackathon', 'speakers', 'organizations', 'registrations']);
+        $workshopData = $this->workshopService->getWorkshopDetails($workshop->id);
 
         return Inertia::render('TrackSupervisor/Workshops/Show', [
-            'workshop' => $workshop
+            'workshop' => $workshopData
         ]);
     }
 
     public function edit(Workshop $workshop)
     {
-        $speakers = Speaker::orderBy('name')->get();
-        $organizations = Organization::orderBy('name')->get();
-        $workshop->load(['speakers', 'organizations']);
+        $speakers = $this->speakerService->getAllSpeakers();
+        $organizations = $this->organizationService->getAllOrganizations();
+        $workshopData = $this->workshopService->getWorkshopWithRelations($workshop->id);
 
         return Inertia::render('TrackSupervisor/Workshops/Edit', [
-            'workshop' => $workshop,
+            'workshop' => $workshopData,
             'speakers' => $speakers,
             'organizations' => $organizations
         ]);
@@ -73,25 +146,47 @@ class WorkshopController extends Controller
 
     public function update(Request $request, Workshop $workshop)
     {
-        // TODO: Implement update functionality
-        return redirect()->route('track-supervisor.workshops.index')
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'type' => 'nullable|string|max:50',
+            'start_time' => 'required|date',
+            'end_time' => 'required|date|after:start_time',
+            'format' => 'nullable|in:online,offline,hybrid',
+            'location' => 'nullable|string|max:255',
+            'max_attendees' => 'nullable|integer|min:1',
+            'prerequisites' => 'nullable|string',
+            'materials' => 'nullable|array',
+            'is_active' => 'boolean',
+            'requires_registration' => 'boolean',
+            'registration_deadline' => 'nullable|date|before:start_time',
+            'speaker_ids' => 'nullable|array',
+            'speaker_ids.*' => 'exists:speakers,id',
+            'organization_ids' => 'nullable|array',
+            'organization_ids.*' => 'exists:organizations,id',
+        ]);
+
+        // Update workshop through service
+        $this->workshopService->updateWorkshop($workshop->id, $validated, auth()->user());
+
+        return redirect()->route('system-admin.workshops.index')
             ->with('success', 'Workshop updated successfully.');
     }
 
     public function destroy(Workshop $workshop)
     {
-        $workshop->delete();
+        $this->workshopService->deleteWorkshop($workshop->id);
 
-        return redirect()->route('track-supervisor.workshops.index')
+        return redirect()->route('system-admin.workshops.index')
             ->with('success', 'Workshop deleted successfully.');
     }
 
     public function attendance(Workshop $workshop)
     {
-        $workshop->load('attendances.user');
+        $workshopData = $this->workshopService->getWorkshopWithAttendance($workshop->id);
 
         return Inertia::render('TrackSupervisor/Workshops/Attendance', [
-            'workshop' => $workshop
+            'workshop' => $workshopData
         ]);
     }
 
