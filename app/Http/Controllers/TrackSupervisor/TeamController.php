@@ -127,6 +127,7 @@ class TeamController extends Controller
 
         return Inertia::render('TrackSupervisor/Teams/Edit', array_merge($data, [
             'edition' => $edition,
+            'editions' => [$edition], // Only current edition for track supervisors
             'assigned_tracks' => $assignedTracks,
             'tracks' => $assignedTracks // For compatibility
         ]));
@@ -167,12 +168,19 @@ class TeamController extends Controller
         $this->authorize('addMember', $team);
 
         $validated = $request->validate([
-            'user_id' => 'required|exists:users,id'
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'phone' => 'nullable|string|max:20',
+            'send_invitation' => 'nullable|boolean'
         ]);
 
-        $result = $this->teamService->addMember($team->id, $validated['user_id'], auth()->user());
+        $result = $this->teamService->addMemberWithInvitation($team, $validated);
 
-        return back()->with('success', 'Member added successfully.');
+        if ($result['success']) {
+            return back()->with('success', $result['message']);
+        }
+
+        return back()->withErrors(['email' => $result['message']]);
     }
 
     public function removeMember(Team $team, $userId)

@@ -70,20 +70,24 @@
                                     </div>
                                     <select v-model="form.edition_id"
                                             id="edition_id"
-                                            class="pl-10 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-opacity-50 focus:border-transparent transition-all duration-200 appearance-none cursor-pointer"
+                                            disabled
+                                            class="pl-10 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-600 text-gray-900 dark:text-white focus:ring-2 focus:ring-opacity-50 focus:border-transparent transition-all duration-200 appearance-none cursor-not-allowed opacity-75"
                                             :class="{ 'border-red-500 focus:ring-red-500': form.errors.edition_id }"
                                             :style="{ '--tw-ring-color': themeColor.primary }">
-                                        <option value="" disabled>Select Edition</option>
+                                        <option v-if="!editions || editions.length === 0" :value="form.edition_id">Current Edition</option>
                                         <option v-for="edition in editions" :key="edition.id" :value="edition.id">
                                             {{ edition.name }} ({{ edition.year }})
                                         </option>
                                     </select>
                                     <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                                         <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
                                         </svg>
                                     </div>
                                 </div>
+                                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                    Track supervisors work with the current edition only
+                                </p>
                                 <p v-if="form.errors.edition_id" class="mt-1 text-sm text-red-600 dark:text-red-400">
                                     {{ form.errors.edition_id }}
                                 </p>
