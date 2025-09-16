@@ -5,6 +5,7 @@ namespace App\Http\Controllers\TrackSupervisor;
 use App\Http\Controllers\Controller;
 use App\Models\Track;
 use App\Services\TrackService;
+use App\Services\EditionContext;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -12,25 +13,72 @@ use Inertia\Response;
 class TrackController extends Controller
 {
     protected TrackService $trackService;
+    protected EditionContext $editionContext;
 
-    public function __construct(TrackService $trackService)
+    public function __construct(TrackService $trackService, EditionContext $editionContext)
     {
         $this->trackService = $trackService;
+        $this->editionContext = $editionContext;
     }
 
     /**
-     * Display a listing of tracks
+     * Display the single track assigned to this supervisor
      */
     public function index(Request $request): Response
     {
-        $filters = $request->only(['edition_id', 'status', 'search']);
-        $perPage = $request->get('per_page', 15);
+        $edition = $this->editionContext->current();
+        $user = auth()->user();
 
-        $data = $this->trackService->getPaginatedTracks(
-            auth()->user(),
-            $filters,
-            $perPage
-        );
+        // Get the single track assigned to this supervisor
+        $assignedTrack = $user->getAssignedTrack($edition->id);
+
+        if (!$assignedTrack) {
+            // Return empty data if no track assigned
+            return Inertia::render('TrackSupervisor/Tracks/Index', [
+                'tracks' => ['data' => [], 'total' => 0],
+                'statistics' => [
+                    'total' => 0,
+                    'active' => 0,
+                    'inactive' => 0,
+                    'with_supervisor' => 0,
+                    'total_teams' => 0,
+                    'total_ideas' => 0
+                ],
+                'editions' => [$edition],
+                'filters' => $request->only(['search', 'status', 'edition_id']),
+                'message' => 'You are not assigned to any track in the current edition.'
+            ]);
+        }
+
+        // Load relationships and counts for the track
+        $assignedTrack->loadCount(['teams', 'ideas']);
+        $assignedTrack->load(['edition', 'supervisors']);
+
+        // Calculate statistics for the single track
+        $statistics = [
+            'total' => 1,
+            'active' => $assignedTrack->is_active ? 1 : 0,
+            'inactive' => !$assignedTrack->is_active ? 1 : 0,
+            'with_supervisor' => 1, // Track supervisor is viewing their own track
+            'total_teams' => $assignedTrack->teams_count ?? 0,
+            'total_ideas' => $assignedTrack->ideas_count ?? 0
+        ];
+
+        // Return single track as paginated result for consistency
+        $data = [
+            'tracks' => [
+                'data' => [$assignedTrack],
+                'total' => 1,
+                'current_page' => 1,
+                'per_page' => 1,
+                'links' => [] // Empty links since there's only one track
+            ],
+            'statistics' => $statistics,
+            'editions' => [$edition], // Only show current edition
+            'filters' => $request->only(['search', 'status', 'edition_id']),
+            'current_edition' => $edition,
+            'assigned_track' => $assignedTrack
+        ];
 
         return Inertia::render('TrackSupervisor/Tracks/Index', $data);
     }
@@ -40,9 +88,8 @@ class TrackController extends Controller
      */
     public function create(): Response
     {
-        $data = $this->trackService->getFormData(auth()->user());
-
-        return Inertia::render('TrackSupervisor/Tracks/Create', $data);
+        // Track supervisors cannot create tracks
+        abort(403, 'Track supervisors are not authorized to create tracks.');
     }
 
     /**

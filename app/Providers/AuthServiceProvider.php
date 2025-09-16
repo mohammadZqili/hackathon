@@ -5,9 +5,11 @@ namespace App\Providers;
 use App\Models\Team;
 use App\Models\Idea;
 use App\Models\Track;
+use App\Models\Workshop;
 use App\Policies\TeamPolicy;
 use App\Policies\IdeaPolicy;
 use App\Policies\TrackPolicy;
+use App\Policies\WorkshopPolicy;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
@@ -22,6 +24,7 @@ class AuthServiceProvider extends ServiceProvider
         Team::class => TeamPolicy::class,
         Idea::class => IdeaPolicy::class,
         Track::class => TrackPolicy::class,
+        Workshop::class => WorkshopPolicy::class,
     ];
 
     /**

@@ -76,10 +76,16 @@ class TeamPolicy
      */
     public function update(User $user, Team $team): bool
     {
-        // Only admins can update teams
-        // Track supervisors cannot update teams
+        // Admins can update any team
         if ($user->hasAnyRole(['system_admin', 'hackathon_admin'])) {
             return true;
+        }
+
+        // Track supervisors can update teams in their assigned track
+        if ($user->hasRole('track_supervisor')) {
+            $edition = $this->editionContext->current();
+            $assignedTrackId = $user->getAssignedTrackId($edition->id);
+            return $team->track_id === $assignedTrackId;
         }
 
         // Team leader can update their own team
@@ -95,8 +101,19 @@ class TeamPolicy
      */
     public function delete(User $user, Team $team): bool
     {
-        // Only admins can delete teams
-        return $user->hasAnyRole(['system_admin', 'hackathon_admin']);
+        // Admins can delete any team
+        if ($user->hasAnyRole(['system_admin', 'hackathon_admin'])) {
+            return true;
+        }
+
+        // Track supervisors can delete teams in their assigned track
+        if ($user->hasRole('track_supervisor')) {
+            $edition = $this->editionContext->current();
+            $assignedTrackId = $user->getAssignedTrackId($edition->id);
+            return $team->track_id === $assignedTrackId;
+        }
+
+        return false;
     }
 
     /**

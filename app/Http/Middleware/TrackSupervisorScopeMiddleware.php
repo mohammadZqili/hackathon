@@ -36,19 +36,16 @@ class TrackSupervisorScopeMiddleware
             abort(503, 'No active edition available.');
         }
 
-        // Get tracks assigned to this supervisor in the current edition
-        $trackIds = $user->supervisedTracks()
-            ->where('edition_id', $currentEdition->id)
-            ->pluck('tracks.id')
-            ->toArray();
+        // Get the single track assigned to this supervisor in the current edition
+        $assignedTrack = $user->getAssignedTrack($currentEdition->id);
 
-        if (empty($trackIds)) {
-            abort(403, 'You are not assigned to any tracks in the current edition.');
+        if (!$assignedTrack) {
+            abort(403, 'You are not assigned to any track in the current edition.');
         }
 
-        // Add track IDs to request for easy access in controllers
+        // Add track ID to request for easy access in controllers
         $request->merge([
-            'supervisor_track_ids' => $trackIds,
+            'supervisor_track_id' => $assignedTrack->id,
             'supervisor_edition_id' => $currentEdition->id
         ]);
 

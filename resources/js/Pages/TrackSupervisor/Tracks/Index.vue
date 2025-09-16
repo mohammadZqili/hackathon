@@ -164,19 +164,21 @@
                                         <div class="max-w-xs truncate">{{ track.description }}</div>
                                     </td>
                                     <td class="px-4 py-4 text-sm" :style="{ color: themeColor.primary }">
-                                        <span v-if="track.supervisor">{{ track.supervisor.name }}</span>
+                                        <span v-if="track.supervisors && track.supervisors.length > 0">
+                                            {{ track.supervisors.map(s => s.name).join(', ') }}
+                                        </span>
                                         <span v-else class="text-gray-400">Not Assigned</span>
                                     </td>
                                     <td class="px-4 py-4 text-sm text-gray-900">{{ track.teams_count || 0 }}</td>
                                     <td class="px-4 py-4 text-sm text-gray-900">{{ track.ideas_count || 0 }}</td>
                                     <td class="px-4 py-4 text-sm">
-                                        <span v-if="track.status === 'active'" class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Active</span>
+                                        <span v-if="track.is_active" class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Active</span>
                                         <span v-else class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800">Inactive</span>
                                     </td>
                                     <td class="px-4 py-4 text-sm">
                                         <div class="flex items-center gap-2">
                                             <Link
-                                                :href="route('system-admin.tracks.show', track.id)"
+                                                :href="route('track-supervisor.tracks.show', track.id)"
                                                 class="text-blue-600 hover:text-blue-800"
                                             >
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -185,7 +187,7 @@
                                                 </svg>
                                             </Link>
                                             <Link
-                                                :href="route('system-admin.tracks.edit', track.id)"
+                                                :href="route('track-supervisor.tracks.edit', track.id)"
                                                 :style="{ color: themeColor.primary }"
                                                 class="hover:opacity-75"
                                             >
@@ -193,14 +195,6 @@
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                                                 </svg>
                                             </Link>
-                                            <button
-                                                @click="deleteTrack(track.id)"
-                                                class="text-red-600 hover:text-red-800"
-                                            >
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                                </svg>
-                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -215,20 +209,11 @@
                 </div>
             </div>
 
-            <!-- Add Track Button -->
-            <div class="flex flex-row items-start justify-start py-3 px-4">
-                <Link
-                    :href="route('system-admin.tracks.create')"
-                    class="rounded-xl px-4 py-2 font-bold text-white transition-colors"
-                    :style="{ 
-                        backgroundColor: themeColor.primary,
-                        ':hover': { backgroundColor: themeColor.hover }
-                    }"
-                    @mouseover="e => e.target.style.backgroundColor = themeColor.hover"
-                    @mouseout="e => e.target.style.backgroundColor = themeColor.primary"
-                >
-                    Add Track
-                </Link>
+            <!-- Note: Track supervisors cannot create tracks -->
+            <div v-if="message" class="px-4 py-3">
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-yellow-800">
+                    {{ message }}
+                </div>
             </div>
         </div>
     </Default>
@@ -248,6 +233,7 @@ const props = defineProps({
     editions: Array,
     statistics: Object,
     filters: Object,
+    message: String,
 });
 
 const filters = ref({
@@ -291,15 +277,9 @@ const debounceSearch = () => {
 };
 
 const applyFilters = () => {
-    router.get(route('system-admin.tracks.index'), filters.value, {
+    router.get(route('track-supervisor.tracks.index'), filters.value, {
         preserveState: true,
         preserveScroll: true,
     });
-};
-
-const deleteTrack = (id) => {
-    if (confirm('Are you sure you want to delete this track? This action cannot be undone.')) {
-        router.delete(route('system-admin.tracks.destroy', id));
-    }
 };
 </script>

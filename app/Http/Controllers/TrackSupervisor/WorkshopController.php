@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\WorkshopService;
 use App\Services\SpeakerService;
 use App\Services\OrganizationService;
+use App\Services\EditionContext;
 use App\Rules\WorkshopTimeValidation;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -18,36 +19,48 @@ class WorkshopController extends Controller
     protected WorkshopService $workshopService;
     protected SpeakerService $speakerService;
     protected OrganizationService $organizationService;
+    protected EditionContext $editionContext;
 
     public function __construct(
         WorkshopService $workshopService,
         SpeakerService $speakerService,
-        OrganizationService $organizationService
+        OrganizationService $organizationService,
+        EditionContext $editionContext
     ) {
         $this->workshopService = $workshopService;
         $this->speakerService = $speakerService;
         $this->organizationService = $organizationService;
+        $this->editionContext = $editionContext;
     }
     public function index()
     {
-        $workshops = $this->workshopService->getPaginatedWorkshops(15);
+        $edition = $this->editionContext->current();
+
+        // Filter workshops by current edition (using hackathon_edition_id)
+        $workshops = Workshop::where('hackathon_edition_id', $edition->id)
+            ->with(['speaker', 'organization', 'attendees'])
+            ->paginate(15);
+
         $speakers = $this->speakerService->getAllSpeakers();
         $organizations = $this->organizationService->getAllOrganizations();
 
         return Inertia::render('TrackSupervisor/Workshops/Index', [
             'workshops' => $workshops,
             'speakers' => $speakers,
-            'organizations' => $organizations
+            'organizations' => $organizations,
+            'current_edition' => $edition
         ]);
     }
 
     public function create()
     {
+        $edition = $this->editionContext->current();
         $speakers = $this->speakerService->getAllSpeakers();
         $organizations = $this->organizationService->getAllOrganizations();
 
         return Inertia::render('TrackSupervisor/Workshops/Create', [
             'speakers' => $speakers,
+            'current_edition' => $edition,
             'organizations' => $organizations
         ]);
     }
@@ -91,6 +104,10 @@ class WorkshopController extends Controller
             if (!$additionalValidation['valid']) {
                 throw ValidationException::withMessages($additionalValidation['errors']);
             }
+
+            // Add current edition to the validated data
+            $edition = $this->editionContext->current();
+            $validated['hackathon_edition_id'] = $edition->id;
 
             // Create workshop through service
             $workshop = $this->workshopService->createWorkshop(

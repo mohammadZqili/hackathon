@@ -54,14 +54,51 @@ class TeamController extends Controller
 
     public function create()
     {
-        // Track supervisors cannot create teams
-        abort(403, 'Track supervisors are not authorized to create teams.');
+        $edition = $this->editionContext->current();
+        $user = auth()->user();
+
+        // Get the single track assigned to this supervisor
+        $assignedTrack = $user->getAssignedTrack($edition->id);
+
+        if (!$assignedTrack) {
+            abort(403, 'You are not assigned to any track in the current edition.');
+        }
+
+        return Inertia::render('TrackSupervisor/Teams/Create', [
+            'edition' => $edition,
+            'assigned_track' => $assignedTrack
+        ]);
     }
 
     public function store(Request $request)
     {
-        // Track supervisors cannot create teams
-        abort(403, 'Track supervisors are not authorized to create teams.');
+        $edition = $this->editionContext->current();
+        $user = auth()->user();
+
+        // Get the single track assigned to this supervisor
+        $assignedTrackId = $user->getAssignedTrackId($edition->id);
+
+        if (!$assignedTrackId) {
+            abort(403, 'You are not assigned to any track in the current edition.');
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'leader_id' => 'nullable|exists:users,id',
+            'max_members' => 'nullable|integer|min:1|max:10',
+            'member_ids' => 'nullable|array',
+            'member_ids.*' => 'exists:users,id'
+        ]);
+
+        // Force the team to be in the supervisor's track and current edition
+        $validated['track_id'] = $assignedTrackId;
+        $validated['edition_id'] = $edition->id;
+
+        $result = $this->teamService->createTeam($validated, $user);
+
+        return redirect()->route('track-supervisor.teams.index')
+            ->with('success', 'Team created successfully.');
     }
 
     public function show(Team $team)
@@ -76,20 +113,46 @@ class TeamController extends Controller
 
     public function edit(Team $team)
     {
-        // Track supervisors cannot edit teams
-        abort(403, 'Track supervisors are not authorized to edit teams.');
+        // Check policy
+        $this->authorize('update', $team);
+
+        $edition = $this->editionContext->current();
+        $data = $this->teamService->getTeamDetails($team->id, auth()->user());
+        $assignedTrack = auth()->user()->getAssignedTrack($edition->id);
+
+        return Inertia::render('TrackSupervisor/Teams/Edit', array_merge($data, [
+            'edition' => $edition,
+            'assigned_track' => $assignedTrack
+        ]));
     }
 
     public function update(Request $request, Team $team)
     {
-        // Track supervisors cannot update teams
-        abort(403, 'Track supervisors are not authorized to update teams.');
+        // Check policy
+        $this->authorize('update', $team);
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'leader_id' => 'nullable|exists:users,id',
+            'max_members' => 'nullable|integer|min:1|max:10'
+        ]);
+
+        $result = $this->teamService->updateTeam($team->id, $validated, auth()->user());
+
+        return redirect()->route('track-supervisor.teams.index')
+            ->with('success', 'Team updated successfully.');
     }
 
     public function destroy(Team $team)
     {
-        // Track supervisors cannot delete teams
-        abort(403, 'Track supervisors are not authorized to delete teams.');
+        // Check policy - track supervisors can delete teams in their track
+        $this->authorize('delete', $team);
+
+        $this->teamService->deleteTeam($team->id, auth()->user());
+
+        return redirect()->route('track-supervisor.teams.index')
+            ->with('success', 'Team deleted successfully.');
     }
 
     public function addMember(Request $request, Team $team)
