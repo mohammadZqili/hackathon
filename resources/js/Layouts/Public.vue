@@ -4,6 +4,8 @@ import { usePage, Link } from '@inertiajs/vue3'
 import NavSidebarDesktop from '@/Shared/Public/NavSidebarDesktop.vue'
 import Footer from '@/Shared/Public/Footer.vue'
 import { cycleTheme, getCurrentThemeState } from '@/darkMode'
+import LanguageSwitcher from '@/Components/LanguageSwitcher.vue'
+import { useLocalization } from '@/composables/useLocalization'
 
 const sidebarStorageKey = 'sidebarOpen'
 const isMobile = () => window.innerWidth < 768
@@ -11,6 +13,7 @@ const page = usePage()
 const isSidebarOpen = ref(false)
 const isDark = ref(document.documentElement.classList.contains('dark'))
 const themeState = ref(getCurrentThemeState())
+const { t, isRTL, direction, locale } = useLocalization()
 
 const toggleSidebar = () => {
     isSidebarOpen.value = !isSidebarOpen.value
@@ -123,6 +126,9 @@ onMounted(() => {
                     </section>
 
                     <section class="flex flex-1 items-center justify-end gap-4" aria-label="Site controls">
+                        <!-- Language Switcher -->
+                        <LanguageSwitcher />
+
                         <!-- Theme Toggle Button -->
                         <button type="button"
                             class="rounded-lg p-2 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-700 transition-all cursor-pointer"

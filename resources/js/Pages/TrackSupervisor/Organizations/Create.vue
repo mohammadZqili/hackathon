@@ -209,7 +209,7 @@
 
                 <!-- Action Buttons -->
                 <div class="flex justify-between">
-                    <Link :href="route('system-admin.organizations.index')"
+                    <Link :href="route('track-supervisor.organizations.index')"
                           class="px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                         Cancel
                     </Link>
@@ -288,6 +288,6 @@ const removeLogo = () => {
 }
 
 const submit = () => {
-    form.post(route('system-admin.organizations.store'))
+    form.post(route('track-supervisor.organizations.store'))
 }
 </script>

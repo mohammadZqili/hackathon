@@ -209,7 +209,7 @@ const form = useForm({
 })
 
 const submit = () => {
-    form.post(route('system-admin.organizations.store'), {
+    form.post(route('track-supervisor.organizations.store'), {
         onSuccess: () => {
             emit('success')
         },

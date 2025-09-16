@@ -213,7 +213,7 @@
 
                 <!-- Actions -->
                 <div class="flex justify-end gap-4">
-                    <Link :href="route('system-admin.editions.index')"
+                    <Link :href="route('track-supervisor.editions.index')"
                           class="px-6 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                         Cancel
                     </Link>
@@ -298,7 +298,7 @@ const themeStyles = computed(() => ({
 }))
 
 const submit = () => {
-    form.post(route('system-admin.editions.store'))
+    form.post(route('track-supervisor.editions.store'))
 }
 </script>
 

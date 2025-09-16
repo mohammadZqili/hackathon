@@ -159,7 +159,7 @@ const submit = () => {
     errorMessage.value = ''
     successMessage.value = ''
 
-    form.post(route('system-admin.teams.add-member', props.team.id), {
+    form.post(route('track-supervisor.teams.add-member', props.team.id), {
         onSuccess: () => {
             successMessage.value = form.send_invitation
                 ? t('admin.teams.member_added_email_sent')

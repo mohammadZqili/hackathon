@@ -24,6 +24,11 @@ use App\Http\Controllers\AdminPermissionRoleController;
 use App\Http\Controllers\ForcePasswordChangeController;
 use App\Http\Controllers\AdminPersonalisationController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\PublicNewsController;
+
+// Public News Routes
+Route::get('/news', [PublicNewsController::class, 'index'])->name('public.news.index');
+Route::get('/news/{id}', [PublicNewsController::class, 'show'])->name('public.news.show');
 
 Route::get('/terms', [PageController::class, 'terms'])->name('terms');
 Route::get('/', function () {
@@ -231,7 +236,7 @@ require __DIR__.'/hackathon.php';
 //require __DIR__.'/hackathon-admin.php';
 
 // TrackSupervisor Routes
-//require __DIR__.'/track-supervisor.php';
+require __DIR__.'/track-supervisor.php';
 
 // TeamLead Routes
 require __DIR__.'/team-lead.php';

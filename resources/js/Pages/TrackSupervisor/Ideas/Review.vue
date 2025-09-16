@@ -35,10 +35,10 @@ const totalScore = computed(() => {
 })
 
 const submitReview = () => {
-    form.post(route('system-admin.ideas.process-review', props.idea.id), {
+    form.post(route('track-supervisor.ideas.process-review', props.idea.id), {
         preserveScroll: true,
         onSuccess: () => {
-            router.visit(route('system-admin.ideas.show', props.idea.id))
+            router.visit(route('track-supervisor.ideas.show', props.idea.id))
         },
     })
 }
@@ -64,7 +64,7 @@ const criteriaDescriptions = {
             <!-- Header -->
             <div class="mb-6">
                 <div class="flex items-center mb-3">
-                    <a :href="route('system-admin.ideas.show', idea.id)"
+                    <a :href="route('track-supervisor.ideas.show', idea.id)"
                        class="mr-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
                         <ArrowLeftIcon class="w-5 h-5" />
                     </a>
@@ -212,7 +212,7 @@ const criteriaDescriptions = {
 
                 <!-- Actions -->
                 <div class="flex justify-end space-x-3">
-                    <a :href="route('system-admin.ideas.show', idea.id)"
+                    <a :href="route('track-supervisor.ideas.show', idea.id)"
                        class="px-6 py-2.5 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl font-medium transition-colors">
                         Cancel
                     </a>

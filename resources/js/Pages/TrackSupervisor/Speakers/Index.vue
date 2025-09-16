@@ -7,7 +7,7 @@
                 <div class="w-72 flex flex-col items-start justify-start min-w-[288px]">
                     <h1 class="text-[32px] font-bold text-gray-900 dark:text-white leading-10">Speakers</h1>
                 </div>
-                <Link :href="route('system-admin.speakers.create')"
+                <Link :href="route('track-supervisor.speakers.create')"
                       class="rounded-xl h-8 overflow-hidden flex flex-row items-center justify-center py-0 px-4 min-w-[84px] max-w-[480px] text-center text-sm text-white font-medium transition-all duration-200 hover:shadow-md"
                       :style="{
                           background: `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})`,
@@ -235,7 +235,7 @@ const themeStyles = computed(() => ({
 }))
 
 const handleSearch = () => {
-    router.get(route('system-admin.speakers.index'), {
+    router.get(route('track-supervisor.speakers.index'), {
         search: searchQuery.value
     }, {
         preserveState: true,
@@ -244,12 +244,12 @@ const handleSearch = () => {
 }
 
 const editSpeaker = (speaker) => {
-    router.visit(route('system-admin.speakers.edit', speaker.id))
+    router.visit(route('track-supervisor.speakers.edit', speaker.id))
 }
 
 const deleteSpeaker = (speaker) => {
     if (confirm(`Are you sure you want to delete speaker "${speaker.name}"?`)) {
-        useForm({}).delete(route('system-admin.speakers.destroy', speaker.id))
+        useForm({}).delete(route('track-supervisor.speakers.destroy', speaker.id))
     }
 }
 

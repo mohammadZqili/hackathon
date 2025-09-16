@@ -57,16 +57,17 @@ class TeamController extends Controller
         $edition = $this->editionContext->current();
         $user = auth()->user();
 
-        // Get the single track assigned to this supervisor
-        $assignedTrack = $user->getAssignedTrack($edition->id);
+        // Get all tracks assigned to this supervisor
+        $assignedTracks = $user->tracksInEdition($edition->id)->get();
 
-        if (!$assignedTrack) {
+        if ($assignedTracks->isEmpty()) {
             abort(403, 'You are not assigned to any track in the current edition.');
         }
 
         return Inertia::render('TrackSupervisor/Teams/Create', [
             'edition' => $edition,
-            'assigned_track' => $assignedTrack
+            'assigned_tracks' => $assignedTracks,
+            'tracks' => $assignedTracks // For compatibility
         ]);
     }
 
@@ -75,24 +76,28 @@ class TeamController extends Controller
         $edition = $this->editionContext->current();
         $user = auth()->user();
 
-        // Get the single track assigned to this supervisor
-        $assignedTrackId = $user->getAssignedTrackId($edition->id);
+        // Get all track IDs assigned to this supervisor
+        $assignedTrackIds = $user->tracksInEdition($edition->id)->pluck('tracks.id')->toArray();
 
-        if (!$assignedTrackId) {
+        if (empty($assignedTrackIds)) {
             abort(403, 'You are not assigned to any track in the current edition.');
         }
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'track_id' => ['required', 'exists:tracks,id', function($attribute, $value, $fail) use ($assignedTrackIds) {
+                if (!in_array($value, $assignedTrackIds)) {
+                    $fail('You can only create teams in your assigned tracks.');
+                }
+            }],
             'leader_id' => 'nullable|exists:users,id',
             'max_members' => 'nullable|integer|min:1|max:10',
             'member_ids' => 'nullable|array',
             'member_ids.*' => 'exists:users,id'
         ]);
 
-        // Force the team to be in the supervisor's track and current edition
-        $validated['track_id'] = $assignedTrackId;
+        // Force the team to be in current edition
         $validated['edition_id'] = $edition->id;
 
         $result = $this->teamService->createTeam($validated, $user);
@@ -118,11 +123,12 @@ class TeamController extends Controller
 
         $edition = $this->editionContext->current();
         $data = $this->teamService->getTeamDetails($team->id, auth()->user());
-        $assignedTrack = auth()->user()->getAssignedTrack($edition->id);
+        $assignedTracks = auth()->user()->tracksInEdition($edition->id)->get();
 
         return Inertia::render('TrackSupervisor/Teams/Edit', array_merge($data, [
             'edition' => $edition,
-            'assigned_track' => $assignedTrack
+            'assigned_tracks' => $assignedTracks,
+            'tracks' => $assignedTracks // For compatibility
         ]));
     }
 
@@ -157,14 +163,26 @@ class TeamController extends Controller
 
     public function addMember(Request $request, Team $team)
     {
-        // Track supervisors cannot add members
-        abort(403, 'Track supervisors are not authorized to manage team members.');
+        // Check policy - track supervisors CAN add members to teams in their tracks
+        $this->authorize('addMember', $team);
+
+        $validated = $request->validate([
+            'user_id' => 'required|exists:users,id'
+        ]);
+
+        $result = $this->teamService->addMember($team->id, $validated['user_id'], auth()->user());
+
+        return back()->with('success', 'Member added successfully.');
     }
 
-    public function removeMember(Team $team, $user)
+    public function removeMember(Team $team, $userId)
     {
-        // Track supervisors cannot remove members
-        abort(403, 'Track supervisors are not authorized to manage team members.');
+        // Check policy - track supervisors CAN remove members from teams in their tracks
+        $this->authorize('removeMember', $team);
+
+        $result = $this->teamService->removeMember($team->id, $userId, auth()->user());
+
+        return back()->with('success', 'Member removed successfully.');
     }
 
     public function export()

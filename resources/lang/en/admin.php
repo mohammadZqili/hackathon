@@ -1,6 +1,31 @@
 <?php
 
 return [
+
+    // Sidebar Navigation
+    'sidebar' => [
+        'dashboard' => 'Dashboard',
+        'hackathon_editions' => 'Hackathon Editions',
+        'teams_all' => 'Teams (All Editions)',
+        'tracks_all' => 'Tracks (All Editions)',
+        'ideas_all' => 'Ideas (All Editions)',
+        'workshops_all' => 'Workshops (All)',
+        'news_all' => 'News (All)',
+        'admin_users' => 'Admin User Management',
+        'speakers' => 'Speakers',
+        'organizations' => 'Organizations',
+        'system_settings' => 'System Settings',
+        'checkins' => 'Check-ins',
+        'reports' => 'Reports & Analytics',
+        'teams' => 'Teams',
+        'tracks' => 'Tracks',
+        'ideas' => 'Ideas',
+        'workshops' => 'Workshops',
+        'news' => 'News',
+        'profile' => 'Profile',
+        'settings' => 'Settings',
+        'logout' => 'Logout',
+    ],
     // Dashboard
     'dashboard' => [
         'title' => 'System Admin Dashboard',

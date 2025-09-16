@@ -11,7 +11,7 @@
                     </p>
                 </div>
 
-                <Link :href="route('system-admin.news.create')"
+                <Link :href="route('track-supervisor.news.create')"
                       class="inline-flex items-center px-4 py-2 rounded-lg font-semibold text-white transition-all duration-200 shadow-sm hover:shadow-md mt-4 sm:mt-0"
                       :style="{
                           background: `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})`,
@@ -27,11 +27,11 @@
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm mb-6">
                 <div class="border-b border-gray-200 dark:border-gray-700">
                     <div class="flex gap-8 px-6">
-                        <Link :href="route('system-admin.news.create')"
+                        <Link :href="route('track-supervisor.news.create')"
                               class="py-4 px-1 border-b-2 transition-colors border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
                             <span class="text-sm font-medium">Add News</span>
                         </Link>
-                        <Link :href="route('system-admin.news.index')"
+                        <Link :href="route('track-supervisor.news.index')"
                               class="py-4 px-1 border-b-2 transition-colors border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
                             <span class="text-sm font-medium">All News</span>
                         </Link>
@@ -372,7 +372,7 @@ const deleteMedia = async (media) => {
     if (confirm(`Are you sure you want to delete this ${media.type}?`)) {
         try {
             // Make API call to delete the media
-            const response = await fetch(route('system-admin.news.media.delete', media.id), {
+            const response = await fetch(route('track-supervisor.news.media.delete', media.id), {
                 method: 'DELETE',
                 headers: {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),

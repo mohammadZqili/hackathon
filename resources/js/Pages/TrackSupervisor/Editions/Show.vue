@@ -62,11 +62,11 @@ const statusColor = computed(() => {
                         </p>
                     </div>
                     <div class="flex gap-3">
-                        <a :href="route('system-admin.editions.index')"
+                        <a :href="route('track-supervisor.editions.index')"
                            class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
                             Back to List
                         </a>
-                        <a :href="route('system-admin.editions.edit', edition.id)"
+                        <a :href="route('track-supervisor.editions.edit', edition.id)"
                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                             Edit Edition
                         </a>
@@ -243,17 +243,17 @@ export default {
     methods: {
         setCurrent() {
             if (confirm('Are you sure you want to set this edition as current?')) {
-                router.post(route('system-admin.editions.set-current', this.edition.id))
+                router.post(route('track-supervisor.editions.set-current', this.edition.id))
             }
         },
         archiveEdition() {
             if (confirm('Are you sure you want to archive this edition?')) {
-                router.post(route('system-admin.editions.archive', this.edition.id))
+                router.post(route('track-supervisor.editions.archive', this.edition.id))
             }
         },
         deleteEdition() {
             if (confirm('Are you sure you want to delete this edition? This action cannot be undone.')) {
-                router.delete(route('system-admin.editions.destroy', this.edition.id))
+                router.delete(route('track-supervisor.editions.destroy', this.edition.id))
             }
         }
     }

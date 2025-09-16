@@ -7,7 +7,7 @@
                 <div class="w-72 flex flex-col items-start justify-start min-w-[288px]">
                     <h1 class="text-[32px] font-bold text-gray-900 dark:text-white leading-10">Organizations</h1>
                 </div>
-                <Link :href="route('system-admin.organizations.create')"
+                <Link :href="route('track-supervisor.organizations.create')"
                       class="rounded-xl h-8 overflow-hidden flex flex-row items-center justify-center py-0 px-4 min-w-[84px] max-w-[480px] text-center text-sm text-white font-medium transition-all duration-200 hover:shadow-md"
                       :style="{
                           background: `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})`,
@@ -221,7 +221,7 @@ const formatWebsite = (url) => {
 }
 
 const handleSearch = () => {
-    router.get(route('system-admin.organizations.index'), {
+    router.get(route('track-supervisor.organizations.index'), {
         search: searchQuery.value
     }, {
         preserveState: true,
@@ -230,12 +230,12 @@ const handleSearch = () => {
 }
 
 const editOrganization = (org) => {
-    router.visit(route('system-admin.organizations.edit', org.id))
+    router.visit(route('track-supervisor.organizations.edit', org.id))
 }
 
 const deleteOrganization = (org) => {
     if (confirm(`Are you sure you want to delete organization "${org.name}"?`)) {
-        useForm({}).delete(route('system-admin.organizations.destroy', org.id))
+        useForm({}).delete(route('track-supervisor.organizations.destroy', org.id))
     }
 }
 

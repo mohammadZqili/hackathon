@@ -75,8 +75,63 @@ class IdeaController extends Controller
      */
     public function create()
     {
-        // Track supervisors cannot create ideas
-        abort(403, 'Track supervisors are not authorized to create ideas.');
+        $edition = $this->editionContext->current();
+        $user = auth()->user();
+
+        // Get all tracks assigned to this supervisor
+        $assignedTracks = $user->tracksInEdition($edition->id)->get();
+
+        if ($assignedTracks->isEmpty()) {
+            abort(403, 'You are not assigned to any track in the current edition.');
+        }
+
+        // Get teams in assigned tracks
+        $teams = \App\Models\Team::whereIn('track_id', $assignedTracks->pluck('id'))
+            ->where('edition_id', $edition->id)
+            ->get();
+
+        return Inertia::render('TrackSupervisor/Ideas/Create', [
+            'edition' => $edition,
+            'tracks' => $assignedTracks,
+            'teams' => $teams
+        ]);
+    }
+
+    /**
+     * Store a newly created idea in storage.
+     */
+    public function store(Request $request)
+    {
+        $edition = $this->editionContext->current();
+        $user = auth()->user();
+
+        // Get track IDs assigned to this supervisor
+        $assignedTrackIds = $user->tracksInEdition($edition->id)->pluck('tracks.id')->toArray();
+
+        if (empty($assignedTrackIds)) {
+            abort(403, 'You are not assigned to any track in the current edition.');
+        }
+
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'problem_statement' => 'nullable|string',
+            'proposed_solution' => 'nullable|string',
+            'target_audience' => 'nullable|string',
+            'expected_impact' => 'nullable|string',
+            'resources_needed' => 'nullable|string',
+            'track_id' => ['required', 'exists:tracks,id', function($attribute, $value, $fail) use ($assignedTrackIds) {
+                if (!in_array($value, $assignedTrackIds)) {
+                    $fail('You can only create ideas in your assigned tracks.');
+                }
+            }],
+            'team_id' => 'required|exists:teams,id'
+        ]);
+
+        $result = $this->ideaService->createIdea($validated, $user);
+
+        return redirect()->route('track-supervisor.ideas.index')
+            ->with('success', 'Idea created successfully.');
     }
 
     /**
@@ -130,8 +185,27 @@ class IdeaController extends Controller
      */
     public function edit(Idea $idea)
     {
-        // Track supervisors cannot edit ideas directly
-        abort(403, 'Track supervisors are not authorized to edit ideas.');
+        // Check policy
+        $this->authorize('update', $idea);
+
+        $edition = $this->editionContext->current();
+        $user = auth()->user();
+
+        $data = $this->ideaService->getIdeaDetails($idea->id, $user);
+
+        // Get all tracks assigned to this supervisor
+        $assignedTracks = $user->tracksInEdition($edition->id)->get();
+
+        // Get teams in assigned tracks
+        $teams = \App\Models\Team::whereIn('track_id', $assignedTracks->pluck('id'))
+            ->where('edition_id', $edition->id)
+            ->get();
+
+        return Inertia::render('TrackSupervisor/Ideas/Edit', array_merge($data, [
+            'edition' => $edition,
+            'tracks' => $assignedTracks,
+            'teams' => $teams
+        ]));
     }
 
     /**
@@ -139,8 +213,25 @@ class IdeaController extends Controller
      */
     public function update(Request $request, Idea $idea)
     {
-        // Track supervisors cannot update ideas directly
-        abort(403, 'Track supervisors are not authorized to update ideas.');
+        // Check policy
+        $this->authorize('update', $idea);
+
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'problem_statement' => 'nullable|string',
+            'proposed_solution' => 'nullable|string',
+            'target_audience' => 'nullable|string',
+            'expected_impact' => 'nullable|string',
+            'resources_needed' => 'nullable|string',
+            'track_id' => 'required|exists:tracks,id',
+            'team_id' => 'required|exists:teams,id'
+        ]);
+
+        $result = $this->ideaService->updateIdea($idea->id, $validated, auth()->user());
+
+        return redirect()->route('track-supervisor.ideas.show', $idea)
+            ->with('success', 'Idea updated successfully.');
     }
 
     /**

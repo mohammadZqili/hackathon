@@ -231,7 +231,7 @@
                                     </span>
                                 </div>
                             </div>
-                            <Link :href="route('system-admin.ideas.edit', team.idea.id)"
+                            <Link :href="route('track-supervisor.ideas.edit', team.idea.id)"
                                   class="text-sm font-medium hover:underline transition-colors"
                                   :style="{ color: themeColor.primary }">
                                 View Idea
@@ -242,7 +242,7 @@
 
                 <!-- Actions -->
                 <div class="flex justify-end gap-4">
-                    <Link :href="route('system-admin.teams.index')"
+                    <Link :href="route('track-supervisor.teams.index')"
                           class="px-6 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                         Cancel
                     </Link>
@@ -350,20 +350,20 @@ const handleMemberAdded = () => {
 const makeLeader = (member) => {
     if (confirm(`Are you sure you want to make ${member.name} the team leader?`)) {
         form.leader_id = member.id
-        form.put(route('system-admin.teams.update', props.team.id))
+        form.put(route('track-supervisor.teams.update', props.team.id))
     }
 }
 
 const removeMember = (member) => {
     if (confirm(`Are you sure you want to remove ${member.name} from the team?`)) {
-        router.delete(route('system-admin.teams.remove-member', [props.team.id, member.id]), {
+        router.delete(route('track-supervisor.teams.remove-member', [props.team.id, member.id]), {
             preserveScroll: true
         })
     }
 }
 
 const submit = () => {
-    form.put(route('system-admin.teams.update', props.team.id))
+    form.put(route('track-supervisor.teams.update', props.team.id))
 }
 </script>
 

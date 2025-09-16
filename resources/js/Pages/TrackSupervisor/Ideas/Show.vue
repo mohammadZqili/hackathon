@@ -75,7 +75,7 @@ const submitDecision = (status) => {
 
 const updateScore = () => {
     if (decisionForm.score && decisionForm.score >= 0 && decisionForm.score <= 100) {
-        decisionForm.post(route('system-admin.ideas.score', props.idea.id), {
+        decisionForm.post(route('track-supervisor.ideas.score', props.idea.id), {
             only: ['score'],
             preserveScroll: true,
         })
@@ -88,16 +88,16 @@ const submitChanges = () => {
         return;
     }
     
-    decisionForm.post(route('system-admin.ideas.process-review', props.idea.id), {
+    decisionForm.post(route('track-supervisor.ideas.process-review', props.idea.id), {
         onSuccess: () => {
-            router.visit(route('system-admin.ideas.index'))
+            router.visit(route('track-supervisor.ideas.index'))
         },
     })
 }
 
 const deleteIdea = () => {
     if (confirm('Are you sure you want to delete this idea? This action cannot be undone.')) {
-        router.delete(route('system-admin.ideas.destroy', props.idea.id))
+        router.delete(route('track-supervisor.ideas.destroy', props.idea.id))
     }
 }
 

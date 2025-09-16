@@ -190,7 +190,7 @@ const form = useForm({
 })
 
 const submit = () => {
-    form.post(route('system-admin.speakers.store'), {
+    form.post(route('track-supervisor.speakers.store'), {
         onSuccess: () => {
             emit('success')
         },

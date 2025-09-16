@@ -5,6 +5,7 @@ return [
     'welcome' => 'مرحباً',
     'welcome_back' => 'مرحباً بعودتك، :name!',
     'language_switched' => 'تم تغيير اللغة بنجاح',
+    'switch_language' => 'تبديل اللغة',
     
     // التنقل
     'nav' => [

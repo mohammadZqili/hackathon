@@ -33,7 +33,7 @@ const handleLogoUpload = (event) => {
             <div class="max-w-2xl mx-auto">
                 <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-8">Branding Settings</h1>
 
-                <form @submit.prevent="form.post(route('system-admin.settings.branding.update'))"
+                <form @submit.prevent="form.post(route('track-supervisor.settings.branding.update'))"
                       class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                     <div class="space-y-6">
                         <div>
@@ -62,7 +62,7 @@ const handleLogoUpload = (event) => {
                     </div>
 
                     <div class="mt-6 flex justify-end space-x-3">
-                        <a :href="route('system-admin.settings.index')"
+                        <a :href="route('track-supervisor.settings.index')"
                            class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg">Cancel</a>
                         <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg">
                             Save Settings

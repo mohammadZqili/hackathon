@@ -11,7 +11,7 @@
                     </p>
                 </div>
 
-                <Link :href="route('system-admin.news.create')"
+                <Link :href="route('track-supervisor.news.create')"
                       class="inline-flex items-center px-4 py-2 rounded-lg font-semibold text-white transition-all duration-200 shadow-sm hover:shadow-md mt-4 sm:mt-0"
                       :style="{
                           background: `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})`,
@@ -27,7 +27,7 @@
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm mb-6">
                 <div class="border-b border-gray-200 dark:border-gray-700">
                     <div class="flex gap-8 px-6">
-                        <Link :href="route('system-admin.news.create')"
+                        <Link :href="route('track-supervisor.news.create')"
                               class="py-4 px-1 border-b-2 transition-colors"
                               :class="false ? 'border-[var(--theme-primary)] text-[var(--theme-primary)]' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'">
                             <span class="text-sm font-medium">Add News</span>
@@ -36,7 +36,7 @@
                                 :class="true ? 'border-[var(--theme-primary)] text-[var(--theme-primary)]' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'">
                             <span class="text-sm font-medium">All News</span>
                         </button>
-                        <Link :href="route('system-admin.news.media-center')"
+                        <Link :href="route('track-supervisor.news.media-center')"
                               class="py-4 px-1 border-b-2 transition-colors border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
                             <span class="text-sm font-medium">Media Center</span>
                         </Link>
@@ -102,7 +102,7 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-center">
                                     <div class="flex items-center justify-center gap-3">
-                                        <Link :href="route('system-admin.news.edit', article.id)"
+                                        <Link :href="route('track-supervisor.news.edit', article.id)"
                                               class="text-sm font-medium transition-colors"
                                               :style="{ color: themeColor.primary }"
                                               @mouseover="e => e.target.style.color = themeColor.hover"
@@ -236,14 +236,14 @@ const formatDate = (date) => {
 const toggleTwitterPublish = (article) => {
     useForm({
         publish_to_twitter: !article.publish_to_twitter
-    }).patch(route('system-admin.news.update', article.id), {
+    }).patch(route('track-supervisor.news.update', article.id), {
         preserveScroll: true
     })
 }
 
 const deleteArticle = (article) => {
     if (confirm(`Are you sure you want to delete the article "${article.title}"?`)) {
-        useForm({}).delete(route('system-admin.news.destroy', article.id))
+        useForm({}).delete(route('track-supervisor.news.destroy', article.id))
     }
 }
 </script>

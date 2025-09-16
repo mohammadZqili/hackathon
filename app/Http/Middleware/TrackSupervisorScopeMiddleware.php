@@ -38,7 +38,7 @@ class TrackSupervisorScopeMiddleware
 
         // Get tracks assigned to this supervisor in the current edition
         $assignedTracks = $user->tracksInEdition($currentEdition->id);
-        $trackIds = $assignedTracks->pluck('id')->toArray();
+        $trackIds = $assignedTracks->pluck('tracks.id')->toArray();
 
         if (empty($trackIds)) {
             abort(403, 'You are not assigned to any track in the current edition.');

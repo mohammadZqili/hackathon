@@ -78,7 +78,7 @@
                                 </div>
                                 <div class="w-[171px] h-[72px] flex flex-col items-center justify-center py-2 px-4 box-border">
                                     <div class="flex items-center gap-2">
-                                        <button @click="() => router.visit(route('system-admin.teams.edit', team.id))"
+                                        <button @click="() => router.visit(route('track-supervisor.teams.edit', team.id))"
                                                 class="font-bold hover:underline transition-colors text-sm"
                                                 :style="{ color: themeColor.primary }">
                                             Edit
@@ -199,7 +199,7 @@ const themeStyles = computed(() => ({
 
 const deleteTeam = (team) => {
     if (confirm(`Are you sure you want to delete the team "${team.name}"?`)) {
-        useForm({}).delete(route('system-admin.teams.destroy', team.id))
+        useForm({}).delete(route('track-supervisor.teams.destroy', team.id))
     }
 }
 
@@ -213,7 +213,7 @@ const formatDate = (date) => {
 }
 
 const handleSearch = () => {
-    router.get(route('system-admin.teams.index'), {
+    router.get(route('track-supervisor.teams.index'), {
         search: searchQuery.value
     }, {
         preserveState: true,
@@ -222,7 +222,7 @@ const handleSearch = () => {
 }
 
 const openCreateModal = () => {
-    router.visit(route('system-admin.teams.create'))
+    router.visit(route('track-supervisor.teams.create'))
 }
 
 const openAddMemberModal = (team) => {

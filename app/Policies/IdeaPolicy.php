@@ -32,7 +32,7 @@ class IdeaPolicy
     public function view(User $user, Idea $idea): bool
     {
         // Admins can view all ideas
-        if ($user->hasRole(['system_admin', 'hackathon_admin'])) {
+        if ($user->hasAnyRole(['system_admin', 'hackathon_admin'])) {
             return true;
         }
 
@@ -43,11 +43,11 @@ class IdeaPolicy
                 return false;
             }
 
-            // Get idea's edition through its team
-            $ideaEditionId = $idea->team ? $idea->team->edition_id : null;
+            // Get idea's edition - check both direct edition_id and through team
+            $ideaEditionId = $idea->edition_id ?: ($idea->team ? $idea->team->edition_id : null);
 
             // Check if idea belongs to current edition
-            if ($ideaEditionId !== $edition->id) {
+            if ($ideaEditionId && $ideaEditionId != $edition->id) {
                 return false;
             }
 
@@ -99,11 +99,11 @@ class IdeaPolicy
                 return false;
             }
 
-            // Get idea's edition through its team
-            $ideaEditionId = $idea->team ? $idea->team->edition_id : null;
+            // Get idea's edition - check both direct edition_id and through team
+            $ideaEditionId = $idea->edition_id ?: ($idea->team ? $idea->team->edition_id : null);
 
             // Check if idea belongs to current edition
-            if ($ideaEditionId !== $edition->id) {
+            if ($ideaEditionId && $ideaEditionId != $edition->id) {
                 return false;
             }
 
@@ -138,11 +138,11 @@ class IdeaPolicy
                 return false;
             }
 
-            // Get idea's edition through its team
-            $ideaEditionId = $idea->team ? $idea->team->edition_id : null;
+            // Get idea's edition - check both direct edition_id and through team
+            $ideaEditionId = $idea->edition_id ?: ($idea->team ? $idea->team->edition_id : null);
 
             // Check if idea belongs to current edition
-            if ($ideaEditionId !== $edition->id) {
+            if ($ideaEditionId && $ideaEditionId != $edition->id) {
                 return false;
             }
 

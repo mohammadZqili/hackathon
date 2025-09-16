@@ -75,7 +75,7 @@ const showAddCategory = ref(false)
 // FilePond upload configuration
 const uploadConfig = {
     process: {
-        url: route('system-admin.news.upload-temp'),
+        url: route('track-supervisor.news.upload-temp'),
         method: 'POST',
         headers: {
             'X-CSRF-TOKEN': csrfToken,
@@ -88,7 +88,7 @@ const uploadConfig = {
         }
     },
     revert: {
-        url: route('system-admin.news.delete-temp'),
+        url: route('track-supervisor.news.delete-temp'),
         method: 'DELETE',
         headers: {
             'X-CSRF-TOKEN': csrfToken,
@@ -170,7 +170,7 @@ const submit = () => {
     form.transform((data) => ({
         ...data,
         _method: 'PUT'
-    })).post(route('system-admin.news.update', props.article.id), {
+    })).post(route('track-supervisor.news.update', props.article.id), {
         preserveScroll: true,
         onSuccess: () => {
             // Handle success
@@ -192,7 +192,7 @@ const submit = () => {
                     </p>
                 </div>
                 
-                <Link :href="route('system-admin.news.index')"
+                <Link :href="route('track-supervisor.news.index')"
                       class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors mt-4 sm:mt-0">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
@@ -208,7 +208,7 @@ const submit = () => {
                         <button class="py-4 px-1 border-b-2 transition-colors border-[var(--theme-primary)] text-[var(--theme-primary)]">
                             <span class="text-sm font-medium">Edit News</span>
                         </button>
-                        <Link :href="route('system-admin.news.index')"
+                        <Link :href="route('track-supervisor.news.index')"
                               class="py-4 px-1 border-b-2 transition-colors border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
                             <span class="text-sm font-medium">All News</span>
                         </Link>

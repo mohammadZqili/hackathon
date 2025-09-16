@@ -11,7 +11,7 @@
                     </p>
                 </div>
 
-                <Link :href="route('system-admin.editions.create')"
+                <Link :href="route('track-supervisor.editions.create')"
                       class="inline-flex items-center px-4 py-2 rounded-lg font-semibold text-white transition-all duration-200 shadow-sm hover:shadow-md mt-4 sm:mt-0"
                       :style="{
                           background: `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})`,
@@ -106,7 +106,7 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-center">
                                     <div class="flex items-center justify-center gap-2">
-                                        <Link :href="route('system-admin.editions.edit', edition.id)"
+                                        <Link :href="route('track-supervisor.editions.edit', edition.id)"
                                               class="text-sm font-bold transition-colors"
                                               :style="{ color: themeColor.primary }"
                                               @mouseover="e => e.target.style.color = themeColor.hover"
@@ -243,7 +243,7 @@ const formatDate = (date) => {
 
 const deleteEdition = (edition) => {
     if (confirm(`Are you sure you want to delete the edition "${edition.name} ${edition.year}"? This action cannot be undone.`)) {
-        useForm({}).delete(route('system-admin.editions.destroy', edition.id))
+        useForm({}).delete(route('track-supervisor.editions.destroy', edition.id))
     }
 }
 </script>

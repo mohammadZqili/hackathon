@@ -355,7 +355,7 @@ const formatDate = (date) => {
 }
 
 const handleSearch = () => {
-    router.get(route('system-admin.workshops.index'), {
+    router.get(route('track-supervisor.workshops.index'), {
         search: searchQuery.value,
         tab: activeTab.value
     }, {
@@ -366,39 +366,39 @@ const handleSearch = () => {
 
 const handleAddAction = () => {
     if (activeTab.value === 'workshops') {
-        router.visit(route('system-admin.workshops.create'))
+        router.visit(route('track-supervisor.workshops.create'))
     } else if (activeTab.value === 'speakers') {
-        router.visit(route('system-admin.speakers.create'))
+        router.visit(route('track-supervisor.speakers.create'))
     } else if (activeTab.value === 'organizations') {
-        router.visit(route('system-admin.organizations.create'))
+        router.visit(route('track-supervisor.organizations.create'))
     }
 }
 
 const viewWorkshop = (workshop) => {
-    router.visit(route('system-admin.workshops.show', workshop.id))
+    router.visit(route('track-supervisor.workshops.show', workshop.id))
 }
 
 const editWorkshop = (workshop) => {
-    router.visit(route('system-admin.workshops.edit', workshop.id))
+    router.visit(route('track-supervisor.workshops.edit', workshop.id))
 }
 
 const editSpeaker = (speaker) => {
-    router.visit(route('system-admin.speakers.edit', speaker.id))
+    router.visit(route('track-supervisor.speakers.edit', speaker.id))
 }
 
 const deleteSpeaker = (speaker) => {
     if (confirm(`Are you sure you want to delete speaker "${speaker.name}"?`)) {
-        useForm({}).delete(route('system-admin.speakers.destroy', speaker.id))
+        useForm({}).delete(route('track-supervisor.speakers.destroy', speaker.id))
     }
 }
 
 const editOrganization = (org) => {
-    router.visit(route('system-admin.organizations.edit', org.id))
+    router.visit(route('track-supervisor.organizations.edit', org.id))
 }
 
 const deleteOrganization = (org) => {
     if (confirm(`Are you sure you want to delete organization "${org.name}"?`)) {
-        useForm({}).delete(route('system-admin.organizations.destroy', org.id))
+        useForm({}).delete(route('track-supervisor.organizations.destroy', org.id))
     }
 }
 

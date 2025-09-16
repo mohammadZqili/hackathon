@@ -128,7 +128,7 @@
 
                 <!-- Action Buttons -->
                 <div class="flex justify-end space-x-4 pt-6">
-                    <Link :href="route('system-admin.organizations.index')"
+                    <Link :href="route('track-supervisor.organizations.index')"
                           class="px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
                         Cancel
                     </Link>
@@ -173,6 +173,6 @@ const form = useForm({
 })
 
 const submit = () => {
-    form.put(route('system-admin.organizations.update', props.organization.id))
+    form.put(route('track-supervisor.organizations.update', props.organization.id))
 }
 </script>

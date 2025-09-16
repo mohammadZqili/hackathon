@@ -53,7 +53,7 @@ const statusDisplayNames = {
 }
 
 const filterIdeas = () => {
-    router.get(route('system-admin.ideas.index'), {
+    router.get(route('track-supervisor.ideas.index'), {
         search: searchForm.search,
         status: searchForm.status,
         track_id: searchForm.track_id,
@@ -74,16 +74,16 @@ const formatDate = (date) => {
 }
 
 const viewDetails = (idea) => {
-    router.get(route('system-admin.ideas.show', idea.id))
+    router.get(route('track-supervisor.ideas.show', idea.id))
 }
 
 const editIdea = (idea) => {
-    router.get(route('system-admin.ideas.review', idea.id))
+    router.get(route('track-supervisor.ideas.review', idea.id))
 }
 
 const deleteIdea = (idea) => {
     if (confirm(t('admin.actions.confirm_delete'))) {
-        router.delete(route('system-admin.ideas.destroy', idea.id))
+        router.delete(route('track-supervisor.ideas.destroy', idea.id))
     }
 }
 </script>

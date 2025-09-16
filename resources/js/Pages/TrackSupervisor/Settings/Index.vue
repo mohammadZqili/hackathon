@@ -472,7 +472,7 @@ console.log('Initial notification settings:', {
 // Form submission handlers
 const saveSmtpSettings = () => {
     console.log('Submitting SMTP settings:', smtpForm.data())
-    smtpForm.post(route('system-admin.settings.smtp.update'), {
+    smtpForm.post(route('track-supervisor.settings.smtp.update'), {
         preserveScroll: true,
         preserveState: true,
         onSuccess: () => {
@@ -489,7 +489,7 @@ const saveBrandingSettings = () => {
     
     // If there's a logo file, we need to use FormData
     if (brandingForm.logo) {
-        brandingForm.post(route('system-admin.settings.branding.update'), {
+        brandingForm.post(route('track-supervisor.settings.branding.update'), {
             preserveScroll: true,
             preserveState: true,
             forceFormData: true,
@@ -506,7 +506,7 @@ const saveBrandingSettings = () => {
             ...data,
             logo: undefined,
             logo_preview: undefined
-        })).post(route('system-admin.settings.branding.update'), {
+        })).post(route('track-supervisor.settings.branding.update'), {
             preserveScroll: true,
             preserveState: true,
             onSuccess: () => {
@@ -532,7 +532,7 @@ const saveNotificationSettings = () => {
     
     console.log('Processed notification data:', data)
     
-    notificationForm.transform(() => data).post(route('system-admin.settings.notifications.update'), {
+    notificationForm.transform(() => data).post(route('track-supervisor.settings.notifications.update'), {
         preserveScroll: true,
         preserveState: true,
         onSuccess: (page) => {

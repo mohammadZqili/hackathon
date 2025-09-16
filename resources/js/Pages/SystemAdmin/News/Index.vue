@@ -102,6 +102,13 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-center">
                                     <div class="flex items-center justify-center gap-3">
+                                        <TwitterShareButton
+                                            :title="article.title"
+                                            :url="`/news/${article.id}`"
+                                            :description="article.content ? article.content.substring(0, 100) : ''"
+                                            :hashtags="['GuacPanel', 'Hackathon', 'News']"
+                                            via="GuacPanel"
+                                        />
                                         <Link :href="route('system-admin.news.edit', article.id)"
                                               class="text-sm font-medium transition-colors"
                                               :style="{ color: themeColor.primary }"
@@ -178,6 +185,7 @@ const { t, isRTL, direction, locale } = useLocalization()
 import { Head, Link, useForm, router } from '@inertiajs/vue3'
 import { ref, computed, onMounted } from 'vue'
 import Default from '../../../Layouts/Default.vue'
+import TwitterShareButton from '@/Components/TwitterShareButton.vue'
 
 const props = defineProps({
     news: {

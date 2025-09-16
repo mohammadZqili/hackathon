@@ -5,6 +5,7 @@ return [
     'welcome' => 'Welcome',
     'welcome_back' => 'Welcome back, :name!',
     'language_switched' => 'Language has been changed successfully',
+    'switch_language' => 'Switch Language',
     
     // Navigation
     'nav' => [

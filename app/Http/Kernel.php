@@ -37,8 +37,8 @@ class Kernel extends HttpKernel
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            \App\Http\Middleware\SetLocale::class, // Must run before HandleInertiaRequests
             HandleInertiaRequests::class,
-            \App\Http\Middleware\SetLocale::class,
         ],
 
         'api' => [
@@ -80,6 +80,7 @@ class Kernel extends HttpKernel
         'check_track_supervisor' => \App\Http\Middleware\CheckTrackSupervisorRole::class,
         'resolve.edition' => \App\Http\Middleware\ResolveEditionMiddleware::class,
         'scope.ts' => \App\Http\Middleware\TrackSupervisorScopeMiddleware::class,
+        'track_supervisor_scope' => \App\Http\Middleware\TrackSupervisorScopeMiddleware::class,
         'track_supervisor' => \App\Http\Middleware\TrackSupervisorMiddleware::class,
         'team_member' => \App\Http\Middleware\TeamMemberMiddleware::class,
         'team.lead' => \App\Http\Middleware\TeamLeadMiddleware::class,
