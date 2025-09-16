@@ -101,9 +101,10 @@ class IdeaRepository extends BaseRepository
                 'track',
                 'reviewer',
                 'files',
+                'comments.user',
                 'auditLogs.user'
             ])
-            ->withCount(['reviews'])
+            ->withCount(['reviews', 'comments'])
             ->find($id);
     }
 
@@ -247,18 +248,21 @@ class IdeaRepository extends BaseRepository
             'idea_id' => $ideaId,
             'user_id' => $commentData['user_id'],
             'comment' => $commentData['comment'],
+            'is_supervisor' => $commentData['is_supervisor'] ?? false,
+            'parent_id' => $commentData['parent_id'] ?? null,
             'created_at' => $commentData['created_at'] ?? now()
         ]);
     }
 
     /**
-     * Get audit logs for idea
+     * Get comments for idea
      */
     public function getComments(int $ideaId): Collection
     {
         return IdeaComment::where('idea_id', $ideaId)
             ->with('user')
-            ->orderBy('created_at', 'desc')
+            ->topLevel() // Only get top-level comments
+            ->orderBy('created_at', 'asc')
             ->get();
     }
 

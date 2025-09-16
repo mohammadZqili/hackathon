@@ -7,7 +7,8 @@ import { ref, computed, onMounted } from 'vue'
 import Default from '@/Layouts/Default.vue'
 import {
     DocumentIcon,
-    PaperClipIcon
+    PaperClipIcon,
+    PaperAirplaneIcon
 } from '@heroicons/vue/24/outline'
 
 const props = defineProps({
@@ -15,6 +16,27 @@ const props = defineProps({
     reviewHistory: Array,
     scoring: Object,
 })
+
+// Comments form
+const commentForm = useForm({
+    comment: ''
+})
+
+const submitComment = () => {
+    if (!commentForm.comment.trim()) return
+
+    commentForm.post(route('track-supervisor.ideas.add-comment', props.idea.id), {
+        preserveScroll: true,
+        onSuccess: () => {
+            commentForm.reset()
+            // Reload the page to show the new comment
+            router.reload({ only: ['idea'] })
+        },
+        onError: (errors) => {
+            console.error('Error submitting comment:', errors)
+        }
+    })
+}
 
 const activeTab = ref('overview')
 
@@ -139,12 +161,20 @@ const downloadDocument = (file) => {
                             Overview
                         </button>
                         <button
-                            @click="activeTab = 'response'"
-                            :class="activeTab === 'response' ? 'border-gray-900 dark:border-white text-gray-900 dark:text-white font-bold' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
+                            @click="activeTab = 'comments'"
+                            :class="activeTab === 'comments' ? 'border-gray-900 dark:border-white text-gray-900 dark:text-white font-bold' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
                             class="py-4 px-1 border-b-3 font-medium text-sm transition-colors"
-                            :style="activeTab === 'response' ? { color: themeColor.primary, borderColor: themeColor.primary } : {}"
+                            :style="activeTab === 'comments' ? { color: themeColor.primary, borderColor: themeColor.primary } : {}"
                         >
-                            Response
+                            Comments
+                        </button>
+                        <button
+                            @click="activeTab = 'instructions'"
+                            :class="activeTab === 'instructions' ? 'border-gray-900 dark:border-white text-gray-900 dark:text-white font-bold' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
+                            class="py-4 px-1 border-b-3 font-medium text-sm transition-colors"
+                            :style="activeTab === 'instructions' ? { color: themeColor.primary, borderColor: themeColor.primary } : {}"
+                        >
+                            Instructions
                         </button>
                     </nav>
                 </div>
@@ -322,31 +352,91 @@ const downloadDocument = (file) => {
                 </div>
             </div>
 
-            <!-- Response Tab Content -->
-            <div v-show="activeTab === 'response'" class="space-y-6">
-                <h2 class="text-xl font-bold text-gray-900 dark:text-white">Review History</h2>
+            <!-- Comments Tab Content -->
+            <div v-show="activeTab === 'comments'" class="space-y-6">
+                <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6">Comments</h2>
 
-                <div v-if="reviewHistory && reviewHistory.length > 0" class="space-y-4">
-                    <div v-for="review in reviewHistory" :key="review.id"
-                         class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-                        <div class="flex justify-between items-start mb-2">
-                            <div>
-                                <span class="font-medium text-gray-900 dark:text-white">
-                                    {{ review.reviewer_name }}
-                                </span>
-                                <span class="ml-2 text-sm text-gray-500 dark:text-gray-400">
-                                    {{ formatDateTime(review.created_at) }}
-                                </span>
+                <!-- Comments Container -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <!-- Comments List -->
+                    <div class="max-h-96 overflow-y-auto p-4 space-y-4">
+                        <div v-if="idea.comments && idea.comments.length > 0">
+                            <div v-for="comment in idea.comments" :key="comment.id" class="flex gap-3">
+                                <!-- Avatar -->
+                                <div class="flex-shrink-0">
+                                    <div class="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
+                                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            {{ comment.user?.name?.charAt(0).toUpperCase() || 'U' }}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <!-- Comment Content -->
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <span class="text-sm font-medium text-gray-900 dark:text-white">
+                                            {{ comment.user?.name || 'User' }}
+                                        </span>
+                                        <span v-if="comment.is_supervisor"
+                                              class="text-xs px-2 py-0.5 rounded-full text-white"
+                                              :style="{ backgroundColor: themeColor.primary }">
+                                            Supervisor
+                                        </span>
+                                        <span class="text-xs text-gray-500 dark:text-gray-400">
+                                            {{ formatDateTime(comment.created_at) }}
+                                        </span>
+                                    </div>
+                                    <div class="bg-gray-50 dark:bg-gray-700 rounded-lg px-3 py-2">
+                                        <p class="text-sm text-gray-900 dark:text-white">{{ comment.comment }}</p>
+                                    </div>
+                                </div>
                             </div>
-                            <span class="px-3 py-1 text-xs font-medium rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
-                                {{ review.status }}
-                            </span>
                         </div>
-                        <p class="text-gray-700 dark:text-gray-300">{{ review.feedback }}</p>
+                        <div v-else class="text-center py-8 text-gray-500 dark:text-gray-400">
+                            No comments yet. Start the conversation!
+                        </div>
+                    </div>
+
+                    <!-- Comment Form -->
+                    <div class="border-t border-gray-200 dark:border-gray-700 p-4">
+                        <form @submit.prevent="submitComment" class="flex gap-3 items-end">
+                            <div class="flex-1">
+                                <textarea
+                                    v-model="commentForm.comment"
+                                    placeholder="Type your message here..."
+                                    rows="2"
+                                    class="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 transition-all resize-none text-sm"
+                                    :style="{
+                                        '--tw-ring-color': themeColor.primary
+                                    }"
+                                    @keydown.enter.prevent="submitComment"
+                                ></textarea>
+                            </div>
+                            <button
+                                type="submit"
+                                :disabled="!commentForm.comment.trim() || commentForm.processing"
+                                class="p-2 rounded-lg text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                :style="{ backgroundColor: themeColor.primary }"
+                            >
+                                <PaperAirplaneIcon class="w-5 h-5" />
+                            </button>
+                        </form>
                     </div>
                 </div>
-                <div v-else class="text-center py-12 text-gray-500 dark:text-gray-400">
-                    No review history available yet.
+            </div>
+
+            <!-- Instructions Tab Content -->
+            <div v-show="activeTab === 'instructions'" class="space-y-6">
+                <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6">Track Instructions</h2>
+
+                <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+                    <div v-if="idea.track?.instructions" class="prose dark:prose-invert max-w-none">
+                        <div v-html="idea.track.instructions"></div>
+                    </div>
+                    <div v-else class="text-center py-8 text-gray-500 dark:text-gray-400">
+                        <p>No specific instructions have been provided for this track yet.</p>
+                        <p class="text-sm mt-2">Please follow the general hackathon guidelines and feel free to ask questions in the comments.</p>
+                    </div>
                 </div>
             </div>
         </div>

@@ -419,6 +419,30 @@ class IdeaController extends Controller
     }
 
     /**
+     * Add comment to an idea
+     */
+    public function addComment(Request $request, Idea $idea)
+    {
+        $request->validate([
+            'comment' => 'required|string|max:2000',
+            'parent_id' => 'nullable|exists:idea_comments,id'
+        ]);
+
+        try {
+            $comment = $this->ideaService->addComment(
+                $idea->id,
+                auth()->user()->id,
+                $request->comment,
+                $request->parent_id
+            );
+
+            return back()->with('success', 'Comment added successfully.');
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => $e->getMessage()]);
+        }
+    }
+
+    /**
      * Assign supervisor to an idea
      */
     public function assignSupervisor(Request $request, Idea $idea)

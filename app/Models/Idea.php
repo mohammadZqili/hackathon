@@ -103,6 +103,14 @@ class Idea extends Model
     }
 
     /**
+     * Get comments for this idea
+     */
+    public function comments()
+    {
+        return $this->hasMany(IdeaComment::class)->with('user');
+    }
+
+    /**
      * Submit the idea for review.
      */
     public function submit(): bool

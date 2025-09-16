@@ -17,6 +17,7 @@ class Track extends Model
         'edition_id',
         'name',
         'description',
+        'instructions',
         'icon',
         'color',
         'max_teams',

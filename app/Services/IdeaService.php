@@ -422,24 +422,52 @@ class IdeaService extends BaseService
         });
     }
 
-    public function addComment($ideaId, $userId, $comment)
+    public function addComment($ideaId, $userId, $comment, $parentId = null)
     {
         $idea = $this->ideaRepo->find($ideaId);
+        $user = User::find($userId);
 
-        // Check if user is part of the team
-        $team = $this->teamRepo->findByLeaderId($userId);
-        if (!$team) {
-            $member = $this->teamRepo->findMemberTeam($userId);
-            $team = $member ? $member->team : null;
+        if (!$idea) {
+            throw new \Exception('Idea not found');
         }
 
-        if (!$team || $idea->team_id !== $team->id) {
+        // Check if user has permission to comment
+        $canComment = false;
+        $isSupervisor = false;
+
+        // Check if user is a supervisor with access to this idea
+        if ($user->hasRole('track_supervisor')) {
+            // Check if supervisor has access to this idea's track
+            $edition = app(\App\Services\EditionContext::class)->current();
+            $assignedTracks = $user->tracksInEdition($edition->id)->pluck('tracks.id');
+            if ($assignedTracks->contains($idea->track_id)) {
+                $canComment = true;
+                $isSupervisor = true;
+            }
+        }
+
+        // Check if user is part of the team
+        if (!$canComment) {
+            $team = $this->teamRepo->findByLeaderId($userId);
+            if (!$team) {
+                $member = $this->teamRepo->findMemberTeam($userId);
+                $team = $member ? $member->team : null;
+            }
+
+            if ($team && $idea->team_id === $team->id) {
+                $canComment = true;
+            }
+        }
+
+        if (!$canComment) {
             throw new \Exception('Unauthorized to comment on this idea');
         }
 
         return $this->ideaRepo->addComment($ideaId, [
             'user_id' => $userId,
             'comment' => $comment,
+            'is_supervisor' => $isSupervisor,
+            'parent_id' => $parentId,
             'created_at' => now()
         ]);
     }
