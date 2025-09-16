@@ -117,7 +117,7 @@ class WorkshopController extends Controller
 
             DB::commit();
 
-            return redirect()->route('system-admin.workshops.index')
+            return redirect()->route('track-supervisor.workshops.index')
                 ->with('success', 'Workshop created successfully.');
 
         } catch (ValidationException $e) {
@@ -186,7 +186,7 @@ class WorkshopController extends Controller
         // Update workshop through service
         $this->workshopService->updateWorkshop($workshop->id, $validated, auth()->user());
 
-        return redirect()->route('system-admin.workshops.index')
+        return redirect()->route('track-supervisor.workshops.index')
             ->with('success', 'Workshop updated successfully.');
     }
 
@@ -194,7 +194,7 @@ class WorkshopController extends Controller
     {
         $this->workshopService->deleteWorkshop($workshop->id);
 
-        return redirect()->route('system-admin.workshops.index')
+        return redirect()->route('track-supervisor.workshops.index')
             ->with('success', 'Workshop deleted successfully.');
     }
 

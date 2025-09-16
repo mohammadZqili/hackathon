@@ -71,9 +71,29 @@ class TrackPolicy
      */
     public function update(User $user, Track $track): bool
     {
-        // Only admins can update tracks
-        // Track supervisors cannot update tracks
-        return $user->hasAnyRole(['system_admin', 'hackathon_admin']);
+        // Admins can update all tracks
+        if ($user->hasAnyRole(['system_admin', 'hackathon_admin'])) {
+            return true;
+        }
+
+        // Track supervisors can update tracks they are assigned to
+        if ($user->hasRole('track_supervisor')) {
+            $edition = $this->editionContext->current();
+            if (!$edition) {
+                return false;
+            }
+
+            // Check if track belongs to current edition
+            if ($track->edition_id !== $edition->id) {
+                return false;
+            }
+
+            // Check if this track is assigned to this supervisor
+            $trackIds = $user->tracksInEdition($edition->id)->pluck('tracks.id')->toArray();
+            return in_array($track->id, $trackIds);
+        }
+
+        return false;
     }
 
     /**

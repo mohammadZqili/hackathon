@@ -56,7 +56,7 @@ class OrganizationController extends Controller
 
         $organization = $this->organizationService->createOrganization($validated);
 
-        return redirect()->route('system-admin.organizations.index')
+        return redirect()->route('track-supervisor.organizations.index')
             ->with('success', 'Organization created successfully.');
     }
 
@@ -97,7 +97,7 @@ class OrganizationController extends Controller
 
         $this->organizationService->updateOrganization($organization->id, $validated);
 
-        return redirect()->route('system-admin.organizations.index')
+        return redirect()->route('track-supervisor.organizations.index')
             ->with('success', 'Organization updated successfully.');
     }
 
@@ -105,7 +105,7 @@ class OrganizationController extends Controller
     {
         $this->organizationService->deleteOrganization($organization->id);
 
-        return redirect()->route('system-admin.organizations.index')
+        return redirect()->route('track-supervisor.organizations.index')
             ->with('success', 'Organization deleted successfully.');
     }
 

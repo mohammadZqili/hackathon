@@ -506,6 +506,19 @@ class TrackService extends BaseService
                 return $user->edition_id == $editionId;
 
             default:
+                // Check if user has track_supervisor role
+                if ($user->hasRole('track_supervisor')) {
+                    // Track supervisors can access the current edition they're working with
+                    $currentEdition = $this->editionRepository->getCurrentEdition();
+                    if ($currentEdition && $currentEdition->id == $editionId) {
+                        return true;
+                    }
+
+                    // Also check if they have tracks assigned in this edition
+                    $trackCount = $user->tracksInEdition($editionId)->count();
+                    return $trackCount > 0;
+                }
+
                 return false;
         }
     }
@@ -527,7 +540,29 @@ class TrackService extends BaseService
             return false;
         }
 
-        return in_array($user->user_type, ['system_admin', 'hackathon_admin']);
+        // Admins can edit all tracks
+        if (in_array($user->user_type, ['system_admin', 'hackathon_admin'])) {
+            return true;
+        }
+
+        // Track supervisors can edit tracks they are assigned to
+        if ($user->hasRole('track_supervisor')) {
+            $currentEdition = $this->editionRepository->getCurrentEdition();
+            if (!$currentEdition) {
+                return false;
+            }
+
+            // Check if track belongs to current edition
+            if ($track->edition_id !== $currentEdition->id) {
+                return false;
+            }
+
+            // Check if this track is assigned to this supervisor
+            $trackIds = $user->tracksInEdition($currentEdition->id)->pluck('tracks.id')->toArray();
+            return in_array($track->id, $trackIds);
+        }
+
+        return false;
     }
 
     /**

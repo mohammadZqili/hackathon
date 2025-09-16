@@ -64,7 +64,7 @@ class NewsController extends Controller
 
         try {
             $result = $this->newsService->createNewsAdmin($validated, auth()->user());
-            return redirect()->route('system-admin.news.index')
+            return redirect()->route('track-supervisor.news.index')
                 ->with('success', $result['message']);
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()]);
@@ -116,7 +116,7 @@ class NewsController extends Controller
                     'auto_post_twitter' => $request->boolean('publish_to_twitter')
                 ], auth()->user());
 
-                return redirect()->route('system-admin.news.index')
+                return redirect()->route('track-supervisor.news.index')
                     ->with('success', 'Twitter publishing setting updated.');
             } catch (\Exception $e) {
                 return back()->withErrors(['error' => $e->getMessage()]);
@@ -138,7 +138,7 @@ class NewsController extends Controller
 
         try {
             $result = $this->newsService->updateNewsAdmin($news->id, $validated, auth()->user());
-            return redirect()->route('system-admin.news.index')
+            return redirect()->route('track-supervisor.news.index')
                 ->with('success', $result['message']);
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()]);
@@ -149,7 +149,7 @@ class NewsController extends Controller
     {
         try {
             $result = $this->newsService->deleteNewsAdmin($news->id, auth()->user());
-            return redirect()->route('system-admin.news.index')
+            return redirect()->route('track-supervisor.news.index')
                 ->with('success', $result['message']);
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()]);
@@ -160,7 +160,7 @@ class NewsController extends Controller
     {
         try {
             $result = $this->newsService->publishNewsAdmin($news->id, auth()->user());
-            return redirect()->route('system-admin.news.index')
+            return redirect()->route('track-supervisor.news.index')
                 ->with('success', $result['message']);
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()]);
@@ -171,7 +171,7 @@ class NewsController extends Controller
     {
         try {
             $result = $this->newsService->unpublishNewsAdmin($news->id, auth()->user());
-            return redirect()->route('system-admin.news.index')
+            return redirect()->route('track-supervisor.news.index')
                 ->with('success', $result['message']);
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()]);

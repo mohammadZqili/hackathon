@@ -58,7 +58,7 @@ class EditionController extends Controller
 
         $this->editionService->createEdition($validated);
 
-        return redirect()->route('system-admin.editions.index')
+        return redirect()->route('track-supervisor.editions.index')
             ->with('success', 'Edition created successfully.');
     }
 
@@ -99,7 +99,7 @@ class EditionController extends Controller
 
         $this->editionService->updateEdition($edition->id, $validated);
 
-        return redirect()->route('system-admin.editions.index')
+        return redirect()->route('track-supervisor.editions.index')
             ->with('success', 'Edition updated successfully.');
     }
 
@@ -107,7 +107,7 @@ class EditionController extends Controller
     {
         try {
             $this->editionService->deleteEdition($edition->id);
-            return redirect()->route('system-admin.editions.index')
+            return redirect()->route('track-supervisor.editions.index')
                 ->with('success', 'Edition deleted successfully.');
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
@@ -118,7 +118,7 @@ class EditionController extends Controller
     {
         $this->editionService->activateEdition($edition->id);
 
-        return redirect()->route('system-admin.editions.index')
+        return redirect()->route('track-supervisor.editions.index')
             ->with('success', 'Edition activated successfully.');
     }
 

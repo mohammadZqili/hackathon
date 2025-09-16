@@ -62,7 +62,7 @@ class SpeakerController extends Controller
 
         $speaker = $this->speakerService->createSpeaker($validated);
 
-        return redirect()->route('system-admin.speakers.index')
+        return redirect()->route('track-supervisor.speakers.index')
             ->with('success', 'Speaker created successfully.');
     }
 
@@ -105,7 +105,7 @@ class SpeakerController extends Controller
 
         $this->speakerService->updateSpeaker($speaker->id, $validated);
 
-        return redirect()->route('system-admin.speakers.index')
+        return redirect()->route('track-supervisor.speakers.index')
             ->with('success', 'Speaker updated successfully.');
     }
 
@@ -113,7 +113,7 @@ class SpeakerController extends Controller
     {
         $this->speakerService->deleteSpeaker($speaker->id);
 
-        return redirect()->route('system-admin.speakers.index')
+        return redirect()->route('track-supervisor.speakers.index')
             ->with('success', 'Speaker deleted successfully.');
     }
 

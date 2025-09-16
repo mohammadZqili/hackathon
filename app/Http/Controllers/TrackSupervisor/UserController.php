@@ -91,7 +91,7 @@ class UserController extends Controller
 
         try {
             $result = $this->userService->createUser($validated, auth()->user());
-            return redirect()->route('system-admin.users.index')
+            return redirect()->route('track-supervisor.users.index')
                 ->with('success', $result['message']);
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()]);
@@ -164,7 +164,7 @@ class UserController extends Controller
 
         try {
             $result = $this->userService->updateUser($user->id, $validated, auth()->user());
-            return redirect()->route('system-admin.users.index')
+            return redirect()->route('track-supervisor.users.index')
                 ->with('success', $result['message']);
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()]);
@@ -178,7 +178,7 @@ class UserController extends Controller
     {
         try {
             $result = $this->userService->deleteUser($user->id, auth()->user());
-            return redirect()->route('system-admin.users.index')
+            return redirect()->route('track-supervisor.users.index')
                 ->with('success', $result['message']);
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()]);

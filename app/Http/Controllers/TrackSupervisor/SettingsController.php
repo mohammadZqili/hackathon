@@ -76,7 +76,7 @@ class SettingsController extends Controller
             // Clear config cache
             Artisan::call('config:clear');
 
-            return redirect()->route('system-admin.settings.branding')->with('success', $result['message']);
+            return redirect()->route('track-supervisor.settings.branding')->with('success', $result['message']);
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()]);
         }

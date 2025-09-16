@@ -119,25 +119,8 @@ class TrackController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'edition_id' => 'nullable|exists:hackathon_editions,id',
-            'hackathon_id' => 'required|exists:hackathons,id',
-            'name' => 'required|string|max:255',
-            'description' => 'required|string',
-            'max_teams' => 'nullable|integer|min:1',
-            'evaluation_criteria' => 'nullable|array',
-            'is_active' => 'required|boolean',
-            'supervisor_id' => 'nullable|exists:users,id',
-        ]);
-
-        try {
-            $result = $this->trackService->createTrack($validated, auth()->user());
-
-            return redirect()->route('system-admin.tracks.index')
-                ->with('success', $result['message']);
-        } catch (\Exception $e) {
-            return back()->withErrors(['error' => $e->getMessage()])->withInput();
-        }
+        // Track supervisors shouldn't be able to create tracks normally
+        abort(403, 'Track supervisors are not authorized to create tracks.');
     }
 
     /**
@@ -174,20 +157,22 @@ class TrackController extends Controller
     public function update(Request $request, Track $track)
     {
         $validated = $request->validate([
-            'edition_id' => 'nullable|exists:hackathon_editions,id',
             'hackathon_id' => 'required|exists:hackathons,id',
             'name' => 'required|string|max:255',
             'description' => 'required|string',
             'max_teams' => 'nullable|integer|min:1',
             'evaluation_criteria' => 'nullable|array',
             'is_active' => 'required|boolean',
-            'supervisor_id' => 'nullable|exists:users,id',
         ]);
+
+        // Track supervisors cannot change edition_id or supervisor_id
+        // Keep the existing values
+        $validated['edition_id'] = $track->edition_id;
 
         try {
             $result = $this->trackService->updateTrack($track->id, $validated, auth()->user());
 
-            return redirect()->route('system-admin.tracks.show', $track)
+            return redirect()->route('track-supervisor.tracks.show', $track)
                 ->with('success', $result['message']);
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()])->withInput();
@@ -202,7 +187,7 @@ class TrackController extends Controller
         try {
             $result = $this->trackService->deleteTrack($track->id, auth()->user());
 
-            return redirect()->route('system-admin.tracks.index')
+            return redirect()->route('track-supervisor.tracks.index')
                 ->with('success', $result['message']);
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()]);

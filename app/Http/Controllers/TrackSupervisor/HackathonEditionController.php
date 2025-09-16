@@ -68,7 +68,7 @@ class HackathonEditionController extends Controller
         try {
             $this->editionService->createEdition($validated);
 
-            return redirect()->route('system-admin.editions.index')
+            return redirect()->route('track-supervisor.editions.index')
                 ->with('success', 'Hackathon edition created successfully.');
         } catch (\Exception $e) {
             return redirect()->back()
@@ -133,7 +133,7 @@ class HackathonEditionController extends Controller
         try {
             $this->editionService->updateEdition($edition->id, $validated);
 
-            return redirect()->route('system-admin.editions.index')
+            return redirect()->route('track-supervisor.editions.index')
                 ->with('success', 'Hackathon edition updated successfully.');
         } catch (\Exception $e) {
             return redirect()->back()
@@ -150,7 +150,7 @@ class HackathonEditionController extends Controller
         try {
             $this->editionService->deleteEdition($edition->id);
 
-            return redirect()->route('system-admin.editions.index')
+            return redirect()->route('track-supervisor.editions.index')
                 ->with('success', 'Hackathon edition deleted successfully.');
         } catch (\Exception $e) {
             return redirect()->back()
@@ -166,7 +166,7 @@ class HackathonEditionController extends Controller
         try {
             $this->editionService->setCurrentEdition($edition->id);
 
-            return redirect()->route('system-admin.editions.index')
+            return redirect()->route('track-supervisor.editions.index')
                 ->with('success', 'Edition set as current successfully.');
         } catch (\Exception $e) {
             return redirect()->back()
@@ -182,7 +182,7 @@ class HackathonEditionController extends Controller
         try {
             $this->editionService->archiveEdition($edition->id);
 
-            return redirect()->route('system-admin.editions.index')
+            return redirect()->route('track-supervisor.editions.index')
                 ->with('success', 'Edition archived successfully.');
         } catch (\Exception $e) {
             return redirect()->back()
