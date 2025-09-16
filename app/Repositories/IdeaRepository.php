@@ -97,7 +97,7 @@ class IdeaRepository extends BaseRepository
         return $this->query()
             ->with([
                 'team.leader',
-                'team.members.user',
+                'team.members',
                 'track',
                 'reviewer',
                 'files',

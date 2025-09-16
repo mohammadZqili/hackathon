@@ -326,7 +326,7 @@ Route::middleware(['auth', 'role:track_supervisor|permission:view-assigned-track
     // Global Team Management
     Route::resource('teams', TrackSupervisorTeamController::class);
     Route::post('teams/{team}/add-member', [TrackSupervisorTeamController::class, 'addMember'])->name('teams.add-member');
-    Route::delete('teams/{team}/remove-member/{user}', [TrackSupervisorTeamController::class, 'removeMember'])->name('teams.remove-member');
+    Route::delete('teams/{team}/remove-member/{user}', [TrackSupervisorTeamController::class, 'removeMember'])->name('teams.member-remove');
     Route::get('teams/export', [TrackSupervisorTeamController::class, 'export'])->name('teams.export');
     Route::get('users/search', [TrackSupervisorUserController::class, 'search'])->name('users.search');
 
@@ -342,7 +342,7 @@ Route::middleware(['auth', 'role:track_supervisor|permission:view-assigned-track
     Route::post('ideas/{idea}/review/reject', [TrackSupervisorIdeaController::class, 'reject'])->name('ideas.review.reject');
     Route::post('ideas/{idea}/review/need-edit', [TrackSupervisorIdeaController::class, 'needEdit'])->name('ideas.review.need-edit');
     Route::post('ideas/{idea}/assign-supervisor', [TrackSupervisorIdeaController::class, 'assignSupervisor'])->name('ideas.assign-supervisor');
-    Route::post('ideas/{idea}/update-score', [TrackSupervisorIdeaController::class, 'updateScore'])->name('ideas.update-score');
+    Route::post('ideas/{idea}/update-score', [TrackSupervisorIdeaController::class, 'updateScore'])->name('ideas.score-change');
     Route::post('ideas/{idea}/score', [TrackSupervisorIdeaController::class, 'updateScore'])->name('ideas.score');
     Route::get('ideas/{idea}/files/{file}/download', [TrackSupervisorIdeaController::class, 'downloadFile'])->name('ideas.download-file');
     Route::get('ideas/statistics', [TrackSupervisorIdeaController::class, 'statistics'])->name('ideas.statistics');

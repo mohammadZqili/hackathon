@@ -124,7 +124,7 @@
                             
                             <!-- Edit Button -->
                             <div class="self-stretch flex flex-row items-start justify-end py-3 px-4 text-center text-white">
-                                <Link :href="route('team-lead.idea.edit', idea.id)"
+                                <Link :href="route('team-lead.idea.edit-my')"
                                     class="w-52 rounded-xl flex flex-row items-center justify-center py-3 px-4 box-border max-h-[40px]"
                                     :style="{ background: `linear-gradient(rgba(79, 150, 115, 0.75), rgba(79, 150, 115, 0.75)), ${themeColor.primary}` }">
                                     <b class="relative leading-[14.66px]">Edit Idea</b>

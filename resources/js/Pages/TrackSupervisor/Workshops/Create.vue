@@ -129,10 +129,35 @@
                     </label>
                     <select v-model="form.type"
                             class="w-full rounded-lg bg-teal-50 dark:bg-gray-800 border border-teal-100 dark:border-gray-600 px-4 py-3 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent">
-                        <option value="technical">Technical</option>
-                        <option value="business">Business</option>
-                        <option value="soft-skills">Soft Skills</option>
+                        <option value="workshop">Workshop</option>
+                        <option value="seminar">Seminar</option>
+                        <option value="lecture">Lecture</option>
+                        <option value="panel">Panel Discussion</option>
                     </select>
+                </div>
+
+                <!-- Workshop Format -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Workshop Format
+                    </label>
+                    <select v-model="form.format"
+                            class="w-full rounded-lg bg-teal-50 dark:bg-gray-800 border border-teal-100 dark:border-gray-600 px-4 py-3 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+                        <option value="offline">In-Person</option>
+                        <option value="online">Online</option>
+                        <option value="hybrid">Hybrid</option>
+                    </select>
+                </div>
+
+                <!-- Remote Link (shown only for online/hybrid) -->
+                <div v-if="form.format === 'online' || form.format === 'hybrid'">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Remote Meeting Link
+                    </label>
+                    <input v-model="form.remote_link"
+                           type="url"
+                           placeholder="https://zoom.us/j/123456789"
+                           class="w-full rounded-lg bg-teal-50 dark:bg-gray-800 border border-teal-100 dark:border-gray-600 px-4 py-3 text-gray-900 dark:text-white placeholder-teal-600/50 dark:placeholder-gray-400 focus:ring-2 focus:ring-teal-500 focus:border-transparent">
                 </div>
 
                 <!-- Action Buttons -->
@@ -180,10 +205,45 @@ const form = useForm({
     speaker_id: '',
     organization_id: '',
     location: '',
-    type: 'technical'
+    type: 'workshop',
+    format: 'offline',
+    remote_link: '',
+    requires_registration: true,
+    is_active: true
 })
 
 const submit = () => {
-    form.post(route('track-supervisor.workshops.store'))
+    // Prepare the data for submission
+    const startDateTime = form.start_date && form.start_time
+        ? `${form.start_date}T${form.start_time}:00`
+        : '';
+
+    // Calculate end time based on duration
+    let endDateTime = '';
+    if (startDateTime && form.duration) {
+        const start = new Date(startDateTime);
+        const end = new Date(start.getTime() + (form.duration * 60 * 60 * 1000));
+        endDateTime = end.toISOString().slice(0, 19).replace('T', ' ');
+    }
+
+    // Transform the form data to match controller expectations
+    const transformedData = {
+        title: form.title,
+        description: form.description,
+        type: form.type,
+        start_time: startDateTime ? startDateTime.replace('T', ' ') : '',
+        end_time: endDateTime,
+        format: form.format,
+        location: form.location,
+        remote_link: form.remote_link,
+        max_attendees: form.max_attendees,
+        speaker_ids: form.speaker_id ? [form.speaker_id] : [],
+        organization_ids: form.organization_id ? [form.organization_id] : [],
+        requires_registration: form.requires_registration,
+        is_active: form.is_active
+    };
+
+    // Submit the transformed data
+    form.transform(() => transformedData).post(route('track-supervisor.workshops.store'))
 }
 </script>

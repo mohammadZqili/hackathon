@@ -45,7 +45,7 @@ Route::middleware(['auth', 'role:track_supervisor', 'track_supervisor_scope'])->
     Route::post('/ideas/{idea}/approve', [IdeaController::class, 'approve'])->name('ideas.approve');
     Route::post('/ideas/{idea}/reject', [IdeaController::class, 'reject'])->name('ideas.reject');
     Route::post('/ideas/{idea}/need-edit', [IdeaController::class, 'needEdit'])->name('ideas.need-edit');
-    Route::post('/ideas/{idea}/score', [IdeaController::class, 'updateScore'])->name('ideas.update-score');
+    Route::post('/ideas/{idea}/score', [IdeaController::class, 'updateScore'])->name('ideas.score-update');
     Route::post('/ideas/{idea}/comments', [IdeaController::class, 'addComment'])->name('ideas.add-comment');
     Route::get('/ideas/export', [IdeaController::class, 'export'])->name('ideas.export');
 

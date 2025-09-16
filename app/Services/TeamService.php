@@ -98,7 +98,51 @@ class TeamService
      */
     public function updateTeam(int $id, array $data, $user)
     {
-        return $this->teamRepository->update($id, $data);
+        DB::beginTransaction();
+        try {
+            $team = $this->teamRepository->find($id);
+
+            if (!$team) {
+                throw new \Exception('Team not found');
+            }
+
+            // If leader is being changed
+            if (isset($data['leader_id']) && $data['leader_id'] !== $team->leader_id) {
+                $newLeaderId = $data['leader_id'];
+                $oldLeaderId = $team->leader_id;
+
+                // Update the old leader's role to team_member if they exist
+                if ($oldLeaderId) {
+                    $oldLeader = User::find($oldLeaderId);
+                    if ($oldLeader) {
+                        // Remove team_leader role and assign team_member role
+                        $oldLeader->syncRoles(['team_member']);
+
+                        // Also update user_type field if it exists
+                        $oldLeader->update(['user_type' => 'team_member']);
+                    }
+                }
+
+                // Update the new leader's role to team_leader
+                $newLeader = User::find($newLeaderId);
+                if ($newLeader) {
+                    // Remove any existing roles and assign team_leader role
+                    $newLeader->syncRoles(['team_leader']);
+
+                    // Also update user_type field if it exists
+                    $newLeader->update(['user_type' => 'team_leader']);
+                }
+            }
+
+            // Update the team
+            $updatedTeam = $this->teamRepository->update($id, $data);
+
+            DB::commit();
+            return $updatedTeam;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
     }
 
     /**

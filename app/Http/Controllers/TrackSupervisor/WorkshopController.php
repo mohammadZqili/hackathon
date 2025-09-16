@@ -71,9 +71,9 @@ class WorkshopController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string|max:5000',
-            'type' => 'nullable|string|in:workshop,seminar,lecture,panel',
-            'start_time' => 'required|date|after:now',
-            'end_time' => ['required', 'date', new WorkshopTimeValidation()],
+            'type' => 'required|string|in:workshop,seminar,lecture,panel',
+            'start_time' => 'required|date_format:Y-m-d H:i:s|after:now',
+            'end_time' => ['required', 'date_format:Y-m-d H:i:s', new WorkshopTimeValidation()],
             'format' => 'required|in:online,offline,hybrid',
             'location' => 'required_unless:format,online|nullable|string|max:255',
             'remote_link' => 'required_if:format,online|nullable|url|max:500',
