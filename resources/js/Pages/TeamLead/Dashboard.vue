@@ -23,9 +23,9 @@
                                 Manage your team members and their roles.
                             </p>
                         </div>
-                        <Link :href="route('team-leader.team.show')" 
+                        <Link :href="route('team-leader.team.show')"
                             class="inline-flex items-center justify-center px-4 py-2 rounded-xl font-medium text-sm transition-colors"
-                            :style="{ 
+                            :style="{
                                 backgroundColor: themeColor.primary + '20',
                                 color: themeColor.primary
                             }"
@@ -58,9 +58,9 @@
                                 Track the progress of your ideas and initiatives.
                             </p>
                         </div>
-                        <Link :href="route('team-lead.idea.index')" 
+                        <Link :href="route('team-lead.idea.show')"
                             class="inline-flex items-center justify-center px-4 py-2 rounded-xl font-medium text-sm transition-colors"
-                            :style="{ 
+                            :style="{
                                 backgroundColor: themeColor.primary + '20',
                                 color: themeColor.primary
                             }"
@@ -89,9 +89,9 @@
                                 See the schedule for upcoming workshops and training sessions.
                             </p>
                         </div>
-                        <Link :href="route('workshops.public.index')" 
+                        <Link :href="route('team-lead.workshops.index')"
                             class="inline-flex items-center justify-center px-4 py-2 rounded-xl font-medium text-sm transition-colors"
-                            :style="{ 
+                            :style="{
                                 backgroundColor: themeColor.primary + '20',
                                 color: themeColor.primary
                             }"

@@ -35,11 +35,11 @@ class TeamController extends Controller
     {
         $user = auth()->user();
         $team = $this->teamService->getMyTeam($user);
-        
+
         if (!$team) {
-            // If no team exists, redirect to create team
-            return redirect()->route('team-leader.dashboard')
-                ->with('info', 'You need to create a team first');
+            // If no team exists, redirect to idea creation
+            return redirect()->route('team-lead.idea.create')
+                ->with('info', 'Please create an idea first. A team will be created automatically.');
         }
 
         $team->load(['members', 'track', 'idea']);

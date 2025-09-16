@@ -5,7 +5,9 @@ namespace App\Http\Controllers\TeamLead;
 use App\Http\Controllers\Controller;
 use App\Services\TeamService;
 use App\Services\IdeaService;
+use App\Services\EditionContext;
 use App\Repositories\IdeaRepository;
+use App\Repositories\TrackRepository;
 use App\Notifications\IdeaSubmittedNotification;
 use App\Notifications\IdeaStatusChangedNotification;
 use Illuminate\Http\Request;
@@ -18,15 +20,21 @@ class IdeaController extends Controller
     protected $teamService;
     protected $ideaService;
     protected $ideaRepository;
+    protected $trackRepository;
+    protected $editionContext;
 
     public function __construct(
         TeamService $teamService,
         IdeaService $ideaService,
-        IdeaRepository $ideaRepository
+        IdeaRepository $ideaRepository,
+        TrackRepository $trackRepository,
+        EditionContext $editionContext
     ) {
         $this->teamService = $teamService;
         $this->ideaService = $ideaService;
         $this->ideaRepository = $ideaRepository;
+        $this->trackRepository = $trackRepository;
+        $this->editionContext = $editionContext;
     }
 
     public function index()
@@ -35,8 +43,8 @@ class IdeaController extends Controller
         $team = $this->teamService->getMyTeam($user);
 
         if (!$team) {
-            return redirect()->route('team-lead.dashboard')
-                ->with('error', 'You need to create a team first');
+            return redirect()->route('team-lead.idea.create')
+                ->with('info', 'Please create an idea first. A team will be created automatically.');
         }
 
         $idea = $this->teamService->getTeamIdea($team);
@@ -61,14 +69,15 @@ class IdeaController extends Controller
         $team = $this->teamService->getMyTeam($user);
 
         if (!$team) {
-            return redirect()->route('team-leader.dashboard')
-                ->with('error', 'You need to create a team first');
+            return redirect()->route('team-lead.idea.create')
+                ->with('info', 'Please create an idea first. A team will be created automatically.');
         }
 
         $idea = $this->teamService->getTeamIdea($team);
 
         if (!$idea) {
-            return redirect()->route('team-leader.idea.create');
+            return redirect()->route('team-lead.idea.create')
+                ->with('info', 'Please create an idea for your team.');
         }
 
         // Load idea with comments and other relationships
@@ -85,20 +94,23 @@ class IdeaController extends Controller
     {
         $user = auth()->user();
         $team = $this->teamService->getMyTeam($user);
-        
-        if (!$team) {
-            return redirect()->route('team-leader.dashboard')
-                ->with('error', 'You need to create a team first');
-        }
 
-        $idea = $this->teamService->getTeamIdea($team);
-        if ($idea) {
-            return redirect()->route('team-leader.idea.show');
+        // Get available tracks for team leaders
+        $tracks = $this->trackRepository->getAllActive();
+
+        // If team exists and already has an idea, redirect to show
+        if ($team) {
+            $idea = $this->teamService->getTeamIdea($team);
+            if ($idea) {
+                return redirect()->route('team-lead.idea.show')
+                    ->with('info', 'You already have an idea created.');
+            }
         }
 
         return Inertia::render('TeamLead/Idea/Create', [
             'team' => $team,
-            'tracks' => [$team->track] // Team's assigned track
+            'tracks' => $tracks,
+            'requiresTeamCreation' => !$team
         ]);
     }
 
@@ -106,27 +118,49 @@ class IdeaController extends Controller
     {
         $user = auth()->user();
         $team = $this->teamService->getMyTeam($user);
-        
-        if (!$team) {
-            return redirect()->route('team-leader.dashboard')
-                ->with('error', 'You need to create a team first');
-        }
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',
+            'track_id' => 'required|exists:tracks,id',
+            'team_name' => $team ? 'nullable' : 'required|string|max:255',
             'files' => 'nullable|array',
             'files.*' => 'file|max:10240' // 10MB max per file
         ]);
+
+        // If no team exists, create one automatically
+        if (!$team) {
+            $edition = $this->editionContext->current();
+
+            // Create team with the provided name and track
+            $teamData = [
+                'name' => $validated['team_name'] ?? $user->name . "'s Team",
+                'leader_id' => $user->id,
+                'track_id' => $validated['track_id'],
+                'edition_id' => $edition->id,
+                'status' => 'active',
+                'description' => 'Team created for idea: ' . $validated['title']
+            ];
+
+            $team = $this->teamService->createTeam($teamData, $user);
+
+            // Add the team leader as a member
+            $team->members()->attach($user->id, [
+                'role' => 'leader',
+                'joined_at' => now()
+            ]);
+        }
 
         // Map the form data to match the database schema
         $ideaData = [
             'title' => $validated['title'],
             'description' => $validated['description'],
+            'track_id' => $team->track_id,
             'problem_statement' => null,
             'solution_approach' => null,
             'expected_impact' => null,
             'technologies' => [],
+            'status' => 'draft' // Start as draft, user can submit later
         ];
 
         $result = $this->teamService->submitIdea($team, $ideaData);
@@ -148,24 +182,30 @@ class IdeaController extends Controller
                 }
             }
 
-            // Notify all team members about the new idea
-            $teamMembers = $team->members()->get();
+            // Notify all team members about the new idea (if there are any besides the leader)
+            $teamMembers = $team->members()->where('users.id', '!=', $user->id)->get();
             foreach ($teamMembers as $member) {
-                // Don't notify the submitter
-                if ($member->id !== $user->id) {
-                    $member->notify(new IdeaSubmittedNotification($idea, $user));
-                }
+                $member->notify(new IdeaSubmittedNotification($idea, $user));
             }
 
-            // Also notify track supervisors
+            // Load the track with supervisors
+            $team->load('track.supervisors');
+
+            // Notify track supervisors about the new idea
             if ($team->track && $team->track->supervisors) {
                 foreach ($team->track->supervisors as $supervisor) {
                     $supervisor->notify(new IdeaSubmittedNotification($idea, $user));
                 }
             }
 
-            return redirect()->route('team-leader.idea.show')
-                ->with('success', 'Idea created successfully and team members notified');
+            $message = 'Idea created successfully! ';
+            if (!$validated['team_name']) {
+                $message .= 'Your team has been created automatically. ';
+            }
+            $message .= 'Track supervisors have been notified.';
+
+            return redirect()->route('team-lead.idea.show')
+                ->with('success', $message);
         } else {
             return back()->with('error', $result['message']);
         }
@@ -291,21 +331,26 @@ class IdeaController extends Controller
             'submitted_at' => now()
         ]);
 
-        // Notify all team members about the status change
-        $teamMembers = $team->members()->get();
+        // Notify all team members about the status change (except the submitter)
+        $teamMembers = $team->members()->where('users.id', '!=', $user->id)->get();
         foreach ($teamMembers as $member) {
             $member->notify(new IdeaStatusChangedNotification($idea, $oldStatus, 'submitted', $user));
         }
 
-        // Also notify track supervisors
+        // Load the track with supervisors
+        $team->load('track.supervisors');
+
+        // Notify track supervisors about the idea submission
         if ($team->track && $team->track->supervisors) {
             foreach ($team->track->supervisors as $supervisor) {
+                // Send both submission and status change notifications
+                $supervisor->notify(new IdeaSubmittedNotification($idea, $user));
                 $supervisor->notify(new IdeaStatusChangedNotification($idea, $oldStatus, 'submitted', $user));
             }
         }
 
-        return redirect()->route('team-leader.idea.show')
-            ->with('success', 'Idea submitted successfully for review and team notified');
+        return redirect()->route('team-lead.idea.show')
+            ->with('success', 'Idea submitted successfully for review! Track supervisors have been notified.');
     }
 
     public function withdraw()
