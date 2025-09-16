@@ -33,40 +33,51 @@ class IdeaController extends Controller
     {
         $user = auth()->user();
         $team = $this->teamService->getMyTeam($user);
-        
+
         if (!$team) {
             return redirect()->route('team-lead.dashboard')
                 ->with('error', 'You need to create a team first');
         }
 
         $idea = $this->teamService->getTeamIdea($team);
-        
+
         if (!$idea) {
             return redirect()->route('team-lead.idea.create');
         }
-        
-        return redirect()->route('team-lead.idea.edit-my');
+
+        // Load idea with comments and other relationships
+        $idea->load(['comments.user', 'files', 'track', 'team.members']);
+
+        return Inertia::render('TeamLead/Idea/Edit', [
+            'idea' => $idea,
+            'team' => $team,
+            'comments' => $idea->comments
+        ]);
     }
 
     public function show()
     {
         $user = auth()->user();
         $team = $this->teamService->getMyTeam($user);
-        
+
         if (!$team) {
             return redirect()->route('team-leader.dashboard')
                 ->with('error', 'You need to create a team first');
         }
 
         $idea = $this->teamService->getTeamIdea($team);
-        
+
         if (!$idea) {
             return redirect()->route('team-leader.idea.create');
         }
-        
+
+        // Load idea with comments and other relationships
+        $idea->load(['comments.user', 'files', 'track', 'team.members']);
+
         return Inertia::render('TeamLead/Idea/Show', [
             'idea' => $idea,
-            'team' => $team
+            'team' => $team,
+            'comments' => $idea->comments
         ]);
     }
 
@@ -164,14 +175,14 @@ class IdeaController extends Controller
     {
         $user = auth()->user();
         $team = $this->teamService->getMyTeam($user);
-        
+
         if (!$team) {
             return redirect()->route('team-leader.dashboard')
                 ->with('error', 'You need to create a team first');
         }
 
         $idea = $this->teamService->getTeamIdea($team);
-        
+
         if (!$idea) {
             return redirect()->route('team-leader.idea.create');
         }
@@ -182,9 +193,13 @@ class IdeaController extends Controller
                 ->with('error', 'Idea cannot be edited in current status');
         }
 
+        // Load idea with comments and other relationships
+        $idea->load(['comments.user', 'files', 'track', 'team.members']);
+
         return Inertia::render('TeamLead/Idea/Edit', [
             'idea' => $idea,
-            'team' => $team
+            'team' => $team,
+            'comments' => $idea->comments
         ]);
     }
 
@@ -403,5 +418,39 @@ class IdeaController extends Controller
         $file->delete();
 
         return back()->with('success', 'File deleted successfully');
+    }
+
+    public function addComment(Request $request, $id)
+    {
+        $user = auth()->user();
+        $team = $this->teamService->getMyTeam($user);
+
+        if (!$team) {
+            return back()->with('error', 'You need to create a team first');
+        }
+
+        $idea = $this->teamService->getTeamIdea($team);
+
+        if (!$idea || $idea->id != $id) {
+            return back()->with('error', 'Invalid idea');
+        }
+
+        $request->validate([
+            'comment' => 'required|string|max:2000',
+            'parent_id' => 'nullable|exists:idea_comments,id'
+        ]);
+
+        try {
+            $comment = $this->ideaService->addComment(
+                $idea->id,
+                $user->id,
+                $request->comment,
+                $request->parent_id
+            );
+
+            return back()->with('success', 'Comment added successfully.');
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => $e->getMessage()]);
+        }
     }
 }
