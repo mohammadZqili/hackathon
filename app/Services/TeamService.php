@@ -9,6 +9,7 @@ use App\Models\Team;
 use App\Models\User;
 use App\Models\Idea;
 use App\Mail\TeamInvitation;
+use App\Helpers\MailConfig;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
