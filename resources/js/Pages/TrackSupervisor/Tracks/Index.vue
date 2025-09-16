@@ -6,10 +6,10 @@
             <div class="flex flex-row items-start justify-between flex-wrap p-4">
                 <div class="flex flex-col items-start justify-start gap-3 min-w-[288px]">
                     <div class="flex flex-col items-start justify-start">
-                        <h1 class="text-[32px] font-bold leading-10">Tracks</h1>
+                        <h1 class="text-[32px] font-bold leading-10">My Assigned Tracks</h1>
                     </div>
                     <div class="flex flex-col items-start justify-start text-sm" :style="{ color: themeColor.primary }">
-                        <div class="relative leading-[21px]">Manage tracks for all hackathon editions.</div>
+                        <div class="relative leading-[21px]">Manage teams, ideas, and workshops for your assigned tracks.</div>
                     </div>
                 </div>
 

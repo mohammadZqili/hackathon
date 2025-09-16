@@ -76,7 +76,9 @@ class SettingsController extends Controller
             // Clear config cache
             Artisan::call('config:clear');
 
-            return redirect()->route('system-admin.settings.branding')->with('success', $result['message']);
+            return redirect()->route('system-admin.settings.branding')
+                ->with('success', $result['message'])
+                ->with('settings', $this->settingService->getBrandingSettings(auth()->user()));
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()]);
         }
@@ -120,9 +122,32 @@ class SettingsController extends Controller
             // Clear config cache
             Artisan::call('config:clear');
 
-            return back()->with('success', $result['message']);
+            return redirect()->route('system-admin.settings.smtp')->with('success', $result['message']);
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Test SMTP connection
+     */
+    public function testSmtp(Request $request)
+    {
+        try {
+            // Configure mail settings from database
+            \App\Helpers\MailConfig::configure();
+
+            // Send test email to current user
+            $user = auth()->user();
+
+            \Illuminate\Support\Facades\Mail::raw('This is a test email from ' . config('app.name') . ' to verify SMTP settings are working correctly.', function ($message) use ($user) {
+                $message->to($user->email)
+                    ->subject('SMTP Test Email - ' . config('app.name'));
+            });
+
+            return back()->with('success', 'Test email sent successfully to ' . $user->email);
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => 'Failed to send test email: ' . $e->getMessage()]);
         }
     }
 

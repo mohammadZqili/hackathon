@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
+use App\Helpers\MailConfig;
 
 class MagicLinkController extends Controller
 {
@@ -119,6 +120,8 @@ class MagicLinkController extends Controller
             ['token' => $token]
         );
 
+        // Configure mail settings from database
+        MailConfig::configure();
         Mail::to($user)->send(new MagicLoginLink($url, $isNewUser));
     }
 

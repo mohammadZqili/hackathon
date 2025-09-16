@@ -150,6 +150,7 @@ Route::middleware(['auth', 'role:system_admin|permission:manage-hackathon-editio
         Route::get('/', [SystemAdminSettingsController::class, 'index'])->name('index');
         Route::get('/smtp', [SystemAdminSettingsController::class, 'smtp'])->name('smtp');
         Route::post('/smtp', [SystemAdminSettingsController::class, 'updateSmtp'])->name('smtp.update');
+        Route::post('/smtp/test', [SystemAdminSettingsController::class, 'testSmtp'])->name('smtp.test');
         Route::get('/branding', [SystemAdminSettingsController::class, 'branding'])->name('branding');
         Route::post('/branding', [SystemAdminSettingsController::class, 'updateBranding'])->name('branding.update');
         Route::get('/twitter', [SystemAdminSettingsController::class, 'twitter'])->name('twitter');

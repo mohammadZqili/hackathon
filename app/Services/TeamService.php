@@ -349,6 +349,8 @@ class TeamService
             // Send invitation email if requested
             if (!empty($data['send_invitation']) && $data['send_invitation']) {
                 try {
+                    // Configure mail settings from database
+                    MailConfig::configure();
                     Mail::to($user->email)->send(new TeamInvitation($user, $team));
                 } catch (\Exception $e) {
                     Log::error('Failed to send team invitation email: ' . $e->getMessage());

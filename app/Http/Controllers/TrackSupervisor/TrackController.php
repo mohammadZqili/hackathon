@@ -22,18 +22,18 @@ class TrackController extends Controller
     }
 
     /**
-     * Display the single track assigned to this supervisor
+     * Display the tracks assigned to this supervisor
      */
     public function index(Request $request): Response
     {
         $edition = $this->editionContext->current();
         $user = auth()->user();
 
-        // Get the single track assigned to this supervisor
-        $assignedTrack = $user->getAssignedTrack($edition->id);
+        // Get all tracks assigned to this supervisor in the current edition
+        $assignedTracks = $user->tracksInEdition($edition->id)->get();
 
-        if (!$assignedTrack) {
-            // Return empty data if no track assigned
+        if ($assignedTracks->isEmpty()) {
+            // Return empty data if no tracks assigned
             return Inertia::render('TrackSupervisor/Tracks/Index', [
                 'tracks' => ['data' => [], 'total' => 0],
                 'statistics' => [
@@ -46,38 +46,60 @@ class TrackController extends Controller
                 ],
                 'editions' => [$edition],
                 'filters' => $request->only(['search', 'status', 'edition_id']),
-                'message' => 'You are not assigned to any track in the current edition.'
+                'message' => 'You are not assigned to any tracks in the current edition.'
             ]);
         }
 
-        // Load relationships and counts for the track
-        $assignedTrack->loadCount(['teams', 'ideas']);
-        $assignedTrack->load(['edition', 'supervisors']);
+        // Apply filters
+        $query = $assignedTracks;
 
-        // Calculate statistics for the single track
+        // Filter by search term
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query = $query->filter(function ($track) use ($search) {
+                return stripos($track->name, $search) !== false ||
+                       stripos($track->description, $search) !== false;
+            });
+        }
+
+        // Filter by status
+        if ($request->filled('status')) {
+            $isActive = $request->status === 'active';
+            $query = $query->filter(function ($track) use ($isActive) {
+                return $track->is_active === $isActive;
+            });
+        }
+
+        // Load relationships and counts for all tracks
+        $query->each(function($track) {
+            $track->loadCount(['teams', 'ideas']);
+            $track->load(['edition', 'supervisors']);
+        });
+
+        // Calculate statistics for all assigned tracks
         $statistics = [
-            'total' => 1,
-            'active' => $assignedTrack->is_active ? 1 : 0,
-            'inactive' => !$assignedTrack->is_active ? 1 : 0,
-            'with_supervisor' => 1, // Track supervisor is viewing their own track
-            'total_teams' => $assignedTrack->teams_count ?? 0,
-            'total_ideas' => $assignedTrack->ideas_count ?? 0
+            'total' => $assignedTracks->count(),
+            'active' => $assignedTracks->where('is_active', true)->count(),
+            'inactive' => $assignedTracks->where('is_active', false)->count(),
+            'with_supervisor' => $assignedTracks->count(), // All have supervisor (current user)
+            'total_teams' => $assignedTracks->sum('teams_count'),
+            'total_ideas' => $assignedTracks->sum('ideas_count')
         ];
 
-        // Return single track as paginated result for consistency
+        // Return tracks as paginated result for consistency
         $data = [
             'tracks' => [
-                'data' => [$assignedTrack],
-                'total' => 1,
+                'data' => $query->values()->all(),
+                'total' => $query->count(),
                 'current_page' => 1,
-                'per_page' => 1,
-                'links' => [] // Empty links since there's only one track
+                'per_page' => $query->count(),
+                'links' => [] // No pagination needed for limited tracks
             ],
             'statistics' => $statistics,
             'editions' => [$edition], // Only show current edition
             'filters' => $request->only(['search', 'status', 'edition_id']),
             'current_edition' => $edition,
-            'assigned_track' => $assignedTrack
+            'assigned_tracks' => $assignedTracks
         ];
 
         return Inertia::render('TrackSupervisor/Tracks/Index', $data);

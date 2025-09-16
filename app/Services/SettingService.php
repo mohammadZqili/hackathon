@@ -7,6 +7,7 @@ use App\Models\SystemSetting;
 use App\Repositories\SettingRepository;
 use App\Repositories\HackathonEditionRepository;
 use App\Providers\SettingsServiceProvider;
+use App\Helpers\MailConfig;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Collection;
@@ -173,6 +174,7 @@ class SettingService extends BaseService
 
             // Clear settings cache
             SettingsServiceProvider::clearCache();
+            MailConfig::clearCache();
 
             DB::commit();
 
