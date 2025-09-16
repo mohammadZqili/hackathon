@@ -3,11 +3,16 @@
 namespace App\Services;
 
 use App\Models\User;
+use App\Models\Idea;
 use App\Repositories\IdeaRepository;
 use App\Repositories\TeamRepository;
 use App\Repositories\HackathonEditionRepository;
+use App\Notifications\IdeaSubmittedNotification;
+use App\Notifications\IdeaReviewedNotification;
+use App\Notifications\IdeaStatusChangedNotification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Collection;
 
 class IdeaService extends BaseService
@@ -162,11 +167,14 @@ class IdeaService extends BaseService
                 'status' => $data['status']
             ]);
 
+            // Send notifications to team members
+            $this->notifyTeamOfReview($idea, $user, $data['status'], $data['feedback'] ?? null);
+
             DB::commit();
 
             return [
                 'success' => true,
-                'message' => 'Idea review completed successfully.'
+                'message' => 'Idea review completed successfully. Team has been notified.'
             ];
         } catch (\Exception $e) {
             DB::rollBack();
@@ -257,42 +265,42 @@ class IdeaService extends BaseService
     {
         $roleFilters = $filters;
 
-        switch ($user->user_type) {
-            case 'hackathon_admin':
-                // Limit to user's edition
-                if ($user->edition_id) {
-                    $roleFilters['edition_id'] = $user->edition_id;
-                }
-                break;
+        if ($user->hasRole('hackathon_admin')) {
+            // Limit to user's edition
+            if ($user->edition_id) {
+                $roleFilters['edition_id'] = $user->edition_id;
+            }
+        } elseif ($user->hasRole('track_supervisor')) {
+            // Get supervised tracks
+            $trackIds = DB::table('track_supervisors')
+                ->where('user_id', $user->id)
+                ->pluck('track_id')
+                ->toArray();
 
-            case 'track_supervisor':
-                // Get supervised tracks
-                $trackIds = DB::table('track_supervisors')
-                    ->where('user_id', $user->id)
-                    ->pluck('track_id')
-                    ->toArray();
+            if (!empty($trackIds)) {
+                $roleFilters['track_id'] = $trackIds;
+            }
+        } elseif ($user->hasRole('team_leader')) {
+            // Limit to their team's ideas
+            $team = $this->teamRepo->findByLeaderId($user->id);
+            if ($team) {
+                $roleFilters['team_id'] = $team->id;
+            }
+        } elseif ($user->hasRole('team_member')) {
+            // Limit to their team's ideas
+            $teams = DB::table('team_user')
+                ->where('user_id', $user->id)
+                ->pluck('team_id')
+                ->toArray();
 
-                if (!empty($trackIds)) {
-                    $roleFilters['track_id'] = $trackIds;
-                }
-                break;
-
-            case 'team_leader':
-                // Limit to their team's ideas
-                $team = $this->teamRepo->findByLeaderId($user->id);
-                if ($team) {
-                    $roleFilters['team_id'] = $team->id;
-                }
-                break;
-
-            case 'system_admin':
-                // No additional filters - can see everything
-                break;
-
-            default:
-                // Other roles - force empty result
-                $roleFilters['force_empty'] = true;
-                break;
+            if (!empty($teams)) {
+                $roleFilters['team_id'] = $teams;
+            }
+        } elseif ($user->hasRole('system_admin')) {
+            // No additional filters - can see everything
+        } else {
+            // Other roles - force empty result
+            $roleFilters['force_empty'] = true;
         }
 
         return $roleFilters;
@@ -303,18 +311,15 @@ class IdeaService extends BaseService
      */
     protected function getEditionsForUser(User $user): Collection
     {
-        switch ($user->user_type) {
-            case 'system_admin':
-                return $this->editionRepository->all();
-
-            case 'hackathon_admin':
-                if ($user->edition_id) {
-                    return collect([$this->editionRepository->find($user->edition_id)]);
-                }
-                return collect();
-
-            default:
-                return collect();
+        if ($user->hasRole('system_admin')) {
+            return $this->editionRepository->all();
+        } elseif ($user->hasRole('hackathon_admin')) {
+            if ($user->edition_id) {
+                return collect([$this->editionRepository->find($user->edition_id)]);
+            }
+            return collect();
+        } else {
+            return collect();
         }
     }
 
@@ -323,25 +328,20 @@ class IdeaService extends BaseService
      */
     protected function userCanAccessIdea(User $user, $idea): bool
     {
-        switch ($user->user_type) {
-            case 'system_admin':
-                return true;
-
-            case 'hackathon_admin':
-                return $idea->team && $idea->team->edition_id == $user->edition_id;
-
-            case 'track_supervisor':
-                $trackIds = DB::table('track_supervisors')
-                    ->where('user_id', $user->id)
-                    ->pluck('track_id')
-                    ->toArray();
-                return in_array($idea->track_id, $trackIds);
-
-            case 'team_leader':
-                return $idea->team_id == $this->teamRepo->findByLeaderId($user->id)?->id;
-
-            default:
-                return false;
+        if ($user->hasRole('system_admin')) {
+            return true;
+        } elseif ($user->hasRole('hackathon_admin')) {
+            return $idea->team && $idea->team->edition_id == $user->edition_id;
+        } elseif ($user->hasRole('track_supervisor')) {
+            $trackIds = DB::table('track_supervisors')
+                ->where('user_id', $user->id)
+                ->pluck('track_id')
+                ->toArray();
+            return in_array($idea->track_id, $trackIds);
+        } elseif ($user->hasRole('team_leader')) {
+            return $idea->team_id == $this->teamRepo->findByLeaderId($user->id)?->id;
+        } else {
+            return false;
         }
     }
 
@@ -354,7 +354,7 @@ class IdeaService extends BaseService
             return false;
         }
 
-        return in_array($user->user_type, ['system_admin', 'hackathon_admin', 'track_supervisor']);
+        return $user->hasAnyRole(['system_admin', 'hackathon_admin', 'track_supervisor']);
     }
 
     /**
@@ -442,5 +442,92 @@ class IdeaService extends BaseService
             'comment' => $comment,
             'created_at' => now()
         ]);
+    }
+
+    /**
+     * Notify team members about idea submission
+     */
+    protected function notifyTeamOfSubmission(Idea $idea, User $submitter): void
+    {
+        if (!$idea->team) {
+            return;
+        }
+
+        // Get all team members
+        $teamMembers = $idea->team->members()->get();
+
+        foreach ($teamMembers as $member) {
+            // Don't notify the submitter themselves
+            if ($member->id !== $submitter->id) {
+                $member->notify(new IdeaSubmittedNotification($idea, $submitter));
+            }
+        }
+
+        // Also notify track supervisors
+        if ($idea->team->track && $idea->team->track->supervisors) {
+            foreach ($idea->team->track->supervisors as $supervisor) {
+                $supervisor->notify(new IdeaSubmittedNotification($idea, $submitter));
+            }
+        }
+    }
+
+    /**
+     * Notify team members about idea review
+     */
+    protected function notifyTeamOfReview(Idea $idea, User $reviewer, string $status, ?string $feedback = null): void
+    {
+        if (!$idea->team) {
+            return;
+        }
+
+        // Store old status for comparison
+        $oldStatus = $idea->getOriginal('status');
+
+        // Get all team members
+        $teamMembers = $idea->team->members()->get();
+
+        foreach ($teamMembers as $member) {
+            // Send review notification
+            $member->notify(new IdeaReviewedNotification($idea, $reviewer, $status, $feedback));
+
+            // Send status change notification if status changed
+            if ($oldStatus && $oldStatus !== $status) {
+                $member->notify(new IdeaStatusChangedNotification($idea, $oldStatus, $status, $reviewer));
+            }
+        }
+
+        // Also notify the team leader if not already in members
+        if ($idea->team->leader && !$teamMembers->contains('id', $idea->team->leader->id)) {
+            $idea->team->leader->notify(new IdeaReviewedNotification($idea, $reviewer, $status, $feedback));
+            if ($oldStatus && $oldStatus !== $status) {
+                $idea->team->leader->notify(new IdeaStatusChangedNotification($idea, $oldStatus, $status, $reviewer));
+            }
+        }
+    }
+
+    /**
+     * Notify team members about idea status change
+     */
+    protected function notifyTeamOfStatusChange(Idea $idea, string $oldStatus, string $newStatus, User $changedBy): void
+    {
+        if (!$idea->team) {
+            return;
+        }
+
+        // Get all team members
+        $teamMembers = $idea->team->members()->get();
+
+        foreach ($teamMembers as $member) {
+            $member->notify(new IdeaStatusChangedNotification($idea, $oldStatus, $newStatus, $changedBy));
+        }
+
+        // Also notify track supervisors if status is significant
+        if (in_array($newStatus, ['submitted', 'approved', 'rejected'])) {
+            if ($idea->team->track && $idea->team->track->supervisors) {
+                foreach ($idea->team->track->supervisors as $supervisor) {
+                    $supervisor->notify(new IdeaStatusChangedNotification($idea, $oldStatus, $newStatus, $changedBy));
+                }
+            }
+        }
     }
 }

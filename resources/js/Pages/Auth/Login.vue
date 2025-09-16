@@ -5,6 +5,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import FormInput from '../../Components/FormInput.vue'
 import FormCheckbox from '../../Components/FormCheckbox.vue'
 import Modal from '../../Components/Modal.vue'
+import TestAccountsHelper from '../../Components/TestAccountsHelper.vue'
 
 const page = usePage()
 const { settings: { passwordlessLogin = false } = {} } = page.props
@@ -71,6 +72,12 @@ const themeStyles = computed(() => ({
 
 const submit = () => {
     form.post(route('login'))
+}
+
+// Fill login form with test credentials (Development only)
+const fillLoginForm = ({ email, password }) => {
+    form.email = email
+    form.password = password
 }
 
 const sendMagicLink = () => {
@@ -314,6 +321,9 @@ const handleOAuthLogin = (provider) => {
             </button>
         </template>
     </Modal>
+
+    <!-- Test Accounts Helper (Development Only) -->
+    <TestAccountsHelper @fill-credentials="fillLoginForm" />
 </template>
 
 <style scoped>

@@ -12,6 +12,7 @@ use App\Http\Controllers\TrackSupervisor\SpeakerController;
 use App\Http\Controllers\TrackSupervisor\OrganizationController;
 use App\Http\Controllers\TrackSupervisor\SettingsController;
 use App\Http\Controllers\TrackSupervisor\EditionController;
+use App\Http\Controllers\TrackSupervisor\UserController;
 
 Route::middleware(['auth', 'role:track_supervisor', 'track_supervisor_scope'])->prefix('track-supervisor')->name('track-supervisor.')->group(function () {
 
@@ -40,6 +41,7 @@ Route::middleware(['auth', 'role:track_supervisor', 'track_supervisor_scope'])->
     Route::resource('ideas', IdeaController::class);
     Route::get('/ideas/{idea}/review', [IdeaController::class, 'review'])->name('ideas.review');
     Route::post('/ideas/{idea}/review', [IdeaController::class, 'submitReview'])->name('ideas.submit-review');
+    Route::post('/ideas/{idea}/process-review', [IdeaController::class, 'processReview'])->name('ideas.process-review');
     Route::post('/ideas/{idea}/approve', [IdeaController::class, 'approve'])->name('ideas.approve');
     Route::post('/ideas/{idea}/reject', [IdeaController::class, 'reject'])->name('ideas.reject');
     Route::post('/ideas/{idea}/need-edit', [IdeaController::class, 'needEdit'])->name('ideas.need-edit');
@@ -82,4 +84,7 @@ Route::middleware(['auth', 'role:track_supervisor', 'track_supervisor_scope'])->
     Route::get('/reports', [DashboardController::class, 'reports'])->name('reports.index');
     Route::get('/reports/export', [DashboardController::class, 'exportReport'])->name('reports.export');
     Route::get('/analytics', [DashboardController::class, 'analytics'])->name('analytics.index');
+
+    // User Search
+    Route::get('/users/search', [UserController::class, 'search'])->name('users.search');
 });

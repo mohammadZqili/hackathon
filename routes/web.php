@@ -249,6 +249,9 @@ require __DIR__.'/visitor.php';
 
 // Language switching routes
 Route::post('/language/{locale}', [App\Http\Controllers\LanguageController::class, 'switch'])->name('language.switch');
+
+// Test Accounts (Development Only)
+Route::get('/api/test-accounts', [App\Http\Controllers\TestAccountsController::class, 'index'])->name('test-accounts.index');
 Route::get('/language/current', [App\Http\Controllers\LanguageController::class, 'current'])->name('language.current');
 
 // Debug route for testing roles

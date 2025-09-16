@@ -6,7 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Services\IdeaService;
 use App\Services\TrackService;
 use App\Services\EditionContext;
+use App\Notifications\IdeaReviewedNotification;
+use App\Notifications\IdeaStatusChangedNotification;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Notification;
 use Inertia\Inertia;
 use App\Models\Idea;
 use App\Models\User;
@@ -281,15 +284,38 @@ class IdeaController extends Controller
         ]);
 
         try {
+            // Store old status for notification
+            $oldStatus = $idea->status;
+
             $result = $this->ideaService->processReview($idea->id, $validated, auth()->user());
 
-            // Send notification to team if requested
-            if ($request->boolean('notify_team')) {
-                // TODO: Trigger notification service here
+            // Send notifications to team members
+            if ($idea->team) {
+                $teamMembers = $idea->team->members()->get();
+                $feedback = $validated['feedback'] ?? null;
+                $newStatus = $validated['status'];
+
+                foreach ($teamMembers as $member) {
+                    // Send review notification
+                    $member->notify(new IdeaReviewedNotification($idea, auth()->user(), $newStatus, $feedback));
+
+                    // Send status change notification if status changed
+                    if ($oldStatus !== $newStatus) {
+                        $member->notify(new IdeaStatusChangedNotification($idea, $oldStatus, $newStatus, auth()->user()));
+                    }
+                }
+
+                // Also notify the team leader specifically if not already included
+                if ($idea->team->leader && !$teamMembers->contains('id', $idea->team->leader->id)) {
+                    $idea->team->leader->notify(new IdeaReviewedNotification($idea, auth()->user(), $newStatus, $feedback));
+                    if ($oldStatus !== $newStatus) {
+                        $idea->team->leader->notify(new IdeaStatusChangedNotification($idea, $oldStatus, $newStatus, auth()->user()));
+                    }
+                }
             }
 
             return redirect()->route('track-supervisor.ideas.show', $idea->id)
-                ->with('success', $result['message']);
+                ->with('success', $result['message'] . ' Team has been notified.');
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()]);
         }
@@ -305,13 +331,27 @@ class IdeaController extends Controller
             'score' => 'nullable|numeric|min:0|max:100'
         ]);
 
+        // Store old status
+        $oldStatus = $idea->status;
+
         $idea->accept(
             auth()->user(),
             $request->feedback,
             $request->score
         );
 
-        return redirect()->back()->with('success', 'Idea accepted successfully.');
+        // Notify team members about acceptance
+        if ($idea->team) {
+            $teamMembers = $idea->team->members()->get();
+            foreach ($teamMembers as $member) {
+                $member->notify(new IdeaReviewedNotification($idea, auth()->user(), 'accepted', $request->feedback));
+                if ($oldStatus !== 'accepted') {
+                    $member->notify(new IdeaStatusChangedNotification($idea, $oldStatus, 'accepted', auth()->user()));
+                }
+            }
+        }
+
+        return redirect()->back()->with('success', 'Idea accepted successfully. Team notified.');
     }
 
     /**
@@ -324,13 +364,27 @@ class IdeaController extends Controller
             'score' => 'nullable|numeric|min:0|max:100'
         ]);
 
+        // Store old status
+        $oldStatus = $idea->status;
+
         $idea->reject(
             auth()->user(),
             $request->feedback,
             $request->score
         );
 
-        return redirect()->back()->with('success', 'Idea rejected.');
+        // Notify team members about rejection
+        if ($idea->team) {
+            $teamMembers = $idea->team->members()->get();
+            foreach ($teamMembers as $member) {
+                $member->notify(new IdeaReviewedNotification($idea, auth()->user(), 'rejected', $request->feedback));
+                if ($oldStatus !== 'rejected') {
+                    $member->notify(new IdeaStatusChangedNotification($idea, $oldStatus, 'rejected', auth()->user()));
+                }
+            }
+        }
+
+        return redirect()->back()->with('success', 'Idea rejected. Team notified.');
     }
 
     /**
@@ -342,12 +396,26 @@ class IdeaController extends Controller
             'feedback' => 'required|string|max:2000'
         ]);
 
+        // Store old status
+        $oldStatus = $idea->status;
+
         $idea->requestRevision(
             auth()->user(),
             $request->feedback
         );
 
-        return redirect()->back()->with('success', 'Idea marked as needing revisions.');
+        // Notify team members about revision request
+        if ($idea->team) {
+            $teamMembers = $idea->team->members()->get();
+            foreach ($teamMembers as $member) {
+                $member->notify(new IdeaReviewedNotification($idea, auth()->user(), 'needs_revision', $request->feedback));
+                if ($oldStatus !== 'needs_revision') {
+                    $member->notify(new IdeaStatusChangedNotification($idea, $oldStatus, 'needs_revision', auth()->user()));
+                }
+            }
+        }
+
+        return redirect()->back()->with('success', 'Idea marked as needing revisions. Team notified.');
     }
 
     /**

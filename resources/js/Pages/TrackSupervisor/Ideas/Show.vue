@@ -5,19 +5,9 @@ const { t, isRTL, direction, locale } = useLocalization()
 import { Head, router, useForm } from '@inertiajs/vue3'
 import { ref, computed, onMounted } from 'vue'
 import Default from '@/Layouts/Default.vue'
-import { 
+import {
     DocumentIcon,
-    CheckIcon,
-    XMarkIcon,
-    ClockIcon,
-    ExclamationTriangleIcon,
-    StarIcon,
-    UserGroupIcon,
-    CalendarIcon,
-    TagIcon,
-    TrophyIcon,
-    PencilSquareIcon,
-    TrashIcon
+    PaperClipIcon
 } from '@heroicons/vue/24/outline'
 
 const props = defineProps({
@@ -28,7 +18,7 @@ const props = defineProps({
 
 const activeTab = ref('overview')
 
-// Get theme color from localStorage or default
+// Get theme color
 const themeColor = ref({
     primary: '#0d9488',
     hover: '#0f766e',
@@ -73,21 +63,12 @@ const submitDecision = (status) => {
     decisionForm.status = status
 }
 
-const updateScore = () => {
-    if (decisionForm.score && decisionForm.score >= 0 && decisionForm.score <= 100) {
-        decisionForm.post(route('track-supervisor.ideas.score', props.idea.id), {
-            only: ['score'],
-            preserveScroll: true,
-        })
-    }
-}
-
 const submitChanges = () => {
     if (!decisionForm.status) {
-        alert('Please select a decision status');
-        return;
+        alert('Please select a decision status')
+        return
     }
-    
+
     decisionForm.post(route('track-supervisor.ideas.process-review', props.idea.id), {
         onSuccess: () => {
             router.visit(route('track-supervisor.ideas.index'))
@@ -95,355 +76,277 @@ const submitChanges = () => {
     })
 }
 
-const deleteIdea = () => {
-    if (confirm('Are you sure you want to delete this idea? This action cannot be undone.')) {
-        router.delete(route('track-supervisor.ideas.destroy', props.idea.id))
-    }
-}
-
 const formatDateTime = (date) => {
     if (!date) return 'N/A'
     const d = new Date(date)
     return d.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
         year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    }) + ' ' + d.toLocaleTimeString('en-US', {
         hour: '2-digit',
-        minute: '2-digit'
+        minute: '2-digit',
+        hour12: false
     })
 }
 
-// Status gradient colors
-const statusGradients = {
-    accepted: 'from-green-400 to-green-600',
-    rejected: 'from-red-400 to-red-600',
-    needs_revision: 'from-amber-400 to-amber-600',
-    pending_review: 'from-blue-400 to-blue-600',
-    under_review: 'from-indigo-400 to-indigo-600',
-    submitted: 'from-blue-400 to-blue-600',
-    draft: 'from-gray-400 to-gray-600',
-    in_progress: 'from-purple-400 to-purple-600',
-    completed: 'from-teal-400 to-teal-600',
+// Get actual uploaded documents
+const documents = computed(() => {
+    return props.idea?.files || []
+})
+
+// Download document
+const downloadDocument = (file) => {
+    if (file.file_path) {
+        // Create a download link
+        const link = document.createElement('a')
+        link.href = `/storage/${file.file_path}`
+        link.download = file.original_name || file.file_name || 'document'
+        link.target = '_blank'
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+    } else if (file.url) {
+        window.open(file.url, '_blank')
+    }
 }
 </script>
 
 <template>
-    <Head :title="`System Admin - Idea: ${idea.title}`" />
+    <Head :title="`Idea: ${idea.title}`" />
 
     <Default>
-        <div class="container mx-auto px-4 py-8" :style="themeStyles">
-            <!-- Enhanced Header with Gradient -->
-            <div class="mb-8">
-                <div class="bg-gradient-to-r rounded-xl p-6 shadow-lg"
-                     :style="{
-                         background: `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})`
-                     }">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <div class="text-sm text-white/80 mb-1">SYSTEM ADMIN VIEW</div>
-                            <h1 class="text-3xl font-bold text-white mb-2">
-                                {{ idea.title }}
-                            </h1>
-                            <div class="flex items-center gap-4 text-white/90">
-                                <span class="flex items-center">
-                                    <UserGroupIcon class="w-5 h-5 mr-2" />
-                                    {{ idea.team?.name || 'Unknown Team' }}
-                                </span>
-                                <span class="flex items-center">
-                                    <CalendarIcon class="w-5 h-5 mr-2" />
+        <div class="max-w-5xl mx-auto px-4 py-6" :style="themeStyles">
+            <!-- Page Header -->
+            <div class="mb-6">
+                <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
+                    Idea: {{ idea.title || 'Streamlined Onboarding Process' }}
+                </h1>
+                <p class="text-sm mt-2" :style="{ color: themeColor.primary }">
+                    Submitted by {{ idea.team?.name || 'Saleh Team' }}
+                </p>
+            </div>
+
+            <!-- Tabs -->
+            <div class="mb-6">
+                <div class="border-b border-gray-200 dark:border-gray-700">
+                    <nav class="-mb-px flex gap-8">
+                        <button
+                            @click="activeTab = 'overview'"
+                            :class="activeTab === 'overview' ? 'border-gray-900 dark:border-white text-gray-900 dark:text-white font-bold' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
+                            class="py-4 px-1 border-b-3 font-medium text-sm transition-colors"
+                        >
+                            Overview
+                        </button>
+                        <button
+                            @click="activeTab = 'response'"
+                            :class="activeTab === 'response' ? 'border-gray-900 dark:border-white text-gray-900 dark:text-white font-bold' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
+                            class="py-4 px-1 border-b-3 font-medium text-sm transition-colors"
+                            :style="activeTab === 'response' ? { color: themeColor.primary, borderColor: themeColor.primary } : {}"
+                        >
+                            Response
+                        </button>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- Overview Tab Content -->
+            <div v-show="activeTab === 'overview'" class="space-y-8">
+                <!-- Idea Details Section -->
+                <div>
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6">Idea Details</h2>
+
+                    <!-- Details Grid -->
+                    <div class="space-y-0">
+                        <!-- Row 1: Team Name and Submission Date -->
+                        <div class="grid grid-cols-1 md:grid-cols-4 border-t border-gray-200 dark:border-gray-700">
+                            <div class="py-5 pr-4">
+                                <div class="text-sm text-gray-500 dark:text-gray-400">Team Name</div>
+                                <div class="mt-1 text-sm font-medium text-gray-900 dark:text-white">
+                                    {{ idea.team?.name || 'Marketing' }}
+                                </div>
+                            </div>
+                            <div class="col-span-3 py-5 border-l border-gray-200 dark:border-gray-700 pl-6">
+                                <div class="text-sm text-gray-500 dark:text-gray-400">Submission Date/Time</div>
+                                <div class="mt-1 text-sm font-medium text-gray-900 dark:text-white">
                                     {{ formatDateTime(idea.created_at) }}
-                                </span>
+                                </div>
                             </div>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <button @click="deleteIdea"
-                                    class="bg-red-500/20 hover:bg-red-500/30 text-white px-4 py-2 rounded-lg transition-all flex items-center">
-                                <TrashIcon class="w-5 h-5 mr-2" />
-                                Delete
-                            </button>
-                            <span :class="`bg-gradient-to-r ${statusGradients[idea.status] || 'from-gray-400 to-gray-600'} px-4 py-2 text-white font-semibold rounded-full shadow-md`">
-                                {{ idea.status?.replace('_', ' ').toUpperCase() }}
-                            </span>
+
+                        <!-- Row 2: Idea Leader and Track -->
+                        <div class="grid grid-cols-1 md:grid-cols-4 border-t border-gray-200 dark:border-gray-700">
+                            <div class="py-5 pr-4">
+                                <div class="text-sm text-gray-500 dark:text-gray-400">Idea Leader</div>
+                                <div class="mt-1 text-sm font-medium text-gray-900 dark:text-white">
+                                    {{ idea.team?.leader?.name || 'Sarah Chen' }}
+                                </div>
+                            </div>
+                            <div class="col-span-3 py-5 border-l border-gray-200 dark:border-gray-700 pl-6">
+                                <div class="text-sm text-gray-500 dark:text-gray-400">Track</div>
+                                <div class="mt-1 text-sm font-medium text-gray-900 dark:text-white">
+                                    {{ idea.track?.name || 'Marketing' }}
+                                </div>
+                            </div>
                         </div>
+
+                        <!-- Row 3: Hackathon Edition -->
+                        <div class="border-t border-gray-200 dark:border-gray-700 py-5">
+                            <div class="text-sm text-gray-500 dark:text-gray-400">Hackathon Edition</div>
+                            <div class="mt-1 text-sm font-medium text-gray-900 dark:text-white">
+                                {{ idea.team?.edition?.name || 'Summer 2024' }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Description Section -->
+                <div>
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Description</h2>
+                    <p class="text-base text-gray-700 dark:text-gray-300 leading-6">
+                        {{ idea.description || 'This campaign aims to leverage social media influencers and interactive content to increase brand awareness and engagement. The strategy includes a series of online contests, collaborative posts with influencers, and a user-generated content campaign.' }}
+                    </p>
+                </div>
+
+                <!-- Related Documents Section -->
+                <div>
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Related Documents</h2>
+                    <div v-if="documents.length > 0" class="space-y-0">
+                        <div v-for="doc in documents" :key="doc.id"
+                             @click="downloadDocument(doc)"
+                             class="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-700/30 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-0">
+                            <div class="w-10 h-10 rounded-lg flex items-center justify-center"
+                                 :style="{ backgroundColor: themeColor.primary + '20' }">
+                                <DocumentIcon class="w-6 h-6" :style="{ color: themeColor.primary }" />
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-base font-medium text-gray-900 dark:text-white">
+                                    {{ doc.original_name || doc.file_name || 'Document' }}
+                                </p>
+                                <p v-if="doc.file_size" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    {{ (doc.file_size / 1024).toFixed(2) }} KB
+                                    <span v-if="doc.file_type" class="ml-2">• {{ doc.file_type.toUpperCase() }}</span>
+                                </p>
+                            </div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400">
+                                Click to download
+                            </div>
+                        </div>
+                    </div>
+                    <div v-else class="p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg">
+                        <p class="text-gray-500 dark:text-gray-400 text-center">
+                            No documents uploaded for this idea
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Make Decision and Score Section -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6">
+                    <!-- Make Decision Section -->
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Make Decision ...</h2>
+
+                        <!-- Decision Buttons -->
+                        <div class="flex gap-3 mb-4">
+                            <button
+                                @click="submitDecision('accepted')"
+                                :class="decisionForm.status === 'accepted' ? 'text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'"
+                                :style="decisionForm.status === 'accepted' ? { backgroundColor: themeColor.primary } : {}"
+                                class="px-5 py-2.5 rounded-xl font-bold text-sm transition-all hover:opacity-90">
+                                Accept
+                            </button>
+                            <button
+                                @click="submitDecision('rejected')"
+                                :class="decisionForm.status === 'rejected' ? 'bg-gray-700 dark:bg-gray-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'"
+                                class="px-5 py-2.5 rounded-xl font-bold text-sm transition-all hover:opacity-90">
+                                Reject
+                            </button>
+                            <button
+                                @click="submitDecision('needs_revision')"
+                                :class="decisionForm.status === 'needs_revision' ? 'bg-gray-700 dark:bg-gray-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'"
+                                class="px-5 py-2.5 rounded-xl font-bold text-sm transition-all hover:opacity-90">
+                                Need Edit
+                            </button>
+                        </div>
+
+                        <!-- Feedback Textarea -->
+                        <div>
+                            <textarea
+                                v-model="decisionForm.feedback"
+                                placeholder="Provide feedback or required changes for the idea's acceptance"
+                                class="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 transition-all resize-none"
+                                :style="{
+                                    '--tw-ring-color': themeColor.primary,
+                                    color: themeColor.primary + '90'
+                                }"
+                                rows="6"
+                            ></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Score Section -->
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Score</h2>
+
+                        <!-- Score Input -->
+                        <div class="mb-6">
+                            <input
+                                v-model.number="decisionForm.score"
+                                type="number"
+                                min="0"
+                                max="100"
+                                placeholder="Add Score From 100"
+                                class="w-full px-4 py-3 border rounded-xl text-base bg-gray-50 dark:bg-gray-700/30 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 transition-all"
+                                :style="{
+                                    borderColor: themeColor.primary + '30',
+                                    backgroundColor: themeColor.primary + '05',
+                                    color: themeColor.primary,
+                                    '--tw-ring-color': themeColor.primary
+                                }"
+                            />
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button
+                            @click="submitChanges"
+                            :disabled="!decisionForm.status || decisionForm.processing"
+                            class="w-full px-4 py-3 text-white font-bold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            :style="{
+                                background: decisionForm.status && !decisionForm.processing
+                                    ? `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})`
+                                    : 'linear-gradient(135deg, #9ca3af, #6b7280)'
+                            }">
+                            {{ decisionForm.processing ? 'Processing...' : 'Submit Review' }}
+                        </button>
                     </div>
                 </div>
             </div>
 
-            <!-- Tabs with Theme Color -->
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm mb-6">
-                <div class="border-b border-gray-200 dark:border-gray-700">
-                    <nav class="flex -mb-px">
-                        <button @click="activeTab = 'overview'"
-                                :class="activeTab === 'overview' ? 'border-b-2' : 'border-transparent'"
-                                :style="activeTab === 'overview' ? { borderColor: themeColor.primary, color: themeColor.primary } : {}"
-                                class="px-6 py-3 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
-                            <div class="flex items-center">
-                                <DocumentIcon class="w-5 h-5 mr-2" />
-                                Overview
-                            </div>
-                        </button>
-                        <button @click="activeTab = 'response'"
-                                :class="activeTab === 'response' ? 'border-b-2' : 'border-transparent'"
-                                :style="activeTab === 'response' ? { borderColor: themeColor.primary, color: themeColor.primary } : {}"
-                                class="px-6 py-3 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
-                            <div class="flex items-center">
-                                <ClockIcon class="w-5 h-5 mr-2" />
-                                Response History
-                            </div>
-                        </button>
-                        <button @click="activeTab = 'admin'"
-                                :class="activeTab === 'admin' ? 'border-b-2' : 'border-transparent'"
-                                :style="activeTab === 'admin' ? { borderColor: themeColor.primary, color: themeColor.primary } : {}"
-                                class="px-6 py-3 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
-                            <div class="flex items-center">
-                                <PencilSquareIcon class="w-5 h-5 mr-2" />
-                                Admin Actions
-                            </div>
-                        </button>
-                    </nav>
-                </div>
+            <!-- Response Tab Content -->
+            <div v-show="activeTab === 'response'" class="space-y-6">
+                <h2 class="text-xl font-bold text-gray-900 dark:text-white">Review History</h2>
 
-                <!-- Overview Tab Content -->
-                <div v-show="activeTab === 'overview'" class="p-6">
-                    <!-- Quick Stats Cards -->
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                        <div class="bg-gradient-to-br p-4 rounded-lg text-white"
-                             :style="{
-                                 background: `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})`
-                             }">
-                            <TagIcon class="w-8 h-8 mb-2 opacity-80" />
-                            <div class="text-sm opacity-90">Track</div>
-                            <div class="text-lg font-bold">{{ idea.track?.name || 'Unassigned' }}</div>
-                        </div>
-                        <div class="bg-gradient-to-br from-purple-400 to-purple-600 p-4 rounded-lg text-white">
-                            <UserGroupIcon class="w-8 h-8 mb-2 opacity-80" />
-                            <div class="text-sm opacity-90">Team Members</div>
-                            <div class="text-lg font-bold">{{ idea.team?.members?.length || 0 }}</div>
-                        </div>
-                        <div class="bg-gradient-to-br from-orange-400 to-orange-600 p-4 rounded-lg text-white">
-                            <DocumentIcon class="w-8 h-8 mb-2 opacity-80" />
-                            <div class="text-sm opacity-90">Documents</div>
-                            <div class="text-lg font-bold">{{ idea.files?.length || 0 }}</div>
-                        </div>
-                        <div class="bg-gradient-to-br from-blue-400 to-blue-600 p-4 rounded-lg text-white">
-                            <TrophyIcon class="w-8 h-8 mb-2 opacity-80" />
-                            <div class="text-sm opacity-90">Score</div>
-                            <div class="text-lg font-bold">{{ idea.score || 0 }}/100</div>
-                        </div>
-                    </div>
-
-                    <!-- Idea Details -->
-                    <div class="space-y-6">
-                        <div>
-                            <h3 class="text-lg font-semibold mb-3" :style="{ color: themeColor.primary }">
-                                Description
-                            </h3>
-                            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                                <p class="text-gray-700 dark:text-gray-300 leading-relaxed">
-                                    {{ idea.description }}
-                                </p>
-                            </div>
-                        </div>
-
-                        <div v-if="idea.problem_statement">
-                            <h3 class="text-lg font-semibold mb-3" :style="{ color: themeColor.primary }">
-                                Problem Statement
-                            </h3>
-                            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                                <p class="text-gray-700 dark:text-gray-300 leading-relaxed">
-                                    {{ idea.problem_statement }}
-                                </p>
-                            </div>
-                        </div>
-
-                        <div v-if="idea.solution_approach">
-                            <h3 class="text-lg font-semibold mb-3" :style="{ color: themeColor.primary }">
-                                Solution Approach
-                            </h3>
-                            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                                <p class="text-gray-700 dark:text-gray-300 leading-relaxed">
-                                    {{ idea.solution_approach }}
-                                </p>
-                            </div>
-                        </div>
-
-                        <!-- Related Documents with Enhanced Style -->
-                        <div v-if="idea.files && idea.files.length > 0">
-                            <h3 class="text-lg font-semibold mb-3" :style="{ color: themeColor.primary }">
-                                Related Documents
-                            </h3>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <div v-for="file in idea.files" :key="file.id"
-                                     class="flex items-center p-3 rounded-lg cursor-pointer transition-all hover:shadow-md"
-                                     :style="{
-                                         backgroundColor: `rgba(${themeColor.rgb}, 0.05)`,
-                                         border: `1px solid rgba(${themeColor.rgb}, 0.2)`
-                                     }"
-                                     @mouseover="e => e.currentTarget.style.backgroundColor = `rgba(${themeColor.rgb}, 0.1)`"
-                                     @mouseleave="e => e.currentTarget.style.backgroundColor = `rgba(${themeColor.rgb}, 0.05)`">
-                                    <div class="p-2 rounded-lg mr-3"
-                                         :style="{ backgroundColor: `rgba(${themeColor.rgb}, 0.1)` }">
-                                        <DocumentIcon class="w-6 h-6" :style="{ color: themeColor.primary }" />
-                                    </div>
-                                    <div class="flex-1">
-                                        <div class="font-medium text-gray-900 dark:text-white">{{ file.filename }}</div>
-                                        <div class="text-xs text-gray-500 dark:text-gray-400">Click to download</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Response Tab Content -->
-                <div v-show="activeTab === 'response'" class="p-6">
-                    <h3 class="text-lg font-semibold mb-4" :style="{ color: themeColor.primary }">
-                        Review History
-                    </h3>
-                    <div v-if="reviewHistory && reviewHistory.length > 0" class="space-y-4">
-                        <div v-for="review in reviewHistory" :key="review.id" 
-                             class="border-l-4 pl-4 py-3 rounded-r-lg"
-                             :style="{ 
-                                 borderLeftColor: themeColor.primary,
-                                 backgroundColor: `rgba(${themeColor.rgb}, 0.02)`
-                             }">
-                            <div class="flex justify-between items-start mb-2">
-                                <div>
-                                    <span class="font-medium text-gray-900 dark:text-white">
-                                        {{ review.reviewer_name }}
-                                    </span>
-                                    <span class="ml-2 text-sm text-gray-500 dark:text-gray-400">
-                                        {{ formatDateTime(review.created_at) }}
-                                    </span>
-                                </div>
-                                <span :class="`bg-gradient-to-r ${statusGradients[review.status] || 'from-gray-400 to-gray-600'} px-3 py-1 text-xs font-medium text-white rounded-full`">
-                                    {{ review.status }}
-                                </span>
-                            </div>
-                            <p class="text-gray-700 dark:text-gray-300">{{ review.feedback }}</p>
-                        </div>
-                    </div>
-                    <div v-else class="text-center py-8 text-gray-500 dark:text-gray-400">
-                        No review history available
-                    </div>
-                </div>
-
-                <!-- Admin Tab Content -->
-                <div v-show="activeTab === 'admin'" class="p-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Make Decision Section -->
-                        <div>
-                            <h3 class="text-xl font-bold mb-4 flex items-center" :style="{ color: themeColor.primary }">
-                                <PencilSquareIcon class="w-6 h-6 mr-2" />
-                                Make Decision
-                            </h3>
-                            <div class="flex flex-wrap gap-3 mb-4">
-                                <button @click="submitDecision('accepted')"
-                                        :class="decisionForm.status === 'accepted' ? 'ring-2 ring-offset-2' : ''"
-                                        :style="decisionForm.status === 'accepted' ? { 
-                                            background: `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})`,
-                                            ringColor: themeColor.primary
-                                        } : {}"
-                                        class="px-4 py-2 font-bold rounded-lg transition-all text-white bg-gradient-to-r from-green-400 to-green-600 hover:from-green-500 hover:to-green-700">
-                                    <CheckIcon class="w-5 h-5 inline mr-2" />
-                                    Accept
-                                </button>
-                                <button @click="submitDecision('rejected')"
-                                        :class="decisionForm.status === 'rejected' ? 'ring-2 ring-offset-2 ring-red-500' : ''"
-                                        class="px-4 py-2 font-bold rounded-lg transition-all text-white bg-gradient-to-r from-red-400 to-red-600 hover:from-red-500 hover:to-red-700">
-                                    <XMarkIcon class="w-5 h-5 inline mr-2" />
-                                    Reject
-                                </button>
-                                <button @click="submitDecision('needs_revision')"
-                                        :class="decisionForm.status === 'needs_revision' ? 'ring-2 ring-offset-2 ring-amber-500' : ''"
-                                        class="px-4 py-2 font-bold rounded-lg transition-all text-white bg-gradient-to-r from-amber-400 to-amber-600 hover:from-amber-500 hover:to-amber-700">
-                                    <ExclamationTriangleIcon class="w-5 h-5 inline mr-2" />
-                                    Need Edit
-                                </button>
-                            </div>
+                <div v-if="reviewHistory && reviewHistory.length > 0" class="space-y-4">
+                    <div v-for="review in reviewHistory" :key="review.id"
+                         class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                        <div class="flex justify-between items-start mb-2">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Feedback & Comments
-                                </label>
-                                <textarea
-                                    v-model="decisionForm.feedback"
-                                    placeholder="Provide feedback or required changes"
-                                    class="w-full px-4 py-3 border rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 transition-all resize-none"
-                                    :style="{
-                                        borderColor: `rgba(${themeColor.rgb}, 0.3)`,
-                                        '--tw-ring-color': themeColor.primary
-                                    }"
-                                    rows="5"
-                                ></textarea>
-                            </div>
-                        </div>
-
-                        <!-- Score Section -->
-                        <div>
-                            <h3 class="text-xl font-bold mb-4 flex items-center" :style="{ color: themeColor.primary }">
-                                <StarIcon class="w-6 h-6 mr-2" />
-                                Score
-                            </h3>
-                            <div class="mb-4">
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Overall Score (0-100)
-                                </label>
-                                <div class="relative">
-                                    <input
-                                        v-model.number="decisionForm.score"
-                                        @blur="updateScore"
-                                        type="number"
-                                        min="0"
-                                        max="100"
-                                        placeholder="Enter score"
-                                        class="w-full px-4 py-3 pr-16 border rounded-lg text-2xl font-bold text-center transition-all"
-                                        :style="{
-                                            borderColor: `rgba(${themeColor.rgb}, 0.3)`,
-                                            backgroundColor: `rgba(${themeColor.rgb}, 0.05)`,
-                                            color: themeColor.primary,
-                                            '--tw-ring-color': themeColor.primary
-                                        }"
-                                    />
-                                    <div class="absolute right-4 top-1/2 -translate-y-1/2 text-2xl font-bold"
-                                         :style="{ color: themeColor.primary }">
-                                        /100
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Score Progress Bar -->
-                            <div class="mb-6">
-                                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
-                                    <div class="h-3 rounded-full transition-all duration-300"
-                                         :style="{
-                                             width: `${decisionForm.score || 0}%`,
-                                             background: `linear-gradient(90deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})`
-                                         }"></div>
-                                </div>
-                            </div>
-
-                            <!-- Submit Button -->
-                            <button @click="submitChanges"
-                                    :disabled="!decisionForm.status || decisionForm.processing"
-                                    class="w-full px-6 py-3 text-white font-bold rounded-lg transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                                    :style="{
-                                        background: decisionForm.status && !decisionForm.processing 
-                                            ? `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})`
-                                            : 'linear-gradient(135deg, #9ca3af, #6b7280)'
-                                    }">
-                                <span v-if="!decisionForm.processing">
-                                    Submit Review
+                                <span class="font-medium text-gray-900 dark:text-white">
+                                    {{ review.reviewer_name }}
                                 </span>
-                                <span v-else class="flex items-center">
-                                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                    Processing...
+                                <span class="ml-2 text-sm text-gray-500 dark:text-gray-400">
+                                    {{ formatDateTime(review.created_at) }}
                                 </span>
-                            </button>
+                            </div>
+                            <span class="px-3 py-1 text-xs font-medium rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                                {{ review.status }}
+                            </span>
                         </div>
+                        <p class="text-gray-700 dark:text-gray-300">{{ review.feedback }}</p>
                     </div>
+                </div>
+                <div v-else class="text-center py-12 text-gray-500 dark:text-gray-400">
+                    No review history available yet.
                 </div>
             </div>
         </div>
@@ -451,19 +354,25 @@ const statusGradients = {
 </template>
 
 <style scoped>
+/* Focus states with theme */
+textarea:focus,
+input:focus {
+    box-shadow: 0 0 0 3px rgba(var(--theme-rgb), 0.1);
+}
+
 /* Remove spinner from number input */
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
     -webkit-appearance: none;
     margin: 0;
 }
+
 input[type="number"] {
     -moz-appearance: textfield;
 }
 
-/* Focus states */
-textarea:focus,
-input:focus {
-    box-shadow: 0 0 0 3px rgba(var(--theme-rgb), 0.1);
+/* Tab border width */
+.border-b-3 {
+    border-bottom-width: 3px;
 }
 </style>

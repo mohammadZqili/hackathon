@@ -99,9 +99,7 @@ class Idea extends Model
      */
     public function reviews()
     {
-        // Create a pseudo-relationship that checks if idea has been reviewed
-        // This is for backward compatibility with existing code
-        return $this->hasOne(User::class, 'id', 'reviewed_by');
+        return $this->hasMany(IdeaReview::class);
     }
 
     /**

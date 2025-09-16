@@ -6,8 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Services\TeamService;
 use App\Services\IdeaService;
 use App\Repositories\IdeaRepository;
+use App\Notifications\IdeaSubmittedNotification;
+use App\Notifications\IdeaStatusChangedNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Notification;
 use Inertia\Inertia;
 
 class IdeaController extends Controller
@@ -116,25 +119,42 @@ class IdeaController extends Controller
         ];
 
         $result = $this->teamService->submitIdea($team, $ideaData);
-        
-        if ($result['success'] && isset($validated['files'])) {
-            // Handle file uploads
-            $idea = $result['idea'];
-            foreach ($validated['files'] as $file) {
-                $path = $file->store('ideas/' . $idea->id, 'public');
-                $idea->files()->create([
-                    'filename' => $file->getClientOriginalName(),
-                    'path' => $path,
-                    'type' => 'document',
-                    'size' => $file->getSize(),
-                    'mime_type' => $file->getMimeType()
-                ]);
-            }
-        }
-        
+
         if ($result['success']) {
+            $idea = $result['idea'];
+
+            // Handle file uploads if present
+            if (isset($validated['files'])) {
+                foreach ($validated['files'] as $file) {
+                    $path = $file->store('ideas/' . $idea->id, 'public');
+                    $idea->files()->create([
+                        'filename' => $file->getClientOriginalName(),
+                        'path' => $path,
+                        'type' => 'document',
+                        'size' => $file->getSize(),
+                        'mime_type' => $file->getMimeType()
+                    ]);
+                }
+            }
+
+            // Notify all team members about the new idea
+            $teamMembers = $team->members()->get();
+            foreach ($teamMembers as $member) {
+                // Don't notify the submitter
+                if ($member->id !== $user->id) {
+                    $member->notify(new IdeaSubmittedNotification($idea, $user));
+                }
+            }
+
+            // Also notify track supervisors
+            if ($team->track && $team->track->supervisors) {
+                foreach ($team->track->supervisors as $supervisor) {
+                    $supervisor->notify(new IdeaSubmittedNotification($idea, $user));
+                }
+            }
+
             return redirect()->route('team-leader.idea.show')
-                ->with('success', 'Idea created successfully');
+                ->with('success', 'Idea created successfully and team members notified');
         } else {
             return back()->with('error', $result['message']);
         }
@@ -247,14 +267,30 @@ class IdeaController extends Controller
             return back()->with('error', 'Idea has already been submitted');
         }
 
+        // Store old status for notification
+        $oldStatus = $idea->status;
+
         // Update idea status to submitted
         $this->ideaRepository->update($idea->id, [
             'status' => 'submitted',
             'submitted_at' => now()
         ]);
 
+        // Notify all team members about the status change
+        $teamMembers = $team->members()->get();
+        foreach ($teamMembers as $member) {
+            $member->notify(new IdeaStatusChangedNotification($idea, $oldStatus, 'submitted', $user));
+        }
+
+        // Also notify track supervisors
+        if ($team->track && $team->track->supervisors) {
+            foreach ($team->track->supervisors as $supervisor) {
+                $supervisor->notify(new IdeaStatusChangedNotification($idea, $oldStatus, 'submitted', $user));
+            }
+        }
+
         return redirect()->route('team-leader.idea.show')
-            ->with('success', 'Idea submitted successfully for review');
+            ->with('success', 'Idea submitted successfully for review and team notified');
     }
 
     public function withdraw()
@@ -277,11 +313,22 @@ class IdeaController extends Controller
             return back()->with('error', 'Idea cannot be withdrawn in current status');
         }
 
+        // Store old status for notification
+        $oldStatus = $idea->status;
+
         // Update idea status back to draft
         $this->ideaRepository->update($idea->id, [
             'status' => 'draft',
             'submitted_at' => null
         ]);
+
+        // Notify all team members about the withdrawal
+        $teamMembers = $team->members()->get();
+        foreach ($teamMembers as $member) {
+            if ($member->id !== $user->id) {
+                $member->notify(new IdeaStatusChangedNotification($idea, $oldStatus, 'draft', $user));
+            }
+        }
 
         return redirect()->route('team-leader.idea.edit')
             ->with('success', 'Idea withdrawn successfully. You can now edit it.');
