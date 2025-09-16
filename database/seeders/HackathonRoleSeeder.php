@@ -25,7 +25,7 @@ class HackathonRoleSeeder extends Seeder
             'manage_system_settings',
             'view_all_analytics',
             'manage_backups',
-            
+
             // Hackathon Admin permissions
             'manage_current_edition',
             'manage_teams',
@@ -35,13 +35,13 @@ class HackathonRoleSeeder extends Seeder
             'approve_teams',
             'approve_ideas',
             'view_edition_analytics',
-            
+
             // Track Supervisor permissions
             'manage_track_teams',
             'review_track_ideas',
             'provide_feedback',
             'export_track_data',
-            
+
             // Team Leader permissions
             'create_team',
             'manage_own_team',
@@ -49,7 +49,7 @@ class HackathonRoleSeeder extends Seeder
             'update_idea',
             'invite_members',
             'register_workshops',
-            
+
             // Team Member permissions
             'view_team',
             'view_idea',
@@ -97,6 +97,14 @@ class HackathonRoleSeeder extends Seeder
                 'view_team',
                 'view_idea',
                 'view_workshops',
+                'manage_teams',
+                'manage_ideas',
+                'manage_workshops',
+                'manage_news',
+                'approve_teams',
+                'approve_ideas',
+                'view_edition_analytics',
+                'provide_feedback',
             ],
             'team_leader' => [
                 'create_team',

@@ -78,8 +78,8 @@ class IdeaPolicy
             return true;
         }
 
-        // Admins can create ideas (for testing/management purposes)
-        return $user->hasAnyRole(['system_admin', 'hackathon_admin']);
+        // Admins and track supervisors can create ideas (for testing/management purposes)
+        return $user->hasAnyRole(['system_admin', 'hackathon_admin', 'track_supervisor']);
     }
 
     /**
@@ -90,6 +90,26 @@ class IdeaPolicy
         // Admins can update any idea
         if ($user->hasAnyRole(['system_admin', 'hackathon_admin'])) {
             return true;
+        }
+
+        // Track supervisors can update ideas in their assigned tracks
+        if ($user->hasRole('track_supervisor')) {
+            $edition = $this->editionContext->current();
+            if (!$edition) {
+                return false;
+            }
+
+            // Get idea's edition through its team
+            $ideaEditionId = $idea->team ? $idea->team->edition_id : null;
+
+            // Check if idea belongs to current edition
+            if ($ideaEditionId !== $edition->id) {
+                return false;
+            }
+
+            // Check if idea's track is assigned to this supervisor
+            $trackIds = $user->tracksInEdition($edition->id)->pluck('tracks.id')->toArray();
+            return in_array($idea->track_id, $trackIds);
         }
 
         // Team leader can update their team's idea
@@ -106,8 +126,32 @@ class IdeaPolicy
      */
     public function delete(User $user, Idea $idea): bool
     {
-        // Only admins can delete ideas
-        return $user->hasAnyRole(['system_admin', 'hackathon_admin']);
+        // Admins can delete any idea
+        if ($user->hasAnyRole(['system_admin', 'hackathon_admin'])) {
+            return true;
+        }
+
+        // Track supervisors can delete ideas in their assigned tracks
+        if ($user->hasRole('track_supervisor')) {
+            $edition = $this->editionContext->current();
+            if (!$edition) {
+                return false;
+            }
+
+            // Get idea's edition through its team
+            $ideaEditionId = $idea->team ? $idea->team->edition_id : null;
+
+            // Check if idea belongs to current edition
+            if ($ideaEditionId !== $edition->id) {
+                return false;
+            }
+
+            // Check if idea's track is assigned to this supervisor
+            $trackIds = $user->tracksInEdition($edition->id)->pluck('tracks.id')->toArray();
+            return in_array($idea->track_id, $trackIds);
+        }
+
+        return false;
     }
 
     /**

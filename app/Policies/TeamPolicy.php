@@ -81,11 +81,21 @@ class TeamPolicy
             return true;
         }
 
-        // Track supervisors can update teams in their assigned track
+        // Track supervisors can update teams in their assigned tracks
         if ($user->hasRole('track_supervisor')) {
             $edition = $this->editionContext->current();
-            $assignedTrackId = $user->getAssignedTrackId($edition->id);
-            return $team->track_id === $assignedTrackId;
+            if (!$edition) {
+                return false;
+            }
+
+            // Check if team belongs to current edition
+            if ($team->edition_id !== $edition->id) {
+                return false;
+            }
+
+            // Check if team's track is assigned to this supervisor
+            $trackIds = $user->tracksInEdition($edition->id)->pluck('tracks.id')->toArray();
+            return in_array($team->track_id, $trackIds);
         }
 
         // Team leader can update their own team
@@ -106,11 +116,21 @@ class TeamPolicy
             return true;
         }
 
-        // Track supervisors can delete teams in their assigned track
+        // Track supervisors can delete teams in their assigned tracks
         if ($user->hasRole('track_supervisor')) {
             $edition = $this->editionContext->current();
-            $assignedTrackId = $user->getAssignedTrackId($edition->id);
-            return $team->track_id === $assignedTrackId;
+            if (!$edition) {
+                return false;
+            }
+
+            // Check if team belongs to current edition
+            if ($team->edition_id !== $edition->id) {
+                return false;
+            }
+
+            // Check if team's track is assigned to this supervisor
+            $trackIds = $user->tracksInEdition($edition->id)->pluck('tracks.id')->toArray();
+            return in_array($team->track_id, $trackIds);
         }
 
         return false;
@@ -142,6 +162,25 @@ class TeamPolicy
             return true;
         }
 
+        // Track supervisors can add members to teams in their assigned tracks
+        if ($user->hasRole('track_supervisor')) {
+            $edition = $this->editionContext->current();
+            if (!$edition) {
+                return false;
+            }
+
+            // Check if team belongs to current edition
+            if ($team->edition_id !== $edition->id) {
+                return false;
+            }
+
+            // Check if team's track is assigned to this supervisor
+            $trackIds = $user->tracksInEdition($edition->id)->pluck('tracks.id')->toArray();
+            if (in_array($team->track_id, $trackIds)) {
+                return true;
+            }
+        }
+
         // Team leader can add members to their own team
         if ($user->hasRole('team_leader') && $team->leader_id === $user->id) {
             return true;
@@ -158,6 +197,25 @@ class TeamPolicy
         // Admins can remove members from any team
         if ($user->hasAnyRole(['system_admin', 'hackathon_admin'])) {
             return true;
+        }
+
+        // Track supervisors can remove members from teams in their assigned tracks
+        if ($user->hasRole('track_supervisor')) {
+            $edition = $this->editionContext->current();
+            if (!$edition) {
+                return false;
+            }
+
+            // Check if team belongs to current edition
+            if ($team->edition_id !== $edition->id) {
+                return false;
+            }
+
+            // Check if team's track is assigned to this supervisor
+            $trackIds = $user->tracksInEdition($edition->id)->pluck('tracks.id')->toArray();
+            if (in_array($team->track_id, $trackIds)) {
+                return true;
+            }
         }
 
         // Team leader can remove members from their own team

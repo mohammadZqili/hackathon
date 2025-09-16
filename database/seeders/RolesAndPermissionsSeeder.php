@@ -35,7 +35,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'export_all_data',
             'import_data',
             'system_maintenance',
-            
+
             // Hackathon management
             'manage_hackathons',
             'create_hackathon',
@@ -63,7 +63,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'manage_social_media',
             'view_hackathon_reports',
             'export_hackathon_data',
-            
+
             // Ideas management
             'view_all_ideas',
             'evaluate_ideas',
@@ -72,7 +72,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'request_idea_modifications',
             'delete_ideas',
             'export_ideas',
-            
+
             // Track supervision
             'manage_track',
             'evaluate_track_ideas',
@@ -80,7 +80,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'schedule_meetings',
             'view_track_reports',
             'export_track_data',
-            
+
             // Team management
             'create_team',
             'manage_team',
@@ -91,13 +91,13 @@ class RolesAndPermissionsSeeder extends Seeder
             'delete_idea',
             'upload_files',
             'delete_files',
-            
+
             // Team membership
             'join_team',
             'leave_team',
             'contribute_idea',
             'view_team_data',
-            
+
             // Workshop management
             'register_workshops',
             'manage_workshop_registrations',
@@ -105,7 +105,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'view_attendance_reports',
             'export_attendance_data',
             'manage_workshop_capacity',
-            
+
             // User management
             'create_users',
             'edit_users',
@@ -116,14 +116,14 @@ class RolesAndPermissionsSeeder extends Seeder
             'impersonate_users',
             'view_user_activity',
             'export_user_data',
-            
+
             // Communication
             'send_notifications',
             'send_emails',
             'send_sms',
             'manage_templates',
             'view_communication_logs',
-            
+
             // Reports and Analytics
             'view_reports',
             'view_analytics',
@@ -131,18 +131,18 @@ class RolesAndPermissionsSeeder extends Seeder
             'export_reports',
             'view_statistics',
             'view_dashboards',
-            
+
             // Content management
             'manage_content',
             'manage_pages',
             'manage_media',
             'manage_files',
-            
+
             // General permissions
             'view_public_content',
             'access_admin_panel',
             'access_api',
-            
+
             // Security permissions
             'manage_security',
             'view_security_logs',
@@ -161,6 +161,7 @@ class RolesAndPermissionsSeeder extends Seeder
             UserType::ADMIN->value => $permissions, // Gets ALL permissions
 
             UserType::HACKATHON_ADMIN->value => [
+                'view_audit_logs',
                 'manage_hackathon',
                 'manage_tracks',
                 'create_track',
@@ -194,17 +195,35 @@ class RolesAndPermissionsSeeder extends Seeder
             ],
 
             UserType::TRACK_SUPERVISOR->value => [
+                'manage_tracks',
+                'create_track',
+                'edit_track',
+                'delete_track',
+                'assign_supervisors',
+                'manage_teams',
+                'manage_workshops',
+                'create_workshop',
+                'edit_workshop',
+                'delete_workshop',
+                'manage_speakers',
+                'manage_organizations',
+                'manage_news',
+                'create_news',
+                'edit_news',
+                'delete_news',
+                'publish_news',
+                'view_hackathon_reports',
+                'export_hackathon_data',
+                'view_all_ideas',
                 'evaluate_ideas',
-                'evaluate_track_ideas',
-                'manage_track',
-                'communicate_teams',
-                'schedule_meetings',
-                'view_track_reports',
-                'export_track_data',
+                'send_notifications',
+                'send_emails',
+                'view_reports',
+                'view_analytics',
+                'manage_content',
+                'access_admin_panel',
                 'register_workshops',
                 'view_public_content',
-                'send_notifications',
-                'access_admin_panel',
             ],
 
             UserType::TEAM_LEADER->value => [
