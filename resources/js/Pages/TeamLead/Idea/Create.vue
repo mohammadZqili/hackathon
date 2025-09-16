@@ -12,17 +12,43 @@
                         </div>
                     </div>
 
-                    <!-- Track Info Display -->
+                    <!-- Track Selection -->
                     <div class="flex flex-row items-end justify-start flex-wrap content-end py-3 px-4 box-border w-full text-base">
                         <div class="flex-1 flex flex-col items-start justify-start">
                             <div class="self-stretch flex flex-col items-start justify-start pt-0 px-0 pb-2">
-                                <div class="self-stretch relative leading-6 font-medium">Track</div>
+                                <div class="self-stretch relative leading-6 font-medium">Track *</div>
                             </div>
-                            <div class="self-stretch rounded-xl bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 overflow-hidden flex flex-row items-center justify-between py-3 px-4 gap-0">
+                            <!-- Show dropdown if no team exists, otherwise show team's track -->
+                            <div v-if="!team" class="self-stretch">
+                                <select v-model="form.track_id" required
+                                    class="w-full rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 h-14 overflow-hidden px-4 text-gray-900 dark:text-white">
+                                    <option value="">Select a track</option>
+                                    <option v-for="track in tracks" :key="track.id" :value="track.id">
+                                        {{ track.name }} {{ track.teams_count !== undefined ? `(${track.teams_count} teams)` : '' }}
+                                    </option>
+                                </select>
+                                <div v-if="errors.track_id" class="text-red-500 text-sm mt-1">{{ errors.track_id }}</div>
+                            </div>
+                            <div v-else class="self-stretch rounded-xl bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 overflow-hidden flex flex-row items-center justify-between py-3 px-4 gap-0">
                                 <div class="relative leading-6 text-gray-700 dark:text-gray-300">
                                     {{ team?.track?.name || 'No track assigned' }}
                                 </div>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Team Name Field (only if no team) -->
+                    <div v-if="!team" class="flex flex-row items-end justify-start flex-wrap content-end py-3 px-4 box-border w-full text-base">
+                        <div class="flex-1 flex flex-col items-start justify-start">
+                            <div class="self-stretch flex flex-col items-start justify-start pt-0 px-0 pb-2">
+                                <div class="self-stretch relative leading-6 font-medium">Team Name *</div>
+                            </div>
+                            <div class="self-stretch rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 box-border h-14 overflow-hidden shrink-0 flex flex-row items-center justify-start p-[15px]">
+                                <input v-model="form.team_name" type="text" placeholder="Enter your team name" required
+                                    class="w-full relative leading-6 whitespace-pre-wrap inline-block shrink-0 bg-transparent border-none outline-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400">
+                            </div>
+                            <div v-if="errors.team_name" class="text-red-500 text-sm mt-1">{{ errors.team_name }}</div>
+                            <div class="text-sm text-gray-500 dark:text-gray-400 mt-1">A team will be created automatically with this name.</div>
                         </div>
                     </div>
 

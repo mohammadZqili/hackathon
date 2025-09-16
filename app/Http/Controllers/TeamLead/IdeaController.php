@@ -96,7 +96,8 @@ class IdeaController extends Controller
         $team = $this->teamService->getMyTeam($user);
 
         // Get available tracks for team leaders
-        $tracks = $this->trackRepository->getAllActive();
+        $edition = $this->editionContext->current();
+        $tracks = $this->trackRepository->getActive(['edition_id' => $edition->id]);
 
         // If team exists and already has an idea, redirect to show
         if ($team) {
