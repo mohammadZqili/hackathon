@@ -1,68 +1,57 @@
-# .dockerignore - Optimize Docker build by excluding unnecessary files
-
 # Git
 .git
 .gitignore
 .gitattributes
 
-# Documentation
-*.md
-docs/
-README.md
-CHANGELOG.md
-
-# Development files
-.env
-.env.local
-.env.example
-docker-compose.dev.yml
-
-# IDE files
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# Node.js
-node_modules/
+# Node
+node_modules
 npm-debug.log
 yarn-error.log
 
 # Laravel
-/storage/logs/*
-/storage/framework/cache/*
-/storage/framework/sessions/*
-/storage/framework/views/*
-/storage/app/public/*
-bootstrap/cache/*
+/vendor
+.env
+.env.backup
+.env.production
 .phpunit.result.cache
+Homestead.json
+Homestead.yaml
 
-# Vendor (will be installed during build)
-vendor/
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+*~
+.DS_Store
 
-# Compiled assets (will be built during build)
-public/build/
-public/hot
-
-# Test files
-tests/
+# Testing
+tests
 phpunit.xml
-.phpunit.result.cache
+.phpunit.cache
 
-# Development scripts
-*.sh
-!docker/start.sh
-
-# Temporary files
-tmp/
-temp/
-*.tmp
-*.log
+# Documentation
+*.md
+docs
+LICENSE
 
 # Build artifacts
-public/mix-manifest.json
+/public/hot
+/public/storage
+/storage/*.key
+/storage/framework/cache/data/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/storage/logs/*
+
+# Docker
+docker-compose.override.yml
+Dockerfile
+docker/
+
+# Development files
+.editorconfig
+.styleci.yml
+webpack.mix.js
+package-lock.json
+yarn.lock

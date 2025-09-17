@@ -136,20 +136,18 @@ class IdeaController extends Controller
             // Create team with the provided name and track
             $teamData = [
                 'name' => $validated['team_name'] ?? $user->name . "'s Team",
+                'user_id' => $user->id,  // For Jetstream compatibility
                 'leader_id' => $user->id,
                 'track_id' => $validated['track_id'],
                 'edition_id' => $edition->id,
                 'status' => 'active',
-                'description' => 'Team created for idea: ' . $validated['title']
+                'description' => 'Team created for idea: ' . $validated['title'],
+                'personal_team' => false  // This is not a personal team
             ];
 
             $team = $this->teamService->createTeam($teamData, $user);
 
-            // Add the team leader as a member
-            $team->members()->attach($user->id, [
-                'role' => 'leader',
-                'joined_at' => now()
-            ]);
+            // The TeamService already adds the leader as a member, so we don't need to do it again
         }
 
         // Map the form data to match the database schema
@@ -174,11 +172,14 @@ class IdeaController extends Controller
                 foreach ($validated['files'] as $file) {
                     $path = $file->store('ideas/' . $idea->id, 'public');
                     $idea->files()->create([
-                        'filename' => $file->getClientOriginalName(),
-                        'path' => $path,
-                        'type' => 'document',
-                        'size' => $file->getSize(),
-                        'mime_type' => $file->getMimeType()
+                        'original_name' => $file->getClientOriginalName(),
+                        'file_name' => basename($path),
+                        'file_path' => $path,
+                        'file_type' => $file->getExtension() ?? 'unknown',
+                        'mime_type' => $file->getMimeType(),
+                        'file_size' => $file->getSize(),
+                        'file_category' => 'document',
+                        'uploaded_by' => $user->id
                     ]);
                 }
             }
@@ -218,24 +219,27 @@ class IdeaController extends Controller
         $team = $this->teamService->getMyTeam($user);
 
         if (!$team) {
-            return redirect()->route('team-leader.dashboard')
+            return redirect()->route('team-lead.dashboard')
                 ->with('error', 'You need to create a team first');
         }
 
         $idea = $this->teamService->getTeamIdea($team);
 
         if (!$idea) {
-            return redirect()->route('team-leader.idea.create');
+            return redirect()->route('team-lead.idea.create');
         }
 
         // Check if idea can be edited (not in review or accepted status)
         if (in_array($idea->status, ['reviewing', 'accepted', 'rejected'])) {
-            return redirect()->route('team-leader.idea.show')
+            return redirect()->route('team-lead.idea.show')
                 ->with('error', 'Idea cannot be edited in current status');
         }
 
         // Load idea with comments and other relationships
         $idea->load(['comments.user', 'files', 'track', 'team.members']);
+
+        // Load team with track relationship
+        $team->load('track');
 
         return Inertia::render('TeamLead/Idea/Edit', [
             'idea' => $idea,
@@ -250,19 +254,19 @@ class IdeaController extends Controller
         $team = $this->teamService->getMyTeam($user);
         
         if (!$team) {
-            return redirect()->route('team-leader.dashboard')
+            return redirect()->route('team-lead.dashboard')
                 ->with('error', 'You need to create a team first');
         }
 
         $idea = $this->teamService->getTeamIdea($team);
         
         if (!$idea) {
-            return redirect()->route('team-leader.idea.create');
+            return redirect()->route('team-lead.idea.create');
         }
 
         // Check if idea can be edited
         if (in_array($idea->status, ['reviewing', 'accepted', 'rejected'])) {
-            return redirect()->route('team-leader.idea.show')
+            return redirect()->route('team-lead.idea.show')
                 ->with('error', 'Idea cannot be edited in current status');
         }
 
@@ -290,16 +294,19 @@ class IdeaController extends Controller
             foreach ($validated['files'] as $file) {
                 $path = $file->store('ideas/' . $idea->id, 'public');
                 $idea->files()->create([
-                    'filename' => $file->getClientOriginalName(),
-                    'path' => $path,
-                    'type' => 'document',
-                    'size' => $file->getSize(),
-                    'mime_type' => $file->getMimeType()
+                    'original_name' => $file->getClientOriginalName(),
+                    'file_name' => basename($path),
+                    'file_path' => $path,
+                    'file_type' => $file->getExtension() ?? 'unknown',
+                    'mime_type' => $file->getMimeType(),
+                    'file_size' => $file->getSize(),
+                    'file_category' => 'document',
+                    'uploaded_by' => $user->id
                 ]);
             }
         }
         
-        return redirect()->route('team-leader.idea.show')
+        return redirect()->route('team-lead.idea.show')
             ->with('success', 'Idea updated successfully');
     }
 
@@ -391,7 +398,7 @@ class IdeaController extends Controller
             }
         }
 
-        return redirect()->route('team-leader.idea.edit')
+        return redirect()->route('team-lead.idea.edit-my')
             ->with('success', 'Idea withdrawn successfully. You can now edit it.');
     }
 
@@ -423,11 +430,14 @@ class IdeaController extends Controller
         
         // Save file record in database
         $fileRecord = $idea->files()->create([
-            'filename' => $file->getClientOriginalName(),
-            'path' => $path,
-            'type' => $type,
-            'size' => $file->getSize(),
-            'mime_type' => $file->getMimeType()
+            'original_name' => $file->getClientOriginalName(),
+            'file_name' => basename($path),
+            'file_path' => $path,
+            'file_type' => $file->getExtension() ?? 'unknown',
+            'mime_type' => $file->getMimeType(),
+            'file_size' => $file->getSize(),
+            'file_category' => $type ?? 'document',
+            'uploaded_by' => $user->id
         ]);
 
         return response()->json([
@@ -458,8 +468,8 @@ class IdeaController extends Controller
         }
 
         // Delete file from storage
-        Storage::disk('public')->delete($file->path);
-        
+        Storage::disk('public')->delete($file->file_path);
+
         // Delete database record
         $file->delete();
 

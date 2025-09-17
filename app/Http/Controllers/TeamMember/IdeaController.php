@@ -19,7 +19,12 @@ class IdeaController extends Controller
     public function index()
     {
         $idea = $this->ideaService->getTeamIdea(auth()->id());
-        
+
+        // Load additional relationships for full idea display
+        if ($idea) {
+            $idea->load(['track', 'user', 'comments.user', 'attachments']);
+        }
+
         return Inertia::render('TeamMember/Idea/Index', [
             'idea' => $idea
         ]);

@@ -7,12 +7,18 @@ use App\Services\WorkshopService;
 use App\Services\SpeakerService;
 use App\Services\OrganizationService;
 use App\Services\EditionContext;
+use App\Services\TeamService;
 use App\Rules\WorkshopTimeValidation;
+use App\Notifications\WorkshopCreatedNotification;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\Workshop;
+use App\Models\Team;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Notification;
 
 class WorkshopController extends Controller
 {
@@ -20,17 +26,20 @@ class WorkshopController extends Controller
     protected SpeakerService $speakerService;
     protected OrganizationService $organizationService;
     protected EditionContext $editionContext;
+    protected TeamService $teamService;
 
     public function __construct(
         WorkshopService $workshopService,
         SpeakerService $speakerService,
         OrganizationService $organizationService,
-        EditionContext $editionContext
+        EditionContext $editionContext,
+        TeamService $teamService
     ) {
         $this->workshopService = $workshopService;
         $this->speakerService = $speakerService;
         $this->organizationService = $organizationService;
         $this->editionContext = $editionContext;
+        $this->teamService = $teamService;
     }
     public function index()
     {
@@ -38,7 +47,7 @@ class WorkshopController extends Controller
 
         // Filter workshops by current edition (using hackathon_edition_id)
         $workshops = Workshop::where('hackathon_edition_id', $edition->id)
-            ->with(['speaker', 'organization', 'attendees'])
+            ->with(['speakers', 'organizations', 'attendees'])
             ->paginate(15);
 
         $speakers = $this->speakerService->getAllSpeakers();
@@ -73,7 +82,8 @@ class WorkshopController extends Controller
             'description' => 'nullable|string|max:5000',
             'type' => 'required|string|in:workshop,seminar,lecture,panel',
             'start_time' => 'required|date_format:Y-m-d H:i:s|after:now',
-            'end_time' => ['required', 'date_format:Y-m-d H:i:s', new WorkshopTimeValidation()],
+            'end_time' => ['nullable', 'date_format:Y-m-d H:i:s'],
+            'duration' => 'nullable|numeric|min:0.5|max:8', // Duration in hours
             'format' => 'required|in:online,offline,hybrid',
             'location' => 'required_unless:format,online|nullable|string|max:255',
             'remote_link' => 'required_if:format,online|nullable|url|max:500',
@@ -90,11 +100,31 @@ class WorkshopController extends Controller
         ], [
             // Custom error messages for better UX
             'start_time.after' => 'The workshop start time must be in the future.',
-            'end_time.required' => 'Please specify when the workshop ends.',
             'location.required_unless' => 'Please specify the workshop location.',
             'remote_link.required_if' => 'Please provide the online meeting link.',
             'registration_deadline.before' => 'Registration must close before the workshop starts.',
         ]);
+
+        // Calculate end_time from duration if provided
+        if (empty($validated['end_time']) && !empty($validated['duration'])) {
+            $startTime = \Carbon\Carbon::parse($validated['start_time']);
+            $durationHours = floatval($validated['duration']);
+            $validated['end_time'] = $startTime->addHours($durationHours)->format('Y-m-d H:i:s');
+        }
+
+        // Validate end_time after calculation
+        if (empty($validated['end_time'])) {
+            return back()->withErrors(['end_time' => 'Please specify either end time or duration.'])->withInput();
+        }
+
+        // Apply time validation rule
+        $validator = \Validator::make($validated, [
+            'end_time' => [new WorkshopTimeValidation()]
+        ]);
+
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
 
         // Use service layer for business logic and additional validation
         DB::beginTransaction();
@@ -115,10 +145,13 @@ class WorkshopController extends Controller
                 auth()->user()
             );
 
+            // Send notifications to all track members and team leaders
+            $this->sendWorkshopNotifications($workshop);
+
             DB::commit();
 
             return redirect()->route('track-supervisor.workshops.index')
-                ->with('success', 'Workshop created successfully.');
+                ->with('success', 'Workshop created successfully! Notifications with QR codes have been sent to all team members and team leaders across all tracks.');
 
         } catch (ValidationException $e) {
             DB::rollBack();
@@ -217,5 +250,84 @@ class WorkshopController extends Controller
     {
         // TODO: Implement export functionality
         return response()->json(['message' => 'Export functionality to be implemented']);
+    }
+
+    /**
+     * Send workshop notifications to all track members and team leaders
+     *
+     * @param Workshop $workshop
+     * @return void
+     */
+    protected function sendWorkshopNotifications(Workshop $workshop)
+    {
+        try {
+            // Get ALL teams from ALL tracks (not just supervisor's track)
+            $teams = Team::with(['members'])->get();
+
+            // Collect all users to notify (team members and leaders)
+            $usersToNotify = collect();
+
+            foreach ($teams as $team) {
+                // Add team leader
+                if ($team->leader_id) {
+                    $leader = User::find($team->leader_id);
+                    if ($leader) {
+                        $usersToNotify->push($leader);
+                    }
+                }
+
+                // Add all team members
+                $members = $team->members()->get();
+                foreach ($members as $member) {
+                    $usersToNotify->push($member);
+                }
+            }
+
+            // Also add all users with team_leader and team_member roles (in case they don't have teams yet)
+            $teamLeaders = User::role('team_leader')->get();
+            foreach ($teamLeaders as $leader) {
+                $usersToNotify->push($leader);
+            }
+
+            $teamMembers = User::role('team_member')->get();
+            foreach ($teamMembers as $member) {
+                $usersToNotify->push($member);
+            }
+
+            // Remove duplicates
+            $uniqueUsers = $usersToNotify->unique('id');
+
+            // Send notification to each user
+            $successCount = 0;
+            $failCount = 0;
+
+            foreach ($uniqueUsers as $userToNotify) {
+                try {
+                    $userToNotify->notify(new WorkshopCreatedNotification($workshop));
+                    $successCount++;
+                } catch (\Exception $e) {
+                    $failCount++;
+                    \Log::error('Failed to send workshop notification', [
+                        'user_id' => $userToNotify->id,
+                        'workshop_id' => $workshop->id,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+
+            \Log::info('Workshop notifications sent to ALL tracks', [
+                'workshop_id' => $workshop->id,
+                'workshop_title' => $workshop->title,
+                'total_recipients' => $uniqueUsers->count(),
+                'successful' => $successCount,
+                'failed' => $failCount
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Failed to send workshop notifications', [
+                'workshop_id' => $workshop->id,
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 }

@@ -1,96 +1,90 @@
-# Multi-stage Docker build for Laravel + Vue.js application
+# Multi-stage build for Laravel application
 FROM node:20-alpine AS node-builder
 
 WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
+RUN npm ci
 
-# Install Node dependencies
-RUN npm ci --only=production
-
-# Copy source code
+# Copy application files for building
 COPY . .
 
-# Build frontend assets
+# Build the frontend assets
 RUN npm run build
 
-# PHP Application Stage
-FROM php:8.2-fpm-alpine AS php-base
+# Main application image
+FROM php:8.2-fpm-alpine
 
 # Install system dependencies
 RUN apk add --no-cache \
-    git \
+    nginx \
+    supervisor \
     curl \
-    libpng-dev \
-    libxml2-dev \
     zip \
     unzip \
-    sqlite \
-    sqlite-dev \
-    oniguruma-dev \
-    freetype-dev \
+    git \
+    libpng-dev \
     libjpeg-turbo-dev \
+    libwebp-dev \
     libzip-dev \
     icu-dev \
-    supervisor \
-    nginx
+    oniguruma-dev \
+    mysql-client \
+    nodejs \
+    npm \
+    bash
 
 # Install PHP extensions
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+RUN docker-php-ext-configure gd --with-jpeg --with-webp \
     && docker-php-ext-install \
-        pdo \
-        pdo_sqlite \
-        pdo_mysql \
-        mbstring \
-        exif \
-        pcntl \
-        bcmath \
-        gd \
-        zip \
-        intl
+    pdo \
+    pdo_mysql \
+    gd \
+    zip \
+    intl \
+    opcache \
+    pcntl \
+    mbstring \
+    exif \
+    bcmath
+
+# Install Redis extension
+RUN apk add --no-cache $PHPIZE_DEPS \
+    && pecl install redis \
+    && docker-php-ext-enable redis
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Create application directory
 WORKDIR /var/www/html
 
-# Copy composer files
-COPY composer*.json ./
+# Copy application files
+COPY . .
+
+# Copy built assets from node builder
+COPY --from=node-builder /app/public/build ./public/build
+
+# Set proper permissions
+RUN chown -R www-data:www-data /var/www/html \
+    && chmod -R 755 /var/www/html \
+    && chmod -R 775 /var/www/html/storage \
+    && chmod -R 775 /var/www/html/bootstrap/cache
 
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-# Copy application code
-COPY . .
-
-# Copy built assets from node-builder stage
-COPY --from=node-builder /app/public/build ./public/build
-
-# Set permissions
-RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 755 /var/www/html/storage \
-    && chmod -R 755 /var/www/html/bootstrap/cache
-
 # Copy configuration files
 COPY docker/nginx.conf /etc/nginx/nginx.conf
-COPY docker/php-fpm.conf /usr/local/etc/php-fpm.d/www.conf
+COPY docker/php.ini /usr/local/etc/php/php.ini
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-COPY docker/php.ini /usr/local/etc/php/conf.d/custom.ini
-
-# Create necessary directories
-RUN mkdir -p /var/log/supervisor \
-    && mkdir -p /var/run/nginx \
-    && mkdir -p /var/www/html/storage/logs \
-    && mkdir -p /var/www/html/storage/framework/cache \
-    && mkdir -p /var/www/html/storage/framework/sessions \
-    && mkdir -p /var/www/html/storage/framework/views
-
-# Create startup script
 COPY docker/start.sh /usr/local/bin/start.sh
+
+# Make start script executable
 RUN chmod +x /usr/local/bin/start.sh
 
+# Expose ports
 EXPOSE 80
 
+# Start services
 CMD ["/usr/local/bin/start.sh"]

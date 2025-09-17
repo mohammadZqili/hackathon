@@ -12,6 +12,7 @@ use Inertia\Inertia;
 use App\Models\Workshop;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Validator;
 
 class WorkshopController extends Controller
 {
@@ -60,7 +61,8 @@ class WorkshopController extends Controller
             'description' => 'nullable|string|max:5000',
             'type' => 'nullable|string|in:workshop,seminar,lecture,panel',
             'start_time' => 'required|date|after:now',
-            'end_time' => ['required', 'date', new WorkshopTimeValidation()],
+            'end_time' => ['nullable', 'date'],
+            'duration' => 'nullable|numeric|min:0.5|max:8', // Duration in hours
             'format' => 'required|in:online,offline,hybrid',
             'location' => 'required_unless:format,online|nullable|string|max:255',
             'remote_link' => 'required_if:format,online|nullable|url|max:500',
@@ -77,11 +79,31 @@ class WorkshopController extends Controller
         ], [
             // Custom error messages for better UX
             'start_time.after' => 'The workshop start time must be in the future.',
-            'end_time.required' => 'Please specify when the workshop ends.',
             'location.required_unless' => 'Please specify the workshop location.',
             'remote_link.required_if' => 'Please provide the online meeting link.',
             'registration_deadline.before' => 'Registration must close before the workshop starts.',
         ]);
+
+        // Calculate end_time from duration if provided
+        if (empty($validated['end_time']) && !empty($validated['duration'])) {
+            $startTime = \Carbon\Carbon::parse($validated['start_time']);
+            $durationHours = floatval($validated['duration']);
+            $validated['end_time'] = $startTime->addHours($durationHours)->format('Y-m-d H:i:s');
+        }
+
+        // Validate end_time after calculation
+        if (empty($validated['end_time'])) {
+            return back()->withErrors(['end_time' => 'Please specify either end time or duration.'])->withInput();
+        }
+
+        // Apply time validation rule
+        $validator = \Validator::make($validated, [
+            'end_time' => [new WorkshopTimeValidation()]
+        ]);
+
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
 
         // Use service layer for business logic and additional validation
         DB::beginTransaction();

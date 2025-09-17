@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Workshop;
 use App\Models\WorkshopRegistration;
 use App\Models\User;
+use App\Services\QrCodeService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Carbon\Carbon;
@@ -76,18 +77,69 @@ class CheckinController extends Controller
         $code = $request->code;
         $workshopId = $request->workshop_id;
 
-        // Try to parse the QR code
-        // Expected format: WORKSHOP_{workshop_id}_REG_{registration_id}_CODE_{barcode}
-        // Or just the barcode directly
+        // Use QR Code Service to parse the code
+        $qrService = new QrCodeService();
+        $parsedData = $qrService->parseWorkshopQrCode($code);
 
-        $barcode = $code;
-        $registrationId = null;
+        // If we can parse the new format with email
+        if ($parsedData && $parsedData['format'] === 'email_based') {
+            // Verify workshop ID matches
+            if ($parsedData['workshop_id'] != $workshopId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This QR code is for a different workshop.'
+                ], 400);
+            }
 
-        // Check if it's a structured QR code
-        if (preg_match('/WORKSHOP_(\d+)_REG_(\d+)_CODE_(.+)/', $code, $matches)) {
-            $qrWorkshopId = $matches[1];
-            $registrationId = $matches[2];
-            $barcode = $matches[3];
+            // Find user by email
+            $user = User::where('email', $parsedData['user_email'])->first();
+
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User not found with email: ' . $parsedData['user_email']
+                ], 404);
+            }
+
+            // Find or create registration
+            $registration = WorkshopRegistration::where('workshop_id', $workshopId)
+                ->where('user_id', $user->id)
+                ->first();
+
+            if (!$registration) {
+                // Create new registration
+                $registration = WorkshopRegistration::create([
+                    'workshop_id' => $workshopId,
+                    'user_id' => $user->id,
+                    'barcode' => Str::random(10) . '_' . time(),
+                    'status' => 'attended',
+                    'registered_at' => now(),
+                    'attended_at' => now(),
+                    'attendance_method' => 'qr_scan',
+                    'marked_by' => auth()->id(),
+                    'notes' => 'Auto-registered via QR scan',
+                ]);
+
+                $workshop = Workshop::find($workshopId);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'User registered and checked in successfully!',
+                    'data' => [
+                        'id' => $registration->id,
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'workshop' => $workshop->title,
+                        'type' => 'auto_registered',
+                        'code' => $registration->barcode
+                    ]
+                ]);
+            }
+        } elseif ($parsedData && $parsedData['format'] === 'legacy') {
+            // Handle legacy format
+            $qrWorkshopId = $parsedData['workshop_id'];
+            $registrationId = $parsedData['registration_id'];
+            $barcode = $parsedData['barcode'];
 
             // Verify workshop ID matches
             if ($qrWorkshopId != $workshopId) {
@@ -96,33 +148,60 @@ class CheckinController extends Controller
                     'message' => 'This QR code is for a different workshop.'
                 ], 400);
             }
+
+            // Find registration by barcode or ID
+            $registration = WorkshopRegistration::where('workshop_id', $workshopId)
+                ->where(function($query) use ($barcode, $registrationId) {
+                    $query->where('barcode', $barcode);
+                    if ($registrationId) {
+                        $query->orWhere('id', $registrationId);
+                    }
+                })
+                ->first();
+        } else {
+            // Try direct barcode lookup for backward compatibility
+            $barcode = $code;
+            $registration = WorkshopRegistration::where('workshop_id', $workshopId)
+                ->where('barcode', $barcode)
+                ->first();
         }
 
-        // Find registration by barcode or ID
-        $registration = WorkshopRegistration::where('workshop_id', $workshopId)
-            ->where(function($query) use ($barcode, $registrationId) {
-                $query->where('barcode', $barcode);
-                if ($registrationId) {
-                    $query->orWhere('id', $registrationId);
+        // If no registration found, create walk-in
+        if (!isset($registration) || !$registration) {
+            // For email-based QR that somehow didn't match
+            if ($parsedData && $parsedData['format'] === 'simple' && isset($parsedData['user_email'])) {
+                $user = User::where('email', $parsedData['user_email'])->first();
+                if ($user) {
+                    $registration = WorkshopRegistration::create([
+                        'workshop_id' => $workshopId,
+                        'user_id' => $user->id,
+                        'barcode' => Str::random(10) . '_' . time(),
+                        'status' => 'attended',
+                        'registered_at' => now(),
+                        'attended_at' => now(),
+                        'attendance_method' => 'qr_scan',
+                        'marked_by' => auth()->id(),
+                        'notes' => 'Walk-in registration via QR scan',
+                    ]);
                 }
-            })
-            ->first();
+            }
 
-        if (!$registration) {
-            // Create walk-in registration with generated user ID
-            $guestUserId = $this->getOrCreateGuestUser($code);
+            // Final fallback - create guest registration
+            if (!isset($registration) || !$registration) {
+                $guestUserId = $this->getOrCreateGuestUser($code);
 
-            $registration = WorkshopRegistration::create([
-                'workshop_id' => $workshopId,
-                'user_id' => $guestUserId,
-                'barcode' => Str::random(10) . '_' . time(),
-                'status' => 'attended',
-                'registered_at' => now(),
-                'attended_at' => now(),
-                'attendance_method' => 'qr_scan',
-                'marked_by' => auth()->id(),
-                'notes' => 'Walk-in registration via QR scan',
-            ]);
+                $registration = WorkshopRegistration::create([
+                    'workshop_id' => $workshopId,
+                    'user_id' => $guestUserId,
+                    'barcode' => Str::random(10) . '_' . time(),
+                    'status' => 'attended',
+                    'registered_at' => now(),
+                    'attended_at' => now(),
+                    'attendance_method' => 'qr_scan',
+                    'marked_by' => auth()->id(),
+                    'notes' => 'Walk-in registration via QR scan',
+                ]);
+            }
 
             $workshop = Workshop::find($workshopId);
 
@@ -131,7 +210,8 @@ class CheckinController extends Controller
                 'message' => 'Walk-in attendee checked in successfully.',
                 'data' => [
                     'id' => $registration->id,
-                    'name' => 'Walk-in Guest',
+                    'name' => isset($user) ? $user->name : 'Walk-in Guest',
+                    'email' => isset($user) ? $user->email : null,
                     'workshop' => $workshop->title,
                     'type' => 'walk-in',
                     'code' => $registration->barcode

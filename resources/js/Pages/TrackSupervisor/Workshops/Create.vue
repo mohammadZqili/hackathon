@@ -42,6 +42,7 @@
                             Date
                         </label>
                         <input v-model="form.start_date"
+                               @change="calculateEndTime"
                                type="date"
                                class="w-full rounded-lg bg-teal-50 dark:bg-gray-800 border border-teal-100 dark:border-gray-600 px-4 py-3 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                                required>
@@ -51,6 +52,7 @@
                             Time
                         </label>
                         <input v-model="form.start_time"
+                               @change="calculateEndTime"
                                type="time"
                                class="w-full rounded-lg bg-teal-50 dark:bg-gray-800 border border-teal-100 dark:border-gray-600 px-4 py-3 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent">
                     </div>
@@ -63,6 +65,7 @@
                             Duration (hours)
                         </label>
                         <input v-model="form.duration"
+                               @change="calculateEndTime"
                                type="number"
                                min="0.5"
                                max="8"
@@ -80,6 +83,18 @@
                                max="500"
                                placeholder="50"
                                class="w-full rounded-lg bg-teal-50 dark:bg-gray-800 border border-teal-100 dark:border-gray-600 px-4 py-3 text-gray-900 dark:text-white placeholder-teal-600/50 dark:placeholder-gray-400 focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+                    </div>
+                </div>
+
+                <!-- Calculated End Time Display -->
+                <div v-if="calculatedEndTime" class="bg-teal-50 dark:bg-gray-800 rounded-lg p-4 border border-teal-200 dark:border-gray-600">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Workshop End Time:
+                        </span>
+                        <span class="text-sm font-semibold text-teal-600 dark:text-teal-400">
+                            {{ calculatedEndTime }}
+                        </span>
                     </div>
                 </div>
 
@@ -178,6 +193,7 @@
 </template>
 
 <script setup>
+import { ref, computed, watch } from 'vue'
 import { useLocalization } from '@/composables/useLocalization'
 
 const { t, isRTL, direction, locale } = useLocalization()
@@ -212,18 +228,60 @@ const form = useForm({
     is_active: true
 })
 
+// Computed end time for display
+const calculatedEndTime = ref('')
+
+// Function to calculate end time based on start time and duration
+const calculateEndTime = () => {
+    if (form.start_date && form.start_time && form.duration) {
+        // Create a date object from start date and time
+        const startDateTime = new Date(`${form.start_date}T${form.start_time}`)
+
+        // Add duration in hours
+        const durationMs = form.duration * 60 * 60 * 1000
+        const endDateTime = new Date(startDateTime.getTime() + durationMs)
+
+        // Format the end time for display
+        const endTimeString = endDateTime.toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        })
+
+        const endDateString = endDateTime.toLocaleDateString('en-US', {
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric'
+        })
+
+        calculatedEndTime.value = `${endDateString} at ${endTimeString}`
+    } else {
+        calculatedEndTime.value = ''
+    }
+}
+
+// Watch for changes in duration
+watch(() => form.duration, () => {
+    calculateEndTime()
+})
+
 const submit = () => {
     // Prepare the data for submission
     const startDateTime = form.start_date && form.start_time
         ? `${form.start_date}T${form.start_time}:00`
         : '';
 
-    // Calculate end time based on duration
+    // Calculate end time for submission
     let endDateTime = '';
     if (startDateTime && form.duration) {
-        const start = new Date(startDateTime);
-        const end = new Date(start.getTime() + (form.duration * 60 * 60 * 1000));
-        endDateTime = end.toISOString().slice(0, 19).replace('T', ' ');
+        const start = new Date(`${form.start_date}T${form.start_time}`)
+        const durationMs = form.duration * 60 * 60 * 1000
+        const end = new Date(start.getTime() + durationMs)
+
+        // Format end time as Y-m-d H:i:s
+        const endDate = end.toISOString().split('T')[0]
+        const endTime = end.toTimeString().split(' ')[0]
+        endDateTime = `${endDate} ${endTime}`
     }
 
     // Transform the form data to match controller expectations
@@ -232,7 +290,8 @@ const submit = () => {
         description: form.description,
         type: form.type,
         start_time: startDateTime ? startDateTime.replace('T', ' ') : '',
-        end_time: endDateTime,
+        end_time: endDateTime, // Send calculated end_time
+        duration: form.duration, // Also send duration for reference
         format: form.format,
         location: form.location,
         remote_link: form.remote_link,

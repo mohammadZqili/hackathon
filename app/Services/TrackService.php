@@ -32,6 +32,24 @@ class TrackService extends BaseService
     }
 
     /**
+     * Get active tracks with teams for current edition only
+     */
+    public function getActiveTracksWithTeams()
+    {
+        // Get current edition
+        $currentEdition = $this->editionRepository->getCurrent();
+
+        if (!$currentEdition) {
+            return collect();
+        }
+
+        // Get active tracks for current edition only
+        return $this->trackRepository->getActive([
+            'edition_id' => $currentEdition->id
+        ]);
+    }
+
+    /**
      * Get paginated tracks based on user role and filters
      */
     public function getPaginatedTracks(User $user, array $filters = [], int $perPage = 15): array

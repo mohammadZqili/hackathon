@@ -164,6 +164,7 @@ import Default from '@/Layouts/Default.vue'
 const props = defineProps({
     tracks: Array,
     team: Object,
+    requiresTeamCreation: Boolean,
     errors: Object
 })
 
@@ -204,6 +205,8 @@ const themeStyles = computed(() => ({
 const form = useForm({
     title: '',
     description: '',
+    track_id: props.team?.track_id || '',
+    team_name: '',
     files: []
 })
 
@@ -234,8 +237,34 @@ const removeFile = (index) => {
 }
 
 const submitForm = () => {
+    // Validate required fields
+    if (!form.title || !form.description) {
+        alert('Please fill in all required fields')
+        return
+    }
+
+    // If no team, validate track and team name
+    if (!props.team && (!form.track_id || !form.team_name)) {
+        alert('Please select a track and enter a team name')
+        return
+    }
+
     processing.value = true
-    form.post(route('team-leader.idea.store'), {
+
+    // Use FormData for file uploads
+    const formData = new FormData()
+    formData.append('title', form.title)
+    formData.append('description', form.description)
+    formData.append('track_id', form.track_id || props.team?.track_id || '')
+    formData.append('team_name', form.team_name)
+
+    // Append files
+    form.files.forEach((file, index) => {
+        formData.append(`files[${index}]`, file)
+    })
+
+    // Submit using router.post with FormData
+    router.post(route('team-lead.idea.store'), formData, {
         onSuccess: () => {
             processing.value = false
         },
@@ -243,7 +272,8 @@ const submitForm = () => {
             processing.value = false
             console.error('Validation errors:', errors)
         },
-        preserveScroll: true
+        preserveScroll: true,
+        forceFormData: true
     })
 }
 </script>

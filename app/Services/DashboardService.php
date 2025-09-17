@@ -44,13 +44,19 @@ class DashboardService extends BaseService
         $team = $this->teamRepo->findByLeaderId($userId);
         $idea = $team ? $this->ideaRepo->findByTeamId($team->id) : null;
         $workshops = $this->workshopRepo->getUpcoming();
-        $tracks = $this->trackRepo->getActive();
+
+        // Get tracks for current edition only
+        $currentEdition = $this->editionRepo ? $this->editionRepo->getCurrent() : null;
+        $tracks = $currentEdition
+            ? $this->trackRepo->getActive(['edition_id' => $currentEdition->id])
+            : collect();
 
         return [
             'team' => $team,
             'idea' => $idea,
             'workshops' => $workshops,
             'tracks' => $tracks,
+            'currentEdition' => $currentEdition,
             'stats' => [
                 'team_members' => $team ? $team->members()->count() : 0,
                 'idea_status' => $idea ? $idea->status : 'pending',
@@ -67,10 +73,18 @@ class DashboardService extends BaseService
         $idea = $team ? $this->ideaRepo->findByTeamId($team->id) : null;
         $workshops = $this->workshopRepo->getUpcoming();
 
+        // Get tracks for current edition only
+        $currentEdition = $this->editionRepo ? $this->editionRepo->getCurrent() : null;
+        $tracks = $currentEdition
+            ? $this->trackRepo->getActive(['edition_id' => $currentEdition->id])
+            : collect();
+
         return [
             'team' => $team,
             'idea' => $idea,
             'workshops' => $workshops,
+            'tracks' => $tracks,
+            'currentEdition' => $currentEdition,
             'stats' => [
                 'team_name' => $team ? $team->name : null,
                 'idea_status' => $idea ? $idea->status : 'pending',
@@ -151,6 +165,11 @@ class DashboardService extends BaseService
                 'total' => 0,
                 'upcoming' => 0,
                 'completed' => 0
+            ],
+            'tracks' => [
+                'total' => 0,
+                'supervised' => 0,
+                'teams_in_tracks' => 0
             ]
         ];
 
@@ -159,32 +178,55 @@ class DashboardService extends BaseService
         if (!empty($filters['edition_id'])) {
             $teamQuery->where('edition_id', $filters['edition_id']);
         }
+        if (!empty($filters['track_ids'])) {
+            $teamQuery->whereIn('track_id', $filters['track_ids']);
+        }
         $stats['teams']['total'] = $teamQuery->count();
-        $stats['teams']['active'] = $teamQuery->where('status', 'active')->count();
+        $stats['teams']['active'] = (clone $teamQuery)->where('status', 'active')->count();
 
         // Get idea statistics
         $ideaQuery = DB::table('ideas');
-        if (!empty($filters['edition_id'])) {
+        if (!empty($filters['edition_id']) || !empty($filters['track_ids'])) {
             $ideaQuery->whereExists(function ($query) use ($filters) {
                 $query->select(DB::raw(1))
                     ->from('teams')
-                    ->whereColumn('teams.id', 'ideas.team_id')
-                    ->where('teams.edition_id', $filters['edition_id']);
+                    ->whereColumn('teams.id', 'ideas.team_id');
+
+                if (!empty($filters['edition_id'])) {
+                    $query->where('teams.edition_id', $filters['edition_id']);
+                }
+                if (!empty($filters['track_ids'])) {
+                    $query->whereIn('teams.track_id', $filters['track_ids']);
+                }
             });
         }
         $stats['ideas']['total'] = $ideaQuery->count();
         $stats['ideas']['submitted'] = (clone $ideaQuery)->where('status', 'submitted')->count();
         $stats['ideas']['approved'] = (clone $ideaQuery)->where('status', 'approved')->count();
 
-        // Get user statistics
-        $userQuery = DB::table('users');
-        if (!empty($filters['edition_id'])) {
-            $userQuery->where('edition_id', $filters['edition_id']);
+        // Get user statistics (count team members in supervised tracks)
+        if (!empty($filters['track_ids'])) {
+            // For track supervisors, count users in teams within their tracks
+            $userQuery = DB::table('users')
+                ->whereExists(function ($query) use ($filters) {
+                    $query->select(DB::raw(1))
+                        ->from('team_members')
+                        ->join('teams', 'teams.id', '=', 'team_members.team_id')
+                        ->whereColumn('team_members.user_id', 'users.id')
+                        ->whereIn('teams.track_id', $filters['track_ids']);
+                });
+            $stats['users']['total'] = $userQuery->count();
+            $stats['users']['active'] = (clone $userQuery)->where('last_login_at', '>', Carbon::now()->subDays(30))->count();
+            $stats['users']['new_today'] = (clone $userQuery)->whereDate('users.created_at', Carbon::today())->count();
+        } else {
+            $userQuery = DB::table('users');
+            if (!empty($filters['edition_id'])) {
+                $userQuery->where('edition_id', $filters['edition_id']);
+            }
+            $stats['users']['total'] = $userQuery->count();
+            $stats['users']['active'] = (clone $userQuery)->where('last_login_at', '>', Carbon::now()->subDays(30))->count();
+            $stats['users']['new_today'] = (clone $userQuery)->whereDate('created_at', Carbon::today())->count();
         }
-        $stats['users']['total'] = $userQuery->count();
-        // Count users who logged in recently as active (within last 30 days)
-        $stats['users']['active'] = $userQuery->where('last_login_at', '>', Carbon::now()->subDays(30))->count();
-        $stats['users']['new_today'] = $userQuery->whereDate('created_at', Carbon::today())->count();
 
         // Get workshop statistics
         $workshopQuery = DB::table('workshops');
@@ -192,8 +234,23 @@ class DashboardService extends BaseService
             $workshopQuery->where('hackathon_edition_id', $filters['edition_id']);
         }
         $stats['workshops']['total'] = $workshopQuery->count();
-        $stats['workshops']['upcoming'] = $workshopQuery->where('is_active', true)->where('start_time', '>', now())->count();
-        $stats['workshops']['completed'] = $workshopQuery->where('end_time', '<', now())->count();
+        $stats['workshops']['upcoming'] = (clone $workshopQuery)->where('is_active', true)->where('start_time', '>', now())->count();
+        $stats['workshops']['completed'] = (clone $workshopQuery)->where('end_time', '<', now())->count();
+
+        // Get track statistics for track supervisors
+        if (!empty($filters['track_ids'])) {
+            $stats['tracks']['supervised'] = count($filters['track_ids']);
+            $stats['tracks']['teams_in_tracks'] = DB::table('teams')
+                ->whereIn('track_id', $filters['track_ids'])
+                ->count();
+
+            // Get track names for display
+            $trackNames = DB::table('tracks')
+                ->whereIn('id', $filters['track_ids'])
+                ->pluck('name')
+                ->implode(', ');
+            $stats['tracks']['names'] = $trackNames;
+        }
 
         return $stats;
     }
@@ -204,18 +261,23 @@ class DashboardService extends BaseService
     protected function getRecentActivities(User $user, array $filters): array
     {
         $activities = [];
-        
+
         // Get recent teams
         $teamsQuery = DB::table('teams')
-            ->select('teams.*', 'users.name as leader_name')
+            ->select('teams.*', 'users.name as leader_name', 'tracks.name as track_name')
             ->leftJoin('users', 'teams.leader_id', '=', 'users.id')
+            ->leftJoin('tracks', 'teams.track_id', '=', 'tracks.id')
             ->orderBy('teams.created_at', 'desc')
             ->limit(5);
-            
+
         if (!empty($filters['edition_id'])) {
             $teamsQuery->where('teams.edition_id', $filters['edition_id']);
         }
-        
+
+        if (!empty($filters['track_ids'])) {
+            $teamsQuery->whereIn('teams.track_id', $filters['track_ids']);
+        }
+
         $recentTeams = $teamsQuery->get();
         
         foreach ($recentTeams as $team) {
@@ -223,22 +285,27 @@ class DashboardService extends BaseService
                 'id' => 'team_' . $team->id,
                 'type' => 'team_created',
                 'title' => 'New team registered',
-                'description' => $team->name . ' has registered',
+                'description' => $team->name . ' has registered' . ($team->track_name ? ' in ' . $team->track_name : ''),
                 'timestamp' => Carbon::parse($team->created_at),
                 'icon' => 'users',
                 'color' => 'green'
             ];
         }
-        
+
         // Get recent ideas
         $ideasQuery = DB::table('ideas')
-            ->select('ideas.*', 'teams.name as team_name')
+            ->select('ideas.*', 'teams.name as team_name', 'tracks.name as track_name')
             ->leftJoin('teams', 'ideas.team_id', '=', 'teams.id')
+            ->leftJoin('tracks', 'teams.track_id', '=', 'tracks.id')
             ->orderBy('ideas.created_at', 'desc')
             ->limit(5);
-            
+
         if (!empty($filters['edition_id'])) {
             $ideasQuery->where('teams.edition_id', $filters['edition_id']);
+        }
+
+        if (!empty($filters['track_ids'])) {
+            $ideasQuery->whereIn('teams.track_id', $filters['track_ids']);
         }
         
         $recentIdeas = $ideasQuery->get();

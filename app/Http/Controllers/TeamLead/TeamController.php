@@ -56,7 +56,7 @@ class TeamController extends Controller
         $team = $this->teamService->getMyTeam($user);
         
         if (!$team) {
-            return redirect()->route('team-leader.dashboard')
+            return redirect()->route('team-lead.dashboard')
                 ->with('error', 'You don\'t have a team to edit');
         }
 
@@ -74,7 +74,7 @@ class TeamController extends Controller
         $team = $this->teamService->getMyTeam($user);
         
         if (!$team) {
-            return redirect()->route('team-leader.dashboard')
+            return redirect()->route('team-lead.dashboard')
                 ->with('error', 'You don\'t have a team to update');
         }
 
@@ -86,7 +86,7 @@ class TeamController extends Controller
 
         $team = $this->teamService->updateTeamDetails($team, $validated);
 
-        return redirect()->route('team-leader.team.show')
+        return redirect()->route('team-lead.team.show')
             ->with('success', 'Team updated successfully');
     }
 
@@ -96,7 +96,7 @@ class TeamController extends Controller
         $team = $this->teamService->getMyTeam($user);
         
         if (!$team) {
-            return redirect()->route('team-leader.dashboard')
+            return redirect()->route('team-lead.dashboard')
                 ->with('error', 'You need to create a team first');
         }
 
@@ -124,7 +124,7 @@ class TeamController extends Controller
         $result = $this->teamService->addTeamMember($team, $validated['email'], 'member');
 
         if ($result['success']) {
-            return redirect()->route('team-leader.team.index')
+            return redirect()->route('team-lead.team.index')
                 ->with('success', $result['message']);
         } else {
             return back()->with('error', $result['message']);
@@ -187,7 +187,7 @@ class TeamController extends Controller
 
         try {
             $this->teamRepository->delete($team->id);
-            return redirect()->route('team-leader.dashboard')
+            return redirect()->route('team-lead.dashboard')
                 ->with('success', 'Team disbanded successfully');
         } catch (\Exception $e) {
             return back()->with('error', 'Failed to disband team: ' . $e->getMessage());

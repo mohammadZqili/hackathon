@@ -1,48 +1,60 @@
 #!/bin/sh
 
-set -e
+# Wait for MySQL to be ready
+echo "Waiting for MySQL..."
+while ! nc -z mysql 3306; do
+  sleep 1
+done
+echo "MySQL is ready!"
 
-echo "Starting GuacPanel Hackathon Management System..."
+# Wait for Redis to be ready
+echo "Waiting for Redis..."
+while ! nc -z redis 6379; do
+  sleep 1
+done
+echo "Redis is ready!"
 
-# Wait for database to be ready (if using external database)
-echo "Checking application setup..."
+# Wait for Typesense to be ready
+echo "Waiting for Typesense..."
+while ! nc -z typesense 8108; do
+  sleep 1
+done
+echo "Typesense is ready!"
 
 # Generate application key if not set
-if [ -z "$APP_KEY" ] || [ "$APP_KEY" = "" ]; then
+if [ "$APP_KEY" = "" ] || [ "$APP_KEY" = "base64:YOUR_APP_KEY_HERE" ]; then
     echo "Generating application key..."
     php artisan key:generate --force
 fi
 
-# Clear all caches
-echo "Clearing application caches..."
-php artisan config:clear
-php artisan cache:clear
-php artisan route:clear
-php artisan view:clear
-
-# Run migrations and seeders
-echo "Running database migrations..."
+# Run migrations
+echo "Running migrations..."
 php artisan migrate --force
 
-# Create storage symlink
-echo "Creating storage symlink..."
-php artisan storage:link
+# Seed database (only if specified)
+if [ "$SEED_DATABASE" = "true" ]; then
+    echo "Seeding database..."
+    php artisan db:seed --force
+fi
 
-# Cache configurations for better performance
-echo "Caching configurations..."
+# Clear and cache configurations
+echo "Optimizing application..."
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
+php artisan event:cache
 
-# Set proper permissions
+# Set permissions
 echo "Setting permissions..."
 chown -R www-data:www-data /var/www/html/storage
 chown -R www-data:www-data /var/www/html/bootstrap/cache
-chmod -R 755 /var/www/html/storage
-chmod -R 755 /var/www/html/bootstrap/cache
+chmod -R 775 /var/www/html/storage
+chmod -R 775 /var/www/html/bootstrap/cache
 
-echo "Application setup completed successfully!"
-echo "Starting services..."
+# Create storage link
+echo "Creating storage link..."
+php artisan storage:link --force
 
-# Start supervisor
-exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
+# Start supervisord (manages PHP-FPM, Nginx, Queue Workers, and Scheduler)
+echo "Starting application services..."
+/usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf

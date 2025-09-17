@@ -115,30 +115,44 @@
                         <!-- Time -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                {{ t('admin.workshops.time') }}
+                                {{ t('admin.workshops.start_time') || 'Start Time' }}
                             </label>
-                            <div class="grid grid-cols-2 gap-2">
-                                <input
-                                    v-model="form.start_time_input"
-                                    type="time"
-                                    :placeholder="t('admin.workshops.start_time')"
-                                    class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-theme-primary focus:ring focus:ring-theme-primary focus:ring-opacity-25"
-                                    :style="{ backgroundColor: `rgba(${themeColor.rgb}, 0.05)` }"
-                                    required
-                                />
-                                <input
-                                    v-model="form.end_time_input"
-                                    type="time"
-                                    :placeholder="t('admin.workshops.end_time')"
-                                    class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-theme-primary focus:ring focus:ring-theme-primary focus:ring-opacity-25"
-                                    :style="{ backgroundColor: `rgba(${themeColor.rgb}, 0.05)` }"
-                                    required
-                                />
-                            </div>
-                            <p v-if="form.errors.end_time" class="mt-1 text-sm text-red-600">
-                                {{ form.errors.end_time }}
+                            <input
+                                v-model="form.start_time_input"
+                                type="time"
+                                :placeholder="t('admin.workshops.start_time')"
+                                class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-theme-primary focus:ring focus:ring-theme-primary focus:ring-opacity-25"
+                                :style="{ backgroundColor: `rgba(${themeColor.rgb}, 0.05)` }"
+                                required
+                            />
+                            <p v-if="form.errors.start_time" class="mt-1 text-sm text-red-600">
+                                {{ form.errors.start_time }}
                             </p>
                         </div>
+                    </div>
+
+                    <!-- Duration Row -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                {{ t('admin.workshops.duration') || 'Duration (hours)' }}
+                            </label>
+                            <input
+                                v-model="form.duration"
+                                type="number"
+                                min="0.5"
+                                max="8"
+                                step="0.5"
+                                placeholder="2"
+                                required
+                                class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-theme-primary focus:ring focus:ring-theme-primary focus:ring-opacity-25"
+                                :style="{ backgroundColor: `rgba(${themeColor.rgb}, 0.05)` }"
+                            />
+                            <p v-if="form.errors.duration" class="mt-1 text-sm text-red-600">
+                                {{ form.errors.duration }}
+                            </p>
+                        </div>
+                        <div></div>
                     </div>
 
                     <!-- Location Row with Format Toggle -->
@@ -304,9 +318,8 @@ const form = useForm({
     description: '',
     workshop_date: '',
     start_time_input: '',
-    end_time_input: '',
+    duration: 2, // Default 2 hours
     start_time: '', // Will be computed from date+time
-    end_time: '', // Will be computed from date+time
     max_attendees: 50,
     speaker_id: '',
     organization_id: '',
@@ -317,17 +330,16 @@ const form = useForm({
 })
 
 const submit = () => {
-    // Combine date and time for start_time and end_time
+    // Combine date and time for start_time
     if (form.workshop_date && form.start_time_input) {
         form.start_time = `${form.workshop_date} ${form.start_time_input}:00`;
     }
-    if (form.workshop_date && form.end_time_input) {
-        form.end_time = `${form.workshop_date} ${form.end_time_input}:00`;
-    }
 
     // Transform speaker_id and organization_id to arrays for the controller
+    // Also include duration for backend calculation
     form.transform((data) => ({
         ...data,
+        duration: data.duration, // Send duration to backend
         speaker_ids: data.speaker_id ? [data.speaker_id] : [],
         organization_ids: data.organization_id ? [data.organization_id] : []
     })).post(route('system-admin.workshops.store'))

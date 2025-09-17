@@ -5,8 +5,14 @@ namespace App\Services;
 use App\Models\Workshop;
 use App\Models\Edition;
 use App\Models\User;
+use App\Models\Team;
+use App\Models\Track;
+use App\Models\WorkshopRegistration;
+use App\Notifications\WorkshopCreatedNotification;
 use App\Repositories\WorkshopRepository;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Str;
 use Carbon\Carbon;
 
 class WorkshopService extends BaseService
@@ -159,9 +165,14 @@ class WorkshopService extends BaseService
             // Prepare workshop data
             $workshopData = collect($data)->except(['speaker_ids', 'organization_ids', 'remote_link'])->toArray();
 
-            // Add hackathon_id from current edition
-            $activeEdition = Edition::where('is_current', true)->first();
-            $workshopData['hackathon_id'] = $activeEdition ? $activeEdition->id : 1;
+            // Use hackathon_id (renamed from hackathon_edition_id for db compatibility)
+            if (!empty($workshopData['hackathon_edition_id'])) {
+                $workshopData['hackathon_id'] = $workshopData['hackathon_edition_id'];
+                unset($workshopData['hackathon_edition_id']);
+            } elseif (empty($workshopData['hackathon_id'])) {
+                $activeEdition = Edition::where('is_current', true)->first();
+                $workshopData['hackathon_id'] = $activeEdition ? $activeEdition->id : 1;
+            }
 
             // Handle remote link for online workshops
             if ($data['format'] === 'online' && !empty($data['remote_link'])) {
@@ -212,8 +223,123 @@ class WorkshopService extends BaseService
                     ->log('Workshop created');
             }
 
+            // Send notifications to relevant track members and team leaders
+            $this->notifyTrackParticipants($workshop);
+
             return $workshop;
         });
+    }
+
+    /**
+     * Notify track participants about new workshop
+     * Sends QR code emails to ALL team members and leaders across ALL tracks
+     */
+    protected function notifyTrackParticipants(Workshop $workshop): void
+    {
+        try {
+            // Get ALL teams from ALL tracks (not just current edition tracks)
+            $teams = Team::with(['members'])->get();
+
+            // Collect all users to notify (team members and leaders)
+            $usersToNotify = collect();
+
+            foreach ($teams as $team) {
+                // Add team leader
+                if ($team->leader_id) {
+                    $leader = User::find($team->leader_id);
+                    if ($leader) {
+                        $usersToNotify->push($leader);
+                    }
+                }
+
+                // Add all team members
+                $members = $team->members()->get();
+                foreach ($members as $member) {
+                    $usersToNotify->push($member);
+                }
+            }
+
+            // Also add all users with team_leader and team_member roles (in case they don't have teams yet)
+            $teamLeaders = User::role('team_leader')->get();
+            foreach ($teamLeaders as $leader) {
+                $usersToNotify->push($leader);
+            }
+
+            $teamMembers = User::role('team_member')->get();
+            foreach ($teamMembers as $member) {
+                $usersToNotify->push($member);
+            }
+
+            // Remove duplicates
+            $usersToNotify = $usersToNotify->unique('id');
+
+            // Create registrations and send notifications
+            $successCount = 0;
+            $failCount = 0;
+
+            foreach ($usersToNotify as $user) {
+                try {
+                    // Check if already registered
+                    $existingRegistration = WorkshopRegistration::where('workshop_id', $workshop->id)
+                        ->where('user_id', $user->id)
+                        ->first();
+
+                    if (!$existingRegistration) {
+                        // Create registration
+                        $registration = WorkshopRegistration::create([
+                            'workshop_id' => $workshop->id,
+                            'user_id' => $user->id,
+                            'barcode' => $this->generateUniqueBarcode(),
+                            'status' => 'registered',
+                            'registered_at' => now(),
+                        ]);
+
+                        // Send notification with QR code
+                        $user->notify(new WorkshopCreatedNotification($workshop, $registration));
+                        $successCount++;
+                    }
+                } catch (\Exception $e) {
+                    $failCount++;
+                    \Log::error('Failed to send workshop notification', [
+                        'user_id' => $user->id,
+                        'workshop_id' => $workshop->id,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+
+            // Update workshop attendee count
+            $workshop->update([
+                'current_attendees' => WorkshopRegistration::where('workshop_id', $workshop->id)->count()
+            ]);
+
+            \Log::info('Workshop notifications sent to ALL tracks', [
+                'workshop_id' => $workshop->id,
+                'workshop_title' => $workshop->title,
+                'total_recipients' => $usersToNotify->count(),
+                'successful' => $successCount,
+                'failed' => $failCount
+            ]);
+
+        } catch (\Exception $e) {
+            // Log error but don't fail the workshop creation
+            \Log::error('Failed to send workshop notifications', [
+                'workshop_id' => $workshop->id,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Generate a unique barcode for registration
+     */
+    protected function generateUniqueBarcode(): string
+    {
+        do {
+            $barcode = strtoupper(Str::random(10));
+        } while (WorkshopRegistration::where('barcode', $barcode)->exists());
+
+        return $barcode;
     }
 
     public function getAllWorkshops()

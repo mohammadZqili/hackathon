@@ -56,6 +56,14 @@ class HackathonEditionRepository extends BaseRepository implements HackathonEdit
     }
 
     /**
+     * Get current edition (alias for consistency)
+     */
+    public function getCurrent(): ?HackathonEdition
+    {
+        return $this->getCurrentEdition();
+    }
+
+    /**
      * Set edition as current
      */
     public function setCurrent(int $id): bool

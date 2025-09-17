@@ -175,6 +175,14 @@ return [
         ],
     ],
 
+    'workshop' => [
+        'end_time_after_start' => 'The end time must be after the start time (:start).',
+        'minimum_duration' => 'The workshop must be at least :duration minutes long.',
+        'maximum_duration' => 'The workshop cannot exceed :duration hours.',
+        'same_day' => 'The workshop must start and end on the same day.',
+        'invalid_date_format' => 'Invalid date format provided.',
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Custom Validation Attributes

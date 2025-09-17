@@ -35,10 +35,10 @@ class EnsureTeamLeaderHasIdea
 
         // Skip for idea creation routes
         $skipRoutes = [
-            'team-leader.idea.create',
-            'team-leader.idea.store',
-            'team-leader.team.create',
-            'team-leader.team.store'
+            'team-lead.idea.create',
+            'team-lead.idea.store',
+            'team-lead.team.create',
+            'team-lead.team.store'
         ];
 
         if (in_array($request->route()->getName(), $skipRoutes)) {
@@ -50,8 +50,8 @@ class EnsureTeamLeaderHasIdea
 
         if (!$team) {
             // Redirect to team creation with a message
-            if ($request->route()->getName() !== 'team-leader.dashboard') {
-                return redirect()->route('team-leader.idea.create')
+            if ($request->route()->getName() !== 'team-lead.dashboard') {
+                return redirect()->route('team-lead.idea.create')
                     ->with('info', 'You need to create an idea first. A team will be created automatically.');
             }
         } else {
@@ -60,8 +60,8 @@ class EnsureTeamLeaderHasIdea
 
             if (!$idea) {
                 // Redirect to idea creation
-                if (!in_array($request->route()->getName(), ['team-leader.dashboard', 'team-leader.idea.index'])) {
-                    return redirect()->route('team-leader.idea.create')
+                if (!in_array($request->route()->getName(), ['team-lead.dashboard', 'team-lead.idea.index'])) {
+                    return redirect()->route('team-lead.idea.create')
                         ->with('info', 'You need to create an idea for your team first.');
                 }
             }

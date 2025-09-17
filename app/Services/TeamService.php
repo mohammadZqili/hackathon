@@ -64,16 +64,22 @@ class TeamService
         try {
             $team = $this->teamRepository->create([
                 'name' => $data['name'],
+                'user_id' => $data['user_id'] ?? $data['leader_id'],  // For Jetstream compatibility
                 'description' => $data['description'] ?? null,
                 'edition_id' => $data['edition_id'],
                 'leader_id' => $data['leader_id'] ?? null,
+                'track_id' => $data['track_id'] ?? null,
+                'personal_team' => $data['personal_team'] ?? false,
                 'max_members' => $data['max_members'] ?? 5,
-                'status' => 'active'
+                'status' => $data['status'] ?? 'active'
             ]);
 
             // Add leader as a member if specified
             if (!empty($data['leader_id'])) {
-                $team->members()->attach($data['leader_id'], ['role' => 'leader']);
+                // Check if the leader is not already a member (to avoid duplicate entry)
+                if (!$team->members()->where('user_id', $data['leader_id'])->exists()) {
+                    $team->members()->attach($data['leader_id'], ['role' => 'leader', 'joined_at' => now()]);
+                }
             }
 
             // Add other members
