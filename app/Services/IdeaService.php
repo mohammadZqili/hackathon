@@ -473,6 +473,40 @@ class IdeaService extends BaseService
     }
 
     /**
+     * Get team comments (non-supervisor comments) for an idea
+     */
+    public function getTeamComments($ideaId)
+    {
+        $idea = $this->ideaRepo->find($ideaId);
+        if (!$idea) {
+            return collect([]);
+        }
+
+        return $idea->comments()
+            ->where('is_supervisor', false)
+            ->with('user')
+            ->orderBy('created_at', 'asc')
+            ->get();
+    }
+
+    /**
+     * Get supervisor feedback (supervisor comments) for an idea
+     */
+    public function getSupervisorFeedback($ideaId)
+    {
+        $idea = $this->ideaRepo->find($ideaId);
+        if (!$idea) {
+            return collect([]);
+        }
+
+        return $idea->comments()
+            ->where('is_supervisor', true)
+            ->with('user')
+            ->orderBy('created_at', 'asc')
+            ->get();
+    }
+
+    /**
      * Notify team members about idea submission
      */
     protected function notifyTeamOfSubmission(Idea $idea, User $submitter): void

@@ -46,6 +46,7 @@ Route::middleware(['auth', 'verified', 'team.lead'])->prefix('team-lead')->name(
             Route::put('/update', [IdeaController::class, 'update'])->name('update');
             Route::post('/{id}/comment', [IdeaController::class, 'addComment'])->name('comment');
             Route::delete('/file/{id}', [IdeaController::class, 'deleteFile'])->name('file.delete');
+            Route::get('/{idea}/files/{file}/download', [IdeaController::class, 'downloadFile'])->name('download-file');
         });
 
         // Tracks

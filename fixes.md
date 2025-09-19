@@ -209,6 +209,27 @@ grep -r "import Default from" resources/js/Pages --include="*.vue" | grep -v "@/
 
 ---
 
+### Undefined Relationship Error on Idea Model
+**Issue:** Call to undefined relationship [user] on model [App\Models\Idea]
+**Roles Affected:** TeamMember
+**When:** Loading idea page in TeamMember role
+**Console Error:** Call to undefined relationship [user] on model
+**Fix:** Change relationship loading from non-existent relationships to correct ones
+
+#### Root Cause:
+- Controller was trying to load 'user' relationship which doesn't exist on Idea model
+- Ideas belong to teams, not directly to users
+- Also trying to load 'attachments' instead of 'files'
+
+#### Applied Fix:
+- **Backend:** Changed from `$idea->load(['track', 'user', 'attachments'])` to `$idea->load(['track', 'team', 'files'])`
+- **Frontend:** Changed from `idea.attachments` to `idea.files` in TeamMember/Idea/Index.vue
+- Ideas have: team(), track(), files() relationships
+- No direct user() relationship exists
+- Files are stored in `idea_files` table with `original_name` field
+
+---
+
 ## Prevention Guidelines
 
 1. **Always verify file exists** before navigation routes
@@ -216,3 +237,4 @@ grep -r "import Default from" resources/js/Pages --include="*.vue" | grep -v "@/
 3. **Test all CRUD operations** after adding new features
 4. **Verify import paths** match directory structure
 5. **Keep concerns separated** - one form for one purpose
+6. **Verify model relationships exist** before trying to load them

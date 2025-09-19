@@ -141,36 +141,41 @@
                                 </div>
                             </div>
 
-                            <!-- Attachments -->
-                            <div v-if="idea.attachments?.length" class="self-stretch">
+                            <!-- Files/Attachments -->
+                            <div v-if="idea.files?.length" class="self-stretch">
                                 <div class="self-stretch h-[60px] flex flex-col items-start justify-start pt-5 px-0 pb-3 text-[22px]">
                                     <b class="self-stretch relative leading-7">Related Documents</b>
                                 </div>
 
                                 <div class="space-y-2">
-                                    <div v-for="attachment in idea.attachments" :key="attachment.id"
-                                        class="self-stretch bg-gray-50 dark:bg-gray-800 h-14 flex flex-row items-center justify-start py-0 px-4 gap-4 min-h-[56px]">
+                                    <a v-for="file in idea.files" :key="file.id"
+                                        :href="route('team-member.idea.download-file', { idea: idea.id, file: file.id })"
+                                        class="self-stretch bg-gray-50 dark:bg-gray-800 h-14 flex flex-row items-center justify-start py-0 px-4 gap-4 min-h-[56px] hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors">
                                         <svg class="w-10 h-10 rounded-lg p-2 bg-gray-100 dark:bg-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                                         </svg>
                                         <div class="flex-1 overflow-hidden flex flex-col items-start justify-start">
-                                            <div class="self-stretch relative leading-6 overflow-hidden text-ellipsis whitespace-nowrap">{{ attachment.name }}</div>
+                                            <div class="self-stretch relative leading-6 overflow-hidden text-ellipsis whitespace-nowrap">{{ file.original_name || file.name }}</div>
                                         </div>
-                                    </div>
+                                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"></path>
+                                        </svg>
+                                    </a>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Comments Tab -->
+                        <!-- Comments Tab - Team Chat -->
                         <div v-if="activeTab === 'comments'" class="self-stretch flex flex-col gap-6">
-                            <!-- Comments List -->
+                            <h3 class="text-xl font-bold text-gray-900 dark:text-white">Team Chat</h3>
+                            <!-- Team Comments List -->
                             <div class="self-stretch flex flex-col gap-4">
-                                <div v-if="idea.comments?.length" class="text-xs text-gray-500 dark:text-gray-400">
-                                    {{ idea.comments.length }} comment{{ idea.comments.length !== 1 ? 's' : '' }}
+                                <div v-if="teamComments?.length" class="text-xs text-gray-500 dark:text-gray-400">
+                                    {{ teamComments.length }} message{{ teamComments.length !== 1 ? 's' : '' }}
                                 </div>
 
-                                <div v-if="idea.comments?.length" class="space-y-6">
-                                    <div v-for="comment in idea.comments" :key="comment.id"
+                                <div v-if="teamComments?.length" class="space-y-6">
+                                    <div v-for="comment in teamComments" :key="comment.id"
                                         class="bg-white dark:bg-gray-800 rounded-lg p-6">
                                         <!-- Comment Header -->
                                         <div class="flex items-center gap-3 mb-4">
@@ -180,6 +185,9 @@
                                             <div class="flex-1">
                                                 <div class="flex items-center gap-2">
                                                     <div class="text-sm font-semibold">{{ comment.user?.name || 'Anonymous' }}</div>
+                                                    <span class="text-xs px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300">
+                                                        {{ comment.user?.user_type === 'team_leader' ? 'Team Leader' : 'Team Member' }}
+                                                    </span>
                                                     <div class="text-xs text-gray-500 dark:text-gray-400">{{ formatDate(comment.created_at) }}</div>
                                                 </div>
                                             </div>
@@ -187,13 +195,13 @@
 
                                         <!-- Comment Content -->
                                         <div class="text-base leading-6 text-gray-700 dark:text-gray-300">
-                                            {{ comment.content }}
+                                            {{ comment.comment }}
                                         </div>
                                     </div>
                                 </div>
 
                                 <div v-else class="text-center py-8 text-gray-500 dark:text-gray-400">
-                                    No comments yet. Be the first to comment!
+                                    No team messages yet. Start the conversation!
                                 </div>
                             </div>
 
@@ -211,7 +219,7 @@
                                 <form @submit.prevent="submitComment" class="space-y-4">
                                     <textarea v-model="commentForm.comment"
                                         class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white p-4 min-h-[100px]"
-                                        placeholder="What are your thoughts?"
+                                        placeholder="Share your thoughts with the team..."
                                         required></textarea>
 
                                     <div class="flex justify-between items-center">
@@ -222,7 +230,7 @@
                                             class="rounded-lg px-4 py-2 text-white font-medium"
                                             :style="{ backgroundColor: themeColor.primary }"
                                             :disabled="!commentForm.comment.trim()">
-                                            Reply
+                                            Send Message
                                         </button>
                                     </div>
                                 </form>
@@ -230,37 +238,62 @@
                         </div>
 
                         <!-- Instructions Tab -->
-                        <div v-if="activeTab === 'instructions'" class="self-stretch flex flex-col gap-6">
-                            <!-- Supervisor Feedback Section -->
-                            <div class="self-stretch h-[60px] flex flex-row items-start justify-start pt-5 px-4 pb-3 text-[22px]">
-                                <b class="relative leading-7">Supervisor Feedback</b>
-                            </div>
-
-                            <div v-if="idea.supervisor_feedback" class="self-stretch flex flex-row items-start justify-start p-4 gap-3 text-sm">
-                                <img class="w-10 h-10 rounded-full object-cover"
-                                    :src="idea.supervisor?.avatar || '/default-avatar.png'"
-                                    :alt="idea.supervisor?.name || 'Supervisor'" />
-                                <div class="flex-1 flex flex-col items-start justify-start">
-                                    <div class="self-stretch flex flex-row items-start justify-start gap-3 mb-2">
-                                        <div class="flex flex-col items-start justify-start">
-                                            <b class="self-stretch relative leading-[21px]">
-                                                Supervisor: {{ idea.supervisor?.name || 'Dr. Evelyn Reed' }}
-                                            </b>
-                                        </div>
-                                        <div class="flex flex-col items-start justify-start text-blue-600 dark:text-blue-400">
-                                            <div class="self-stretch relative leading-[21px]">{{ formatDate(idea.feedback_date || idea.updated_at) }}</div>
-                                        </div>
+                        <div v-if="activeTab === 'instructions'" class="self-stretch flex flex-col gap-6 overflow-y-auto">
+                            <!-- Project Instructions Section -->
+                            <div class="self-stretch">
+                                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Project Instructions</h3>
+                                <div class="bg-white dark:bg-gray-800 rounded-lg p-6">
+                                    <div v-if="idea.instructions">
+                                        <div class="text-gray-600 dark:text-gray-400" v-html="idea.instructions"></div>
                                     </div>
-                                    <div class="self-stretch flex flex-col items-start justify-start">
-                                        <div class="self-stretch relative leading-[21px] text-gray-700 dark:text-gray-300">
-                                            {{ idea.supervisor_feedback }}
-                                        </div>
+                                    <div v-else class="text-center py-4 text-gray-500 dark:text-gray-400">
+                                        No instructions available yet.
                                     </div>
                                 </div>
                             </div>
 
-                            <div v-else class="text-center py-8 text-gray-500 dark:text-gray-400">
-                                No supervisor feedback available yet.
+                            <!-- Supervisor Feedback Section -->
+                            <div class="self-stretch">
+                                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Supervisor Feedback</h3>
+
+                                <div v-if="supervisorFeedback?.length > 0" class="space-y-4">
+                                    <div v-for="feedback in supervisorFeedback" :key="feedback.id"
+                                        class="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-4">
+                                        <div class="flex items-start gap-3">
+                                            <div class="w-10 h-10 rounded-full bg-orange-300 dark:bg-orange-600 flex items-center justify-center">
+                                                <span class="text-sm font-medium text-white">
+                                                    {{ feedback.user?.name?.charAt(0) || 'S' }}
+                                                </span>
+                                            </div>
+                                            <div class="flex-1">
+                                                <div class="flex items-start justify-between mb-2">
+                                                    <div>
+                                                        <div class="font-semibold text-gray-900 dark:text-white">
+                                                            {{ feedback.user?.name }}
+                                                        </div>
+                                                        <div class="text-xs text-orange-600 dark:text-orange-400">
+                                                            Track Supervisor
+                                                        </div>
+                                                    </div>
+                                                    <div class="text-xs text-gray-500 dark:text-gray-400">
+                                                        {{ formatDate(feedback.created_at) }}
+                                                    </div>
+                                                </div>
+                                                <div class="text-gray-700 dark:text-gray-300">
+                                                    {{ feedback.comment }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div v-else class="bg-gray-50 dark:bg-gray-800 rounded-lg p-8 text-center">
+                                    <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                                    </svg>
+                                    <p class="text-gray-500 dark:text-gray-400">No supervisor feedback yet.</p>
+                                    <p class="text-sm text-gray-400 dark:text-gray-500 mt-2">Feedback will appear here once your idea is reviewed.</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -286,7 +319,15 @@ import Default from '@/Layouts/Default.vue'
 
 const props = defineProps({
     idea: Object,
-    team: Object
+    team: Object,
+    teamComments: {
+        type: Array,
+        default: () => []
+    },
+    supervisorFeedback: {
+        type: Array,
+        default: () => []
+    }
 })
 
 // Tab management

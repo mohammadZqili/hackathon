@@ -80,13 +80,18 @@ class IdeaController extends Controller
                 ->with('info', 'Please create an idea for your team.');
         }
 
-        // Load idea with comments and other relationships
-        $idea->load(['comments.user', 'files', 'track', 'team.members']);
+        // Load idea with relationships
+        $idea->load(['files', 'track', 'team.members']);
+
+        // Get separated comments
+        $teamComments = $this->ideaService->getTeamComments($idea->id);
+        $supervisorFeedback = $this->ideaService->getSupervisorFeedback($idea->id);
 
         return Inertia::render('TeamLead/Idea/Show', [
             'idea' => $idea,
             'team' => $team,
-            'comments' => $idea->comments
+            'teamComments' => $teamComments,
+            'supervisorFeedback' => $supervisorFeedback
         ]);
     }
 
@@ -510,5 +515,32 @@ class IdeaController extends Controller
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()]);
         }
+    }
+
+    public function downloadFile($ideaId, $fileId)
+    {
+        $user = auth()->user();
+        $team = $this->teamService->getMyTeam($user);
+
+        if (!$team) {
+            return redirect()->route('team-lead.idea.index')
+                ->with('error', 'You don\'t have access to this idea.');
+        }
+
+        $idea = $this->teamService->getTeamIdea($team);
+
+        if (!$idea || $idea->id != $ideaId) {
+            return redirect()->route('team-lead.idea.index')
+                ->with('error', 'You don\'t have access to this idea.');
+        }
+
+        $file = $idea->files()->findOrFail($fileId);
+        $filePath = storage_path('app/public/' . $file->file_path);
+
+        if (!file_exists($filePath)) {
+            return redirect()->back()->with('error', 'File not found.');
+        }
+
+        return response()->download($filePath, $file->original_name);
     }
 }

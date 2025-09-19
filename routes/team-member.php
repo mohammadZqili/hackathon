@@ -21,6 +21,7 @@ Route::middleware(['auth', 'verified', 'team.member'])->prefix('team-member')->n
     Route::prefix('idea')->name('idea.')->group(function () {
         Route::get('/', [IdeaController::class, 'index'])->name('index');
         Route::post('/{id}/comment', [IdeaController::class, 'addComment'])->name('comment');
+        Route::get('/{idea}/files/{file}/download', [IdeaController::class, 'downloadFile'])->name('download-file');
     });
     
     // Tracks

@@ -22,11 +22,17 @@ class IdeaController extends Controller
 
         // Load additional relationships for full idea display
         if ($idea) {
-            $idea->load(['track', 'user', 'comments.user', 'attachments']);
+            $idea->load(['track', 'team', 'files']);
+
+            // Get separated comments
+            $teamComments = $this->ideaService->getTeamComments($idea->id);
+            $supervisorFeedback = $this->ideaService->getSupervisorFeedback($idea->id);
         }
 
         return Inertia::render('TeamMember/Idea/Index', [
-            'idea' => $idea
+            'idea' => $idea,
+            'teamComments' => $idea ? $teamComments : [],
+            'supervisorFeedback' => $idea ? $supervisorFeedback : []
         ]);
     }
 
@@ -42,5 +48,24 @@ class IdeaController extends Controller
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
         }
+    }
+
+    public function downloadFile($ideaId, $fileId)
+    {
+        $idea = $this->ideaService->getTeamIdea(auth()->id());
+
+        if (!$idea || $idea->id != $ideaId) {
+            return redirect()->route('team-member.idea.index')
+                ->with('error', 'You don\'t have access to this idea.');
+        }
+
+        $file = $idea->files()->findOrFail($fileId);
+        $filePath = storage_path('app/public/' . $file->file_path);
+
+        if (!file_exists($filePath)) {
+            return redirect()->back()->with('error', 'File not found.');
+        }
+
+        return response()->download($filePath, $file->original_name);
     }
 }

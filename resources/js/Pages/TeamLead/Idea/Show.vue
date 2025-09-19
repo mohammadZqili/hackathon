@@ -110,17 +110,21 @@
                             <div v-if="idea.files?.length" class="self-stretch h-[60px] flex flex-col items-start justify-start pt-5 px-4 pb-3 box-border text-[22px]">
                                 <b class="self-stretch relative leading-7">Related Documents</b>
                             </div>
-                            <div v-for="file in idea.files" :key="file.id"
-                                class="self-stretch bg-gray-50 dark:bg-gray-800 h-14 flex flex-row items-center justify-start py-0 px-4 box-border gap-4 min-h-[56px]">
+                            <a v-for="file in idea.files" :key="file.id"
+                                :href="route('team-lead.idea.download-file', { idea: idea.id, file: file.id })"
+                                class="self-stretch bg-gray-50 dark:bg-gray-800 h-14 flex flex-row items-center justify-start py-0 px-4 box-border gap-4 min-h-[56px] hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors">
                                 <div class="w-10 rounded-lg h-10 bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
                                     <svg class="w-5 h-5 text-blue-600 dark:text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                                     </svg>
                                 </div>
                                 <div class="flex-1 overflow-hidden flex flex-col items-start justify-start">
-                                    <div class="self-stretch relative leading-6 overflow-hidden text-ellipsis whitespace-nowrap">{{ file.name }}</div>
+                                    <div class="self-stretch relative leading-6 overflow-hidden text-ellipsis whitespace-nowrap">{{ file.original_name || file.name }}</div>
                                 </div>
-                            </div>
+                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"></path>
+                                </svg>
+                            </a>
                             
                             <!-- Edit Button -->
                             <div class="self-stretch flex flex-row items-start justify-end py-3 px-4 text-center text-white">
@@ -132,78 +136,141 @@
                             </div>
                         </div>
                         
-                        <!-- Comments Tab -->
-                        <div v-if="activeTab === 'comments'" class="self-stretch h-full overflow-y-auto">
-                            <!-- Supervisor Feedback -->
-                            <div class="self-stretch h-[60px] flex flex-row items-start justify-start pt-5 px-4 pb-3 box-border text-[22px]">
-                                <b class="relative leading-7">Supervisor Feedback</b>
-                            </div>
-                            
-                            <!-- Comments List -->
-                            <div v-for="comment in idea.comments" :key="comment.id" 
-                                class="self-stretch flex flex-row items-start justify-start p-4 gap-3">
-                                <div class="w-10 relative rounded-[20px] h-10 overflow-hidden shrink-0 bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
-                                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                        {{ comment.user?.name?.charAt(0) || 'U' }}
-                                    </span>
+                        <!-- Comments Tab - Team Chat -->
+                        <div v-if="activeTab === 'comments'" class="self-stretch flex flex-col gap-6 p-4">
+                            <h3 class="text-xl font-bold text-gray-900 dark:text-white">Team Chat</h3>
+
+                            <!-- Team Comments List -->
+                            <div class="self-stretch flex flex-col gap-4">
+                                <div v-if="teamComments?.length" class="text-xs text-gray-500 dark:text-gray-400">
+                                    {{ teamComments.length }} message{{ teamComments.length !== 1 ? 's' : '' }}
                                 </div>
-                                <div class="flex-1 h-[147px] flex flex-col items-start justify-start">
-                                    <div class="self-stretch flex flex-row items-start justify-start gap-3">
-                                        <div class="flex flex-col items-start justify-start">
-                                            <b class="self-stretch relative leading-[21px]">{{ comment.user?.role || 'Supervisor' }}: {{ comment.user?.name }}</b>
+
+                                <div v-if="teamComments?.length" class="space-y-4">
+                                    <div v-for="comment in teamComments" :key="comment.id"
+                                        class="bg-white dark:bg-gray-800 rounded-lg p-6">
+                                        <!-- Comment Header -->
+                                        <div class="flex items-center gap-3 mb-4">
+                                            <div class="w-10 h-10 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
+                                                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                    {{ comment.user?.name?.charAt(0) || 'U' }}
+                                                </span>
+                                            </div>
+                                            <div class="flex-1">
+                                                <div class="flex items-center gap-2">
+                                                    <div class="text-sm font-semibold">{{ comment.user?.name || 'Anonymous' }}</div>
+                                                    <span class="text-xs px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300">
+                                                        {{ comment.user?.user_type === 'team_leader' ? 'Team Leader' : 'Team Member' }}
+                                                    </span>
+                                                    <div class="text-xs text-gray-500 dark:text-gray-400">{{ formatDate(comment.created_at) }}</div>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div class="flex flex-col items-start justify-start text-gray-500 dark:text-gray-400">
-                                            <div class="self-stretch relative leading-[21px]">{{ formatDate(comment.created_at) }}</div>
+
+                                        <!-- Comment Content -->
+                                        <div class="text-base leading-6 text-gray-700 dark:text-gray-300">
+                                            {{ comment.comment }}
                                         </div>
                                     </div>
-                                    <div class="self-stretch flex flex-col items-start justify-start">
-                                        <div class="self-stretch relative leading-[21px]">{{ comment.comment }}</div>
-                                    </div>
+                                </div>
+
+                                <div v-else class="text-center py-8 text-gray-500 dark:text-gray-400">
+                                    No team messages yet. Start the conversation!
                                 </div>
                             </div>
-                            
-                            <!-- Reply Form -->
-                            <div class="self-stretch relative h-[250px] bg-gray-100 dark:bg-gray-800 rounded-lg mx-4 mb-4">
-                                <div class="absolute top-[206px] left-[13.92px] rounded-lg flex flex-col items-center justify-center py-2 px-4 box-border text-center text-white"
-                                    :style="{ backgroundColor: themeColor.primary }">
-                                    <button @click="submitReply" class="relative leading-4 font-medium">Reply</button>
-                                </div>
-                                <div class="absolute w-[6.63%] top-[84%] left-[11.75%] text-base leading-6 cursor-pointer"
-                                    @click="cancelReply">Cancel</div>
-                                <div class="absolute top-[52px] left-[13.92px] right-[13.92px] h-[142px]">
-                                    <textarea v-model="replyText" placeholder="What are your thoughts?"
-                                        class="w-full h-full rounded-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 p-4 resize-none outline-none">
-                                    </textarea>
-                                </div>
-                                <div class="absolute top-[12px] left-[13.92px] w-[125.3px] h-6 flex items-center gap-2">
-                                    <div class="w-6 h-6 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
-                                        <span class="text-xs font-medium text-gray-700 dark:text-gray-300">
-                                            {{ $page.props.auth.user.name?.charAt(0) }}
+
+                            <!-- Add Comment Form -->
+                            <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                                <div class="flex items-start gap-3 mb-4">
+                                    <div class="w-10 h-10 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
+                                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            {{ $page.props.auth.user.name?.charAt(0) || 'U' }}
                                         </span>
                                     </div>
-                                    <div class="flex flex-col">
+                                    <div class="flex-1">
                                         <div class="text-sm font-semibold">{{ $page.props.auth.user.name }}</div>
+                                    </div>
+                                </div>
+
+                                <div class="space-y-4">
+                                    <textarea v-model="replyText"
+                                        class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white p-4 min-h-[100px] focus:ring-2 focus:border-transparent resize-none"
+                                        :class="{ 'focus:ring-opacity-50': true }"
+                                        :style="{ '--tw-ring-color': themeColor.primary }"
+                                        placeholder="Share your thoughts with the team..."
+                                        required></textarea>
+
+                                    <div class="flex justify-between items-center">
+                                        <button type="button" @click="cancelReply" class="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200">
+                                            Cancel
+                                        </button>
+                                        <button @click="submitReply"
+                                            class="rounded-lg px-4 py-2 text-white font-medium transition-opacity"
+                                            :style="{ backgroundColor: themeColor.primary }"
+                                            :disabled="!replyText?.trim()"
+                                            :class="{ 'opacity-50 cursor-not-allowed': !replyText?.trim() }">
+                                            Send Message
+                                        </button>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         
                         <!-- Instructions Tab -->
-                        <div v-if="activeTab === 'instructions'" class="self-stretch h-full flex flex-col items-start justify-start py-3 px-4 box-border text-gray-900 dark:text-white">
+                        <div v-if="activeTab === 'instructions'" class="self-stretch h-full flex flex-col items-start justify-start py-3 px-4 box-border text-gray-900 dark:text-white overflow-y-auto">
+                            <!-- Project Instructions Section -->
+                            <div class="self-stretch h-[60px] flex flex-row items-start justify-start pt-5 px-4 pb-3 box-border text-[22px]">
+                                <b class="relative leading-7">Project Instructions</b>
+                            </div>
+
+                            <div class="self-stretch bg-white dark:bg-gray-800 rounded-lg p-6 mb-6">
+                                <div class="space-y-4">
+                                    <div v-if="idea.instructions">
+                                        <div class="text-gray-600 dark:text-gray-400" v-html="idea.instructions"></div>
+                                    </div>
+                                    <div v-else class="text-center py-4">
+                                        <p class="text-gray-500 dark:text-gray-400">No instructions available yet.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Supervisor Feedback Section -->
                             <div class="self-stretch h-[60px] flex flex-row items-start justify-start pt-5 px-4 pb-3 box-border text-[22px]">
                                 <b class="relative leading-7">Supervisor Feedback</b>
                             </div>
-                            
-                            <!-- Instructions Content -->
-                            <div class="self-stretch flex-1 bg-white dark:bg-gray-800 rounded-lg p-6">
-                                <div class="space-y-4">
-                                    <div v-if="idea.instructions">
-                                        <h3 class="text-lg font-semibold mb-2">Project Instructions</h3>
-                                        <div class="text-gray-600 dark:text-gray-400" v-html="idea.instructions"></div>
+
+                            <div class="self-stretch flex-1">
+                                <div v-if="supervisorFeedback.length > 0">
+                                    <!-- Supervisor Comments List -->
+                                    <div v-for="feedback in supervisorFeedback" :key="feedback.id"
+                                        class="self-stretch flex flex-row items-start justify-start p-4 gap-3 mb-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+                                        <div class="w-10 relative rounded-[20px] h-10 overflow-hidden shrink-0 bg-orange-300 dark:bg-orange-600 flex items-center justify-center">
+                                            <span class="text-sm font-medium text-white">
+                                                {{ feedback.user?.name?.charAt(0) || 'S' }}
+                                            </span>
+                                        </div>
+                                        <div class="flex-1 flex flex-col items-start justify-start">
+                                            <div class="self-stretch flex flex-row items-start justify-start gap-3">
+                                                <div class="flex flex-col items-start justify-start">
+                                                    <b class="self-stretch relative leading-[21px]">{{ feedback.user?.name }}</b>
+                                                    <span class="text-xs text-orange-600 dark:text-orange-400">Track Supervisor</span>
+                                                </div>
+                                                <div class="flex flex-col items-start justify-start text-gray-500 dark:text-gray-400">
+                                                    <div class="self-stretch relative leading-[21px]">{{ formatDate(feedback.created_at) }}</div>
+                                                </div>
+                                            </div>
+                                            <div class="self-stretch flex flex-col items-start justify-start mt-2">
+                                                <div class="self-stretch relative leading-[21px]">{{ feedback.comment }}</div>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div v-else class="text-center py-8">
-                                        <p class="text-gray-500 dark:text-gray-400">No instructions available yet.</p>
-                                    </div>
+                                </div>
+                                <div v-else class="text-center py-8 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                                    <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                                    </svg>
+                                    <p class="text-gray-500 dark:text-gray-400">No supervisor feedback yet.</p>
+                                    <p class="text-sm text-gray-400 dark:text-gray-500 mt-2">Feedback will appear here once your idea is reviewed.</p>
                                 </div>
                             </div>
                         </div>
@@ -229,7 +296,15 @@ import SubmitIdeaForm from './SubmitForm.vue'
 
 const props = defineProps({
     idea: Object,
-    tracks: Array
+    tracks: Array,
+    teamComments: {
+        type: Array,
+        default: () => []
+    },
+    supervisorFeedback: {
+        type: Array,
+        default: () => []
+    }
 })
 
 // Theme color setup

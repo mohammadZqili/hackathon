@@ -403,6 +403,46 @@ Each task follows this structure:
 
 ---
 
+## Task #018
+**Date**: 2025-01-20
+**User Prompt**: "nwo lets work on team lead our idea side bar menu, http://localhost:8000/team-lead/idea/show , Comments tab should appear a comments (chat between all team members ) and now implemented as a chat between team lead and supervisor , so please update it in team lead and team member"
+
+**Solution**: Separated team chat from supervisor feedback - Comments tab now shows team-only chat, Instructions tab shows supervisor feedback.
+
+**Files Affected**:
+- `app/Services/IdeaService.php`
+- `app/Http/Controllers/TeamLead/IdeaController.php`
+- `app/Http/Controllers/TeamMember/IdeaController.php`
+- `resources/js/Pages/TeamLead/Idea/Show.vue`
+- `resources/js/Pages/TeamMember/Idea/Index.vue`
+
+**Code Summary**:
+1. **Service Layer Updates**:
+   - Added `getTeamComments()` method to filter comments where `is_supervisor = false`
+   - Added `getSupervisorFeedback()` method to filter comments where `is_supervisor = true`
+   - Kept existing `addComment()` method which already supports both team and supervisor comments
+
+2. **Controller Updates**:
+   - Updated both TeamLead and TeamMember controllers to load separated comments
+   - Pass `teamComments` and `supervisorFeedback` as separate props to views
+
+3. **Frontend Changes**:
+   - **Comments Tab**: Now shows "Team Chat" with only team member messages
+   - Added role badges (Team Leader/Team Member) for clarity
+   - Updated placeholder text and button labels for team context
+   - **Instructions Tab**: Now contains both project instructions AND supervisor feedback
+   - Supervisor feedback shown in orange-themed cards to differentiate
+
+4. **Visual Improvements**:
+   - Team chat uses blue badges for team roles
+   - Supervisor feedback uses orange color scheme
+   - Clear separation between internal team communication and external supervision
+   - No mixing of conversations - each has its dedicated space
+
+**Status**: Completed
+
+---
+
 ## Notes
 - Tasks should be updated in real-time as work progresses
 - Each task should include enough detail for future reference
