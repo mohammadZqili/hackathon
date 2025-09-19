@@ -191,6 +191,24 @@ grep -r "import Default from" resources/js/Pages --include="*.vue" | grep -v "@/
 
 ---
 
+### Workshop Registration Route Error
+**Issue:** Method App\Http\Controllers\HackathonAdmin\WorkshopController::publicRegister does not exist
+**Roles Affected:** TeamLead
+**When:** Clicking register button on workshop in TeamLead Workshops page
+**Console Error:** Method does not exist error
+**Fix:** Use correct role-specific route instead of public route
+
+#### Root Cause:
+- TeamLead Workshops/Index.vue was using 'workshops.public.register' route
+- Should use 'team-lead.workshops.register' which maps to TeamLead\WorkshopController@register
+
+#### Applied Fix:
+- Changed route from 'workshops.public.register' to 'team-lead.workshops.register'
+- Changed unregister route similarly
+- Each role has its own WorkshopController with appropriate methods
+
+---
+
 ## Prevention Guidelines
 
 1. **Always verify file exists** before navigation routes

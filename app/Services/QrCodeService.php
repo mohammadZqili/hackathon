@@ -136,6 +136,19 @@ class QrCodeService
      */
     public function parseWorkshopQrCode(string $qrContent): ?array
     {
+        // Try JSON format from workshop registration emails
+        $jsonData = json_decode($qrContent, true);
+        if ($jsonData && isset($jsonData['workshop_id'])) {
+            return [
+                'workshop_id' => (int) $jsonData['workshop_id'],
+                'user_email' => $jsonData['user_email'] ?? null,
+                'user_name' => $jsonData['user_name'] ?? null,
+                'registration_id' => isset($jsonData['registration_id']) ? (int) $jsonData['registration_id'] : null,
+                'timestamp' => isset($jsonData['registered_at']) ? strtotime($jsonData['registered_at']) : time(),
+                'format' => 'email_based'
+            ];
+        }
+
         // Try new format: WORKSHOP_{id}_USER_{email}_TIME_{timestamp}_REG_{registrationId}
         if (preg_match('/WORKSHOP_(\d+)_USER_([^_]+)_TIME_(\d+)(?:_REG_(\d+))?/', $qrContent, $matches)) {
             return [

@@ -289,6 +289,10 @@ const props = defineProps({
             gradientFrom: '#0d9488',
             gradientTo: '#14b8a6'
         })
+    },
+    processRoute: {
+        type: String,
+        default: null
     }
 })
 
@@ -463,10 +467,28 @@ const submitManualCode = () => {
 // Process QR Code
 const processQRCode = async (code) => {
     isProcessing.value = true
-    
+
     try {
+        // Determine the correct route based on props or current page context
+        let processUrl = props.processRoute
+
+        if (!processUrl) {
+            // Fallback to determine route based on current URL
+            const currentPath = window.location.pathname
+            if (currentPath.includes('system-admin')) {
+                processUrl = '/system-admin/checkins/process-qr'
+            } else if (currentPath.includes('hackathon-admin')) {
+                processUrl = '/hackathon-admin/checkins/process-qr'
+            } else if (currentPath.includes('track-supervisor')) {
+                processUrl = '/track-supervisor/checkins/process-qr'
+            } else {
+                // Default fallback
+                processUrl = '/system-admin/checkins/process-qr'
+            }
+        }
+
         // Send to backend for processing
-        const response = await axios.post('/system-admin/checkins/process-qr', {
+        const response = await axios.post(processUrl, {
             code: code,
             workshop_id: props.workshopId
         })

@@ -315,6 +315,94 @@ Each task follows this structure:
 
 ---
 
+## Task #014
+**Date**: 2025-01-19
+**User Prompt**: "now please team member has this menues in the tabe in the sidebar , Dashboard , Our idea , My Team , Tracks , Workshops, News , please add them also the same for team lead role"
+
+**Solution**: Added missing menu items to both TeamMember and TeamLead sidebars in navigation.
+
+**Files Affected**:
+- `resources/js/Components/NavSidebarDesktop.vue`
+
+**Code Summary**:
+- Added menu items for TeamLead: Dashboard, Our Idea, My Team, Tracks, Workshops
+- Added menu items for TeamMember: Dashboard, Our Idea, My Team, Tracks, Workshops
+- Removed News menu item as routes don't exist for team roles
+- Fixed routes to use correct endpoints (team-member.team.index, team-member.idea.index)
+- All menu items now have proper icons and routing
+
+**Status**: Completed
+
+---
+
+## Task #015
+**Date**: 2025-01-19
+**User Prompt**: "i have this issue : Method App\Http\Controllers\HackathonAdmin\WorkshopController::publicRegister does not exist. when clicked on register in workshop in team lead workshops page"
+
+**Solution**: Fixed incorrect route being used for workshop registration in TeamLead Workshops page.
+
+**Files Affected**:
+- `resources/js/Pages/TeamLead/Workshops/Index.vue`
+
+**Code Summary**:
+- Changed route from 'workshops.public.register' to 'team-lead.workshops.register'
+- Changed unregister route from 'workshops.public.unregister' to 'team-lead.workshops.unregister'
+- TeamLead has its own WorkshopController with register/unregister methods
+- TeamMember version was already using correct routes
+
+**Status**: Completed
+
+---
+
+## Task #016
+**Date**: 2025-01-19
+**User Prompt**: "please when press on register button please send to user email of workshop invitation with QR code , for team lead and for team member and visitor please any email register , please send an email of workshop invitation with QR code , please as we created before the qr code contail the workshop name and user email to track each workshop attendee, and for statistics for hwo many and who registered that coming to the workshop"
+
+**Solution**: Implemented workshop registration email with QR code for all user roles with attendance tracking and statistics.
+
+**Files Affected**:
+- `app/Mail/WorkshopRegistrationMail.php` (updated)
+- `app/Services/WorkshopService.php` (updated)
+- `resources/views/emails/workshop-registration.blade.php` (existing template)
+
+**Code Summary**:
+- Updated WorkshopRegistrationMail to generate QR codes containing workshop name and user email
+- Modified WorkshopService->registerForWorkshop() to send email on successful registration
+- QR code contains JSON with: workshop_id, workshop_name, user_email, user_name, registration_id
+- Added getWorkshopAttendanceStats() method for attendance statistics
+- Added markAttendanceByQrCode() method to check-in users via QR scan
+- Statistics include: total registered, attended, cancelled, attendance rate
+- Email includes workshop details, QR code for check-in, and instructions
+- Works for all roles: TeamLead, TeamMember, and Visitor
+
+**Status**: Completed
+
+---
+
+## Task #017
+**Date**: 2025-01-20
+**User Prompt**: "i have this issue : Request URL: http://localhost:8000/system-admin/checkins/process-qr Status Code: 419 unknown status"
+
+**Solution**: Fix 419 CSRF token error and update QR processing endpoint to handle JSON format QR codes from workshop registration emails.
+
+**Files Affected**:
+- `app/Http/Controllers/SystemAdmin/CheckinController.php`
+- `app/Http/Controllers/HackathonAdmin/CheckinController.php`
+- `app/Http/Controllers/TrackSupervisor/CheckinController.php`
+- `resources/js/Components/QRScanner.vue`
+
+**Code Summary**:
+- Updated CheckinController's processQR method to parse JSON format QR codes from workshop registration emails
+- Added support for both new JSON format and legacy structured format QR codes
+- Enhanced registration lookup to search by ID, email, or barcode
+- Fixed QRScanner component to use dynamic routes based on user role instead of hardcoded path
+- CSRF token was already properly configured in QRScanner component
+- Process now correctly handles QR data containing workshop_id, user_email, registration_id
+
+**Status**: Completed
+
+---
+
 ## Notes
 - Tasks should be updated in real-time as work progresses
 - Each task should include enough detail for future reference

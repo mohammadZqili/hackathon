@@ -10,7 +10,9 @@ use App\Models\Track;
 use App\Models\WorkshopRegistration;
 use App\Notifications\WorkshopCreatedNotification;
 use App\Repositories\WorkshopRepository;
+use App\Mail\WorkshopRegistrationMail;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
@@ -379,7 +381,39 @@ class WorkshopService extends BaseService
                 }
             }
 
-            return $this->workshopRepo->registerUser($userId, $workshopId);
+            // Register the user
+            $registration = $this->workshopRepo->registerUser($userId, $workshopId);
+
+            // Get the user
+            $user = User::find($userId);
+
+            // Send registration email with QR code
+            // QR contains workshop name and user email for attendance tracking
+            if ($user && $user->email) {
+                try {
+                    Mail::to($user->email)->send(new WorkshopRegistrationMail(
+                        $workshop,
+                        $user,
+                        $registration->id ?? null
+                    ));
+
+                    \Log::info('Workshop registration email sent', [
+                        'user_id' => $userId,
+                        'user_email' => $user->email,
+                        'workshop_id' => $workshopId,
+                        'workshop_name' => $workshop->title
+                    ]);
+                } catch (\Exception $e) {
+                    \Log::error('Failed to send workshop registration email', [
+                        'user_id' => $userId,
+                        'workshop_id' => $workshopId,
+                        'error' => $e->getMessage()
+                    ]);
+                    // Don't fail the registration if email fails
+                }
+            }
+
+            return $registration;
         });
     }
 
@@ -467,5 +501,113 @@ class WorkshopService extends BaseService
             // Delete the workshop
             return $workshop->delete();
         });
+    }
+
+    /**
+     * Get workshop attendance statistics
+     * Shows who registered and who attended
+     */
+    public function getWorkshopAttendanceStats($workshopId)
+    {
+        $workshop = $this->workshopRepo->find($workshopId);
+
+        if (!$workshop) {
+            return null;
+        }
+
+        // Get all registrations
+        $registrations = WorkshopRegistration::where('workshop_id', $workshopId)
+            ->with('user')
+            ->get();
+
+        // Calculate statistics
+        $stats = [
+            'workshop_id' => $workshopId,
+            'workshop_name' => $workshop->title,
+            'total_registered' => $registrations->count(),
+            'attended' => $registrations->where('attendance_status', 'attended')->count(),
+            'pending' => $registrations->where('attendance_status', 'registered')->count(),
+            'cancelled' => $registrations->where('attendance_status', 'cancelled')->count(),
+            'max_capacity' => $workshop->max_attendees,
+            'available_seats' => $workshop->max_attendees - $registrations->where('attendance_status', '!=', 'cancelled')->count(),
+            'attendance_rate' => $registrations->count() > 0
+                ? round(($registrations->where('attendance_status', 'attended')->count() / $registrations->count()) * 100, 2)
+                : 0,
+            'registrations' => $registrations->map(function ($reg) {
+                return [
+                    'id' => $reg->id,
+                    'user_id' => $reg->user_id,
+                    'user_name' => $reg->user->name ?? 'Unknown',
+                    'user_email' => $reg->user->email ?? 'Unknown',
+                    'registration_date' => $reg->created_at,
+                    'status' => $reg->attendance_status,
+                    'checked_in_at' => $reg->checked_in_at,
+                ];
+            })
+        ];
+
+        return $stats;
+    }
+
+    /**
+     * Mark workshop attendance from QR code scan
+     */
+    public function markAttendanceByQrCode($qrCodeData)
+    {
+        try {
+            // Parse the QR code data
+            $data = json_decode($qrCodeData, true);
+
+            if (!$data || !isset($data['workshop_id']) || !isset($data['user_email'])) {
+                throw new \Exception('Invalid QR code data');
+            }
+
+            // Find the user by email
+            $user = User::where('email', $data['user_email'])->first();
+
+            if (!$user) {
+                throw new \Exception('User not found');
+            }
+
+            // Find the registration
+            $registration = WorkshopRegistration::where('workshop_id', $data['workshop_id'])
+                ->where('user_id', $user->id)
+                ->first();
+
+            if (!$registration) {
+                throw new \Exception('Registration not found');
+            }
+
+            // Mark attendance
+            $registration->attendance_status = 'attended';
+            $registration->checked_in_at = now();
+            $registration->save();
+
+            \Log::info('Workshop attendance marked via QR code', [
+                'workshop_id' => $data['workshop_id'],
+                'workshop_name' => $data['workshop_name'] ?? 'Unknown',
+                'user_email' => $data['user_email'],
+                'user_name' => $data['user_name'] ?? 'Unknown',
+                'checked_in_at' => now()
+            ]);
+
+            return [
+                'success' => true,
+                'message' => 'Attendance marked successfully',
+                'user' => $user->name,
+                'workshop' => $data['workshop_name'] ?? 'Workshop'
+            ];
+
+        } catch (\Exception $e) {
+            \Log::error('Failed to mark attendance from QR code', [
+                'error' => $e->getMessage(),
+                'qr_data' => $qrCodeData
+            ]);
+
+            return [
+                'success' => false,
+                'message' => $e->getMessage()
+            ];
+        }
     }
 }

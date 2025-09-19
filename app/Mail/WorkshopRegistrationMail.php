@@ -30,12 +30,18 @@ class WorkshopRegistrationMail extends Mailable
         $this->registrationId = $registrationId;
 
         // Generate QR code for this user and workshop
+        // QR contains workshop name and user email for tracking attendance
         $qrService = new QrCodeService();
-        $this->qrCode = $qrService->generateWorkshopQrCode(
-            $user->email,
-            $workshop->id,
-            $registrationId
-        );
+        $qrContent = json_encode([
+            'workshop_id' => $workshop->id,
+            'workshop_name' => $workshop->title,
+            'user_email' => $user->email,
+            'user_name' => $user->name,
+            'registration_id' => $registrationId,
+            'registered_at' => now()->toDateTimeString()
+        ]);
+
+        $this->qrCode = $qrService->generateQrCodeImage($qrContent);
     }
 
     /**

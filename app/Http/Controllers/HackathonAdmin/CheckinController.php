@@ -77,14 +77,28 @@ class CheckinController extends Controller
         $workshopId = $request->workshop_id;
 
         // Try to parse the QR code
-        // Expected format: WORKSHOP_{workshop_id}_REG_{registration_id}_CODE_{barcode}
-        // Or just the barcode directly
-
         $barcode = $code;
         $registrationId = null;
+        $userEmail = null;
 
-        // Check if it's a structured QR code
-        if (preg_match('/WORKSHOP_(\d+)_REG_(\d+)_CODE_(.+)/', $code, $matches)) {
+        // Check if it's JSON format from our workshop registration emails
+        $jsonData = json_decode($code, true);
+        if ($jsonData && isset($jsonData['workshop_id'])) {
+            // Extract data from JSON QR code
+            $qrWorkshopId = $jsonData['workshop_id'];
+            $registrationId = $jsonData['registration_id'] ?? null;
+            $userEmail = $jsonData['user_email'] ?? null;
+
+            // Verify workshop ID matches
+            if ($qrWorkshopId != $workshopId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This QR code is for a different workshop.'
+                ], 400);
+            }
+        }
+        // Check if it's the old structured format
+        elseif (preg_match('/WORKSHOP_(\d+)_REG_(\d+)_CODE_(.+)/', $code, $matches)) {
             $qrWorkshopId = $matches[1];
             $registrationId = $matches[2];
             $barcode = $matches[3];
@@ -98,13 +112,18 @@ class CheckinController extends Controller
             }
         }
 
-        // Find registration by barcode or ID
+        // Find registration by ID, email, or barcode
         $registration = WorkshopRegistration::where('workshop_id', $workshopId)
-            ->where(function($query) use ($barcode, $registrationId) {
-                $query->where('barcode', $barcode);
+            ->where(function($query) use ($barcode, $registrationId, $userEmail) {
                 if ($registrationId) {
                     $query->orWhere('id', $registrationId);
                 }
+                if ($userEmail) {
+                    $query->orWhereHas('user', function($q) use ($userEmail) {
+                        $q->where('email', $userEmail);
+                    });
+                }
+                $query->orWhere('barcode', $barcode);
             })
             ->first();
 
