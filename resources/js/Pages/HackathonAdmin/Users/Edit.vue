@@ -22,14 +22,14 @@ const form = useForm({
 
 <template>
     <Head title="Edit User" />
-    
+
     <Default>
         <div class="container mx-auto px-4 py-8">
-            
+
             <div class="max-w-2xl mx-auto">
                 <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-8">Edit User</h1>
 
-                <form @submit.prevent="form.put(route('system-admin.users.update', user.id))"
+                <form @submit.prevent="form.put(route('hackathon-admin.users.update', user.id))"
                       class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                     <div class="space-y-6">
                         <div>
@@ -63,7 +63,7 @@ const form = useForm({
                     </div>
 
                     <div class="mt-6 flex justify-end space-x-3">
-                        <a :href="route('system-admin.users.index')"
+                        <a :href="route('hackathon-admin.users.index')"
                            class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg">Cancel</a>
                         <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg">
                             Update User

@@ -11,7 +11,7 @@
                     </p>
                 </div>
 
-                <Link :href="route('system-admin.editions.create')"
+                <Link :href="route('hackathon-admin.editions.create')"
                       class="inline-flex items-center px-4 py-2 rounded-lg font-semibold text-white transition-all duration-200 shadow-sm hover:shadow-md mt-4 sm:mt-0"
                       :style="{
                           background: `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})`,
@@ -106,7 +106,7 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-center">
                                     <div class="flex items-center justify-center gap-2">
-                                        <Link :href="route('system-admin.editions.edit', edition.id)"
+                                        <Link :href="route('hackathon-admin.editions.edit', edition.id)"
                                               class="text-sm font-bold transition-colors"
                                               :style="{ color: themeColor.primary }"
                                               @mouseover="e => e.target.style.color = themeColor.hover"
@@ -129,7 +129,7 @@
                 </div>
 
                 <!-- Pagination -->
-                <div v-if="editions.links && editions.data.length > 0" 
+                <div v-if="editions.links && editions.data.length > 0"
                      class="bg-white dark:bg-gray-800 px-4 py-3 border-t border-gray-200 dark:border-gray-700 sm:px-6">
                     <div class="flex items-center justify-between">
                         <div class="flex-1 flex justify-between sm:hidden">
@@ -145,8 +145,8 @@
                         <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                             <div>
                                 <p class="text-sm text-gray-700 dark:text-gray-300">
-                                    Showing <span class="font-medium">{{ editions.from || 0 }}</span> to 
-                                    <span class="font-medium">{{ editions.to || 0 }}</span> of 
+                                    Showing <span class="font-medium">{{ editions.from || 0 }}</span> to
+                                    <span class="font-medium">{{ editions.to || 0 }}</span> of
                                     <span class="font-medium">{{ editions.total || 0 }}</span> results
                                 </p>
                             </div>
@@ -243,7 +243,7 @@ const formatDate = (date) => {
 
 const deleteEdition = (edition) => {
     if (confirm(`Are you sure you want to delete the edition "${edition.name} ${edition.year}"? This action cannot be undone.`)) {
-        useForm({}).delete(route('system-admin.editions.destroy', edition.id))
+        useForm({}).delete(route('hackathon-admin.editions.destroy', edition.id))
     }
 }
 </script>

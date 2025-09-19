@@ -183,7 +183,7 @@
                         Upload Profile Picture
                     </label>
                     <div class="relative">
-                        <div v-if="!previewUrl" 
+                        <div v-if="!previewUrl"
                              @click="$refs.profileInput.click()"
                              @dragover.prevent
                              @drop.prevent="handleDrop"
@@ -203,7 +203,7 @@
                                 </button>
                             </div>
                         </div>
-                        
+
                         <div v-else class="relative rounded-lg border-2 border-teal-200 dark:border-gray-600 bg-teal-50/50 dark:bg-gray-800 p-4">
                             <img :src="previewUrl" alt="Profile preview" class="w-32 h-32 mx-auto rounded-full object-cover">
                             <button @click="removeProfile" type="button" class="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600">
@@ -212,7 +212,7 @@
                                 </svg>
                             </button>
                         </div>
-                        
+
                         <input ref="profileInput"
                                @change="handleFileUpload"
                                type="file"
@@ -237,7 +237,7 @@
 
                 <!-- Action Buttons -->
                 <div class="flex justify-between">
-                    <Link :href="route('system-admin.speakers.index')"
+                    <Link :href="route('hackathon-admin.speakers.index')"
                           class="px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                         Cancel
                     </Link>
@@ -322,6 +322,6 @@ const removeProfile = () => {
 }
 
 const submit = () => {
-    form.post(route('system-admin.speakers.store'))
+    form.post(route('hackathon-admin.speakers.store'))
 }
 </script>

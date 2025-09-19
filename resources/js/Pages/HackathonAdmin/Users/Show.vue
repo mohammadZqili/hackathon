@@ -16,14 +16,14 @@ const props = defineProps({
 
 <template>
     <Head title="User Details" />
-    
+
     <Default>
         <div class="container mx-auto px-4 py-8">
-            
+
             <div class="max-w-4xl mx-auto">
                 <div class="mb-6 flex justify-between items-center">
                     <h1 class="text-3xl font-bold text-gray-900 dark:text-white">User Details</h1>
-                    <a :href="route('system-admin.users.edit', user.id)"
+                    <a :href="route('hackathon-admin.users.edit', user.id)"
                        class="px-4 py-2 bg-blue-600 text-white rounded-lg">Edit User</a>
                 </div>
 

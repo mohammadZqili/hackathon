@@ -84,7 +84,7 @@
                 <!-- Date Settings -->
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
                     <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Date Settings</h2>
-                    
+
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label for="registration_start_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -151,7 +151,7 @@
                 <!-- Configuration -->
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
                     <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Configuration</h2>
-                    
+
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label for="max_teams" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -214,7 +214,7 @@
                 <!-- Associated Workshops (if any) -->
                 <div v-if="edition.workshops && edition.workshops.length > 0" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
                     <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Associated Workshops</h2>
-                    
+
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                             <thead class="bg-gray-50 dark:bg-gray-700">
@@ -255,7 +255,7 @@
 
                 <!-- Actions -->
                 <div class="flex justify-end gap-4">
-                    <Link :href="route('system-admin.editions.index')"
+                    <Link :href="route('hackathon-admin.editions.index')"
                           class="px-6 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                         Cancel
                     </Link>
@@ -363,7 +363,7 @@ const formatDate = (date) => {
 }
 
 const submit = () => {
-    form.put(route('system-admin.editions.update', props.edition.id))
+    form.put(route('hackathon-admin.editions.update', props.edition.id))
 }
 </script>
 

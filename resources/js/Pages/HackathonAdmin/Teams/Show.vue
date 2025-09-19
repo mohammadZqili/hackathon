@@ -2,12 +2,12 @@
     <div>
         <div class="flex items-center justify-between mb-6">
             <h1 class="text-2xl font-bold text-gray-900">Team Details</h1>
-            <Link :href="route('system-admin.teams.index')"
+            <Link :href="route('hackathon-admin.teams.index')"
                   class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
                 Back to Teams
             </Link>
         </div>
-        
+
         <div class="bg-white shadow overflow-hidden sm:rounded-lg">
             <div class="px-4 py-5 sm:px-6">
                 <h3 class="text-lg leading-6 font-medium text-gray-900">{{ team.name }}</h3>
@@ -51,7 +51,7 @@
                         <dt class="text-sm font-medium text-gray-500">Team Members</dt>
                         <dd class="mt-1 text-sm text-gray-900 sm:col-span-2">
                             <div v-if="team.members && team.members.length > 0" class="space-y-2">
-                                <div v-for="member in team.members" :key="member.id" 
+                                <div v-for="member in team.members" :key="member.id"
                                      class="flex items-center justify-between p-2 bg-gray-100 rounded">
                                     <div>
                                         <span class="font-medium">{{ member.user?.name || 'N/A' }}</span>

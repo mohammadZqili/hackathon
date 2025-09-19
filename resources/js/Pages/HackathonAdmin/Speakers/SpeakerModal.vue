@@ -225,13 +225,13 @@ watch(() => props.speaker, (newSpeaker) => {
 
 const submit = () => {
     if (props.speaker) {
-        form.put(route('system-admin.speakers.update', props.speaker.id), {
+        form.put(route('hackathon-admin.speakers.update', props.speaker.id), {
             onSuccess: () => {
                 emit('success')
             }
         })
     } else {
-        form.post(route('system-admin.speakers.store'), {
+        form.post(route('hackathon-admin.speakers.store'), {
             onSuccess: () => {
                 emit('success')
             }

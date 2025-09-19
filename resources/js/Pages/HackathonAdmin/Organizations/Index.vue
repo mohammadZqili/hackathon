@@ -7,7 +7,7 @@
                 <div class="w-72 flex flex-col items-start justify-start min-w-[288px]">
                     <h1 class="text-[32px] font-bold text-gray-900 dark:text-white leading-10">Organizations</h1>
                 </div>
-                <Link :href="route('system-admin.organizations.create')"
+                <Link :href="route('hackathon-admin.organizations.create')"
                       class="rounded-xl h-8 overflow-hidden flex flex-row items-center justify-center py-0 px-4 min-w-[84px] max-w-[480px] text-center text-sm text-white font-medium transition-all duration-200 hover:shadow-md"
                       :style="{
                           background: `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})`,
@@ -90,7 +90,7 @@
                                 <span class="text-sm" :style="{ color: themeColor.primary }">{{ org.industry || 'Not specified' }}</span>
                             </div>
                             <div class="w-48 py-4 px-4">
-                                <a v-if="org.website" :href="org.website" target="_blank" 
+                                <a v-if="org.website" :href="org.website" target="_blank"
                                    class="text-sm hover:underline"
                                    :style="{ color: themeColor.primary }">
                                     {{ formatWebsite(org.website) }}
@@ -122,7 +122,7 @@
             </div>
 
             <!-- Pagination -->
-            <div v-if="organizations.links && organizations.total > organizations.per_page" 
+            <div v-if="organizations.links && organizations.total > organizations.per_page"
                  class="px-6 py-3">
                 <nav class="flex items-center justify-between">
                     <div class="text-sm text-gray-700 dark:text-gray-300">
@@ -150,7 +150,7 @@
             </div>
 
             <!-- Create/Edit Modal -->
-            <OrganizationModal v-if="showModal" 
+            <OrganizationModal v-if="showModal"
                                :organization="selectedOrganization"
                                :theme-color="themeColor"
                                @close="closeModal"
@@ -221,7 +221,7 @@ const formatWebsite = (url) => {
 }
 
 const handleSearch = () => {
-    router.get(route('system-admin.organizations.index'), {
+    router.get(route('hackathon-admin.organizations.index'), {
         search: searchQuery.value
     }, {
         preserveState: true,
@@ -230,12 +230,12 @@ const handleSearch = () => {
 }
 
 const editOrganization = (org) => {
-    router.visit(route('system-admin.organizations.edit', org.id))
+    router.visit(route('hackathon-admin.organizations.edit', org.id))
 }
 
 const deleteOrganization = (org) => {
     if (confirm(`Are you sure you want to delete organization "${org.name}"?`)) {
-        useForm({}).delete(route('system-admin.organizations.destroy', org.id))
+        useForm({}).delete(route('hackathon-admin.organizations.destroy', org.id))
     }
 }
 

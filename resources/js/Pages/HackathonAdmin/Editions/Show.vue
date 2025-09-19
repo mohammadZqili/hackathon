@@ -24,10 +24,10 @@ const props = defineProps({
 
 const formatDate = (date) => {
     if (!date) return 'N/A'
-    return new Date(date).toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'short', 
-        day: 'numeric' 
+    return new Date(date).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
     })
 }
 
@@ -49,7 +49,7 @@ const statusColor = computed(() => {
 
 <template>
     <Head title="Edition Details" />
-    
+
     <Default>
         <div class="container mx-auto px-4 py-8">
             <div class="max-w-6xl mx-auto">
@@ -62,11 +62,11 @@ const statusColor = computed(() => {
                         </p>
                     </div>
                     <div class="flex gap-3">
-                        <a :href="route('system-admin.editions.index')"
+                        <a :href="route('hackathon-admin.editions.index')"
                            class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
                             Back to List
                         </a>
-                        <a :href="route('system-admin.editions.edit', edition.id)"
+                        <a :href="route('hackathon-admin.editions.edit', edition.id)"
                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                             Edit Edition
                         </a>
@@ -104,7 +104,7 @@ const statusColor = computed(() => {
                                 <span class="px-3 py-1 rounded-full text-sm" :class="statusColor">
                                     {{ edition.status ? edition.status.charAt(0).toUpperCase() + edition.status.slice(1) : 'Unknown' }}
                                 </span>
-                                <span v-if="edition.is_current" 
+                                <span v-if="edition.is_current"
                                       class="px-3 py-1 rounded-full text-sm bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">
                                     Current Edition
                                 </span>
@@ -206,7 +206,7 @@ const statusColor = computed(() => {
                 <div v-if="edition.news && edition.news.length > 0" class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                     <h2 class="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Related News</h2>
                     <div class="space-y-4">
-                        <div v-for="newsItem in edition.news" :key="newsItem.id" 
+                        <div v-for="newsItem in edition.news" :key="newsItem.id"
                              class="border-l-4 border-blue-500 pl-4 py-2">
                             <h3 class="font-semibold text-gray-900 dark:text-white">{{ newsItem.title }}</h3>
                             <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
@@ -243,17 +243,17 @@ export default {
     methods: {
         setCurrent() {
             if (confirm('Are you sure you want to set this edition as current?')) {
-                router.post(route('system-admin.editions.set-current', this.edition.id))
+                router.post(route('hackathon-admin.editions.set-current', this.edition.id))
             }
         },
         archiveEdition() {
             if (confirm('Are you sure you want to archive this edition?')) {
-                router.post(route('system-admin.editions.archive', this.edition.id))
+                router.post(route('hackathon-admin.editions.archive', this.edition.id))
             }
         },
         deleteEdition() {
             if (confirm('Are you sure you want to delete this edition? This action cannot be undone.')) {
-                router.delete(route('system-admin.editions.destroy', this.edition.id))
+                router.delete(route('hackathon-admin.editions.destroy', this.edition.id))
             }
         }
     }

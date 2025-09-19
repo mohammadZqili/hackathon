@@ -16,13 +16,13 @@ const props = defineProps({
 
 <template>
     <Head title="User Management" />
-    
+
     <Default>
         <div class="container mx-auto px-4 py-8">
-            
+
             <div class="mb-6 flex justify-between items-center">
                 <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Users</h1>
-                <a :href="route('system-admin.users.create')"
+                <a :href="route('hackathon-admin.users.create')"
                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
                     Add New User
                 </a>
@@ -69,7 +69,7 @@ const props = defineProps({
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 text-right space-x-2">
-                                    <a :href="route('system-admin.users.edit', user.id)"
+                                    <a :href="route('hackathon-admin.users.edit', user.id)"
                                        class="text-blue-600 hover:text-blue-900">Edit</a>
                                 </td>
                             </tr>

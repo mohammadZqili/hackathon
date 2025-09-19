@@ -8,8 +8,8 @@
                     {{ activeTab === 'overall' ? 'Reporting' : 'Hackathon Edition Report' }}
                 </h1>
                 <p class="text-sm" :style="{ color: themeColor.primary }">
-                    {{ activeTab === 'overall' 
-                        ? 'Overall statistics across all hackathon editions' 
+                    {{ activeTab === 'overall'
+                        ? 'Overall statistics across all hackathon editions'
                         : `Detailed report for ${selectedEditionName}` }}
                 </p>
             </div>
@@ -25,9 +25,9 @@
                                 ? 'border-current'
                                 : 'border-transparent hover:border-gray-300 dark:hover:border-gray-600'
                         ]"
-                        :style="activeTab === 'overall' ? { 
+                        :style="activeTab === 'overall' ? {
                             color: themeColor.primary,
-                            borderColor: themeColor.primary 
+                            borderColor: themeColor.primary
                         } : {
                             color: '#6b7280'
                         }">
@@ -41,9 +41,9 @@
                                 ? 'border-current'
                                 : 'border-transparent hover:border-gray-300 dark:hover:border-gray-600'
                         ]"
-                        :style="activeTab === 'edition' ? { 
+                        :style="activeTab === 'edition' ? {
                             color: themeColor.primary,
-                            borderColor: themeColor.primary 
+                            borderColor: themeColor.primary
                         } : {
                             color: '#6b7280'
                         }">
@@ -118,12 +118,12 @@
                 <!-- Edition Filter Buttons -->
                 <div class="mb-6">
                     <div class="flex items-center gap-3 flex-wrap">
-                        <button 
+                        <button
                             @click="filterByEdition('all')"
                             :class="[
                                 'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
-                                selectedEdition === 'all' 
-                                    ? 'text-white' 
+                                selectedEdition === 'all'
+                                    ? 'text-white'
                                     : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
                             ]"
                             :style="selectedEdition === 'all' ? {
@@ -131,14 +131,14 @@
                             } : {}">
                             All Editions
                         </button>
-                        <button 
+                        <button
                             v-for="edition in editions"
                             :key="edition.id"
                             @click="filterByEdition(edition.id)"
                             :class="[
                                 'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
-                                selectedEdition === edition.id 
-                                    ? 'text-white' 
+                                selectedEdition === edition.id
+                                    ? 'text-white'
                                     : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
                             ]"
                             :style="selectedEdition === edition.id ? {
@@ -157,7 +157,7 @@
                             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                                 <thead class="bg-gray-50 dark:bg-gray-900">
                                     <tr>
-                                        <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" 
+                                        <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
                                             :style="{ color: themeColor.primary }">Edition</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Teams</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Members</th>
@@ -168,7 +168,7 @@
                                     </tr>
                                 </thead>
                                 <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                                    <tr v-for="edition in editionStats" :key="edition.id" 
+                                    <tr v-for="edition in editionStats" :key="edition.id"
                                         class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium"
                                             :style="{ color: themeColor.primary }">
@@ -260,8 +260,8 @@
                     <div v-if="workshopMetrics?.top_workshops?.length > 0" class="mt-6">
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">Top Workshops by Attendance</h3>
                         <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                            <div v-for="(workshop, index) in workshopMetrics.top_workshops" :key="workshop.id" 
-                                 class="flex items-center justify-between py-2" 
+                            <div v-for="(workshop, index) in workshopMetrics.top_workshops" :key="workshop.id"
+                                 class="flex items-center justify-between py-2"
                                  :class="{ 'border-t border-gray-200 dark:border-gray-700': index > 0 }">
                                 <div class="flex items-center gap-3">
                                     <span class="text-sm font-medium" :style="{ color: themeColor.primary }">
@@ -286,10 +286,10 @@
                 <div v-if="recentActivity?.length > 0" class="mb-8">
                     <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Recent Activity</h2>
                     <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-                        <div v-for="(activity, index) in recentActivity" :key="index" 
-                             class="flex items-start gap-3 py-3" 
+                        <div v-for="(activity, index) in recentActivity" :key="index"
+                             class="flex items-start gap-3 py-3"
                              :class="{ 'border-t border-gray-200 dark:border-gray-700': index > 0 }">
-                            <div class="w-2 h-2 rounded-full mt-2" 
+                            <div class="w-2 h-2 rounded-full mt-2"
                                  :style="{ backgroundColor: themeColor.primary }"></div>
                             <div class="flex-1">
                                 <div class="text-sm text-gray-900 dark:text-white">
@@ -305,10 +305,10 @@
 
                 <!-- Action Buttons -->
                 <div class="flex flex-wrap gap-4">
-                    <button @click="generateReport" 
+                    <button @click="generateReport"
                             :disabled="loading"
                             class="px-6 py-2 rounded-lg text-white font-medium transition-all hover:shadow-lg disabled:opacity-50"
-                            :style="{ 
+                            :style="{
                                 background: `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})`
                             }">
                         Generate Report
@@ -316,7 +316,7 @@
                     <button @click="exportToPDF"
                             :disabled="loading"
                             class="px-6 py-2 rounded-lg border font-medium transition-colors hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
-                            :style="{ 
+                            :style="{
                                 borderColor: themeColor.primary,
                                 color: themeColor.primary
                             }">
@@ -325,7 +325,7 @@
                     <button @click="scheduleReports"
                             :disabled="loading"
                             class="px-6 py-2 rounded-lg border font-medium transition-colors hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
-                            :style="{ 
+                            :style="{
                                 borderColor: themeColor.primary,
                                 color: themeColor.primary
                             }">
@@ -341,7 +341,7 @@
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Select Edition
                     </label>
-                    <select v-model="selectedEditionForReport" 
+                    <select v-model="selectedEditionForReport"
                             @change="loadEditionReport"
                             class="w-full max-w-xs rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700">
                         <option v-for="edition in editions" :key="edition.id" :value="edition.id">
@@ -405,7 +405,7 @@
                     <button @click="downloadEditionReport"
                             :disabled="loading"
                             class="px-6 py-2 rounded-lg text-white font-medium transition-all hover:shadow-lg disabled:opacity-50"
-                            :style="{ 
+                            :style="{
                                 background: `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})`
                             }">
                         Download Edition Report
@@ -491,10 +491,10 @@ const themeStyles = computed(() => ({
 const filterByEdition = (editionId) => {
     selectedEdition.value = editionId
     loading.value = true
-    
+
     if (editionId === 'all') {
         selectedEditionName.value = 'All Editions'
-        router.visit('/system-admin/reports', {
+        router.visit('/hackathon-admin/reports', {
             preserveState: true,
             preserveScroll: true,
             onFinish: () => loading.value = false
@@ -502,7 +502,7 @@ const filterByEdition = (editionId) => {
     } else {
         const edition = props.editions?.find(e => e.id == editionId)
         selectedEditionName.value = edition?.name || 'Unknown Edition'
-        router.visit(`/system-admin/reports?edition_id=${editionId}`, {
+        router.visit(`/hackathon-admin/reports?edition_id=${editionId}`, {
             preserveState: true,
             preserveScroll: true,
             onFinish: () => loading.value = false
@@ -513,7 +513,7 @@ const filterByEdition = (editionId) => {
 const generateReport = async () => {
     loading.value = true
     try {
-        const response = await axios.post('/system-admin/reports/generate', {
+        const response = await axios.post('/hackathon-admin/reports/generate', {
             edition_id: selectedEdition.value !== 'all' ? selectedEdition.value : null
         })
         console.log('Report generated:', response.data.message)
@@ -529,7 +529,7 @@ const generateReport = async () => {
 const exportToPDF = async () => {
     loading.value = true
     try {
-        const response = await axios.post('/system-admin/reports/export-pdf', {
+        const response = await axios.post('/hackathon-admin/reports/export-pdf', {
             edition_id: selectedEdition.value !== 'all' ? selectedEdition.value : null
         })
         console.log('PDF export initiated:', response.data.message)
@@ -545,7 +545,7 @@ const exportToPDF = async () => {
 const scheduleReports = async () => {
     loading.value = true
     try {
-        const response = await axios.post('/system-admin/reports/schedule', {
+        const response = await axios.post('/hackathon-admin/reports/schedule', {
             frequency: 'weekly',
             edition_id: selectedEdition.value !== 'all' ? selectedEdition.value : null
         })
@@ -567,7 +567,7 @@ const loadEditionReport = () => {
 const downloadEditionReport = async () => {
     loading.value = true
     try {
-        const response = await axios.post('/system-admin/reports/export-pdf', {
+        const response = await axios.post('/hackathon-admin/reports/export-pdf', {
             edition_id: selectedEditionForReport.value
         })
         console.log('Edition report download initiated:', response.data.message)

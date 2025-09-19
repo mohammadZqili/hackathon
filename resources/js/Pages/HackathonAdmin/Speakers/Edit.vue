@@ -135,7 +135,7 @@
 
                 <!-- Action Buttons -->
                 <div class="flex justify-end space-x-4 pt-6">
-                    <Link :href="route('system-admin.speakers.index')"
+                    <Link :href="route('hackathon-admin.speakers.index')"
                           class="px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
                         Cancel
                     </Link>
@@ -182,6 +182,6 @@ const form = useForm({
 })
 
 const submit = () => {
-    form.put(route('system-admin.speakers.update', props.speaker.id))
+    form.put(route('hackathon-admin.speakers.update', props.speaker.id))
 }
 </script>

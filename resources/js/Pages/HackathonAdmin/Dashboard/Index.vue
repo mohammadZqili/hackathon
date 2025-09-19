@@ -24,12 +24,12 @@ const currentEdition = props.statistics?.current_edition
 
 <template>
     <Head :title="t('admin.dashboard.title')" />
-    
+
     <Default>
         <div class="container mx-auto px-4 py-8">
-            
+
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <div v-for="stat in stats" :key="stat.label" 
+                <div v-for="stat in stats" :key="stat.label"
                      class="bg-white dark:bg-gray-800 rounded-lg shadow p-6"
                      :class="{ 'text-right': isRTL, 'text-left': !isRTL }">
                     <div class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ stat.label }}</div>
@@ -84,16 +84,16 @@ const currentEdition = props.statistics?.current_edition
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                     <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Quick Actions</h2>
                     <div class="space-y-3">
-                        <a href="/system-admin/editions" class="block w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 rounded-lg transition-colors">
+                        <a href="/hackathon-admin/editions" class="block w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 rounded-lg transition-colors">
                             Manage Hackathon Editions
                         </a>
-                        <a href="/system-admin/users" class="block w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 rounded-lg transition-colors">
+                        <a href="/hackathon-admin/users" class="block w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 rounded-lg transition-colors">
                             Manage Users
                         </a>
-                        <a href="/system-admin/settings" class="block w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 rounded-lg transition-colors">
+                        <a href="/hackathon-admin/settings" class="block w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 rounded-lg transition-colors">
                             System Settings
                         </a>
-                        <a href="/system-admin/reports" class="block w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 rounded-lg transition-colors">
+                        <a href="/hackathon-admin/reports" class="block w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 rounded-lg transition-colors">
                             View Reports
                         </a>
                     </div>

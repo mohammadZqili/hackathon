@@ -232,8 +232,8 @@ Route::middleware(['guest', 'web'])->group(function () {
 // Hackathon Routes (Load from separate file for better organization)
 require __DIR__.'/hackathon.php';
 
-// HackathonAdmin Routes
-//require __DIR__.'/hackathon-admin.php';
+// HackathonAdmin Routes (Already included in hackathon.php)
+// require __DIR__.'/hackathon-admin.php';
 
 // TrackSupervisor Routes
 require __DIR__.'/track-supervisor.php';

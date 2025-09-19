@@ -231,13 +231,13 @@ watch(() => props.organization, (newOrg) => {
 
 const submit = () => {
     if (props.organization) {
-        form.put(route('system-admin.organizations.update', props.organization.id), {
+        form.put(route('hackathon-admin.organizations.update', props.organization.id), {
             onSuccess: () => {
                 emit('success')
             }
         })
     } else {
-        form.post(route('system-admin.organizations.store'), {
+        form.post(route('hackathon-admin.organizations.store'), {
             onSuccess: () => {
                 emit('success')
             }

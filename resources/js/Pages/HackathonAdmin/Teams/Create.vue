@@ -15,7 +15,7 @@
                 <!-- Basic Information -->
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
                     <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Basic Information</h2>
-                    
+
                     <div class="grid grid-cols-1 gap-6">
                         <div>
                             <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -122,7 +122,7 @@
                 <!-- Team Leader -->
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
                     <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Team Leader</h2>
-                    
+
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Search and Select Team Leader
@@ -140,7 +140,7 @@
                         </div>
 
                         <!-- Search Results -->
-                        <div v-if="leaderSearchResults.length > 0" 
+                        <div v-if="leaderSearchResults.length > 0"
                              class="mt-2 max-h-48 overflow-y-auto border border-gray-200 dark:border-gray-600 rounded-lg">
                             <div v-for="user in leaderSearchResults" :key="user.id"
                                  @click="selectLeader(user)"
@@ -151,7 +151,7 @@
                         </div>
 
                         <!-- Selected Leader -->
-                        <div v-if="selectedLeader" class="mt-4 p-4 rounded-lg border-2 border-dashed" 
+                        <div v-if="selectedLeader" class="mt-4 p-4 rounded-lg border-2 border-dashed"
                              :style="{ borderColor: themeColor.primary + '40' }">
                             <div class="flex items-center justify-between">
                                 <div>
@@ -172,7 +172,7 @@
                 <!-- Initial Members (Optional) -->
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
                     <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Initial Members (Optional)</h2>
-                    
+
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Add Team Members
@@ -190,7 +190,7 @@
                         </div>
 
                         <!-- Search Results -->
-                        <div v-if="memberSearchResults.length > 0" 
+                        <div v-if="memberSearchResults.length > 0"
                              class="mt-2 max-h-48 overflow-y-auto border border-gray-200 dark:border-gray-600 rounded-lg">
                             <div v-for="user in memberSearchResults" :key="user.id"
                                  @click="addMember(user)"
@@ -221,7 +221,7 @@
 
                 <!-- Actions -->
                 <div class="flex justify-end gap-4">
-                    <Link :href="route('system-admin.teams.index')"
+                    <Link :href="route('hackathon-admin.teams.index')"
                           class="px-6 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                         Cancel
                     </Link>
@@ -314,7 +314,7 @@ const searchLeaders = async () => {
     }
 
     try {
-        const response = await axios.get(route('system-admin.users.search'), {
+        const response = await axios.get(route('hackathon-admin.users.search'), {
             params: { q: leaderSearch.value }
         })
         leaderSearchResults.value = response.data.users || []
@@ -343,12 +343,12 @@ const searchMembers = async () => {
     }
 
     try {
-        const response = await axios.get(route('system-admin.users.search'), {
+        const response = await axios.get(route('hackathon-admin.users.search'), {
             params: { q: memberSearch.value }
         })
         // Filter out already selected members and the leader
-        memberSearchResults.value = (response.data.users || []).filter(user => 
-            !form.members.find(m => m.id === user.id) && 
+        memberSearchResults.value = (response.data.users || []).filter(user =>
+            !form.members.find(m => m.id === user.id) &&
             user.id !== form.leader_id
         )
     } catch (error) {
@@ -375,8 +375,8 @@ const submit = () => {
         ...form.data(),
         member_ids: form.members.map(m => m.id)
     }
-    
-    form.transform(() => data).post(route('system-admin.teams.store'))
+
+    form.transform(() => data).post(route('hackathon-admin.teams.store'))
 }
 </script>
 

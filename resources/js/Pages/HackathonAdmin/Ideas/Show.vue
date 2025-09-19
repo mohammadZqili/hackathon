@@ -5,7 +5,7 @@ const { t, isRTL, direction, locale } = useLocalization()
 import { Head, router, useForm } from '@inertiajs/vue3'
 import { ref, computed, onMounted } from 'vue'
 import Default from '@/Layouts/Default.vue'
-import { 
+import {
     DocumentIcon,
     CheckIcon,
     XMarkIcon,
@@ -75,7 +75,7 @@ const submitDecision = (status) => {
 
 const updateScore = () => {
     if (decisionForm.score && decisionForm.score >= 0 && decisionForm.score <= 100) {
-        decisionForm.post(route('system-admin.ideas.score', props.idea.id), {
+        decisionForm.post(route('hackathon-admin.ideas.score', props.idea.id), {
             only: ['score'],
             preserveScroll: true,
         })
@@ -87,17 +87,17 @@ const submitChanges = () => {
         alert('Please select a decision status');
         return;
     }
-    
-    decisionForm.post(route('system-admin.ideas.process-review', props.idea.id), {
+
+    decisionForm.post(route('hackathon-admin.ideas.process-review', props.idea.id), {
         onSuccess: () => {
-            router.visit(route('system-admin.ideas.index'))
+            router.visit(route('hackathon-admin.ideas.index'))
         },
     })
 }
 
 const deleteIdea = () => {
     if (confirm('Are you sure you want to delete this idea? This action cannot be undone.')) {
-        router.delete(route('system-admin.ideas.destroy', props.idea.id))
+        router.delete(route('hackathon-admin.ideas.destroy', props.idea.id))
     }
 }
 
@@ -301,9 +301,9 @@ const statusGradients = {
                         Review History
                     </h3>
                     <div v-if="reviewHistory && reviewHistory.length > 0" class="space-y-4">
-                        <div v-for="review in reviewHistory" :key="review.id" 
+                        <div v-for="review in reviewHistory" :key="review.id"
                              class="border-l-4 pl-4 py-3 rounded-r-lg"
-                             :style="{ 
+                             :style="{
                                  borderLeftColor: themeColor.primary,
                                  backgroundColor: `rgba(${themeColor.rgb}, 0.02)`
                              }">
@@ -340,7 +340,7 @@ const statusGradients = {
                             <div class="flex flex-wrap gap-3 mb-4">
                                 <button @click="submitDecision('accepted')"
                                         :class="decisionForm.status === 'accepted' ? 'ring-2 ring-offset-2' : ''"
-                                        :style="decisionForm.status === 'accepted' ? { 
+                                        :style="decisionForm.status === 'accepted' ? {
                                             background: `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})`,
                                             ringColor: themeColor.primary
                                         } : {}"
@@ -410,7 +410,7 @@ const statusGradients = {
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <!-- Score Progress Bar -->
                             <div class="mb-6">
                                 <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
@@ -427,7 +427,7 @@ const statusGradients = {
                                     :disabled="!decisionForm.status || decisionForm.processing"
                                     class="w-full px-6 py-3 text-white font-bold rounded-lg transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                                     :style="{
-                                        background: decisionForm.status && !decisionForm.processing 
+                                        background: decisionForm.status && !decisionForm.processing
                                             ? `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})`
                                             : 'linear-gradient(135deg, #9ca3af, #6b7280)'
                                     }">

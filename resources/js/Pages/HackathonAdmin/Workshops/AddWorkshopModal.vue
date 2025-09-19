@@ -230,7 +230,7 @@ const form = useForm({
 })
 
 const submit = () => {
-    form.post(route('system-admin.workshops.store'), {
+    form.post(route('hackathon-admin.workshops.store'), {
         onSuccess: () => {
             emit('success')
         },

@@ -192,7 +192,7 @@ Route::middleware(['auth', 'role:system_admin|permission:manage-hackathon-editio
 | Routes for hackathon administrators managing current edition
 */
 
-Route::middleware(['auth', 'role:hackathon_admin|permission:manage-current-edition'])->prefix('hackathon-admin')->name('hackathon-admin.')->group(function () {
+Route::middleware(['auth', 'role:hackathon_admin'])->prefix('hackathon-admin')->name('hackathon-admin.')->group(function () {
     // Dashboard
     Route::get('/dashboard', [HackathonAdminDashboardController::class, 'index'])->name('dashboard');
 

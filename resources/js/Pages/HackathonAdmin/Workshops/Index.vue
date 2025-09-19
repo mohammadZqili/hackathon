@@ -250,7 +250,7 @@
                                 <span class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{{ org.description || 'No description' }}</span>
                             </div>
                             <div class="w-48 py-4 px-4">
-                                <a :href="org.website" target="_blank" 
+                                <a :href="org.website" target="_blank"
                                    class="text-sm hover:underline"
                                    :style="{ color: themeColor.primary }">
                                     {{ org.website || 'N/A' }}
@@ -355,7 +355,7 @@ const formatDate = (date) => {
 }
 
 const handleSearch = () => {
-    router.get(route('system-admin.workshops.index'), {
+    router.get(route('hackathon-admin.workshops.index'), {
         search: searchQuery.value,
         tab: activeTab.value
     }, {
@@ -366,39 +366,39 @@ const handleSearch = () => {
 
 const handleAddAction = () => {
     if (activeTab.value === 'workshops') {
-        router.visit(route('system-admin.workshops.create'))
+        router.visit(route('hackathon-admin.workshops.create'))
     } else if (activeTab.value === 'speakers') {
-        router.visit(route('system-admin.speakers.create'))
+        router.visit(route('hackathon-admin.speakers.create'))
     } else if (activeTab.value === 'organizations') {
-        router.visit(route('system-admin.organizations.create'))
+        router.visit(route('hackathon-admin.organizations.create'))
     }
 }
 
 const viewWorkshop = (workshop) => {
-    router.visit(route('system-admin.workshops.show', workshop.id))
+    router.visit(route('hackathon-admin.workshops.show', workshop.id))
 }
 
 const editWorkshop = (workshop) => {
-    router.visit(route('system-admin.workshops.edit', workshop.id))
+    router.visit(route('hackathon-admin.workshops.edit', workshop.id))
 }
 
 const editSpeaker = (speaker) => {
-    router.visit(route('system-admin.speakers.edit', speaker.id))
+    router.visit(route('hackathon-admin.speakers.edit', speaker.id))
 }
 
 const deleteSpeaker = (speaker) => {
     if (confirm(`Are you sure you want to delete speaker "${speaker.name}"?`)) {
-        useForm({}).delete(route('system-admin.speakers.destroy', speaker.id))
+        useForm({}).delete(route('hackathon-admin.speakers.destroy', speaker.id))
     }
 }
 
 const editOrganization = (org) => {
-    router.visit(route('system-admin.organizations.edit', org.id))
+    router.visit(route('hackathon-admin.organizations.edit', org.id))
 }
 
 const deleteOrganization = (org) => {
     if (confirm(`Are you sure you want to delete organization "${org.name}"?`)) {
-        useForm({}).delete(route('system-admin.organizations.destroy', org.id))
+        useForm({}).delete(route('hackathon-admin.organizations.destroy', org.id))
     }
 }
 

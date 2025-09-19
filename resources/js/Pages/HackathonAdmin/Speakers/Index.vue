@@ -7,7 +7,7 @@
                 <div class="w-72 flex flex-col items-start justify-start min-w-[288px]">
                     <h1 class="text-[32px] font-bold text-gray-900 dark:text-white leading-10">Speakers</h1>
                 </div>
-                <Link :href="route('system-admin.speakers.create')"
+                <Link :href="route('hackathon-admin.speakers.create')"
                       class="rounded-xl h-8 overflow-hidden flex flex-row items-center justify-center py-0 px-4 min-w-[84px] max-w-[480px] text-center text-sm text-white font-medium transition-all duration-200 hover:shadow-md"
                       :style="{
                           background: `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})`,
@@ -103,10 +103,10 @@
                             </div>
                             <div class="w-32 py-4 px-4">
                                 <div v-if="speaker.expertise" class="flex flex-wrap gap-1">
-                                    <span v-for="(skill, index) in (speaker.expertise || '').split(',').slice(0, 2)" 
+                                    <span v-for="(skill, index) in (speaker.expertise || '').split(',').slice(0, 2)"
                                           :key="index"
                                           class="text-xs px-2 py-1 rounded-full"
-                                          :style="{ 
+                                          :style="{
                                               backgroundColor: themeColor.primary + '20',
                                               color: themeColor.primary
                                           }">
@@ -136,7 +136,7 @@
             </div>
 
             <!-- Pagination -->
-            <div v-if="speakers.links && speakers.total > speakers.per_page" 
+            <div v-if="speakers.links && speakers.total > speakers.per_page"
                  class="px-6 py-3">
                 <nav class="flex items-center justify-between">
                     <div class="text-sm text-gray-700 dark:text-gray-300">
@@ -164,7 +164,7 @@
             </div>
 
             <!-- Create/Edit Modal -->
-            <SpeakerModal v-if="showModal" 
+            <SpeakerModal v-if="showModal"
                           :speaker="selectedSpeaker"
                           :organizations="organizations"
                           :theme-color="themeColor"
@@ -235,7 +235,7 @@ const themeStyles = computed(() => ({
 }))
 
 const handleSearch = () => {
-    router.get(route('system-admin.speakers.index'), {
+    router.get(route('hackathon-admin.speakers.index'), {
         search: searchQuery.value
     }, {
         preserveState: true,
@@ -244,12 +244,12 @@ const handleSearch = () => {
 }
 
 const editSpeaker = (speaker) => {
-    router.visit(route('system-admin.speakers.edit', speaker.id))
+    router.visit(route('hackathon-admin.speakers.edit', speaker.id))
 }
 
 const deleteSpeaker = (speaker) => {
     if (confirm(`Are you sure you want to delete speaker "${speaker.name}"?`)) {
-        useForm({}).delete(route('system-admin.speakers.destroy', speaker.id))
+        useForm({}).delete(route('hackathon-admin.speakers.destroy', speaker.id))
     }
 }
 

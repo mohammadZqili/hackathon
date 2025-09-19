@@ -46,7 +46,7 @@ const stats = computed(() => [
 
 <template>
     <Head title="System Admin Dashboard" />
-    
+
     <Default>
         <div class="max-w-7xl mx-auto">
             <!-- Header -->
@@ -66,7 +66,7 @@ const stats = computed(() => [
                     <div>
                         <h3 class="text-sm font-medium text-blue-800 dark:text-blue-200">Current Edition</h3>
                         <p class="text-sm text-blue-600 dark:text-blue-400">
-                            {{ statistics.current_edition.name }} ({{ statistics.current_edition.year }}) - 
+                            {{ statistics.current_edition.name }} ({{ statistics.current_edition.year }}) -
                             <span class="font-semibold">{{ statistics.current_edition.status }}</span>
                         </p>
                         <p class="text-xs text-blue-500 dark:text-blue-300 mt-1">
@@ -78,7 +78,7 @@ const stats = computed(() => [
 
             <!-- Statistics Grid -->
             <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 mb-8">
-                <div v-for="stat in stats" :key="stat.name" 
+                <div v-for="stat in stats" :key="stat.name"
                      class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
                     <div class="p-5">
                         <div class="flex items-center">
@@ -115,8 +115,8 @@ const stats = computed(() => [
                         <ul role="list" class="-mb-8">
                             <li v-for="(activity, activityIdx) in statistics.recent_activities" :key="activityIdx">
                                 <div class="relative pb-8">
-                                    <span v-if="activityIdx !== statistics.recent_activities.length - 1" 
-                                          class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200 dark:bg-gray-700" 
+                                    <span v-if="activityIdx !== statistics.recent_activities.length - 1"
+                                          class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200 dark:bg-gray-700"
                                           aria-hidden="true"></span>
                                     <div class="relative flex space-x-3">
                                         <div>
@@ -146,7 +146,7 @@ const stats = computed(() => [
 
             <!-- Quick Actions -->
             <div class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                <a href="/system-admin/editions" 
+                <a href="/hackathon-admin/editions"
                    class="relative rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400 dark:hover:border-gray-600">
                     <div class="flex-shrink-0">
                         <svg class="h-6 w-6 text-gray-600 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -160,7 +160,7 @@ const stats = computed(() => [
                     </div>
                 </a>
 
-                <a href="/admin/user" 
+                <a href="/admin/user"
                    class="relative rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400 dark:hover:border-gray-600">
                     <div class="flex-shrink-0">
                         <svg class="h-6 w-6 text-gray-600 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -174,7 +174,7 @@ const stats = computed(() => [
                     </div>
                 </a>
 
-                <a href="/admin/setting" 
+                <a href="/admin/setting"
                    class="relative rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400 dark:hover:border-gray-600">
                     <div class="flex-shrink-0">
                         <svg class="h-6 w-6 text-gray-600 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">

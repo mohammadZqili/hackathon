@@ -32,7 +32,7 @@
                             Upload Organization Logo
                         </label>
                         <div class="relative">
-                            <div v-if="!previewUrl" 
+                            <div v-if="!previewUrl"
                                  @click="$refs.logoInput.click()"
                                  @dragover.prevent
                                  @drop.prevent="handleDrop"
@@ -49,7 +49,7 @@
                                     </button>
                                 </div>
                             </div>
-                            
+
                             <div v-else class="relative rounded-lg border-2 border-teal-200 dark:border-gray-600 bg-teal-50/50 dark:bg-gray-800 p-4">
                                 <img :src="previewUrl" alt="Logo preview" class="w-full h-32 object-contain">
                                 <button @click="removeLogo" type="button" class="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600">
@@ -58,7 +58,7 @@
                                     </svg>
                                 </button>
                             </div>
-                            
+
                             <input ref="logoInput"
                                    @change="handleFileUpload"
                                    type="file"
@@ -209,7 +209,7 @@
 
                 <!-- Action Buttons -->
                 <div class="flex justify-between">
-                    <Link :href="route('system-admin.organizations.index')"
+                    <Link :href="route('hackathon-admin.organizations.index')"
                           class="px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                         Cancel
                     </Link>
@@ -288,6 +288,6 @@ const removeLogo = () => {
 }
 
 const submit = () => {
-    form.post(route('system-admin.organizations.store'))
+    form.post(route('hackathon-admin.organizations.store'))
 }
 </script>

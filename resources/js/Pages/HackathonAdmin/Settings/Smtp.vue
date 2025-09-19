@@ -23,20 +23,20 @@ const form = useForm({
 })
 
 const testConnection = () => {
-    form.post(route('system-admin.settings.smtp.test'))
+    form.post(route('hackathon-admin.settings.smtp.test'))
 }
 </script>
 
 <template>
     <Head title="SMTP Settings" />
-    
+
     <Default>
         <div class="container mx-auto px-4 py-8">
-            
+
             <div class="max-w-2xl mx-auto">
                 <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-8">SMTP Configuration</h1>
 
-                <form @submit.prevent="form.post(route('system-admin.settings.smtp.update'))"
+                <form @submit.prevent="form.post(route('hackathon-admin.settings.smtp.update'))"
                       class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                     <div class="space-y-6">
                         <div>
@@ -92,7 +92,7 @@ const testConnection = () => {
                             Test Connection
                         </button>
                         <div class="space-x-3">
-                            <a :href="route('system-admin.settings.index')"
+                            <a :href="route('hackathon-admin.settings.index')"
                                class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg">Cancel</a>
                             <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg">
                                 Save Settings

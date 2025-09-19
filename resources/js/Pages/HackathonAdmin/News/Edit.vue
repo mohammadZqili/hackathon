@@ -39,7 +39,7 @@ onMounted(() => {
     const rgb = getComputedStyle(root).getPropertyValue('--primary-color-rgb').trim() || '13, 148, 136'
     const gradientFrom = getComputedStyle(root).getPropertyValue('--primary-gradient-from').trim() || '#0d9488'
     const gradientTo = getComputedStyle(root).getPropertyValue('--primary-gradient-to').trim() || '#14b8a6'
-    
+
     themeColor.value = {
         primary: primary || themeColor.value.primary,
         hover: hover || themeColor.value.hover,
@@ -75,7 +75,7 @@ const showAddCategory = ref(false)
 // FilePond upload configuration
 const uploadConfig = {
     process: {
-        url: route('system-admin.news.upload-temp'),
+        url: route('hackathon-admin.news.upload-temp'),
         method: 'POST',
         headers: {
             'X-CSRF-TOKEN': csrfToken,
@@ -88,7 +88,7 @@ const uploadConfig = {
         }
     },
     revert: {
-        url: route('system-admin.news.delete-temp'),
+        url: route('hackathon-admin.news.delete-temp'),
         method: 'DELETE',
         headers: {
             'X-CSRF-TOKEN': csrfToken,
@@ -124,11 +124,11 @@ const getGalleryFiles = () => {
 
 const handleMainImageProcess = (error, file) => {
     if (error || !file) return
-    
+
     const response = file.serverId ?
         (typeof file.serverId === 'string' ? JSON.parse(file.serverId) : file.serverId) :
         (typeof file === 'string' ? JSON.parse(file) : file)
-    
+
     if (response?.path) {
         form.main_image = response.path
     }
@@ -140,11 +140,11 @@ const handleMainImageRemove = () => {
 
 const handleGalleryProcess = (error, file) => {
     if (error || !file) return
-    
+
     const response = file.serverId ?
         (typeof file.serverId === 'string' ? JSON.parse(file.serverId) : file.serverId) :
         (typeof file === 'string' ? JSON.parse(file) : file)
-    
+
     if (response?.path) {
         if (!form.gallery_images) {
             form.gallery_images = []
@@ -170,7 +170,7 @@ const submit = () => {
     form.transform((data) => ({
         ...data,
         _method: 'PUT'
-    })).post(route('system-admin.news.update', props.article.id), {
+    })).post(route('hackathon-admin.news.update', props.article.id), {
         preserveScroll: true,
         onSuccess: () => {
             // Handle success
@@ -191,8 +191,8 @@ const submit = () => {
                         Update news article information
                     </p>
                 </div>
-                
-                <Link :href="route('system-admin.news.index')"
+
+                <Link :href="route('hackathon-admin.news.index')"
                       class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors mt-4 sm:mt-0">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
@@ -208,7 +208,7 @@ const submit = () => {
                         <button class="py-4 px-1 border-b-2 transition-colors border-[var(--theme-primary)] text-[var(--theme-primary)]">
                             <span class="text-sm font-medium">Edit News</span>
                         </button>
-                        <Link :href="route('system-admin.news.index')"
+                        <Link :href="route('hackathon-admin.news.index')"
                               class="py-4 px-1 border-b-2 transition-colors border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
                             <span class="text-sm font-medium">All News</span>
                         </Link>
@@ -261,7 +261,7 @@ const submit = () => {
                     <!-- News Body -->
                     <div>
                         <label for="content" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">News Body</label>
-                        <RichTextEditor 
+                        <RichTextEditor
                             v-model="form.content"
                             placeholder="Write your news content here..."
                             min-height="400px"
@@ -275,11 +275,11 @@ const submit = () => {
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Main Image</label>
                             <div class="max-w-xs">
-                                <FilePondUploader 
-                                    name="main_image" 
-                                    label="Main Image" 
+                                <FilePondUploader
+                                    name="main_image"
+                                    label="Main Image"
                                     label-idle="Drop main image here or click to browse..."
-                                    id="main_image" 
+                                    id="main_image"
                                     :accepted-file-types="['image/jpeg', 'image/png', 'image/webp']"
                                     :server="uploadConfig"
                                     :files="getMainImageFiles()"
@@ -341,11 +341,11 @@ const submit = () => {
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Image Gallery</label>
                         <div class="max-w-xl">
                             <div class="border border-gray-300 dark:border-gray-600 rounded-lg p-3 bg-gray-50 dark:bg-gray-800">
-                                <FilePondUploader 
-                                    name="gallery_images" 
-                                    label="" 
+                                <FilePondUploader
+                                    name="gallery_images"
+                                    label=""
                                     label-idle="Drop images or browse (max 10)"
-                                    id="gallery_images" 
+                                    id="gallery_images"
                                     :accepted-file-types="['image/jpeg', 'image/png', 'image/webp']"
                                     :server="uploadConfig"
                                     :files="getGalleryFiles()"
@@ -375,7 +375,7 @@ const submit = () => {
                         <button type="submit"
                                 :disabled="form.processing"
                                 class="px-8 py-3 rounded-lg font-semibold text-white transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                                :style="{ 
+                                :style="{
                                     background: form.processing ? '#9ca3af' : `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})`,
                                 }">
                             {{ form.processing ? 'Updating...' : 'Update Article' }}

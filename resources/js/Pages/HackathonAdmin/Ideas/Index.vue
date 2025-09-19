@@ -5,7 +5,7 @@ const { t, isRTL, direction, locale } = useLocalization()
 import { Head, useForm, router } from '@inertiajs/vue3'
 import { ref, computed, watch } from 'vue'
 import Default from '@/Layouts/Default.vue'
-import { 
+import {
     MagnifyingGlassIcon
 } from '@heroicons/vue/24/outline'
 
@@ -53,7 +53,7 @@ const statusDisplayNames = {
 }
 
 const filterIdeas = () => {
-    router.get(route('system-admin.ideas.index'), {
+    router.get(route('hackathon-admin.ideas.index'), {
         search: searchForm.search,
         status: searchForm.status,
         track_id: searchForm.track_id,
@@ -74,16 +74,16 @@ const formatDate = (date) => {
 }
 
 const viewDetails = (idea) => {
-    router.get(route('system-admin.ideas.show', idea.id))
+    router.get(route('hackathon-admin.ideas.show', idea.id))
 }
 
 const editIdea = (idea) => {
-    router.get(route('system-admin.ideas.review', idea.id))
+    router.get(route('hackathon-admin.ideas.review', idea.id))
 }
 
 const deleteIdea = (idea) => {
     if (confirm(t('admin.actions.confirm_delete'))) {
-        router.delete(route('system-admin.ideas.destroy', idea.id))
+        router.delete(route('hackathon-admin.ideas.destroy', idea.id))
     }
 }
 </script>
@@ -263,7 +263,7 @@ const deleteIdea = (idea) => {
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <button @click="viewDetails(idea)" 
+                                    <button @click="viewDetails(idea)"
                                             class="text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 mr-3">
                                         View
                                     </button>
@@ -277,7 +277,7 @@ const deleteIdea = (idea) => {
                                     </button>
                                 </td>
                             </tr>
-                            
+
                             <!-- Empty State -->
                             <tr v-if="!ideas.data || ideas.data.length === 0">
                                 <td colspan="7" class="px-6 py-12 text-center">
@@ -308,8 +308,8 @@ const deleteIdea = (idea) => {
                             v-html="link.label"
                             :class="[
                                 'px-3 py-1 text-sm rounded-lg transition-colors',
-                                link.active 
-                                    ? 'bg-emerald-600 text-white hover:bg-emerald-700' 
+                                link.active
+                                    ? 'bg-emerald-600 text-white hover:bg-emerald-700'
                                     : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600'
                             ]"
                         />

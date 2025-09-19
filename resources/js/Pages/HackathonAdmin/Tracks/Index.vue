@@ -176,7 +176,7 @@
                                     <td class="px-4 py-4 text-sm">
                                         <div class="flex items-center gap-2">
                                             <Link
-                                                :href="route('system-admin.tracks.show', track.id)"
+                                                :href="route('hackathon-admin.tracks.show', track.id)"
                                                 class="text-blue-600 hover:text-blue-800"
                                             >
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -185,7 +185,7 @@
                                                 </svg>
                                             </Link>
                                             <Link
-                                                :href="route('system-admin.tracks.edit', track.id)"
+                                                :href="route('hackathon-admin.tracks.edit', track.id)"
                                                 :style="{ color: themeColor.primary }"
                                                 class="hover:opacity-75"
                                             >
@@ -218,9 +218,9 @@
             <!-- Add Track Button -->
             <div class="flex flex-row items-start justify-start py-3 px-4">
                 <Link
-                    :href="route('system-admin.tracks.create')"
+                    :href="route('hackathon-admin.tracks.create')"
                     class="rounded-xl px-4 py-2 font-bold text-white transition-colors"
-                    :style="{ 
+                    :style="{
                         backgroundColor: themeColor.primary,
                         ':hover': { backgroundColor: themeColor.hover }
                     }"
@@ -291,7 +291,7 @@ const debounceSearch = () => {
 };
 
 const applyFilters = () => {
-    router.get(route('system-admin.tracks.index'), filters.value, {
+    router.get(route('hackathon-admin.tracks.index'), filters.value, {
         preserveState: true,
         preserveScroll: true,
     });
@@ -299,7 +299,7 @@ const applyFilters = () => {
 
 const deleteTrack = (id) => {
     if (confirm('Are you sure you want to delete this track? This action cannot be undone.')) {
-        router.delete(route('system-admin.tracks.destroy', id));
+        router.delete(route('hackathon-admin.tracks.destroy', id));
     }
 };
 </script>
