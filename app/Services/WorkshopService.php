@@ -224,7 +224,7 @@ class WorkshopService extends BaseService
             }
 
             // Send notifications to relevant track members and team leaders
-            $this->notifyTrackParticipants($workshop);
+//            $this->notifyTrackParticipants($workshop);
 
             return $workshop;
         });

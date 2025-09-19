@@ -36,7 +36,7 @@ Route::get('/', function () {
         // Get user's primary role and redirect to appropriate dashboard
         $user = auth()->user();
         $primaryRole = $user->primary_role ?? 'team_member';
-        
+
         $roleRoutes = [
             'system_admin' => 'system-admin.dashboard',
             'hackathon_admin' => 'hackathon-admin.dashboard',
@@ -44,11 +44,11 @@ Route::get('/', function () {
             'team_leader' => 'team-lead.dashboard',
             'team_member' => 'team-member.dashboard',
         ];
-        
+
         $route = $roleRoutes[$primaryRole] ?? 'dashboard';
         return redirect()->route($route);
     }
-    
+
     return redirect()->route('login');
 })->name('home');
 
@@ -236,7 +236,7 @@ require __DIR__.'/hackathon.php';
 // require __DIR__.'/hackathon-admin.php';
 
 // TrackSupervisor Routes
-require __DIR__.'/track-supervisor.php';
+//require __DIR__.'/track-supervisor.php';
 
 // TeamLead Routes
 require __DIR__.'/team-lead.php';

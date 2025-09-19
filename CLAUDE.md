@@ -455,3 +455,36 @@ Before finishing any feature:
 - **COMPLETE the chain** - Controller → Service → Repository → Model
 - **HANDLE errors** - Anticipate and handle edge cases
 - **PRESERVE existing data** - Don't lose data during updates
+
+## Issue Tracking Protocol
+
+### When Encountering Errors:
+1. **Document in fixes.md** immediately with:
+   - Issue type and description (concise, 1-2 lines)
+   - Affected role(s)
+   - Console error message
+   - Applied fix (brief, actionable)
+
+2. **Check Cross-Role Impact**:
+   - If issue exists in one role (SystemAdmin, HackathonAdmin, TrackSupervisor)
+   - MUST check if same issue exists in other roles
+   - If found in multiple roles, note in fixes.md under "Should Check in Other Roles"
+   - Don't fix all occurrences - just document and notify
+
+3. **Format for fixes.md**:
+   ```markdown
+   ### Issue Title
+   **Issue:** Brief description
+   **Roles Affected:** Role names
+   **When:** Trigger condition
+   **Error:** Console/system error
+   **Fix:** Solution applied
+
+   #### Should Check in Other Roles:
+   - [ ] RoleName - Component/feature to check
+   ```
+
+4. **Be Smart & Concise**:
+   - Maximum 3 lines for descriptions
+   - Focus on actionable information
+   - Group similar issues together

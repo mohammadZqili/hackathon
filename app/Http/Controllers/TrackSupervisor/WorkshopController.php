@@ -46,7 +46,7 @@ class WorkshopController extends Controller
         $edition = $this->editionContext->current();
 
         // Filter workshops by current edition (using hackathon_edition_id)
-        $workshops = Workshop::where('hackathon_edition_id', $edition->id)
+        $workshops = Workshop::where('hackathon_id', $edition->id)
             ->with(['speakers', 'organizations', 'attendees'])
             ->paginate(15);
 
@@ -146,12 +146,12 @@ class WorkshopController extends Controller
             );
 
             // Send notifications to all track members and team leaders
-            $this->sendWorkshopNotifications($workshop);
+//            $this->sendWorkshopNotifications($workshop);
 
             DB::commit();
 
             return redirect()->route('track-supervisor.workshops.index')
-                ->with('success', 'Workshop created successfully! Notifications with QR codes have been sent to all team members and team leaders across all tracks.');
+                ->with('success', 'Workshop created successfully!');
 
         } catch (ValidationException $e) {
             DB::rollBack();

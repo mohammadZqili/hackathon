@@ -306,7 +306,7 @@ Route::middleware(['auth', 'role:hackathon_admin'])->prefix('hackathon-admin')->
 | Routes for track supervisors managing assigned tracks
 */
 
-Route::middleware(['auth', 'role:track_supervisor|permission:view-assigned-tracks'])->prefix('track-supervisor')->name('track-supervisor.')->group(function () {
+Route::middleware(['auth', 'role:track_supervisor'])->prefix('track-supervisor')->name('track-supervisor.')->group(function () {
     // Dashboard
     Route::get('/dashboard', [TrackSupervisorDashboardController::class, 'index'])->name('dashboard');
 
