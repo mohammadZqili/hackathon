@@ -18,7 +18,7 @@ class DashboardController extends Controller
     public function index()
     {
         $data = $this->dashboardService->getTeamMemberDashboard(auth()->id());
-        
+
         return Inertia::render('TeamMember/Dashboard', $data);
     }
 }

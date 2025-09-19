@@ -78,7 +78,13 @@ class TeamService
             if (!empty($data['leader_id'])) {
                 // Check if the leader is not already a member (to avoid duplicate entry)
                 if (!$team->members()->where('user_id', $data['leader_id'])->exists()) {
-                    $team->members()->attach($data['leader_id'], ['role' => 'leader', 'joined_at' => now()]);
+                    $team->members()->attach($data['leader_id'], [
+                        'role' => 'leader',
+                        'status' => 'accepted', // Leader is always accepted
+                        'joined_at' => now(),
+                        'invited_at' => now(),
+                        'invited_by' => $data['leader_id'] // Leader invites themselves
+                    ]);
                 }
             }
 
@@ -86,7 +92,12 @@ class TeamService
             if (!empty($data['member_ids'])) {
                 foreach ($data['member_ids'] as $memberId) {
                     if ($memberId != $data['leader_id']) {
-                        $team->members()->attach($memberId, ['role' => 'member']);
+                        $team->members()->attach($memberId, [
+                            'role' => 'member',
+                            'status' => 'pending', // Members are pending until they accept
+                            'invited_at' => now(),
+                            'invited_by' => $data['leader_id']
+                        ]);
                     }
                 }
             }
@@ -189,7 +200,7 @@ class TeamService
             ->where('user_id', $userId)
             ->where('status', 'accepted')
             ->first();
-            
+
         if ($teamMember) {
             return Team::find($teamMember->team_id);
         }
@@ -203,7 +214,7 @@ class TeamService
     public function getDashboardStats(User $user): array
     {
         $team = $this->getMyTeam($user);
-        
+
         if (!$team) {
             return [
                 'has_team' => false,
@@ -465,11 +476,11 @@ class TeamService
             } else {
                 // Create new idea
                 $data['team_id'] = $team->id;
-                $data['track_id'] = $team->track_id;
+                $data['track_id'] = $team->track_id ?? $data['track_id'];
                 $data['edition_id'] = $team->hackathon_id;
                 $data['status'] = 'draft';
                 $data['submitted_at'] = now();
-                
+
                 // Map fields to match database columns
                 if (isset($data['solution'])) {
                     $data['solution_approach'] = $data['solution'];
@@ -483,20 +494,20 @@ class TeamService
                 if (isset($data['technologies']) && is_array($data['technologies'])) {
                     $data['technologies'] = json_encode($data['technologies']);
                 }
-                
+
                 // Remove fields that don't exist in the database
                 unset($data['technical_feasibility']);
                 unset($data['business_model']);
-                
+
                 $idea = $this->ideaRepository->create($data);
             }
 
             // Update team status
-            $this->teamRepository->update($team->id, ['status' => 'submitted']);
+            $this->teamRepository->update($team->id, ['status' => 'submitted' , 'track_id' => $data['track_id']]);
 
             DB::commit();
             return ['success' => true, 'idea' => $idea];
-            
+
         } catch (\Exception $e) {
             DB::rollBack();
             return ['success' => false, 'message' => 'Failed to submit idea: ' . $e->getMessage()];
@@ -521,11 +532,11 @@ class TeamService
         if (isset($data['technologies']) && is_array($data['technologies'])) {
             $data['technologies'] = json_encode($data['technologies']);
         }
-        
+
         // Remove fields that don't exist in the database
         unset($data['technical_feasibility']);
         unset($data['business_model']);
-        
+
         return $this->ideaRepository->update($idea->id, $data);
     }
 

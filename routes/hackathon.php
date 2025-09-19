@@ -427,6 +427,7 @@ Route::middleware(['auth', 'role:team_leader|permission:create-manage-team'])->p
     // Team Management (Own Team Only)
     Route::get('/team', [TeamLeaderTeamController::class, 'show'])->name('team.show');
     Route::get('/team/edit', [TeamLeaderTeamController::class, 'edit'])->name('team.edit');
+    Route::get('/team/create', [TeamLeaderTeamController::class, 'create'])->name('team.create');
     Route::put('/team', [TeamLeaderTeamController::class, 'update'])->name('team.update');
     Route::post('/team/invite-member', [TeamLeaderTeamController::class, 'inviteMember'])->name('team.invite-member');
     Route::delete('/team/members/{member}', [TeamLeaderTeamController::class, 'removeMember'])->name('team.remove-member');

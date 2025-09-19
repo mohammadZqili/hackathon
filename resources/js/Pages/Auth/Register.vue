@@ -4,16 +4,22 @@ import { useForm } from '@inertiajs/vue3'
 import { ref, computed, onMounted } from 'vue'
 import FormInput from '../../Components/FormInput.vue'
 
+// Get URL parameters for team invitation
+const urlParams = new URLSearchParams(window.location.search)
+const invitationToken = urlParams.get('invitation')
+const invitationEmail = urlParams.get('email')
+
 const form = useForm({
     name: '',
-    email: '',
+    email: invitationEmail || '', // Pre-fill email from invitation
     national_id: '',
     phone: '',
     password: '',
     password_confirmation: '',
-    user_type: 'team_leader', // Default role
+    user_type: invitationToken ? 'team_member' : 'team_leader', // Default to team_member if invitation exists
     occupation: 'student', // Default occupation
     job_title: '',
+    invitation_token: invitationToken || '', // Include invitation token
 })
 
 const { settings: { passwordlessLogin = false } = {} } = usePage().props
@@ -93,6 +99,17 @@ const submit = () => {
                 <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
                     <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-8">Register</h2>
 
+                    <!-- Invitation Notice -->
+                    <div v-if="invitationToken" class="mb-6 p-4 rounded-lg border-2 border-dashed"
+                        :style="{ borderColor: themeColor.primary + '50', backgroundColor: themeColor.primary + '10' }">
+                        <p class="text-sm font-medium" :style="{ color: themeColor.primary }">
+                            🎉 You've been invited to join a team!
+                        </p>
+                        <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                            Complete your registration to automatically join the team.
+                        </p>
+                    </div>
+
                     <form @submit.prevent="submit" class="space-y-6">
                         <!-- Role Selection -->
                         <div>
@@ -164,7 +181,8 @@ const submit = () => {
                                 type="email"
                                 :required="true"
                                 :error="form.errors.email"
-                                placeholder="Enter your email address"
+                                :readonly="!!invitationEmail"
+                                :placeholder="invitationEmail ? 'Email from invitation' : 'Enter your email address'"
                             />
 
                             <FormInput

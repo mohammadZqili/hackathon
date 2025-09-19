@@ -325,6 +325,8 @@ tail -f storage/logs/laravel.log           # Watch logs
 - Design system in `/design_files/`
 - Role definitions in `files/ROLES_AND_RESPONSIBILITIES.md`
 - Implementation guides in `files/WRITE_IMPLEMENTATION/`
+- **Development tasks tracker in `tasks.md`** - MUST READ AND UPDATE
+- **Issue fixes tracker in `fixes.md`** - Document all bug fixes
 
 ## SENIOR ENGINEER STANDARDS - MUST FOLLOW
 
@@ -456,6 +458,40 @@ Before finishing any feature:
 - **HANDLE errors** - Anticipate and handle edge cases
 - **PRESERVE existing data** - Don't lose data during updates
 
+## Task & Issue Tracking Protocol
+
+### Task Tracking (tasks.md)
+**MANDATORY**: For every user request that requires code changes:
+
+1. **Before Starting Work**:
+   - Add task to `tasks.md` with:
+     - Task number (sequential)
+     - Date (YYYY-MM-DD)
+     - User prompt (exact request)
+     - Planned solution approach
+     - Status: Pending
+
+2. **During Implementation**:
+   - Update status to "In Progress"
+   - List all files being modified
+   - Document key code changes
+
+3. **After Completion**:
+   - Update status to "Completed"
+   - Add code summary
+   - Note any related tasks
+
+4. **Task Format**:
+   ```markdown
+   ## Task #XXX
+   **Date**: YYYY-MM-DD
+   **User Prompt**: "Original request"
+   **Solution**: Implementation approach
+   **Files Affected**: List of files
+   **Code Summary**: Key changes
+   **Status**: Pending | In Progress | Completed
+   ```
+
 ## Issue Tracking Protocol
 
 ### When Encountering Errors:
@@ -487,4 +523,13 @@ Before finishing any feature:
 4. **Be Smart & Concise**:
    - Maximum 3 lines for descriptions
    - Focus on actionable information
+
+## Design Implementation Guidelines
+
+For implementing pages with consistent design and theme:
+- **System Admin Pages**: See `SYSTEM_ADMIN_DESIGN_PROMPT.md` for complete guidelines
+- **All Role Pages**: Reference `/design_files/vue_files_tailwind/[role_name]/` for page structures
+- **Theme Colors**: Always use dynamic theme system, never hardcode colors
+- **Design Files**: Reference design templates for accurate layouts
+- **Figma Images**: Check `/design_files/figma_images/` for visual references
    - Group similar issues together

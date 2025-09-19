@@ -3,6 +3,7 @@
 namespace App\Actions\Fortify;
 
 use App\Models\User;
+use App\Models\TeamInvitation;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -79,8 +80,72 @@ class CreateNewUser implements CreatesNewUsers
             }
         }
 
+        // Check if there's a team invitation
+        if (!empty($input['invitation_token'])) {
+            $this->handleTeamInvitation($user, $input['invitation_token'], $input['email']);
+        }
+
         session()->flash('success', 'Great! Your account has been created successfully.');
 
         return $user;
+    }
+
+    /**
+     * Handle team invitation after user registration.
+     *
+     * @param  \App\Models\User  $user
+     * @param  string  $token
+     * @param  string  $email
+     * @return void
+     */
+    protected function handleTeamInvitation(User $user, string $token, string $email)
+    {
+        // Find the invitation
+        $invitation = TeamInvitation::where('token', $token)
+            ->where('email', $email)
+            ->where('status', 'pending')
+            ->where('expires_at', '>', now())
+            ->first();
+
+        if ($invitation) {
+            // Add user to the team
+            $team = $invitation->team;
+            if ($team) {
+                try {
+                    // Add user to team with the specified role and status
+                    // Note: role should be 'member' not 'team_member' based on enum in database
+                    $team->members()->attach($user->id, [
+                        'role' => ($invitation->role === 'team_member' ? 'member' : $invitation->role) ?? 'member',
+                        'status' => 'accepted',
+                        'joined_at' => now(),
+                        'invited_at' => $invitation->created_at,
+                        'invited_by' => $team->leader_id
+                    ]);
+
+                    \Log::info('Team member attached successfully', [
+                        'user_id' => $user->id,
+                        'team_id' => $team->id,
+                        'role' => ($invitation->role === 'team_member' ? 'member' : $invitation->role) ?? 'member'
+                    ]);
+                } catch (\Exception $e) {
+                    \Log::error('Failed to attach team member', [
+                        'error' => $e->getMessage(),
+                        'user_id' => $user->id,
+                        'team_id' => $team->id
+                    ]);
+                }
+
+                // Update invitation status
+                $invitation->update([
+                    'status' => 'accepted',
+                    'accepted_at' => now()
+                ]);
+
+                // Flash success message
+                session()->flash('success',
+                    session('success') . " You have been added to team '{$team->name}'!"
+                );
+            }
+        }
     }
 }

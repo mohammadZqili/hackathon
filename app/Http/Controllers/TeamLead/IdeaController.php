@@ -95,23 +95,33 @@ class IdeaController extends Controller
         $user = auth()->user();
         $team = $this->teamService->getMyTeam($user);
 
+        // If no team exists, redirect to team creation
+        if (!$team) {
+            return redirect()->route('team-lead.team.create')
+                ->with('info', 'Please create a team first before submitting an idea.');
+        }
+
         // Get available tracks for team leaders
         $edition = $this->editionContext->current();
         $tracks = $this->trackRepository->getActive(['edition_id' => $edition->id]);
 
+        // Debug log tracks
+        \Log::info('Available tracks for idea creation:', ['tracks' => $tracks->toArray()]);
+
         // If team exists and already has an idea, redirect to show
-        if ($team) {
-            $idea = $this->teamService->getTeamIdea($team);
-            if ($idea) {
-                return redirect()->route('team-lead.idea.show')
-                    ->with('info', 'You already have an idea created.');
-            }
+        $idea = $this->teamService->getTeamIdea($team);
+        if ($idea) {
+            return redirect()->route('team-lead.idea.show')
+                ->with('info', 'You already have an idea created.');
         }
+
+        // Load team with track relationship
+        $team->load('track');
 
         return Inertia::render('TeamLead/Idea/Create', [
             'team' => $team,
             'tracks' => $tracks,
-            'requiresTeamCreation' => !$team
+            'requiresTeamCreation' => false
         ]);
     }
 
@@ -120,41 +130,38 @@ class IdeaController extends Controller
         $user = auth()->user();
         $team = $this->teamService->getMyTeam($user);
 
+        // Require team to exist before submitting idea
+        if (!$team) {
+            return redirect()->route('team-lead.team.create')
+                ->with('error', 'You must create a team first before submitting an idea.');
+        }
+
+        // Debug log to see what's received
+        \Log::info('Idea submission request data:', $request->all());
+
+        // Convert empty string to null for track_id
+        if ($request->has('track_id') && $request->track_id === '') {
+            $request->merge(['track_id' => null]);
+        }
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'track_id' => 'required|exists:tracks,id',
-            'team_name' => $team ? 'nullable' : 'required|string|max:255',
             'files' => 'nullable|array',
             'files.*' => 'file|max:10240' // 10MB max per file
         ]);
 
-        // If no team exists, create one automatically
-        if (!$team) {
-            $edition = $this->editionContext->current();
-
-            // Create team with the provided name and track
-            $teamData = [
-                'name' => $validated['team_name'] ?? $user->name . "'s Team",
-                'user_id' => $user->id,  // For Jetstream compatibility
-                'leader_id' => $user->id,
-                'track_id' => $validated['track_id'],
-                'edition_id' => $edition->id,
-                'status' => 'active',
-                'description' => 'Team created for idea: ' . $validated['title'],
-                'personal_team' => false  // This is not a personal team
-            ];
-
-            $team = $this->teamService->createTeam($teamData, $user);
-
-            // The TeamService already adds the leader as a member, so we don't need to do it again
+        // Map the form data to match the database schema
+        // Extra check to ensure track_id is not null
+        if (!isset($validated['track_id']) || !$validated['track_id']) {
+            return back()->withErrors(['track_id' => 'Please select a track for your idea.'])->withInput();
         }
 
-        // Map the form data to match the database schema
         $ideaData = [
             'title' => $validated['title'],
             'description' => $validated['description'],
-            'track_id' => $team->track_id,
+            'track_id' => (int)$validated['track_id'], // Ensure it's an integer
             'problem_statement' => null,
             'solution_approach' => null,
             'expected_impact' => null,
@@ -163,6 +170,7 @@ class IdeaController extends Controller
         ];
 
         $result = $this->teamService->submitIdea($team, $ideaData);
+
 
         if ($result['success']) {
             $idea = $result['idea'];
@@ -200,14 +208,8 @@ class IdeaController extends Controller
                 }
             }
 
-            $message = 'Idea created successfully! ';
-            if (!$validated['team_name']) {
-                $message .= 'Your team has been created automatically. ';
-            }
-            $message .= 'Track supervisors have been notified.';
-
             return redirect()->route('team-lead.idea.show')
-                ->with('success', $message);
+                ->with('success', 'Idea created successfully! Track supervisors have been notified.');
         } else {
             return back()->with('error', $result['message']);
         }
@@ -252,14 +254,14 @@ class IdeaController extends Controller
     {
         $user = auth()->user();
         $team = $this->teamService->getMyTeam($user);
-        
+
         if (!$team) {
             return redirect()->route('team-lead.dashboard')
                 ->with('error', 'You need to create a team first');
         }
 
         $idea = $this->teamService->getTeamIdea($team);
-        
+
         if (!$idea) {
             return redirect()->route('team-lead.idea.create');
         }
@@ -288,7 +290,7 @@ class IdeaController extends Controller
         ];
 
         $updatedIdea = $this->teamService->updateIdea($idea, $ideaData);
-        
+
         // Handle file uploads if present
         if (isset($validated['files'])) {
             foreach ($validated['files'] as $file) {
@@ -305,7 +307,7 @@ class IdeaController extends Controller
                 ]);
             }
         }
-        
+
         return redirect()->route('team-lead.idea.show')
             ->with('success', 'Idea updated successfully');
     }
@@ -314,13 +316,13 @@ class IdeaController extends Controller
     {
         $user = auth()->user();
         $team = $this->teamService->getMyTeam($user);
-        
+
         if (!$team) {
             return back()->with('error', 'You need to create a team first');
         }
 
         $idea = $this->teamService->getTeamIdea($team);
-        
+
         if (!$idea) {
             return back()->with('error', 'You need to create an idea first');
         }
@@ -365,13 +367,13 @@ class IdeaController extends Controller
     {
         $user = auth()->user();
         $team = $this->teamService->getMyTeam($user);
-        
+
         if (!$team) {
             return back()->with('error', 'You need to create a team first');
         }
 
         $idea = $this->teamService->getTeamIdea($team);
-        
+
         if (!$idea) {
             return back()->with('error', 'No idea found to withdraw');
         }
@@ -406,13 +408,13 @@ class IdeaController extends Controller
     {
         $user = auth()->user();
         $team = $this->teamService->getMyTeam($user);
-        
+
         if (!$team) {
             return response()->json(['error' => 'No team found'], 403);
         }
 
         $idea = $this->teamService->getTeamIdea($team);
-        
+
         if (!$idea) {
             return response()->json(['error' => 'No idea found'], 403);
         }
@@ -424,10 +426,10 @@ class IdeaController extends Controller
 
         $file = $request->file('file');
         $type = $request->input('type', 'document');
-        
+
         // Store file
         $path = $file->store('ideas/' . $idea->id, 'public');
-        
+
         // Save file record in database
         $fileRecord = $idea->files()->create([
             'original_name' => $file->getClientOriginalName(),
@@ -450,19 +452,19 @@ class IdeaController extends Controller
     {
         $user = auth()->user();
         $team = $this->teamService->getMyTeam($user);
-        
+
         if (!$team) {
             return back()->with('error', 'No team found');
         }
 
         $idea = $this->teamService->getTeamIdea($team);
-        
+
         if (!$idea) {
             return back()->with('error', 'No idea found');
         }
 
         $file = $idea->files()->where('id', $fileId)->first();
-        
+
         if (!$file) {
             return back()->with('error', 'File not found');
         }

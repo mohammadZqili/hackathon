@@ -30,9 +30,24 @@ class TeamController extends Controller
 
         // Use the same method as dashboard service for consistency
         $member = $this->teamRepository->findMemberTeam($user->id);
+
+        // Debug: Log what we found
+        \Log::info('TeamMember index - looking for user team', [
+            'user_id' => $user->id,
+            'member_found' => $member ? true : false,
+            'member_data' => $member ? $member->toArray() : null
+        ]);
+
         $team = $member ? $member->team : null;
 
         if (!$team) {
+            // Also check if they are in team_members table at all
+            $directCheck = \App\Models\TeamMember::where('user_id', $user->id)->first();
+            \Log::info('Direct check for team member', [
+                'found' => $directCheck ? true : false,
+                'data' => $directCheck ? $directCheck->toArray() : null
+            ]);
+
             return Inertia::render('TeamMember/Team/Index', [
                 'team' => null,
                 'message' => 'You are not part of any team yet.'

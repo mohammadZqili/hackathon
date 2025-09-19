@@ -10,7 +10,14 @@ use App\Http\Controllers\TeamLead\ProfileController;
 
 Route::middleware(['auth', 'verified', 'team.lead'])->prefix('team-lead')->name('team-lead.')->group(function () {
 
-    // Idea creation routes (without ensure.idea middleware)
+    // Routes without ensure.idea middleware (for initial setup)
+    // Team creation routes
+    Route::prefix('team')->name('team.')->group(function () {
+        Route::get('/create', [TeamController::class, 'create'])->name('create');
+        Route::post('/store', [TeamController::class, 'store'])->name('store');
+    });
+
+    // Idea creation routes
     Route::prefix('idea')->name('idea.')->group(function () {
         Route::get('/submit', [IdeaController::class, 'create'])->name('create');
         Route::post('/', [IdeaController::class, 'store'])->name('store');
@@ -20,12 +27,10 @@ Route::middleware(['auth', 'verified', 'team.lead'])->prefix('team-lead')->name(
     Route::middleware(['ensure.idea'])->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-        // Team Management
+        // Team Management (except create/store)
         Route::prefix('team')->name('team.')->group(function () {
             Route::get('/', [TeamController::class, 'index'])->name('index');
             Route::get('/show', [TeamController::class, 'show'])->name('show');
-            Route::get('/create', [TeamController::class, 'create'])->name('create');
-            Route::post('/', [TeamController::class, 'store'])->name('store');
             Route::get('/{id}/edit', [TeamController::class, 'edit'])->name('edit');
             Route::put('/{id}', [TeamController::class, 'update'])->name('update');
             Route::get('/add-member', [TeamController::class, 'showAddMember'])->name('add-member');

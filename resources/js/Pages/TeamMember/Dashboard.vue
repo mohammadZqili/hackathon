@@ -1,144 +1,155 @@
 <template>
-    <Head title="Team Member Dashboard" />
+    <Head title="Dashboard - Team Member" />
     <Default>
-        <div class="w-full h-full overflow-hidden bg-gray-50 dark:bg-gray-900" :style="themeStyles">
-            <!-- Team Member Dashboard exactly matching Figma Design -->
-            <div class="w-full overflow-hidden flex flex-col items-start justify-start max-w-[960px] text-sm font-space-grotesk">
-                <!-- Page Header -->
-                <div class="self-stretch flex flex-row items-start justify-between flex-wrap content-start p-4 text-[32px] text-gray-900 dark:text-white">
-                    <div class="flex flex-col items-start justify-start gap-3 min-w-[288px]">
-                        <div class="w-[896px] flex flex-col items-start justify-start">
-                            <b class="self-stretch relative leading-10">Team Member Dashboard</b>
+        <div class="container mx-auto px-4 py-8" :style="themeStyles">
+            <!-- Page Header -->
+            <div class="mb-8">
+                <h1 class="text-[32px] font-bold text-gray-900 dark:text-white leading-10">Dashboard</h1>
+            </div>
+
+            <!-- Summary Section -->
+            <div class="mb-6">
+                <h2 class="text-[22px] font-bold text-gray-900 dark:text-white leading-7 mb-5">Summary</h2>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="space-y-6">
+                <!-- My Team Card -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm flex items-start justify-between gap-6">
+                    <div class="flex-1 max-w-[573px]">
+                        <div class="mb-4">
+                            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-1">My Team</h3>
+                            <p class="text-sm leading-[21px]" :style="{ color: themeColor.primary }">
+                                Manage your team members and their roles.
+                            </p>
                         </div>
-                        <div class="flex flex-col items-start justify-start text-sm"
-                            :style="{ color: themeColor.primary }">
-                            <div class="self-stretch relative leading-[21px]">Welcome to your team member dashboard. Stay updated with your team activities and upcoming workshops.</div>
-                        </div>
+                        <Link :href="route('team-member.team.index')"
+                              class="inline-flex items-center justify-center px-4 py-2 rounded-xl font-medium text-sm transition-colors"
+                              :style="{
+                                backgroundColor: themeColor.primary + '20',
+                                color: themeColor.primary
+                            }"
+                              @mouseenter="$event.target.style.backgroundColor = themeColor.primary + '30'"
+                              @mouseleave="$event.target.style.backgroundColor = themeColor.primary + '20'">
+                            View Team
+                        </Link>
+                    </div>
+                    <div class="w-[280px] h-[161px] rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-700">
+                        <svg class="w-full h-full" viewBox="0 0 280 161" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="280" height="161" :fill="themeColor.primary + '10'" />
+                            <g opacity="0.5">
+                                <circle cx="140" cy="60" r="25" :fill="themeColor.primary + '40'" />
+                                <circle cx="100" cy="90" r="20" :fill="themeColor.primary + '30'" />
+                                <circle cx="180" cy="90" r="20" :fill="themeColor.primary + '30'" />
+                            </g>
+                            <path d="M140 80C155 80 168 93 168 108V161H112V108C112 93 125 80 140 80Z" :fill="themeColor.primary + '20'" />
+                            <path d="M100 105C110 105 119 114 119 124V161H81V124C81 114 90 105 100 105Z" :fill="themeColor.primary + '15'" />
+                            <path d="M180 105C190 105 199 114 199 124V161H161V124C161 114 170 105 180 105Z" :fill="themeColor.primary + '15'" />
+                        </svg>
                     </div>
                 </div>
-                
-                <!-- Team Information Card -->
-                <div v-if="team" class="self-stretch flex flex-col items-start justify-start p-4">
-                    <div class="self-stretch shadow-[0px_0px_4px_rgba(0,_0,_0,_0.1)] rounded-xl bg-white dark:bg-gray-800 overflow-hidden flex flex-col items-start justify-start p-4 gap-4">
-                        <div class="self-stretch flex flex-row items-center justify-between">
-                            <div class="flex flex-col items-start justify-start">
-                                <div class="text-lg font-semibold text-gray-900 dark:text-white">My Team</div>
-                                <div class="text-sm text-gray-600 dark:text-gray-400">Current team information</div>
-                            </div>
+
+                <!-- Idea Status Card -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm flex items-start justify-between gap-6">
+                    <div class="flex-1 max-w-[573px]">
+                        <div class="mb-4">
+                            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-1">Idea Status</h3>
+                            <p class="text-sm leading-[21px]" :style="{ color: themeColor.primary }">
+                                Track the progress of your ideas and initiatives.
+                            </p>
                         </div>
-                        <div class="self-stretch flex flex-col items-start justify-start gap-2">
-                            <div class="flex items-center gap-3">
-                                <span class="text-base font-medium text-gray-900 dark:text-white">Team Name:</span>
-                                <span class="text-base" :style="{ color: themeColor.primary }">{{ team.name }}</span>
-                            </div>
-                            <div class="flex items-center gap-3">
-                                <span class="text-base font-medium text-gray-900 dark:text-white">Team Lead:</span>
-                                <span class="text-base text-gray-700 dark:text-gray-300">{{ team.leader?.name || 'TBA' }}</span>
-                            </div>
-                            <div class="flex items-center gap-3">
-                                <span class="text-base font-medium text-gray-900 dark:text-white">Track:</span>
-                                <span class="text-base text-gray-700 dark:text-gray-300">{{ team.track?.name || 'Not selected' }}</span>
-                            </div>
-                            <div class="flex items-center gap-3">
-                                <span class="text-base font-medium text-gray-900 dark:text-white">Members:</span>
-                                <span class="text-base text-gray-700 dark:text-gray-300">{{ team.members?.length || 0 }} members</span>
-                            </div>
-                        </div>
+                        <Link :href="route('team-member.idea.index')"
+                              class="inline-flex items-center justify-center px-4 py-2 rounded-xl font-medium text-sm transition-colors"
+                              :style="{
+                                backgroundColor: themeColor.primary + '20',
+                                color: themeColor.primary
+                            }"
+                              @mouseenter="$event.target.style.backgroundColor = themeColor.primary + '30'"
+                              @mouseleave="$event.target.style.backgroundColor = themeColor.primary + '20'">
+                            View Ideas
+                        </Link>
+                    </div>
+                    <div class="w-[280px] h-[161px] rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-700">
+                        <svg class="w-full h-full" viewBox="0 0 280 161" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="280" height="161" :fill="themeColor.primary + '10'" />
+                            <circle cx="140" cy="80" r="40" :stroke="themeColor.primary + '40'" stroke-width="3" fill="none" />
+                            <path d="M140 50 L150 70 L175 70 L155 85 L165 105 L140 90 L115 105 L125 85 L105 70 L130 70 Z" :fill="themeColor.primary + '30'" />
+                            <rect x="60" y="120" width="160" height="8" rx="4" :fill="themeColor.primary + '20'" />
+                            <rect x="60" y="120" :width="idea ? (idea.progress || 0) * 1.6 : 40" height="8" rx="4" :fill="themeColor.primary" />
+                        </svg>
                     </div>
                 </div>
-                
-                <!-- No Team State -->
-                <div v-else class="self-stretch flex flex-col items-center justify-center py-12">
-                    <svg class="w-16 h-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                    </svg>
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Not in a Team</h3>
-                    <p class="text-gray-600 dark:text-gray-400">You are not currently assigned to any team. Please wait for a team leader to invite you.</p>
-                </div>
-                
-                <!-- Quick Actions -->
-                <div class="self-stretch flex flex-col items-start justify-start p-4">
-                    <div class="self-stretch flex flex-col items-start justify-start gap-4">
-                        <div class="text-lg font-semibold text-gray-900 dark:text-white">Quick Actions</div>
-                        <div class="self-stretch grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            <!-- View Team -->
-                            <Link v-if="team" :href="route('team-member.team.index')"
-                                class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 hover:shadow-md transition-shadow border border-gray-200 dark:border-gray-700 group">
-                                <div class="flex items-center gap-3 mb-2">
-                                    <div class="w-8 h-8 rounded-lg flex items-center justify-center"
-                                        :style="{ backgroundColor: `${themeColor.primary}20` }">
-                                        <svg class="w-5 h-5" :style="{ color: themeColor.primary }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                                        </svg>
-                                    </div>
-                                    <div class="text-base font-medium text-gray-900 dark:text-white group-hover:text-gray-700 dark:group-hover:text-gray-200">View My Team</div>
-                                </div>
-                                <div class="text-sm text-gray-600 dark:text-gray-400">See team members and details</div>
-                            </Link>
-                            
-                            <!-- View Idea -->
-                            <Link v-if="team?.idea" :href="route('team-member.idea.index')"
-                                class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 hover:shadow-md transition-shadow border border-gray-200 dark:border-gray-700 group">
-                                <div class="flex items-center gap-3 mb-2">
-                                    <div class="w-8 h-8 rounded-lg flex items-center justify-center"
-                                        :style="{ backgroundColor: `${themeColor.primary}20` }">
-                                        <svg class="w-5 h-5" :style="{ color: themeColor.primary }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
-                                        </svg>
-                                    </div>
-                                    <div class="text-base font-medium text-gray-900 dark:text-white group-hover:text-gray-700 dark:group-hover:text-gray-200">Our Idea</div>
-                                </div>
-                                <div class="text-sm text-gray-600 dark:text-gray-400">View team's submitted idea</div>
-                            </Link>
-                            
-                            <!-- Browse Tracks -->
-                            <Link :href="route('team-member.tracks.index')"
-                                class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 hover:shadow-md transition-shadow border border-gray-200 dark:border-gray-700 group">
-                                <div class="flex items-center gap-3 mb-2">
-                                    <div class="w-8 h-8 rounded-lg flex items-center justify-center"
-                                        :style="{ backgroundColor: `${themeColor.primary}20` }">
-                                        <svg class="w-5 h-5" :style="{ color: themeColor.primary }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-                                        </svg>
-                                    </div>
-                                    <div class="text-base font-medium text-gray-900 dark:text-white group-hover:text-gray-700 dark:group-hover:text-gray-200">Browse Tracks</div>
-                                </div>
-                                <div class="text-sm text-gray-600 dark:text-gray-400">Explore available tracks</div>
-                            </Link>
-                            
-                            <!-- Workshops -->
-                            <Link :href="route('team-member.workshops.index')"
-                                class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 hover:shadow-md transition-shadow border border-gray-200 dark:border-gray-700 group">
-                                <div class="flex items-center gap-3 mb-2">
-                                    <div class="w-8 h-8 rounded-lg flex items-center justify-center"
-                                        :style="{ backgroundColor: `${themeColor.primary}20` }">
-                                        <svg class="w-5 h-5" :style="{ color: themeColor.primary }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-                                        </svg>
-                                    </div>
-                                    <div class="text-base font-medium text-gray-900 dark:text-white group-hover:text-gray-700 dark:group-hover:text-gray-200">Workshops</div>
-                                </div>
-                                <div class="text-sm text-gray-600 dark:text-gray-400">Join upcoming workshops</div>
-                            </Link>
+
+                <!-- Upcoming Workshops Card -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm flex items-start justify-between gap-6">
+                    <div class="flex-1 max-w-[573px]">
+                        <div class="mb-4">
+                            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-1">Upcoming Workshops</h3>
+                            <p class="text-sm leading-[21px]" :style="{ color: themeColor.primary }">
+                                See the schedule for upcoming workshops and training sessions.
+                            </p>
                         </div>
+                        <Link :href="route('team-member.workshops.index')"
+                              class="inline-flex items-center justify-center px-4 py-2 rounded-xl font-medium text-sm transition-colors"
+                              :style="{
+                                backgroundColor: themeColor.primary + '20',
+                                color: themeColor.primary
+                            }"
+                              @mouseenter="$event.target.style.backgroundColor = themeColor.primary + '30'"
+                              @mouseleave="$event.target.style.backgroundColor = themeColor.primary + '20'">
+                            View Workshops
+                        </Link>
+                    </div>
+                    <div class="w-[280px] h-[161px] rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-700">
+                        <svg class="w-full h-full" viewBox="0 0 280 161" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="280" height="161" :fill="themeColor.primary + '10'" />
+                            <rect x="40" y="40" width="200" height="100" rx="8" :fill="themeColor.primary + '20'" />
+                            <rect x="60" y="60" width="160" height="8" rx="4" :fill="themeColor.primary + '30'" />
+                            <rect x="60" y="80" width="120" height="8" rx="4" :fill="themeColor.primary + '25'" />
+                            <rect x="60" y="100" width="140" height="8" rx="4" :fill="themeColor.primary + '25'" />
+                            <circle cx="240" cy="40" r="15" :fill="themeColor.primary + '40'" />
+                            <text x="235" y="45" fill="white" font-size="14" font-weight="bold">{{ upcomingWorkshopsCount || '3' }}</text>
+                        </svg>
                     </div>
                 </div>
-                
-                <!-- Recent Activity -->
-                <div v-if="recentActivity?.length" class="self-stretch flex flex-col items-start justify-start p-4">
-                    <div class="self-stretch flex flex-col items-start justify-start gap-4">
-                        <div class="text-lg font-semibold text-gray-900 dark:text-white">Recent Activity</div>
-                        <div class="self-stretch space-y-2">
-                            <div v-for="activity in recentActivity" :key="activity.id"
-                                class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                                <div class="w-2 h-2 rounded-full" :style="{ backgroundColor: themeColor.primary }"></div>
-                                <div class="flex-1">
-                                    <div class="text-sm text-gray-900 dark:text-white">{{ activity.message }}</div>
-                                    <div class="text-xs text-gray-500 dark:text-gray-400">{{ formatDate(activity.created_at) }}</div>
-                                </div>
-                            </div>
+            </div>
+
+            <!-- Quick Stats Section -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="p-3 rounded-lg" :style="{ backgroundColor: themeColor.primary + '20' }">
+                            <svg class="w-6 h-6" :style="{ color: themeColor.primary }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                            </svg>
                         </div>
                     </div>
+                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white">{{ stats?.team_name || 'No Team' }}</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">My Team</p>
+                </div>
+
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="p-3 rounded-lg" :style="{ backgroundColor: themeColor.primary + '20' }">
+                            <svg class="w-6 h-6" :style="{ color: themeColor.primary }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ team?.track?.name || 'Not Selected' }}</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Current Track</p>
+                </div>
+
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="p-3 rounded-lg" :style="{ backgroundColor: themeColor.primary + '20' }">
+                            <svg class="w-6 h-6" :style="{ color: themeColor.primary }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white">{{ stats.workshops_registered || 0 }}</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Workshops Registered</p>
                 </div>
             </div>
         </div>
@@ -152,9 +163,12 @@ import Default from '@/Layouts/Default.vue'
 
 const props = defineProps({
     team: Object,
-    recentActivity: Array,
-    upcomingWorkshops: Array
+    idea: Object,
+    workshops: Array,
+    stats: Object
 })
+
+const upcomingWorkshopsCount = computed(() => props.workshops?.length || 0)
 
 // Theme color setup
 const themeColor = ref({
@@ -189,18 +203,20 @@ const themeStyles = computed(() => ({
     '--theme-gradient-from': themeColor.value.gradientFrom,
     '--theme-gradient-to': themeColor.value.gradientTo,
 }))
-
-const formatDate = (dateString) => {
-    if (!dateString) return ''
-    const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'short', 
-        day: 'numeric' 
-    })
-}
 </script>
 
 <style scoped>
-/* Theme styles are applied via CSS variables */
+input[type="text"]:focus,
+input[type="number"]:focus,
+input[type="date"]:focus,
+select:focus,
+textarea:focus {
+    border-color: var(--theme-primary) !important;
+    box-shadow: 0 0 0 3px rgba(var(--theme-rgb), 0.1) !important;
+}
+
+input[type="checkbox"]:checked {
+    background-color: var(--theme-primary) !important;
+    border-color: var(--theme-primary) !important;
+}
 </style>
