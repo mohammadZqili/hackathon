@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models;
+namespace App\Traits;
 
 // ... existing imports ...
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -33,7 +33,7 @@ trait HackathonAdminEditionTrait
      */
     public function primaryEdition()
     {
-        return $this->managedEditions()->where('is_active', true)->first() 
+        return $this->managedEditions()->where('is_active', true)->first()
                ?? $this->managedEditions()->latest()->first();
     }
 

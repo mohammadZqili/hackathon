@@ -284,6 +284,7 @@ Route::middleware(['auth', 'role:hackathon_admin'])->prefix('hackathon-admin')->
         Route::get('/ideas', [HackathonAdminReportController::class, 'ideas'])->name('ideas');
         Route::get('/workshops', [HackathonAdminReportController::class, 'workshops'])->name('workshops');
         Route::get('/system-health', [HackathonAdminReportController::class, 'systemHealth'])->name('system-health');
+        Route::get('/export', [HackathonAdminReportController::class, 'export'])->name('export');
         Route::post('/generate', [HackathonAdminReportController::class, 'generateReport'])->name('generate');
         Route::post('/export-pdf', [HackathonAdminReportController::class, 'exportPdf'])->name('export-pdf');
         Route::post('/schedule', [HackathonAdminReportController::class, 'scheduleReports'])->name('schedule');

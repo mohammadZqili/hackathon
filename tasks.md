@@ -636,6 +636,44 @@ Each task follows this structure:
 
 ---
 
+## Task #025
+**Date**: 2025-09-20
+**User Prompt**: "ok now i need from you to copy the same logic for reports in hackathon admin role from system admin , the same pages and statistics for each edition, so when cliked on reports on role hackathond admin from the sidebar menues , then thee same edition reports pages in the system admin will be appeared , i need from you to copy files of frontend if not exist and use the same service logic , if not exist , move system admin controller logic to the service and reuse it in hackathon admin controller"
+
+**Solution**: Copied Reports functionality from SystemAdmin to HackathonAdmin with shared service layer
+
+**Files Affected**:
+- `resources/js/Pages/HackathonAdmin/Reports/Index.vue` (copied from SystemAdmin and updated routes)
+- `app/Http/Controllers/HackathonAdmin/ReportController.php` (refactored to use ReportService)
+- `routes/hackathon.php` (added export route)
+- `app/Services/ReportService.php` (already had all necessary logic)
+
+**Code Summary**:
+1. **Frontend Copy**: Copied SystemAdmin/Reports/Index.vue to HackathonAdmin and updated all routes from `system-admin` to `hackathon-admin`
+2. **Controller Refactoring**:
+   - Replaced custom logic with ReportService usage
+   - Now uses same service methods as SystemAdmin
+   - Added export() and generateCSVContent() methods
+3. **Route Addition**: Added `/export` route to hackathon-admin reports routes
+4. **Service Layer**: ReportService already contained all necessary methods from SystemAdmin implementation
+
+**Implementation Details**:
+- Both SystemAdmin and HackathonAdmin now share the same ReportService
+- Frontend components are identical except for route names
+- Export functionality works the same way for both roles
+- CSV generation uses the same format
+- All statistics and charts render identically
+
+**Benefits**:
+- Code reusability through service layer
+- Consistent functionality across roles
+- Easy maintenance (single service to update)
+- No duplication of business logic
+
+**Status**: Completed
+
+---
+
 ## Notes
 - Tasks should be updated in real-time as work progresses
 - Each task should include enough detail for future reference
