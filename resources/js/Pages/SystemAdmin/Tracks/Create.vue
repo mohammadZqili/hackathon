@@ -26,7 +26,7 @@
             <!-- Form -->
             <form @submit.prevent="submit" class="space-y-6">
                 <!-- Basic Information -->
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
                     <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4" :class="{ 'rtl': isRTL }">
                         {{ t('admin.form.basic_information') }}
                     </h2>
@@ -170,14 +170,26 @@
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 {{ t('admin.tracks.assigned_supervisor') }}
                             </label>
-                            <select v-model="form.supervisor_id"
-                                    class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-opacity-50 focus:border-transparent transition-all duration-200"
-                                    :style="{ '--tw-ring-color': themeColor.primary }">
-                                <option value="">{{ t('admin.tracks.select_supervisor') }}</option>
-                                <option v-for="supervisor in supervisors" :key="supervisor.id" :value="supervisor.id">
-                                    {{ supervisor.name }} - {{ supervisor.user_type === 'system_admin' ? 'System Admin' : 'Track Supervisor' }}
-                                </option>
-                            </select>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                    </svg>
+                                </div>
+                                <select v-model="form.supervisor_id"
+                                        class="pl-10 w-full h-12 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-opacity-50 focus:border-transparent transition-all duration-200 appearance-none cursor-pointer"
+                                        :style="{ '--tw-ring-color': themeColor.primary }">
+                                    <option value="">{{ t('admin.tracks.select_supervisor') }}</option>
+                                    <option v-for="supervisor in supervisors" :key="supervisor.id" :value="supervisor.id">
+                                        {{ supervisor.name }}
+                                    </option>
+                                </select>
+                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                    <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                    </svg>
+                                </div>
+                            </div>
                             <p v-if="form.errors.supervisor_id" class="mt-1 text-sm text-red-600">{{ form.errors.supervisor_id }}</p>
                         </div>
 
@@ -190,7 +202,7 @@
                                 <div v-for="(criterion, index) in form.evaluation_criteria" :key="index" class="flex items-center space-x-2">
                                     <input v-model="form.evaluation_criteria[index]"
                                            type="text"
-                                           class="flex-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-opacity-50 focus:border-transparent transition-all duration-200"
+                                           class="flex-1 h-12 px-4 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-opacity-50 focus:border-transparent transition-all duration-200"
                                            :style="{ '--tw-ring-color': themeColor.primary }"
                                            :placeholder="`${t('admin.tracks.criterion')} ${index + 1}`">
                                     <button @click="removeCriterion(index)"
@@ -203,7 +215,7 @@
                                 </div>
                                 <button @click="addCriterion"
                                         type="button"
-                                        class="inline-flex items-center px-3 py-2 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-500 transition-colors">
+                                        class="inline-flex items-center px-4 py-3 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-500 transition-colors">
                                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                                     </svg>
@@ -217,15 +229,14 @@
                 <!-- Form Actions -->
                 <div class="flex justify-end space-x-4 pt-6">
                     <Link :href="route('system-admin.tracks.index')"
-                          class="px-8 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 font-medium">
+                          class="px-8 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 font-medium">
                         {{ t('admin.buttons.cancel') }}
                     </Link>
                     <button type="submit"
                             :disabled="form.processing"
                             class="px-8 py-3 rounded-lg text-white font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                             :style="{
-                                backgroundColor: form.processing ? '#9CA3AF' : themeColor.primary,
-                                ':hover': { backgroundColor: themeColor.hover }
+                                background: `linear-gradient(135deg, ${themeColor.primary}, ${themeColor.hover})`,
                             }">
                         <span v-if="!form.processing" class="flex items-center">
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

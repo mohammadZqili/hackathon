@@ -125,8 +125,11 @@
                                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <div class="w-2 h-2 rounded-full"
                                          :class="{
+                                             'bg-gray-400': form.status === 'draft',
                                              'bg-green-500': form.status === 'active',
-                                             'bg-gray-500': form.status === 'inactive',
+                                             'bg-blue-500': form.status === 'submitted',
+                                             'bg-emerald-500': form.status === 'accepted',
+                                             'bg-orange-500': form.status === 'rejected',
                                              'bg-red-500': form.status === 'disqualified'
                                          }"></div>
                                 </div>
@@ -134,9 +137,12 @@
                                         id="status"
                                         class="pl-10 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-opacity-50 focus:border-transparent transition-all duration-200 appearance-none cursor-pointer"
                                         :style="{ '--tw-ring-color': themeColor.primary }">
-                                    <option value="active">{{ t('admin.status.active') }}</option>
-                                    <option value="inactive">{{ t('admin.status.inactive') }}</option>
-                                    <option value="disqualified">{{ t('admin.teams.disqualified') }}</option>
+                                    <option value="draft">{{ t('admin.status.draft') || 'Draft' }}</option>
+                                    <option value="active">{{ t('admin.status.active') || 'Active' }}</option>
+                                    <option value="submitted">{{ t('admin.status.submitted') || 'Submitted' }}</option>
+                                    <option value="accepted">{{ t('admin.status.accepted') || 'Accepted' }}</option>
+                                    <option value="rejected">{{ t('admin.status.rejected') || 'Rejected' }}</option>
+                                    <option value="disqualified">{{ t('admin.teams.disqualified') || 'Disqualified' }}</option>
                                 </select>
                                 <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                                     <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -292,7 +298,7 @@ const form = useForm({
     description: props.team.description || '',
     edition_id: props.team.edition_id || '',
     max_members: props.team.max_members || 5,
-    status: props.team.status || 'active',
+    status: props.team.status || 'draft',
     leader_id: props.team.leader_id
 })
 

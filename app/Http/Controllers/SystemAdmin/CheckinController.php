@@ -14,52 +14,62 @@ use Illuminate\Support\Str;
 class CheckinController extends Controller
 {
     /**
-     * Display the check-ins management page.
+     * Display workshops list for check-ins.
      */
-    public function index(Request $request)
+    public function workshops()
     {
-        // Get active workshops for selection
-        $workshops = Workshop::with(['edition', 'speakers', 'organizations', 'registrations'])
+        $workshops = Workshop::with(['speakers', 'organizations', 'registrations'])
             ->where('is_active', true)
             ->orderBy('start_time', 'asc')
             ->get()
             ->map(function ($workshop) {
+                $registrations = $workshop->registrations;
                 return [
                     'id' => $workshop->id,
                     'title' => $workshop->title,
-                    'date_time' => Carbon::parse($workshop->start_time)->format('M d, Y h:i A'),
-                    'edition' => $workshop->edition ? $workshop->edition->name : 'N/A',
+                    'description' => $workshop->description,
+                    'start_time' => $workshop->start_time,
+                    'date_time' => $workshop->start_time,
                     'speakers' => $workshop->speakers->pluck('name')->implode(', '),
-                    'seats' => $workshop->max_attendees ?? 0,
-                    'registered_count' => $workshop->registrations()->count(),
+                    'max_attendees' => $workshop->max_attendees,
+                    'seats' => $workshop->max_attendees,
+                    'registered_count' => $registrations->count(),
+                    'checked_in_count' => $registrations->whereNotNull('attended_at')->count(),
                 ];
             });
 
-        // Get recent check-ins (last 50)
-        $recentCheckIns = WorkshopRegistration::with(['user', 'workshop'])
-            ->whereNotNull('attended_at')
-            ->orderBy('attended_at', 'desc')
-            ->take(50)
-            ->get()
-            ->map(function ($registration) {
-                return [
-                    'id' => $registration->id,
-                    'name' => $registration->user->name ?? 'Guest',
-                    'email' => $registration->user->email ?? 'N/A',
-                    'workshop' => $registration->workshop->title ?? 'N/A',
-                    'checkinTime' => Carbon::parse($registration->attended_at)->format('h:i A, M d, Y'),
-                    'registered' => $registration->user_id !== null,
-                    'barcode' => $registration->barcode,
-                ];
-            });
-
-        // Calculate statistics
-        $stats = $this->calculateStatistics($request->get('workshop_id'));
-
-        return Inertia::render('SystemAdmin/Checkins/Index', [
+        return Inertia::render('SystemAdmin/Checkins/Workshops', [
             'workshops' => $workshops,
-            'recentCheckIns' => $recentCheckIns,
-            'stats' => $stats,
+        ]);
+    }
+
+    /**
+     * Display the check-ins management page.
+     */
+    public function index(Request $request)
+    {
+        $workshops = Workshop::with(['speakers', 'organizations', 'registrations'])
+            ->where('is_active', true)
+            ->orderBy('start_time', 'asc')
+            ->get()
+            ->map(function ($workshop) {
+                $registrations = $workshop->registrations;
+                return [
+                    'id' => $workshop->id,
+                    'title' => $workshop->title,
+                    'description' => $workshop->description,
+                    'start_time' => $workshop->start_time,
+                    'date_time' => $workshop->start_time,
+                    'speakers' => $workshop->speakers->pluck('name')->implode(', '),
+                    'max_attendees' => $workshop->max_attendees,
+                    'seats' => $workshop->max_attendees,
+                    'registered_count' => $registrations->count(),
+                    'checked_in_count' => $registrations->whereNotNull('attended_at')->count(),
+                ];
+            });
+
+        return Inertia::render('SystemAdmin/Checkins/Workshops', [
+            'workshops' => $workshops,
         ]);
     }
 
@@ -130,7 +140,7 @@ class CheckinController extends Controller
         if (!$registration) {
             // Create walk-in registration with generated user ID
             $guestUserId = $this->getOrCreateGuestUser($code);
-            
+
             $registration = WorkshopRegistration::create([
                 'workshop_id' => $workshopId,
                 'user_id' => $guestUserId,
@@ -144,7 +154,7 @@ class CheckinController extends Controller
             ]);
 
             $workshop = Workshop::find($workshopId);
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Walk-in attendee checked in successfully.',
@@ -162,7 +172,7 @@ class CheckinController extends Controller
         if ($registration->attended_at) {
             $user = $registration->user;
             $workshop = $registration->workshop;
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Already checked in at ' . Carbon::parse($registration->attended_at)->format('h:i A'),
@@ -210,7 +220,7 @@ class CheckinController extends Controller
     {
         // Generate a unique guest user ID
         $guestId = 'guest_' . Str::random(10);
-        
+
         // You might want to create actual guest user records
         // For now, we'll use the auth user ID
         return auth()->id();
@@ -222,7 +232,7 @@ class CheckinController extends Controller
     public function generateQR($registrationId)
     {
         $registration = WorkshopRegistration::with(['workshop', 'user'])->findOrFail($registrationId);
-        
+
         // Generate QR code content
         $qrContent = sprintf(
             'WORKSHOP_%d_REG_%d_CODE_%s',
@@ -230,7 +240,7 @@ class CheckinController extends Controller
             $registration->id,
             $registration->barcode
         );
-        
+
         return response()->json([
             'qr_content' => $qrContent,
             'registration' => [
@@ -327,20 +337,20 @@ class CheckinController extends Controller
     public function export(Request $request)
     {
         $workshopId = $request->get('workshop_id');
-        
+
         $query = WorkshopRegistration::with(['user', 'workshop']);
-        
+
         if ($workshopId) {
             $query->where('workshop_id', $workshopId);
         }
-        
+
         $registrations = $query->whereNotNull('attended_at')
             ->orderBy('attended_at', 'desc')
             ->get();
 
         // Generate CSV
         $csvData = "Name,Email,Workshop,Check-in Time,Status\n";
-        
+
         foreach ($registrations as $registration) {
             $csvData .= sprintf(
                 "%s,%s,%s,%s,%s\n",
@@ -363,7 +373,7 @@ class CheckinController extends Controller
     private function calculateStatistics($workshopId = null)
     {
         $query = WorkshopRegistration::query();
-        
+
         if ($workshopId) {
             $query->where('workshop_id', $workshopId);
         }
@@ -378,6 +388,73 @@ class CheckinController extends Controller
             'unregistered' => $walkIns,
             'attendance_rate' => $registered > 0 ? round(($attendees / $registered) * 100, 1) : 0,
         ];
+    }
+
+    /**
+     * Display specific workshop check-in page.
+     */
+    public function workshopCheckIn($workshopId)
+    {
+        try {
+            $workshop = Workshop::with(['registrations.user', 'speakers', 'organizations'])
+                ->findOrFail($workshopId);
+
+            // Get recent check-ins for this workshop
+            $recentCheckIns = $workshop->registrations()
+                ->with('user')
+                ->whereNotNull('attended_at')
+                ->orderBy('attended_at', 'desc')
+                ->get()
+                ->map(function ($registration) {
+                    return [
+                        'id' => $registration->id,
+                        'name' => $registration->user->name ?? 'Guest',
+                        'email' => $registration->user->email ?? 'N/A',
+                        'checkinTime' => Carbon::parse($registration->attended_at)->format('h:i A, M d, Y'),
+                        'registered' => $registration->user_id !== null,
+                        'barcode' => $registration->barcode,
+                    ];
+                });
+
+            // Calculate workshop statistics
+            $stats = [
+                'registered' => $workshop->registrations()->count(),
+                'attendees' => $workshop->registrations()->whereNotNull('attended_at')->count(),
+                'unregistered' => $workshop->registrations()->whereNull('user_id')->whereNotNull('attended_at')->count(),
+            ];
+
+            // Format workshop data
+            $workshopData = [
+                'id' => $workshop->id,
+                'title' => $workshop->title,
+                'description' => $workshop->description,
+                'start_time' => $workshop->start_time,
+                'date_time' => $workshop->start_time ? Carbon::parse($workshop->start_time)->format('M d, Y h:i A') : null,
+                'speakers' => $workshop->speakers->pluck('name')->implode(', '),
+            ];
+
+            // Get active workshops for dropdown
+            $workshops = Workshop::where('is_active', true)
+                ->orderBy('start_time', 'asc')
+                ->get()
+                ->map(function ($w) {
+                    return [
+                        'id' => $w->id,
+                        'title' => $w->title,
+                    ];
+                });
+
+            return Inertia::render('SystemAdmin/Checkins/WorkshopDetail', [
+                'workshop' => $workshopData,
+                'recentCheckIns' => $recentCheckIns,
+                'stats' => $stats,
+                'selectedWorkshop' => $workshopId,
+                'workshops' => $workshops,
+            ]);
+
+        } catch (\Exception $e) {
+            return redirect()->back()->withErrors(['error' => 'Workshop not found.']);
+        }
     }
 
     /**
@@ -410,7 +487,7 @@ class CheckinController extends Controller
             'registered' => $workshop->registrations()->count(),
             'attended' => $workshop->registrations()->whereNotNull('attended_at')->count(),
             'walk_ins' => $workshop->registrations()->whereNull('user_id')->count(),
-            'attendance_rate' => $workshop->registrations()->count() > 0 
+            'attendance_rate' => $workshop->registrations()->count() > 0
                 ? round(($workshop->registrations()->whereNotNull('attended_at')->count() / $workshop->registrations()->count()) * 100, 1)
                 : 0,
         ];

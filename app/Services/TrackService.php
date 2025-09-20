@@ -340,8 +340,8 @@ class TrackService extends BaseService
      */
     protected function getAvailableSupervisors(User $user): Collection
     {
-        // Get users with track_supervisor role or system_admin role
-        return \App\Models\User::whereIn('user_type', ['system_admin', 'track_supervisor'])
+        // Get users with track_supervisor role only (excluding system_admin)
+        return \App\Models\User::where('user_type', 'track_supervisor')
             ->where('is_active', true)
             ->orderBy('name')
             ->get(['id', 'name', 'email', 'user_type']);
@@ -446,11 +446,15 @@ class TrackService extends BaseService
     {
         switch ($user->user_type) {
             case 'system_admin':
-                return \App\Models\Hackathon::all(['id', 'name']);
+                return \App\Models\Hackathon::where('is_active', true)
+                    ->orderBy('name')
+                    ->get(['id', 'name']);
             case 'hackathon_admin':
             case 'track_supervisor':
-                // For now, return all hackathons - can be filtered later based on requirements
-                return \App\Models\Hackathon::all(['id', 'name']);
+                // Return only active hackathons
+                return \App\Models\Hackathon::where('is_active', true)
+                    ->orderBy('name')
+                    ->get(['id', 'name']);
             default:
                 return collect();
         }
@@ -463,16 +467,26 @@ class TrackService extends BaseService
     {
         switch ($user->user_type) {
             case 'system_admin':
-                return $this->editionRepository->all();
+                // Return only active editions
+                return \App\Models\HackathonEdition::where(function($query) {
+                    $query->where('is_current', true)
+                          ->orWhere('status', 'active');
+                })
+                    ->orderBy('created_at', 'desc')
+                    ->get(['id', 'name', 'event_start_date', 'event_end_date', 'is_current', 'status']);
 
             case 'hackathon_admin':
                 if ($user->edition_id) {
-                    return collect([$this->editionRepository->find($user->edition_id)]);
+                    $edition = $this->editionRepository->find($user->edition_id);
+                    // Only return if the edition is active
+                    if ($edition && ($edition->is_current || $edition->status === 'active')) {
+                        return collect([$edition]);
+                    }
                 }
                 return collect();
 
             case 'track_supervisor':
-                // Get editions from supervised tracks
+                // Get editions from supervised tracks, but only active ones
                 $tracks = $this->trackRepository->getTracksBySupervisor((int) $user->id);
                 $editionIds = $tracks->pluck('edition_id')->unique()->filter();
 
@@ -480,7 +494,12 @@ class TrackService extends BaseService
                     return collect();
                 }
 
-                return $this->editionRepository->findManyBy('id', $editionIds->toArray());
+                return \App\Models\HackathonEdition::whereIn('id', $editionIds->toArray())
+                    ->where(function($query) {
+                        $query->where('is_current', true)->orWhere('status', 'active');
+                    })
+                    ->orderBy('created_at', 'desc')
+                    ->get(['id', 'name', 'event_start_date', 'event_end_date', 'is_current', 'status']);
 
             default:
                 return collect();

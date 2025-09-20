@@ -288,6 +288,34 @@ grep -r "import Default from" resources/js/Pages --include="*.vue" | grep -v "@/
 
 ---
 
+---
+
+### Hackathon Editions Column Name Mismatch
+**Issue:** SQLSTATE[42S22]: Column not found: 1054 Unknown column 'start_date' in 'field list'
+**Roles Affected:** SystemAdmin, HackathonAdmin, TrackSupervisor
+**When:** Loading Tracks Create/Edit pages that fetch editions
+**Console Error:** `SQLSTATE[42S22]: Column not found: 1054 Unknown column 'start_date' in 'field list'`
+**Fix:** Use correct column names from hackathon_editions table
+
+#### Root Cause:
+- TrackService->getEditionsForUser() was selecting wrong column names
+- Table has `event_start_date` and `event_end_date`, not `start_date`/`end_date`
+- Table uses `status` column (with values like 'active'), not boolean `is_active`
+
+#### Applied Fix:
+- Changed `start_date` → `event_start_date`
+- Changed `end_date` → `event_end_date`
+- Changed `is_active` checks → `status = 'active'`
+- Added `status` to select list for proper data retrieval
+
+#### Database Structure Reference:
+- hackathon_editions table columns:
+  - `event_start_date`, `event_end_date` (NOT start_date/end_date)
+  - `status` enum ('draft', 'active', 'completed', 'archived')
+  - `is_current` boolean flag
+
+---
+
 ## Prevention Guidelines
 
 1. **Always verify file exists** before navigation routes
@@ -296,3 +324,4 @@ grep -r "import Default from" resources/js/Pages --include="*.vue" | grep -v "@/
 4. **Verify import paths** match directory structure
 5. **Keep concerns separated** - one form for one purpose
 6. **Verify model relationships exist** before trying to load them
+7. **Always check actual database column names** in migrations before writing queries

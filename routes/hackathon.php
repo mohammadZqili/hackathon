@@ -168,6 +168,7 @@ Route::middleware(['auth', 'role:system_admin|permission:manage-hackathon-editio
         Route::get('/ideas', [SystemAdminReportController::class, 'ideas'])->name('ideas');
         Route::get('/workshops', [SystemAdminReportController::class, 'workshops'])->name('workshops');
         Route::get('/system-health', [SystemAdminReportController::class, 'systemHealth'])->name('system-health');
+        Route::get('/export', [SystemAdminReportController::class, 'export'])->name('export');
         Route::post('/generate', [SystemAdminReportController::class, 'generateReport'])->name('generate');
         Route::post('/export-pdf', [SystemAdminReportController::class, 'exportPdf'])->name('export-pdf');
         Route::post('/schedule', [SystemAdminReportController::class, 'scheduleReports'])->name('schedule');
@@ -176,11 +177,12 @@ Route::middleware(['auth', 'role:system_admin|permission:manage-hackathon-editio
     // Check-ins Management
     Route::prefix('checkins')->name('checkins.')->group(function () {
         Route::get('/', [SystemAdminCheckinController::class, 'index'])->name('index');
+        Route::get('/workshops', [SystemAdminCheckinController::class, 'workshops'])->name('workshops');
+        Route::get('/workshop/{workshop}', [SystemAdminCheckinController::class, 'workshopCheckIn'])->name('workshop.detail');
         Route::post('/process-qr', [SystemAdminCheckinController::class, 'processQR'])->name('process-qr');
         Route::post('/mark-attendance', [SystemAdminCheckinController::class, 'markAttendance'])->name('mark-attendance');
         Route::get('/search', [SystemAdminCheckinController::class, 'search'])->name('search');
         Route::get('/export', [SystemAdminCheckinController::class, 'export'])->name('export');
-        Route::get('/workshop/{workshop}', [SystemAdminCheckinController::class, 'workshopAttendance'])->name('workshop-attendance');
         Route::get('/generate-qr/{registration}', [SystemAdminCheckinController::class, 'generateQR'])->name('generate-qr');
     });
 });
@@ -290,11 +292,12 @@ Route::middleware(['auth', 'role:hackathon_admin'])->prefix('hackathon-admin')->
     // Check-ins Management
     Route::prefix('checkins')->name('checkins.')->group(function () {
         Route::get('/', [HackathonAdminCheckinController::class, 'index'])->name('index');
+        Route::get('/workshops', [HackathonAdminCheckinController::class, 'workshops'])->name('workshops');
+        Route::get('/workshop/{workshop}', [HackathonAdminCheckinController::class, 'workshopCheckIn'])->name('workshop.detail');
         Route::post('/process-qr', [HackathonAdminCheckinController::class, 'processQR'])->name('process-qr');
         Route::post('/mark-attendance', [HackathonAdminCheckinController::class, 'markAttendance'])->name('mark-attendance');
         Route::get('/search', [HackathonAdminCheckinController::class, 'search'])->name('search');
         Route::get('/export', [HackathonAdminCheckinController::class, 'export'])->name('export');
-        Route::get('/workshop/{workshop}', [HackathonAdminCheckinController::class, 'workshopAttendance'])->name('workshop-attendance');
         Route::get('/generate-qr/{registration}', [HackathonAdminCheckinController::class, 'generateQR'])->name('generate-qr');
     });
 });

@@ -14,6 +14,36 @@ use Illuminate\Support\Str;
 class CheckinController extends Controller
 {
     /**
+     * Display workshops list for check-ins.
+     */
+    public function workshops()
+    {
+        $workshops = Workshop::with(['speakers', 'organizations', 'registrations'])
+            ->where('is_active', true)
+            ->orderBy('start_time', 'asc')
+            ->get()
+            ->map(function ($workshop) {
+                $registrations = $workshop->registrations;
+                return [
+                    'id' => $workshop->id,
+                    'title' => $workshop->title,
+                    'description' => $workshop->description,
+                    'start_time' => $workshop->start_time,
+                    'date_time' => $workshop->start_time,
+                    'speakers' => $workshop->speakers->pluck('name')->implode(', '),
+                    'max_attendees' => $workshop->max_attendees,
+                    'seats' => $workshop->max_attendees,
+                    'registered_count' => $registrations->count(),
+                    'checked_in_count' => $registrations->whereNotNull('attended_at')->count(),
+                ];
+            });
+
+        return Inertia::render('HackathonAdmin/Checkins/Workshops', [
+            'workshops' => $workshops,
+        ]);
+    }
+
+    /**
      * Display the check-ins management page.
      */
     public function index(Request $request)
@@ -378,6 +408,73 @@ class CheckinController extends Controller
             'unregistered' => $walkIns,
             'attendance_rate' => $registered > 0 ? round(($attendees / $registered) * 100, 1) : 0,
         ];
+    }
+
+    /**
+     * Display specific workshop check-in page.
+     */
+    public function workshopCheckIn($workshopId)
+    {
+        try {
+            $workshop = Workshop::with(['registrations.user', 'speakers', 'organizations'])
+                ->findOrFail($workshopId);
+
+            // Get recent check-ins for this workshop
+            $recentCheckIns = $workshop->registrations()
+                ->with('user')
+                ->whereNotNull('attended_at')
+                ->orderBy('attended_at', 'desc')
+                ->get()
+                ->map(function ($registration) {
+                    return [
+                        'id' => $registration->id,
+                        'name' => $registration->user->name ?? 'Guest',
+                        'email' => $registration->user->email ?? 'N/A',
+                        'checkinTime' => Carbon::parse($registration->attended_at)->format('h:i A, M d, Y'),
+                        'registered' => $registration->user_id !== null,
+                        'barcode' => $registration->barcode,
+                    ];
+                });
+
+            // Calculate workshop statistics
+            $stats = [
+                'registered' => $workshop->registrations()->count(),
+                'attendees' => $workshop->registrations()->whereNotNull('attended_at')->count(),
+                'unregistered' => $workshop->registrations()->whereNull('user_id')->whereNotNull('attended_at')->count(),
+            ];
+
+            // Format workshop data
+            $workshopData = [
+                'id' => $workshop->id,
+                'title' => $workshop->title,
+                'description' => $workshop->description,
+                'start_time' => $workshop->start_time,
+                'date_time' => $workshop->start_time ? Carbon::parse($workshop->start_time)->format('M d, Y h:i A') : null,
+                'speakers' => $workshop->speakers->pluck('name')->implode(', '),
+            ];
+
+            // Get active workshops for dropdown
+            $workshops = Workshop::where('is_active', true)
+                ->orderBy('start_time', 'asc')
+                ->get()
+                ->map(function ($w) {
+                    return [
+                        'id' => $w->id,
+                        'title' => $w->title,
+                    ];
+                });
+
+            return Inertia::render('HackathonAdmin/Checkins/WorkshopDetail', [
+                'workshop' => $workshopData,
+                'recentCheckIns' => $recentCheckIns,
+                'stats' => $stats,
+                'selectedWorkshop' => $workshopId,
+                'workshops' => $workshops,
+            ]);
+
+        } catch (\Exception $e) {
+            return redirect()->back()->withErrors(['error' => 'Workshop not found.']);
+        }
     }
 
     /**
