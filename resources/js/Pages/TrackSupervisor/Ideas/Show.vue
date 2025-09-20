@@ -15,6 +15,7 @@ const props = defineProps({
     idea: Object,
     reviewHistory: Array,
     scoring: Object,
+    instructions: Array
 })
 
 // Comments form
@@ -110,6 +111,17 @@ const formatDateTime = (date) => {
         minute: '2-digit',
         hour12: false
     })
+}
+
+const formatDate = (dateString) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffInDays = Math.floor((now - date) / (1000 * 60 * 60 * 24))
+
+    if (diffInDays === 0) return 'Today'
+    if (diffInDays === 1) return '1 day ago'
+    if (diffInDays < 7) return `${diffInDays} days ago`
+    return date.toLocaleDateString()
 }
 
 // Get actual uploaded documents
@@ -418,17 +430,75 @@ const downloadDocument = (file) => {
 <!--                </div>-->
 <!--            </div>-->
 
-            <!-- Instructions Tab Content -->
+            <!-- Instructions/Responses Tab Content -->
             <div v-show="activeTab === 'responses'" class="space-y-6">
-                <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6">Track Instructions</h2>
+                <!-- Active Instructions -->
+                <div>
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6">Active Instructions</h2>
 
-                <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-                    <div v-if="idea.track?.instructions" class="prose dark:prose-invert max-w-none">
-                        <div v-html="idea.track.instructions"></div>
+                    <div v-if="instructions && instructions.length > 0" class="space-y-4">
+                        <div v-for="instruction in instructions" :key="instruction.id"
+                            class="bg-white dark:bg-gray-800 rounded-lg p-6 border-l-4"
+                            :class="{
+                                'border-orange-500': instruction.user_role === 'supervisor',
+                                'border-blue-500': instruction.user_role === 'team_leader'
+                            }">
+                            <div class="flex items-start gap-4">
+                                <div class="w-10 h-10 rounded-full flex items-center justify-center"
+                                    :class="{
+                                        'bg-orange-100 dark:bg-orange-900': instruction.user_role === 'supervisor',
+                                        'bg-blue-100 dark:bg-blue-900': instruction.user_role === 'team_leader'
+                                    }">
+                                    <span class="text-sm font-medium"
+                                        :class="{
+                                            'text-orange-600 dark:text-orange-300': instruction.user_role === 'supervisor',
+                                            'text-blue-600 dark:text-blue-300': instruction.user_role === 'team_leader'
+                                        }">
+                                        {{ instruction.user?.name?.charAt(0) || (instruction.user_role === 'supervisor' ? 'S' : 'L') }}
+                                    </span>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <div>
+                                            <span class="font-semibold">{{ instruction.user?.name || 'Unknown' }}</span>
+                                            <span class="ml-2 text-xs px-2 py-1 rounded-full"
+                                                :class="{
+                                                    'bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-300': instruction.user_role === 'supervisor',
+                                                    'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300': instruction.user_role === 'team_leader'
+                                                }">
+                                                {{ instruction.user_role === 'supervisor' ? 'Track Supervisor' : 'Team Leader' }}
+                                            </span>
+                                        </div>
+                                        <span class="text-xs text-gray-500 dark:text-gray-400">
+                                            {{ formatDate(instruction.created_at) }}
+                                        </span>
+                                    </div>
+                                    <div class="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                                        {{ instruction.instruction_text }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div v-else class="text-center py-8 text-gray-500 dark:text-gray-400">
-                        <p>No specific instructions have been provided for this track yet.</p>
-                        <p class="text-sm mt-2">Please follow the general hackathon guidelines and feel free to ask questions in the comments.</p>
+
+                    <div v-else class="bg-gray-50 dark:bg-gray-800 rounded-lg p-8 text-center">
+                        <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <p class="text-gray-500 dark:text-gray-400">No instructions have been added yet.</p>
+                    </div>
+                </div>
+
+                <!-- Info about automatic instructions -->
+                <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 mt-6">
+                    <div class="flex items-start gap-3">
+                        <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                        </svg>
+                        <div class="text-sm text-blue-800 dark:text-blue-200">
+                            <p class="font-semibold mb-1">Note: Feedback becomes instructions automatically</p>
+                            <p>When you provide feedback in the Overview tab while reviewing an idea, it will automatically appear as instructions for the team to follow.</p>
+                        </div>
                     </div>
                 </div>
             </div>

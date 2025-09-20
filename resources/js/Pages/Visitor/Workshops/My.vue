@@ -2,8 +2,9 @@
 import { Head } from '@inertiajs/vue3'
 import Default from '../../../Layouts/Default.vue'
 import PageHeader from '../../../Components/Shared/PageHeader.vue'
-import { ref, computed, onMounted } from 'vue'
-import { CalendarIcon, ClockIcon, UserGroupIcon, AcademicCapIcon, MapPinIcon, UserIcon, CheckCircleIcon } from '@heroicons/vue/24/outline'
+import { ref, computed, onMounted, nextTick } from 'vue'
+import { CalendarIcon, ClockIcon, UserIcon, MapPinIcon } from '@heroicons/vue/24/outline'
+import QRCode from 'qrcode'
 
 const props = defineProps({
     workshops: Array,
@@ -44,321 +45,160 @@ const themeStyles = computed(() => ({
     '--theme-gradient-to': themeColor.value.gradientTo,
 }))
 
+// QR Code Modal State
+const showBarcodeModal = ref(false)
+const selectedWorkshop = ref(null)
+const qrCanvas = ref(null)
+
+const viewBarcode = async (workshop) => {
+    selectedWorkshop.value = workshop
+    showBarcodeModal.value = true
+
+    // Generate QR code after modal is shown
+    await nextTick()
+    if (qrCanvas.value && workshop.barcode) {
+        await generateQRCode(workshop)
+    }
+}
+
+const closeBarcodeModal = () => {
+    showBarcodeModal.value = false
+    selectedWorkshop.value = null
+}
+
+const generateQRCode = async (workshop) => {
+    if (!qrCanvas.value) return
+
+    // Create QR content in the same format as backend
+    // Format: WORKSHOP_{id}_REG_{registration_id}_CODE_{barcode}
+    let qrContent = `WORKSHOP_${workshop.id}`
+
+    if (workshop.registration_id) {
+        qrContent += `_REG_${workshop.registration_id}`
+    }
+
+    if (workshop.barcode) {
+        qrContent += `_CODE_${workshop.barcode}`
+    }
+
+    try {
+        await QRCode.toCanvas(qrCanvas.value, qrContent, {
+            width: 256,
+            margin: 2,
+            color: {
+                dark: '#000000',
+                light: '#FFFFFF'
+            }
+        })
+    } catch (error) {
+        console.error('Failed to generate QR code:', error)
+    }
+}
+
 const formatDate = (dateString) => {
+    if (!dateString) return ''
     return new Date(dateString).toLocaleDateString('en-US', {
-        weekday: 'short',
         year: 'numeric',
-        month: 'short',
+        month: 'long',
         day: 'numeric'
     })
 }
 
 const formatTime = (timeString) => {
-    return new Date(`2000-01-01T${timeString}`).toLocaleTimeString('en-US', {
+    if (!timeString) return ''
+    // Handle both full datetime and time-only strings
+    const time = timeString.includes('T') ? timeString.split('T')[1] : timeString
+    return new Date(`2000-01-01T${time}`).toLocaleTimeString('en-US', {
         hour: 'numeric',
         minute: '2-digit',
         hour12: true
     })
 }
 
-const getWorkshopStatus = (workshop) => {
-    const now = new Date()
-    const startTime = new Date(`${workshop.date}T${workshop.start_time}`)
-    const endTime = new Date(`${workshop.date}T${workshop.end_time}`)
-    
-    if (now < startTime) {
-        return { 
-            text: 'Upcoming', 
-            class: 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400',
-            icon: CalendarIcon 
-        }
-    } else if (now >= startTime && now <= endTime) {
-        return { 
-            text: 'In Progress', 
-            class: 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400',
-            icon: ClockIcon 
-        }
-    } else {
-        return { 
-            text: 'Completed', 
-            class: 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400',
-            icon: CheckCircleIcon 
-        }
-    }
+const formatDateTime = (workshop) => {
+    if (!workshop.date) return ''
+
+    const dateStr = formatDate(workshop.date)
+    const startTime = formatTime(workshop.start_time_formatted)
+    const endTime = formatTime(workshop.end_time_formatted)
+
+    return `Date: ${dateStr} | Time: ${startTime} - ${endTime}`
 }
 
-const groupWorkshopsByStatus = computed(() => {
-    const groups = {
-        upcoming: [],
-        inProgress: [],
-        completed: []
+const getSpeakerInfo = (workshop) => {
+    if (workshop.speakers && workshop.speakers.length > 0) {
+        const speaker = workshop.speakers[0]
+        return `Speaker: ${speaker.name || speaker.title || 'TBA'}`
     }
-    
-    if (props.workshops) {
-        props.workshops.forEach(workshop => {
-            const status = getWorkshopStatus(workshop)
-            if (status.text === 'Upcoming') {
-                groups.upcoming.push(workshop)
-            } else if (status.text === 'In Progress') {
-                groups.inProgress.push(workshop)
-            } else {
-                groups.completed.push(workshop)
-            }
-        })
-    }
-    
-    // Sort by date
-    groups.upcoming.sort((a, b) => new Date(a.date) - new Date(b.date))
-    groups.inProgress.sort((a, b) => new Date(a.date) - new Date(b.date))
-    groups.completed.sort((a, b) => new Date(b.date) - new Date(a.date))
-    
-    return groups
-})
+    return 'Speaker: TBA'
+}
 
-const getAttendanceStatus = (workshop) => {
-    // This would be determined by actual attendance data from the backend
-    // For now, we'll use the workshop status as a proxy
-    const status = getWorkshopStatus(workshop)
-    if (status.text === 'Completed') {
-        // In a real implementation, this would check actual attendance records
-        return workshop.attended ? 'attended' : 'missed'
+const getSponsorInfo = (workshop) => {
+    if (workshop.organizations && workshop.organizations.length > 0) {
+        const org = workshop.organizations[0]
+        return `Sponsor: ${org.name || 'TBA'}`
     }
-    return 'pending'
+    return 'Sponsor: TBA'
 }
 </script>
 
 <template>
-    <Head title="My Workshops" />
-    
+    <Head title="My Registered Workshops" />
+
     <Default>
         <div class="max-w-7xl mx-auto" :style="themeStyles">
-            <PageHeader 
-                title="My Workshops" 
-                description="View and manage your workshop registrations"
+            <PageHeader
+                title="My Registered Workshops"
+                description="View your registered workshops and access your personal barcode for check-in at each event."
                 :show-action="false"
             />
 
-            <!-- Statistics Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-                    <div class="flex items-center">
-                        <div class="p-2 rounded-lg" :style="{ backgroundColor: `rgba(${themeColor.rgb}, 0.1)` }">
-                            <AcademicCapIcon class="w-6 h-6" :style="{ color: themeColor.primary }" />
+            <!-- Workshop Cards -->
+            <div v-if="workshops && workshops.length > 0" class="space-y-4">
+                <div v-for="workshop in workshops" :key="workshop.id"
+                     class="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 flex gap-4">
+
+                    <!-- Workshop Content -->
+                    <div class="flex-1 space-y-3">
+                        <!-- Meta Information -->
+                        <div class="text-sm" :style="{ color: themeColor.primary }">
+                            {{ getSpeakerInfo(workshop) }} | {{ getSponsorInfo(workshop) }} | {{ formatDateTime(workshop) }}
                         </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Registered</p>
-                            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ statistics?.total_registered || 0 }}</p>
-                        </div>
+
+                        <!-- Title -->
+                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">
+                            {{ workshop.title }}
+                        </h3>
+
+                        <!-- Description -->
+                        <p class="text-sm text-gray-600 dark:text-gray-400">
+                            {{ workshop.description || 'No description available' }}
+                        </p>
+
+                        <!-- View Barcode Button -->
+                        <button @click="viewBarcode(workshop)"
+                                class="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                                :style="{
+                                    backgroundColor: `rgba(${themeColor.rgb}, 0.1)`,
+                                    color: themeColor.primary
+                                }"
+                                @mouseenter="$event.target.style.backgroundColor = `rgba(${themeColor.rgb}, 0.2)`"
+                                @mouseleave="$event.target.style.backgroundColor = `rgba(${themeColor.rgb}, 0.1)`">
+                            View Barcode
+                        </button>
                     </div>
-                </div>
 
-                <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-                    <div class="flex items-center">
-                        <div class="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/20">
-                            <CalendarIcon class="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                        </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Upcoming</p>
-                            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ groupWorkshopsByStatus.upcoming.length }}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-                    <div class="flex items-center">
-                        <div class="p-2 rounded-lg bg-green-100 dark:bg-green-900/20">
-                            <CheckCircleIcon class="w-6 h-6 text-green-600 dark:text-green-400" />
-                        </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Attended</p>
-                            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ statistics?.attended || 0 }}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-                    <div class="flex items-center">
-                        <div class="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/20">
-                            <ClockIcon class="w-6 h-6 text-purple-600 dark:text-purple-400" />
-                        </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">In Progress</p>
-                            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ groupWorkshopsByStatus.inProgress.length }}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div v-if="workshops && workshops.length > 0" class="space-y-8">
-                <!-- Upcoming Workshops -->
-                <div v-if="groupWorkshopsByStatus.upcoming.length > 0">
-                    <div class="flex items-center mb-4">
-                        <CalendarIcon class="w-5 h-5 mr-2" :style="{ color: themeColor.primary }" />
-                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Upcoming Workshops</h2>
-                        <span class="ml-2 text-sm text-gray-500 dark:text-gray-400">({{ groupWorkshopsByStatus.upcoming.length }})</span>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        <div v-for="workshop in groupWorkshopsByStatus.upcoming" :key="workshop.id" 
-                             class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                            <!-- Workshop Image Placeholder -->
-                            <div class="h-40 bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/20 dark:to-indigo-900/20 flex items-center justify-center">
-                                <AcademicCapIcon class="w-12 h-12 text-gray-400" />
-                            </div>
-                            
-                            <div class="p-6">
-                                <div class="flex items-start justify-between mb-3">
-                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white line-clamp-2">{{ workshop.title }}</h3>
-                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ml-2"
-                                          :class="getWorkshopStatus(workshop).class">
-                                        {{ getWorkshopStatus(workshop).text }}
-                                    </span>
-                                </div>
-
-                                <div class="space-y-2 mb-4 text-sm">
-                                    <div class="flex items-center text-gray-600 dark:text-gray-400">
-                                        <CalendarIcon class="w-4 h-4 mr-2" />
-                                        {{ formatDate(workshop.date) }}
-                                    </div>
-                                    <div class="flex items-center text-gray-600 dark:text-gray-400">
-                                        <ClockIcon class="w-4 h-4 mr-2" />
-                                        {{ formatTime(workshop.start_time) }} - {{ formatTime(workshop.end_time) }}
-                                    </div>
-                                    <div v-if="workshop.location" class="flex items-center text-gray-600 dark:text-gray-400">
-                                        <MapPinIcon class="w-4 h-4 mr-2" />
-                                        {{ workshop.location }}
-                                    </div>
-                                    <div v-if="workshop.speaker" class="flex items-center text-gray-600 dark:text-gray-400">
-                                        <UserIcon class="w-4 h-4 mr-2" />
-                                        {{ workshop.speaker.name }}
-                                    </div>
-                                </div>
-
-                                <div class="flex items-center justify-between">
-                                    <a :href="route('visitor.workshops.show', workshop.id)" 
-                                       class="text-sm px-3 py-2 rounded-lg border transition-colors"
-                                       :style="{ borderColor: themeColor.primary, color: themeColor.primary }"
-                                       @mouseenter="$event.target.style.backgroundColor = `rgba(${themeColor.rgb}, 0.1)`"
-                                       @mouseleave="$event.target.style.backgroundColor = 'transparent'">
-                                        View Details
-                                    </a>
-                                    <div class="text-xs text-gray-500 dark:text-gray-400">
-                                        {{ workshop.registrations_count || 0 }}/{{ workshop.capacity }} registered
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- In Progress Workshops -->
-                <div v-if="groupWorkshopsByStatus.inProgress.length > 0">
-                    <div class="flex items-center mb-4">
-                        <ClockIcon class="w-5 h-5 mr-2 text-green-600 dark:text-green-400" />
-                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">In Progress</h2>
-                        <span class="ml-2 text-sm text-gray-500 dark:text-gray-400">({{ groupWorkshopsByStatus.inProgress.length }})</span>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        <div v-for="workshop in groupWorkshopsByStatus.inProgress" :key="workshop.id" 
-                             class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-green-200 dark:border-green-700 overflow-hidden">
-                            <!-- Workshop Image Placeholder with green tint -->
-                            <div class="h-40 bg-gradient-to-br from-green-100 to-emerald-100 dark:from-green-900/20 dark:to-emerald-900/20 flex items-center justify-center">
-                                <AcademicCapIcon class="w-12 h-12 text-green-600 dark:text-green-400" />
-                            </div>
-                            
-                            <div class="p-6">
-                                <div class="flex items-start justify-between mb-3">
-                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white line-clamp-2">{{ workshop.title }}</h3>
-                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ml-2"
-                                          :class="getWorkshopStatus(workshop).class">
-                                        {{ getWorkshopStatus(workshop).text }}
-                                    </span>
-                                </div>
-
-                                <div class="space-y-2 mb-4 text-sm">
-                                    <div class="flex items-center text-gray-600 dark:text-gray-400">
-                                        <CalendarIcon class="w-4 h-4 mr-2" />
-                                        {{ formatDate(workshop.date) }}
-                                    </div>
-                                    <div class="flex items-center text-gray-600 dark:text-gray-400">
-                                        <ClockIcon class="w-4 h-4 mr-2" />
-                                        {{ formatTime(workshop.start_time) }} - {{ formatTime(workshop.end_time) }}
-                                    </div>
-                                    <div v-if="workshop.location" class="flex items-center text-gray-600 dark:text-gray-400">
-                                        <MapPinIcon class="w-4 h-4 mr-2" />
-                                        {{ workshop.location }}
-                                    </div>
-                                </div>
-
-                                <div class="flex items-center justify-between">
-                                    <a :href="route('visitor.workshops.show', workshop.id)" 
-                                       class="text-sm px-3 py-2 rounded-lg text-white transition-colors"
-                                       :style="{ background: `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})` }">
-                                        Join Now
-                                    </a>
-                                    <div class="text-xs text-green-600 dark:text-green-400 font-medium">
-                                        Currently Active
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Completed Workshops -->
-                <div v-if="groupWorkshopsByStatus.completed.length > 0">
-                    <div class="flex items-center mb-4">
-                        <CheckCircleIcon class="w-5 h-5 mr-2 text-gray-600 dark:text-gray-400" />
-                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Completed</h2>
-                        <span class="ml-2 text-sm text-gray-500 dark:text-gray-400">({{ groupWorkshopsByStatus.completed.length }})</span>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        <div v-for="workshop in groupWorkshopsByStatus.completed" :key="workshop.id" 
-                             class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden opacity-90">
-                            <!-- Workshop Image Placeholder with grayscale -->
-                            <div class="h-40 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-900/20 dark:to-gray-800/20 flex items-center justify-center">
-                                <AcademicCapIcon class="w-12 h-12 text-gray-400" />
-                            </div>
-                            
-                            <div class="p-6">
-                                <div class="flex items-start justify-between mb-3">
-                                    <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-300 line-clamp-2">{{ workshop.title }}</h3>
-                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ml-2"
-                                          :class="getWorkshopStatus(workshop).class">
-                                        {{ getWorkshopStatus(workshop).text }}
-                                    </span>
-                                </div>
-
-                                <div class="space-y-2 mb-4 text-sm">
-                                    <div class="flex items-center text-gray-500 dark:text-gray-500">
-                                        <CalendarIcon class="w-4 h-4 mr-2" />
-                                        {{ formatDate(workshop.date) }}
-                                    </div>
-                                    <div class="flex items-center text-gray-500 dark:text-gray-500">
-                                        <ClockIcon class="w-4 h-4 mr-2" />
-                                        {{ formatTime(workshop.start_time) }} - {{ formatTime(workshop.end_time) }}
-                                    </div>
-                                    <div v-if="workshop.speaker" class="flex items-center text-gray-500 dark:text-gray-500">
-                                        <UserIcon class="w-4 h-4 mr-2" />
-                                        {{ workshop.speaker.name }}
-                                    </div>
-                                </div>
-
-                                <div class="flex items-center justify-between">
-                                    <a :href="route('visitor.workshops.show', workshop.id)" 
-                                       class="text-sm px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300 transition-colors">
-                                        View Details
-                                    </a>
-                                    <div class="text-xs">
-                                        <span v-if="getAttendanceStatus(workshop) === 'attended'" 
-                                              class="text-green-600 dark:text-green-400 font-medium">
-                                            ✓ Attended
-                                        </span>
-                                        <span v-else class="text-gray-500 dark:text-gray-500">
-                                            Not Attended
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
+                    <!-- Workshop Image -->
+                    <div class="w-64 h-40 rounded-xl overflow-hidden bg-gray-200 dark:bg-gray-700 flex-shrink-0">
+                        <img v-if="workshop.thumbnail_url"
+                             :src="workshop.thumbnail_url"
+                             :alt="workshop.title"
+                             class="w-full h-full object-cover">
+                        <div v-else class="w-full h-full flex items-center justify-center">
+                            <svg class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path>
+                            </svg>
                         </div>
                     </div>
                 </div>
@@ -366,16 +206,91 @@ const getAttendanceStatus = (workshop) => {
 
             <!-- Empty State -->
             <div v-else class="text-center py-12 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                <AcademicCapIcon class="mx-auto h-16 w-16 text-gray-400" />
+                <svg class="mx-auto h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path>
+                </svg>
                 <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-white">No workshops registered</h3>
                 <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
                     You haven't registered for any workshops yet. Explore available workshops to get started.
                 </p>
-                <a :href="route('visitor.workshops.index')" 
+                <a :href="route('visitor.workshops.index')"
                    class="mt-4 inline-flex items-center px-4 py-2 rounded-lg text-white transition-colors"
                    :style="{ background: `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})` }">
                     Browse Workshops
                 </a>
+            </div>
+        </div>
+
+        <!-- Barcode Modal -->
+        <div v-if="showBarcodeModal"
+             class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+             @click.self="closeBarcodeModal">
+            <div class="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full">
+                <div class="flex justify-between items-start mb-4">
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white">Workshop Barcode</h3>
+                    <button @click="closeBarcodeModal"
+                            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <div v-if="selectedWorkshop" class="space-y-4">
+                    <!-- Workshop Info -->
+                    <div class="border-b border-gray-200 dark:border-gray-700 pb-4">
+                        <h4 class="font-semibold text-gray-900 dark:text-white mb-2">{{ selectedWorkshop.title }}</h4>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">{{ formatDateTime(selectedWorkshop) }}</p>
+                        <p v-if="selectedWorkshop.location" class="text-sm text-gray-600 dark:text-gray-400 flex items-center mt-1">
+                            <MapPinIcon class="w-4 h-4 mr-1" />
+                            {{ selectedWorkshop.location }}
+                        </p>
+                    </div>
+
+                    <!-- QR Code Display -->
+                    <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-6 text-center">
+                        <div class="bg-white p-4 rounded-lg inline-block">
+                            <!-- QR Code Canvas -->
+                            <canvas ref="qrCanvas"></canvas>
+                        </div>
+
+                        <!-- Barcode Text -->
+                        <div class="mt-4">
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Registration Code:</p>
+                            <div class="font-mono text-lg font-bold text-gray-900 dark:text-white">
+                                {{ selectedWorkshop.barcode || 'NO-CODE' }}
+                            </div>
+                        </div>
+
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-4">
+                            Show this QR code at the workshop entrance for check-in
+                        </p>
+                    </div>
+
+                    <!-- Registration Status -->
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-gray-600 dark:text-gray-400">Status:</span>
+                        <span class="font-medium"
+                              :class="{
+                                  'text-green-600 dark:text-green-400': selectedWorkshop.registration_status === 'attended',
+                                  'text-blue-600 dark:text-blue-400': selectedWorkshop.registration_status === 'registered',
+                                  'text-gray-600 dark:text-gray-400': selectedWorkshop.registration_status === 'cancelled'
+                              }">
+                            {{ selectedWorkshop.registration_status ?
+                               selectedWorkshop.registration_status.charAt(0).toUpperCase() +
+                               selectedWorkshop.registration_status.slice(1) :
+                               'Registered' }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Close Button -->
+                <button @click="closeBarcodeModal"
+                        class="w-full mt-6 px-4 py-2 rounded-lg text-white transition-colors"
+                        :style="{ background: `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})` }">
+                    Close
+                </button>
             </div>
         </div>
     </Default>

@@ -151,6 +151,9 @@ class IdeaController extends Controller
             abort(404, 'Idea not found or access denied.');
         }
 
+        // Get active instructions
+        $instructions = $this->ideaService->getActiveInstructions($idea->id);
+
         // Get review history if exists
         $reviewHistory = [];
         if (method_exists($idea, 'auditLogs')) {
@@ -179,7 +182,8 @@ class IdeaController extends Controller
 
         return Inertia::render('TrackSupervisor/Ideas/Show', array_merge($data, [
             'reviewHistory' => $reviewHistory,
-            'scoring' => $scoring
+            'scoring' => $scoring,
+            'instructions' => $instructions
         ]));
     }
 
@@ -551,5 +555,31 @@ class IdeaController extends Controller
         $stats = $this->ideaService->getStatistics();
 
         return response()->json($stats);
+    }
+
+    /**
+     * Update instructions for an idea
+     */
+    public function updateInstructions(Request $request, Idea $idea)
+    {
+        // Check policy
+        $this->authorize('review', $idea);
+
+        $request->validate([
+            'instruction_text' => 'required|string|max:5000'
+        ]);
+
+        try {
+            $instruction = $this->ideaService->addInstruction(
+                $idea->id,
+                auth()->user()->id,
+                'supervisor',
+                $request->instruction_text
+            );
+
+            return back()->with('success', 'Instructions updated successfully.');
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => $e->getMessage()]);
+        }
     }
 }

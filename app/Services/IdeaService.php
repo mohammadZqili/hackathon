@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\User;
 use App\Models\Idea;
+use App\Models\IdeaInstruction;
 use App\Repositories\IdeaRepository;
 use App\Repositories\TeamRepository;
 use App\Repositories\HackathonEditionRepository;
@@ -157,6 +158,26 @@ class IdeaService extends BaseService
                     'feedback' => $data['feedback'] ?? null,
                     'score' => isset($data['scores']) ? array_sum($data['scores']) : null,
                     'criteria_scores' => $data['scores'] ?? null
+                ]);
+            }
+
+            // Add feedback as instruction for team to see
+            if (isset($data['feedback']) && !empty(trim($data['feedback']))) {
+                // Check if user is a supervisor
+                $userRole = $user->hasRole('track_supervisor') ? 'supervisor' : 'team_leader';
+
+                // Add the feedback as an instruction
+                $this->addInstruction(
+                    $ideaId,
+                    $user->id,
+                    $userRole,
+                    $data['feedback']
+                );
+
+                Log::info('Supervisor feedback saved as instruction', [
+                    'idea_id' => $ideaId,
+                    'user_id' => $user->id,
+                    'instruction_added' => true
                 ]);
             }
 
@@ -503,6 +524,54 @@ class IdeaService extends BaseService
             ->where('is_supervisor', true)
             ->with('user')
             ->orderBy('created_at', 'asc')
+            ->get();
+    }
+
+    /**
+     * Add or update instructions for an idea
+     */
+    public function addInstruction($ideaId, $userId, $userRole, $instructionText)
+    {
+        // Validate user role
+        if (!in_array($userRole, ['supervisor', 'team_leader'])) {
+            throw new \Exception('Invalid user role for instructions');
+        }
+
+        // Deactivate previous instructions from the same role
+        IdeaInstruction::where('idea_id', $ideaId)
+            ->where('user_role', $userRole)
+            ->update(['is_active' => false]);
+
+        // Create new instruction
+        return IdeaInstruction::create([
+            'idea_id' => $ideaId,
+            'user_id' => $userId,
+            'user_role' => $userRole,
+            'instruction_text' => $instructionText,
+            'is_active' => true
+        ]);
+    }
+
+    /**
+     * Get active instructions for an idea
+     */
+    public function getActiveInstructions($ideaId)
+    {
+        return IdeaInstruction::where('idea_id', $ideaId)
+            ->where('is_active', true)
+            ->with('user')
+            ->orderBy('created_at', 'desc')
+            ->get();
+    }
+
+    /**
+     * Get all instructions history for an idea
+     */
+    public function getInstructionsHistory($ideaId)
+    {
+        return IdeaInstruction::where('idea_id', $ideaId)
+            ->with('user')
+            ->orderBy('created_at', 'desc')
             ->get();
     }
 

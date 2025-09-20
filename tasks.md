@@ -443,6 +443,33 @@ Each task follows this structure:
 
 ---
 
+## Task #019
+**Date**: 2025-09-20
+**User Prompt**: "Fix Ziggy route error 'visitor.workshops.show' is not in the route list for My Workshops page. Also implement QR code display instead of simple barcode visualization."
+
+**Solution**: Fixed non-existent route error and implemented QR code generation for workshop check-in
+
+**Files Affected**:
+- `app/Http/Controllers/Visitor/WorkshopController.php` (updated myWorkshops method)
+- `resources/js/Pages/Visitor/Workshops/My.vue` (complete rewrite with QR code)
+
+**Code Summary**:
+1. **Route Fix**: Removed references to non-existent `visitor.workshops.show` route
+2. **Controller Updates**:
+   - Modified myWorkshops() to fetch workshops with registration data including barcodes
+   - Added statistics calculation (total registered, attended, upcoming, completed)
+   - Properly formatted dates and times for frontend display
+3. **Vue Component**:
+   - Imported existing `qrcode` npm package
+   - Added QR code generation from workshop registration data
+   - Format: `WORKSHOP_{id}_REG_{registration_id}_CODE_{barcode}`
+   - Displays QR code in modal when "View Barcode" clicked
+   - Shows registration code below QR for reference
+
+**Status**: Completed
+
+---
+
 ## Notes
 - Tasks should be updated in real-time as work progresses
 - Each task should include enough detail for future reference

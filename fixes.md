@@ -43,6 +43,25 @@
 
 ---
 
+### Non-existent Route Errors
+**Issue:** Ziggy error: route is not in the route list
+**Roles Affected:** Visitor (workshops.show), potentially others
+**When:** Clicking links that reference undefined routes
+**Console Error:** `Ziggy error: route 'visitor.workshops.show' is not in the route list`
+**Fix:** Remove or replace links to non-existent routes with valid ones
+
+#### Specific Occurrences:
+- **visitor.workshops.show** - Route doesn't exist, removed "View Details" links
+- **visitor.workshops.index** - Valid route for browsing workshops
+- **visitor.workshops.my** - Valid route for user's registered workshops
+
+#### Should Check in Other Roles:
+- [ ] Check all workshop view links in TeamMember pages
+- [ ] Check all workshop view links in TeamLead pages
+- [ ] Verify all Inertia route() calls match actual routes
+
+---
+
 ## Quick Check Commands
 
 ```bash

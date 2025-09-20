@@ -87,11 +87,15 @@ class IdeaController extends Controller
         $teamComments = $this->ideaService->getTeamComments($idea->id);
         $supervisorFeedback = $this->ideaService->getSupervisorFeedback($idea->id);
 
+        // Get active instructions
+        $instructions = $this->ideaService->getActiveInstructions($idea->id);
+
         return Inertia::render('TeamLead/Idea/Show', [
             'idea' => $idea,
             'team' => $team,
             'teamComments' => $teamComments,
-            'supervisorFeedback' => $supervisorFeedback
+            'supervisorFeedback' => $supervisorFeedback,
+            'instructions' => $instructions
         ]);
     }
 
@@ -542,5 +546,38 @@ class IdeaController extends Controller
         }
 
         return response()->download($filePath, $file->original_name);
+    }
+
+    public function updateInstructions(Request $request, $id)
+    {
+        $user = auth()->user();
+        $team = $this->teamService->getMyTeam($user);
+
+        if (!$team) {
+            return back()->with('error', 'You need to create a team first');
+        }
+
+        $idea = $this->teamService->getTeamIdea($team);
+
+        if (!$idea || $idea->id != $id) {
+            return back()->with('error', 'Invalid idea');
+        }
+
+        $request->validate([
+            'instruction_text' => 'required|string|max:5000'
+        ]);
+
+        try {
+            $instruction = $this->ideaService->addInstruction(
+                $idea->id,
+                $user->id,
+                'team_leader',
+                $request->instruction_text
+            );
+
+            return back()->with('success', 'Instructions updated successfully.');
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => $e->getMessage()]);
+        }
     }
 }

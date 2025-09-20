@@ -27,12 +27,14 @@ class IdeaController extends Controller
             // Get separated comments
             $teamComments = $this->ideaService->getTeamComments($idea->id);
             $supervisorFeedback = $this->ideaService->getSupervisorFeedback($idea->id);
+            $instructions = $this->ideaService->getActiveInstructions($idea->id);
         }
 
         return Inertia::render('TeamMember/Idea/Index', [
             'idea' => $idea,
             'teamComments' => $idea ? $teamComments : [],
-            'supervisorFeedback' => $idea ? $supervisorFeedback : []
+            'supervisorFeedback' => $idea ? $supervisorFeedback : [],
+            'instructions' => $idea ? ($instructions ?? []) : []
         ]);
     }
 

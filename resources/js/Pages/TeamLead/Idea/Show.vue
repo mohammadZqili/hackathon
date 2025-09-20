@@ -19,7 +19,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Tab Navigation -->
                     <div v-if="idea" class="self-stretch flex flex-col items-start justify-start pt-0 px-0 pb-3 text-sm"
                         :style="{ color: themeColor.primary }">
@@ -59,7 +59,7 @@
                             </button>
                         </div>
                     </div>
-                    
+
                     <!-- Tab Content -->
                     <div v-if="idea" class="self-stretch flex-1 min-h-0">
                         <!-- Overview Tab -->
@@ -95,7 +95,7 @@
                                 </div>
                                 <div class="self-stretch rounded bg-gray-200 dark:bg-gray-700 flex flex-col items-start justify-start">
                                     <div class="rounded h-2"
-                                        :style="{ 
+                                        :style="{
                                             backgroundColor: themeColor.primary,
                                             width: getProgressWidth(idea.status)
                                         }" />
@@ -105,7 +105,7 @@
                                     <div class="self-stretch relative leading-[21px]">{{ getProgressText(idea.status) }}</div>
                                 </div>
                             </div>
-                            
+
                             <!-- Files Section -->
                             <div v-if="idea.files?.length" class="self-stretch h-[60px] flex flex-col items-start justify-start pt-5 px-4 pb-3 box-border text-[22px]">
                                 <b class="self-stretch relative leading-7">Related Documents</b>
@@ -125,7 +125,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"></path>
                                 </svg>
                             </a>
-                            
+
                             <!-- Edit Button -->
                             <div class="self-stretch flex flex-row items-start justify-end py-3 px-4 text-center text-white">
                                 <Link :href="route('team-lead.idea.edit-my')"
@@ -135,7 +135,7 @@
                                 </Link>
                             </div>
                         </div>
-                        
+
                         <!-- Comments Tab - Team Chat -->
                         <div v-if="activeTab === 'comments'" class="self-stretch flex flex-col gap-6 p-4">
                             <h3 class="text-xl font-bold text-gray-900 dark:text-white">Team Chat</h3>
@@ -215,67 +215,96 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Instructions Tab -->
                         <div v-if="activeTab === 'instructions'" class="self-stretch h-full flex flex-col items-start justify-start py-3 px-4 box-border text-gray-900 dark:text-white overflow-y-auto">
-                            <!-- Project Instructions Section -->
+                            <!-- Active Instructions Section -->
                             <div class="self-stretch h-[60px] flex flex-row items-start justify-start pt-5 px-4 pb-3 box-border text-[22px]">
-                                <b class="relative leading-7">Project Instructions</b>
+                                <b class="relative leading-7">Active Instructions</b>
                             </div>
 
-                            <div class="self-stretch bg-white dark:bg-gray-800 rounded-lg p-6 mb-6">
-                                <div class="space-y-4">
-                                    <div v-if="idea.instructions">
-                                        <div class="text-gray-600 dark:text-gray-400" v-html="idea.instructions"></div>
-                                    </div>
-                                    <div v-else class="text-center py-4">
-                                        <p class="text-gray-500 dark:text-gray-400">No instructions available yet.</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Supervisor Feedback Section -->
-                            <div class="self-stretch h-[60px] flex flex-row items-start justify-start pt-5 px-4 pb-3 box-border text-[22px]">
-                                <b class="relative leading-7">Supervisor Feedback</b>
-                            </div>
-
-                            <div class="self-stretch flex-1">
-                                <div v-if="supervisorFeedback.length > 0">
-                                    <!-- Supervisor Comments List -->
-                                    <div v-for="feedback in supervisorFeedback" :key="feedback.id"
-                                        class="self-stretch flex flex-row items-start justify-start p-4 gap-3 mb-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
-                                        <div class="w-10 relative rounded-[20px] h-10 overflow-hidden shrink-0 bg-orange-300 dark:bg-orange-600 flex items-center justify-center">
-                                            <span class="text-sm font-medium text-white">
-                                                {{ feedback.user?.name?.charAt(0) || 'S' }}
-                                            </span>
-                                        </div>
-                                        <div class="flex-1 flex flex-col items-start justify-start">
-                                            <div class="self-stretch flex flex-row items-start justify-start gap-3">
-                                                <div class="flex flex-col items-start justify-start">
-                                                    <b class="self-stretch relative leading-[21px]">{{ feedback.user?.name }}</b>
-                                                    <span class="text-xs text-orange-600 dark:text-orange-400">Track Supervisor</span>
-                                                </div>
-                                                <div class="flex flex-col items-start justify-start text-gray-500 dark:text-gray-400">
-                                                    <div class="self-stretch relative leading-[21px]">{{ formatDate(feedback.created_at) }}</div>
-                                                </div>
+                            <div class="self-stretch mb-6">
+                                <div v-if="instructions && instructions.length > 0" class="space-y-4">
+                                    <div v-for="instruction in instructions" :key="instruction.id"
+                                        class="bg-white dark:bg-gray-800 rounded-lg p-6 border-l-4"
+                                        :class="{
+                                            'border-orange-500': instruction.user_role === 'supervisor',
+                                            'border-blue-500': instruction.user_role === 'team_leader'
+                                        }">
+                                        <div class="flex items-start gap-4">
+                                            <div class="w-10 h-10 rounded-full flex items-center justify-center"
+                                                :class="{
+                                                    'bg-orange-100 dark:bg-orange-900': instruction.user_role === 'supervisor',
+                                                    'bg-blue-100 dark:bg-blue-900': instruction.user_role === 'team_leader'
+                                                }">
+                                                <span class="text-sm font-medium"
+                                                    :class="{
+                                                        'text-orange-600 dark:text-orange-300': instruction.user_role === 'supervisor',
+                                                        'text-blue-600 dark:text-blue-300': instruction.user_role === 'team_leader'
+                                                    }">
+                                                    {{ instruction.user?.name?.charAt(0) || (instruction.user_role === 'supervisor' ? 'S' : 'L') }}
+                                                </span>
                                             </div>
-                                            <div class="self-stretch flex flex-col items-start justify-start mt-2">
-                                                <div class="self-stretch relative leading-[21px]">{{ feedback.comment }}</div>
+                                            <div class="flex-1">
+                                                <div class="flex items-center justify-between mb-2">
+                                                    <div>
+                                                        <span class="font-semibold">{{ instruction.user?.name || 'Unknown' }}</span>
+                                                        <span class="ml-2 text-xs px-2 py-1 rounded-full"
+                                                            :class="{
+                                                                'bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-300': instruction.user_role === 'supervisor',
+                                                                'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300': instruction.user_role === 'team_leader'
+                                                            }">
+                                                            {{ instruction.user_role === 'supervisor' ? 'Track Supervisor' : 'Team Leader' }}
+                                                        </span>
+                                                    </div>
+                                                    <span class="text-xs text-gray-500 dark:text-gray-400">
+                                                        {{ formatDate(instruction.created_at) }}
+                                                    </span>
+                                                </div>
+                                                <div class="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                                                    {{ instruction.instruction_text }}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                                 <div v-else class="text-center py-8 bg-gray-50 dark:bg-gray-800 rounded-lg">
                                     <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                     </svg>
-                                    <p class="text-gray-500 dark:text-gray-400">No supervisor feedback yet.</p>
-                                    <p class="text-sm text-gray-400 dark:text-gray-500 mt-2">Feedback will appear here once your idea is reviewed.</p>
+                                    <p class="text-gray-500 dark:text-gray-400">No instructions available yet.</p>
+                                    <p class="text-sm text-gray-400 dark:text-gray-500 mt-2">Instructions from supervisors or team leaders will appear here.</p>
+                                </div>
+                            </div>
+
+                            <!-- Add Team Leader Instructions Form -->
+                            <div class="self-stretch h-[60px] flex flex-row items-start justify-start pt-5 px-4 pb-3 box-border text-[22px]">
+                                <b class="relative leading-7">Add Team Instructions</b>
+                            </div>
+
+                            <div class="self-stretch bg-gray-50 dark:bg-gray-800 rounded-lg p-6">
+                                <div class="space-y-4">
+                                    <textarea v-model="instructionText"
+                                        class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white p-4 min-h-[120px] focus:ring-2 focus:border-transparent resize-none"
+                                        :class="{ 'focus:ring-opacity-50': true }"
+                                        :style="{ '--tw-ring-color': themeColor.primary }"
+                                        placeholder="Add instructions for your team members..."
+                                        required></textarea>
+
+                                    <div class="flex justify-end">
+                                        <button @click="submitInstructions"
+                                            class="rounded-lg px-6 py-2 text-white font-medium transition-opacity"
+                                            :style="{ backgroundColor: themeColor.primary }"
+                                            :disabled="!instructionText?.trim()"
+                                            :class="{ 'opacity-50 cursor-not-allowed': !instructionText?.trim() }">
+                                            Add Instructions
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Submit Idea Form (when no idea exists) -->
                     <div v-else class="self-stretch flex flex-col items-start justify-start">
                         <!-- Submit Form content goes here - based on Submit_idea_tab design -->
@@ -302,6 +331,10 @@ const props = defineProps({
         default: () => []
     },
     supervisorFeedback: {
+        type: Array,
+        default: () => []
+    },
+    instructions: {
         type: Array,
         default: () => []
     }
@@ -343,6 +376,7 @@ const themeStyles = computed(() => ({
 
 const activeTab = ref('overview')
 const replyText = ref('')
+const instructionText = ref('')
 
 const getProgressWidth = (status) => {
     const statusProgress = {
@@ -370,7 +404,7 @@ const formatDate = (dateString) => {
     const date = new Date(dateString)
     const now = new Date()
     const diffInDays = Math.floor((now - date) / (1000 * 60 * 60 * 24))
-    
+
     if (diffInDays === 0) return 'Today'
     if (diffInDays === 1) return '1 day ago'
     if (diffInDays < 7) return `${diffInDays} days ago`
@@ -391,6 +425,19 @@ const submitReply = () => {
 
 const cancelReply = () => {
     replyText.value = ''
+}
+
+const submitInstructions = () => {
+    if (instructionText.value.trim()) {
+        router.post(route('team-lead.idea.instructions', props.idea.id), {
+            instruction_text: instructionText.value
+        }, {
+            preserveScroll: true,
+            onSuccess: () => {
+                instructionText.value = ''
+            }
+        })
+    }
 }
 
 const handleIdeaSubmitted = () => {

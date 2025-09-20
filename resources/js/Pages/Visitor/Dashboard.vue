@@ -296,7 +296,7 @@ const isRegistered = (workshop) => {
                             </div>
                         </a>
                         
-                        <a :href="route('visitor.profile.edit')" 
+                        <a :href="route('visitor.profile.index')"
                            class="flex items-center p-4 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 transition-colors">
                             <UserGroupIcon class="w-6 h-6 mr-3" :style="{ color: themeColor.primary }" />
                             <div>

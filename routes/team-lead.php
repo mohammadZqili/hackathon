@@ -45,6 +45,7 @@ Route::middleware(['auth', 'verified', 'team.lead'])->prefix('team-lead')->name(
             Route::get('/edit', [IdeaController::class, 'edit'])->name('edit-my');
             Route::put('/update', [IdeaController::class, 'update'])->name('update');
             Route::post('/{id}/comment', [IdeaController::class, 'addComment'])->name('comment');
+            Route::post('/{id}/instructions', [IdeaController::class, 'updateInstructions'])->name('instructions');
             Route::delete('/file/{id}', [IdeaController::class, 'deleteFile'])->name('file.delete');
             Route::get('/{idea}/files/{file}/download', [IdeaController::class, 'downloadFile'])->name('download-file');
         });

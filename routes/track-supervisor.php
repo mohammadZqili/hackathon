@@ -47,6 +47,7 @@ Route::middleware(['auth', 'role:track_supervisor', 'track_supervisor_scope'])->
     Route::post('/ideas/{idea}/need-edit', [IdeaController::class, 'needEdit'])->name('ideas.need-edit');
     Route::post('/ideas/{idea}/score', [IdeaController::class, 'updateScore'])->name('ideas.score-update');
     Route::post('/ideas/{idea}/comments', [IdeaController::class, 'addComment'])->name('ideas.add-comment');
+    Route::post('/ideas/{idea}/instructions', [IdeaController::class, 'updateInstructions'])->name('ideas.instructions');
     Route::get('/ideas/export', [IdeaController::class, 'export'])->name('ideas.export');
 
     // Workshops Management (full access within edition)

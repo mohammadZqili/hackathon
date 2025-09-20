@@ -111,6 +111,22 @@ class Idea extends Model
     }
 
     /**
+     * Get instructions for this idea
+     */
+    public function instructions()
+    {
+        return $this->hasMany(IdeaInstruction::class);
+    }
+
+    /**
+     * Get active instructions for this idea
+     */
+    public function activeInstructions()
+    {
+        return $this->hasMany(IdeaInstruction::class)->where('is_active', true)->with('user');
+    }
+
+    /**
      * Submit the idea for review.
      */
     public function submit(): bool
