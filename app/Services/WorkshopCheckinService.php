@@ -168,6 +168,56 @@ class WorkshopCheckinService extends BaseService
     }
 
     /**
+     * Get recent check-ins across all workshops (formatted for display)
+     */
+    public function getRecentCheckInsFormatted(int $limit = 50): array
+    {
+        $registrations = $this->registrationRepository->getRecentCheckIns($limit);
+
+        return $registrations->map(function ($registration) {
+            return [
+                'id' => $registration->id,
+                'name' => $registration->user->name ?? 'Guest',
+                'email' => $registration->user->email ?? 'N/A',
+                'workshop' => $registration->workshop->title ?? 'N/A',
+                'checkinTime' => Carbon::parse($registration->attended_at)->format('h:i A, M d, Y'),
+                'registered' => $registration->user_id !== null,
+                'barcode' => $registration->barcode,
+            ];
+        })->toArray();
+    }
+
+    /**
+     * Generate QR code for a registration
+     */
+    public function generateQRCode(int $registrationId): array
+    {
+        $registration = $this->registrationRepository->findWithFullDetails($registrationId);
+
+        if (!$registration) {
+            throw new \Exception('Registration not found.');
+        }
+
+        // Generate QR code content
+        $qrContent = sprintf(
+            'WORKSHOP_%d_REG_%d_CODE_%s',
+            $registration->workshop_id,
+            $registration->id,
+            $registration->barcode
+        );
+
+        return [
+            'qr_content' => $qrContent,
+            'registration' => [
+                'id' => $registration->id,
+                'workshop' => $registration->workshop->title ?? 'N/A',
+                'user' => $registration->user ? $registration->user->name : 'Guest',
+                'barcode' => $registration->barcode
+            ]
+        ];
+    }
+
+    /**
      * Process email-based QR code
      */
     protected function processEmailBasedQR(array $parsedData, int $workshopId, User $markedBy): array

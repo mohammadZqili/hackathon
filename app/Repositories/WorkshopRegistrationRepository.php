@@ -27,6 +27,16 @@ class WorkshopRegistrationRepository extends BaseRepository
     }
 
     /**
+     * Find registration with full details (user and workshop loaded)
+     */
+    public function findWithFullDetails(int $id): ?WorkshopRegistration
+    {
+        return $this->query()
+            ->with(['user', 'workshop'])
+            ->find($id);
+    }
+
+    /**
      * Find registration by workshop and barcode
      */
     public function findByWorkshopAndBarcode(int $workshopId, string $barcode): ?WorkshopRegistration
