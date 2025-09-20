@@ -57,13 +57,19 @@ Route::middleware(['auth', 'role:track_supervisor', 'track_supervisor_scope'])->
     Route::get('/workshops/export', [WorkshopController::class, 'export'])->name('workshops.export');
 
     // Check-in Management
-    Route::resource('checkins', CheckinController::class)->only(['index', 'create', 'store']);
+    // Define specific routes before resource routes to avoid conflicts
     Route::get('/checkins/search', [CheckinController::class, 'search'])->name('checkins.search');
     Route::post('/checkins/process-qr', [CheckinController::class, 'processQR'])->name('checkins.process-qr');
-    Route::get('/checkins/workshop/{workshop}', [CheckinController::class, 'workshopAttendance'])->name('checkins.workshop');
     Route::post('/checkins/mark-attendance', [CheckinController::class, 'markAttendance'])->name('checkins.mark-attendance');
-    Route::get('/checkins/generate-qr/{registration}', [CheckinController::class, 'generateQR'])->name('checkins.generate-qr');
     Route::get('/checkins/export', [CheckinController::class, 'export'])->name('checkins.export');
+    Route::get('/checkins/generate-qr/{registration}', [CheckinController::class, 'generateQR'])->name('checkins.generate-qr');
+
+    // Workshop specific routes
+    Route::get('/checkins/workshops', [CheckinController::class, 'workshops'])->name('checkins.workshops');
+    Route::get('/checkins/workshop/{workshop}', [CheckinController::class, 'workshopCheckIn'])->name('checkins.workshop.detail');
+
+    // Resource routes at the end
+    Route::resource('checkins', CheckinController::class)->only(['index', 'create', 'store']);
 
     // News Management
     Route::resource('news', NewsController::class);

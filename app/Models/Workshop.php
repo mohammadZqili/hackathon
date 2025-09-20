@@ -15,6 +15,7 @@ class Workshop extends Model
 
     protected $fillable = [
         'hackathon_id',
+        'hackathon_edition_id',
         'title',
         'slug',
         'description',

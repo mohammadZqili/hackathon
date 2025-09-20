@@ -45,9 +45,30 @@
 
 ### Non-existent Route Errors
 **Issue:** Ziggy error: route is not in the route list
-**Roles Affected:** Visitor (workshops.show), potentially others
+**Roles Affected:** Visitor (workshops.show), TrackSupervisor (checkins.workshop-detail), potentially others
 **When:** Clicking links that reference undefined routes
-**Console Error:** `Ziggy error: route 'visitor.workshops.show' is not in the route list`
+**Console Error Examples:**
+- `Ziggy error: route 'visitor.workshops.show' is not in the route list`
+- `Ziggy error: route 'track-supervisor.checkins.workshop-detail' is not in the route list`
+
+#### Specific Fix for TrackSupervisor Check-ins:
+**Problem:** Route `track-supervisor.checkins.workshop.detail` not registered properly
+**Root Cause:** Some routes placed after certain patterns fail to register in Laravel route collection
+**Symptoms:**
+- Route defined in routes file but not appearing in `php artisan route:list`
+- Ziggy not including route in generated JavaScript file
+- `Route::getRoutes()` not showing the route
+
+**Solutions Applied:**
+1. Moved specific routes before resource routes to avoid conflicts
+2. Clear route cache: `php artisan route:clear && php artisan ziggy:generate`
+3. Used direct URL navigation as workaround: `router.visit('/track-supervisor/checkins/workshop/${workshopId}')`
+4. Alternative: Use existing similar routes that ARE registered
+
+**Permanent Fix:**
+- Define problematic routes at the beginning of the route group
+- Avoid route names with dots after 'workshop' pattern
+- Use direct URL navigation when route helpers fail
 **Fix:** Remove or replace links to non-existent routes with valid ones
 
 #### Specific Occurrences:
@@ -59,6 +80,24 @@
 - [ ] Check all workshop view links in TeamMember pages
 - [ ] Check all workshop view links in TeamLead pages
 - [ ] Verify all Inertia route() calls match actual routes
+
+---
+
+### Database Column Name Mismatches - Workshop Edition ID
+**Issue:** Column not found: Unknown column 'edition_id' in workshops table
+**Roles Affected:** SystemAdmin, HackathonAdmin (Reports feature)
+**When:** Accessing reports page with edition statistics
+**Console Error:** `SQLSTATE[42S22]: Column not found: 1054 Unknown column 'edition_id' in 'where clause'`
+**Fix:** Use correct column name `hackathon_edition_id` instead of `edition_id` for workshops table
+
+#### Specific Occurrences:
+- **ReportRepository.php** - All workshop queries updated to use `hackathon_edition_id`
+- **Workshop.php model** - Added `hackathon_edition_id` to fillable array
+
+#### Database Structure Reference:
+- Teams table: uses `edition_id`
+- Ideas table: uses `edition_id`
+- Workshops table: uses `hackathon_edition_id` (NOT edition_id)
 
 ---
 

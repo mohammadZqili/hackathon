@@ -4,30 +4,102 @@ namespace App\Http\Controllers\TrackSupervisor;
 
 use App\Http\Controllers\Controller;
 use App\Models\Workshop;
-use App\Models\WorkshopRegistration;
-use App\Models\User;
-use App\Services\QrCodeService;
+use App\Services\WorkshopCheckinService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Carbon\Carbon;
-use Illuminate\Support\Str;
 
 class CheckinController extends Controller
 {
+    protected WorkshopCheckinService $checkinService;
+
+    public function __construct(WorkshopCheckinService $checkinService)
+    {
+        $this->checkinService = $checkinService;
+    }
+    /**
+     * Display workshops list for check-ins.
+     */
+    public function workshops()
+    {
+        $workshops = Workshop::with(['speakers', 'organizations', 'registrations'])
+            ->where('is_active', true)
+            ->orderBy('start_time', 'asc')
+            ->get()
+            ->map(function ($workshop) {
+                $registrations = $workshop->registrations;
+                return [
+                    'id' => $workshop->id,
+                    'title' => $workshop->title,
+                    'description' => $workshop->description,
+                    'start_time' => $workshop->start_time,
+                    'date_time' => $workshop->start_time,
+                    'speakers' => $workshop->speakers->pluck('name')->implode(', '),
+                    'max_attendees' => $workshop->max_attendees,
+                    'seats' => $workshop->max_attendees,
+                    'registered_count' => $registrations->count(),
+                    'checked_in_count' => $registrations->whereNotNull('attended_at')->count(),
+                ];
+            });
+
+        return Inertia::render('TrackSupervisor/Checkins/Workshops', [
+            'workshops' => $workshops,
+        ]);
+    }
+
+    /**
+     * Display specific workshop check-in page.
+     */
+    public function workshopCheckIn($workshopId)
+    {
+        try {
+            // Use service to get all workshop check-in data
+            $data = $this->checkinService->getWorkshopCheckinData($workshopId);
+
+            // Get active workshops for dropdown
+            $workshops = Workshop::where('is_active', true)
+                ->orderBy('start_time', 'asc')
+                ->get()
+                ->map(function ($w) {
+                    return [
+                        'id' => $w->id,
+                        'title' => $w->title,
+                    ];
+                });
+
+            return Inertia::render('TrackSupervisor/Checkins/WorkshopDetail', array_merge($data, [
+                'selectedWorkshop' => $workshopId,
+                'workshops' => $workshops,
+            ]));
+
+        } catch (\Exception $e) {
+            return redirect()->back()->withErrors(['error' => 'Workshop not found.']);
+        }
+    }
+
     /**
      * Display the check-ins management page.
      */
     public function index(Request $request)
     {
-        // Get active workshops for selection
-        $workshops = Workshop::with(['edition', 'speakers', 'organizations', 'registrations'])
+        // Show workshops list for check-ins
+        $workshops = Workshop::with(['speakers', 'organizations', 'registrations'])
             ->where('is_active', true)
             ->orderBy('start_time', 'asc')
             ->get()
             ->map(function ($workshop) {
+                $registrations = $workshop->registrations;
                 return [
                     'id' => $workshop->id,
                     'title' => $workshop->title,
+                    'description' => $workshop->description,
+                    'start_time' => $workshop->start_time,
+                    'date_time' => $workshop->start_time,
+                    'speakers' => $workshop->speakers->pluck('name')->implode(', '),
+                    'max_attendees' => $workshop->max_attendees,
+                    'seats' => $workshop->max_attendees,
+                    'registered_count' => $registrations->count(),
+                    'checked_in_count' => $registrations->whereNotNull('attended_at')->count(),
                     'date_time' => Carbon::parse($workshop->start_time)->format('M d, Y h:i A'),
                     'edition' => $workshop->edition ? $workshop->edition->name : 'N/A',
                     'speakers' => $workshop->speakers->pluck('name')->implode(', '),
@@ -57,10 +129,8 @@ class CheckinController extends Controller
         // Calculate statistics
         $stats = $this->calculateStatistics($request->get('workshop_id'));
 
-        return Inertia::render('TrackSupervisor/Checkins/Index', [
+        return Inertia::render('TrackSupervisor/Checkins/Workshops', [
             'workshops' => $workshops,
-            'recentCheckIns' => $recentCheckIns,
-            'stats' => $stats,
         ]);
     }
 
