@@ -46,7 +46,7 @@
                                 <input v-model="form.name"
                                        type="text"
                                        id="name"
-                                       class="pl-10 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-opacity-50 focus:border-transparent transition-all duration-200"
+                                       class="pl-10 w-full h-12 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-opacity-50 focus:border-transparent transition-all duration-200"
                                        :class="{ 'border-red-500 focus:ring-red-500': form.errors.name }"
                                        :style="{ '--tw-ring-color': themeColor.primary }"
                                        :placeholder="t('admin.form.placeholder.enter_name')"
@@ -65,8 +65,8 @@
                             <div class="relative">
                                 <textarea v-model="form.description"
                                           id="description"
-                                          rows="4"
-                                          class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-opacity-50 focus:border-transparent transition-all duration-200 resize-none"
+                                          rows="5"
+                                          class="w-full p-4 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-opacity-50 focus:border-transparent transition-all duration-200 resize-none"
                                           :class="{ 'border-red-500 focus:ring-red-500': form.errors.description }"
                                           :style="{ '--tw-ring-color': themeColor.primary }"
                                           :placeholder="t('admin.tracks.description_placeholder')"
@@ -95,7 +95,7 @@
                                     </div>
                                     <select v-model="form.hackathon_id"
                                             id="hackathon_id"
-                                            class="pl-10 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-opacity-50 focus:border-transparent transition-all duration-200 appearance-none cursor-pointer"
+                                            class="pl-10 w-full h-12 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-opacity-50 focus:border-transparent transition-all duration-200 appearance-none cursor-pointer"
                                             :class="{ 'border-red-500 focus:ring-red-500': form.errors.hackathon_id }"
                                             :style="{ '--tw-ring-color': themeColor.primary }"
                                             required>
@@ -130,7 +130,7 @@
                                            type="number"
                                            id="max_teams"
                                            min="1"
-                                           class="pl-10 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-opacity-50 focus:border-transparent transition-all duration-200"
+                                           class="pl-10 w-full h-12 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-opacity-50 focus:border-transparent transition-all duration-200"
                                            :style="{ '--tw-ring-color': themeColor.primary }"
                                            :placeholder="t('admin.tracks.max_teams_placeholder')">
                                 </div>
@@ -217,12 +217,12 @@
                 <!-- Form Actions -->
                 <div class="flex justify-end space-x-4">
                     <Link :href="route('system-admin.tracks.index')"
-                          class="px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200">
+                          class="px-8 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 font-medium">
                         {{ t('admin.buttons.cancel') }}
                     </Link>
                     <button type="submit"
                             :disabled="form.processing"
-                            class="px-6 py-3 rounded-lg text-white font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                            class="px-8 py-3 rounded-lg text-white font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                             :style="{
                                 backgroundColor: form.processing ? '#9CA3AF' : themeColor.primary,
                                 ':hover': { backgroundColor: themeColor.hover }

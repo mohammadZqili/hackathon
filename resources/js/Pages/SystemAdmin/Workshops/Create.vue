@@ -23,7 +23,7 @@
                                 v-model="form.title"
                                 type="text"
                                 :placeholder="t('admin.workshops.enter_name')"
-                                class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-theme-primary focus:ring focus:ring-theme-primary focus:ring-opacity-25"
+                                class="w-full h-12 rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-theme-primary focus:ring focus:ring-theme-primary focus:ring-opacity-25"
                                 :style="{ backgroundColor: `rgba(${themeColor.rgb}, 0.05)` }"
                                 required
                             />
@@ -39,9 +39,9 @@
                             </label>
                             <textarea
                                 v-model="form.description"
-                                rows="4"
+                                rows="5"
                                 :placeholder="t('admin.workshops.enter_description')"
-                                class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-theme-primary focus:ring focus:ring-theme-primary focus:ring-opacity-25 resize-none"
+                                class="w-full p-4 rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-theme-primary focus:ring focus:ring-theme-primary focus:ring-opacity-25 resize-none"
                                 :style="{ backgroundColor: `rgba(${themeColor.rgb}, 0.05)` }"
                             ></textarea>
                             <p v-if="form.errors.description" class="mt-1 text-sm text-red-600">
@@ -59,7 +59,7 @@
                             </label>
                             <select
                                 v-model="form.speaker_id"
-                                class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-theme-primary focus:ring focus:ring-theme-primary focus:ring-opacity-25"
+                                class="w-full h-12 rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-theme-primary focus:ring focus:ring-theme-primary focus:ring-opacity-25"
                                 :style="{ backgroundColor: `rgba(${themeColor.rgb}, 0.05)` }"
                             >
                                 <option value="">{{ t('admin.workshops.select_speaker') }}</option>
@@ -79,7 +79,7 @@
                             </label>
                             <select
                                 v-model="form.organization_id"
-                                class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-theme-primary focus:ring focus:ring-theme-primary focus:ring-opacity-25"
+                                class="w-full h-12 rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-theme-primary focus:ring focus:ring-theme-primary focus:ring-opacity-25"
                                 :style="{ backgroundColor: `rgba(${themeColor.rgb}, 0.05)` }"
                             >
                                 <option value="">{{ t('admin.workshops.select_organization') }}</option>
@@ -103,7 +103,7 @@
                             <input
                                 v-model="form.workshop_date"
                                 type="date"
-                                class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-theme-primary focus:ring focus:ring-theme-primary focus:ring-opacity-25"
+                                class="w-full h-12 rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-theme-primary focus:ring focus:ring-theme-primary focus:ring-opacity-25"
                                 :style="{ backgroundColor: `rgba(${themeColor.rgb}, 0.05)` }"
                                 required
                             />
@@ -121,7 +121,7 @@
                                 v-model="form.start_time_input"
                                 type="time"
                                 :placeholder="t('admin.workshops.start_time')"
-                                class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-theme-primary focus:ring focus:ring-theme-primary focus:ring-opacity-25"
+                                class="w-full h-12 rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-theme-primary focus:ring focus:ring-theme-primary focus:ring-opacity-25"
                                 :style="{ backgroundColor: `rgba(${themeColor.rgb}, 0.05)` }"
                                 required
                             />
@@ -145,7 +145,7 @@
                                 step="0.5"
                                 placeholder="2"
                                 required
-                                class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-theme-primary focus:ring focus:ring-theme-primary focus:ring-opacity-25"
+                                class="w-full h-12 rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-theme-primary focus:ring focus:ring-theme-primary focus:ring-opacity-25"
                                 :style="{ backgroundColor: `rgba(${themeColor.rgb}, 0.05)` }"
                             />
                             <p v-if="form.errors.duration" class="mt-1 text-sm text-red-600">
@@ -214,7 +214,7 @@
                                 v-model="form.remote_link"
                                 type="url"
                                 :placeholder="t('admin.workshops.enter_remote_link')"
-                                class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-theme-primary focus:ring focus:ring-theme-primary focus:ring-opacity-25"
+                                class="w-full h-12 rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-theme-primary focus:ring focus:ring-theme-primary focus:ring-opacity-25"
                                 :style="{ backgroundColor: `rgba(${themeColor.rgb}, 0.05)` }"
                             />
                         </div>
@@ -229,7 +229,7 @@
                                 type="number"
                                 min="1"
                                 :placeholder="t('admin.workshops.enter_seat_capacity')"
-                                class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-theme-primary focus:ring focus:ring-theme-primary focus:ring-opacity-25"
+                                class="w-full h-12 rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-theme-primary focus:ring focus:ring-theme-primary focus:ring-opacity-25"
                                 :style="{ backgroundColor: `rgba(${themeColor.rgb}, 0.05)` }"
                             />
                             <p v-if="form.errors.max_attendees" class="mt-1 text-sm text-red-600">
@@ -246,7 +246,7 @@
                         <button
                             type="submit"
                             :disabled="form.processing"
-                            class="w-full max-w-md px-6 py-3 text-white font-semibold rounded-lg shadow-lg transition-all disabled:opacity-50"
+                            class="w-full max-w-md px-8 py-3 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all disabled:opacity-50"
                             :style="{
                                 background: `linear-gradient(135deg, ${themeColor.gradientFrom}, ${themeColor.gradientTo})`,
                             }"
